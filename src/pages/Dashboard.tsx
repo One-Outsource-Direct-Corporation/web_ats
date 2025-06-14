@@ -119,10 +119,11 @@ export default function Dashboard() {
   }
 
   return (
-<>
+      <>
       <Navbar />
-      <div className="min-h-screen bg-gray-50 p-6 pt-[180px]">
-        <div className="mx-auto max-w-7xl">
+      <div className="min-h-screen bg-gray-50 p-6 pt-[100px]">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Left Column */}
           <div className="space-y-6 lg:col-span-2">
