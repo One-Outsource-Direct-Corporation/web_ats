@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Calendar, Users, UserCheck, MessageSquare, Clock, MapPin, Video } from "lucide-react"
+import { Calendar, Users, UserCheck, MessageSquare, Clock, MapPin, Video, Pin, FolderSearch, FolderSearch2, CircleUser, ClockAlert} from "lucide-react"
 import { Navbar } from "@/reusables/Navbar"
 
 export default function Dashboard() {
@@ -156,10 +156,15 @@ export default function Dashboard() {
             {/* Recruitment Process */}
             <Card>
               <CardHeader>
-                <CardTitle>Recruitment Process</CardTitle>
+                <CardTitle> 
+                  <div className="flex items-center gap-2 -mb-5">
+                  
+                  <FolderSearch />Recruitment
+                  </div>
+                  </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex gap-6">
+                <div className="flex gap-6 items-stretch">
                   {/* Job Table */}
                   <div className="flex-1">
                     <Table>
@@ -173,18 +178,24 @@ export default function Dashboard() {
                       </TableHeader>
                       <TableBody>
                         {jobData.map((job, index) => (
-                          <TableRow key={index}>
-                            <TableCell className="font-medium">{job.job}</TableCell>
-                            <TableCell>{job.candidates}</TableCell>
-                            <TableCell>{job.vacancies}</TableCell>
-                            <TableCell className="text-sm text-gray-500">{job.expiration}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
+                          <TableRow key={index} className="odd:bg-gray-100 even:bg-white">
+                          <TableCell className="font-medium">{job.job}</TableCell>
+                          <TableCell className="flex items-center gap-2">
+                            <FolderSearch2 />
+                            {job.candidates}
+                          </TableCell>
+                          <TableCell>{job.vacancies}</TableCell>
+                          <TableCell className="text-sm text-gray-500">{job.expiration}</TableCell>
+                        </TableRow>
+
+                          ))}
+                        </TableBody>
+
                     </Table>
                   </div>
 
-                  <Separator orientation="vertical" />
+                   <Separator orientation="vertical" className="bg-border w-[1px]" />
+
 
                   {/* Ongoing Processes */}
                   <div className="flex-1 space-y-4">
@@ -241,7 +252,13 @@ export default function Dashboard() {
             {/* Interviews */}
             <Card>
               <CardHeader>
-                <CardTitle>Scheduled Interviews</CardTitle>
+                <CardTitle>
+                  <div className="flex items-center gap-2">
+                    <Pin />
+                    Scheduled Interviews
+                  </div>
+                </CardTitle>
+
               </CardHeader>
               <CardContent className="space-y-6">
                 {interviews.map((day, dayIndex) => (
@@ -259,18 +276,20 @@ export default function Dashboard() {
                             </div>
                             <div className="text-right">
                               <div className="font-bold text-gray-900">{session.job}</div>
-                              <div className="text-sm text-gray-600">{session.candidate}</div>
-                              <div className="flex items-center gap-4 text-xs text-gray-500">
-                                <span>{session.duration}</span>
-                                <div className="flex items-center gap-1">
-                                  {session.location === "Online" ? (
-                                    <Video className="h-3 w-3" />
-                                  ) : (
-                                    <MapPin className="h-3 w-3" />
-                                  )}
-                                  {session.location}
-                                </div>
-                              </div>
+                              <div className="text-sm text-gray-600 flex items-center gap-2 justify-end"><CircleUser className="h-3 w-3"/>{session.candidate}</div>
+                              <div className="flex items-center justify-end gap-1 text-xs text-gray-500">
+  <ClockAlert className="h-3 w-3" />
+  <span>{session.duration}</span>
+  <div className="flex items-center gap-1">
+    {session.location === "Online" ? (
+      <Video className="h-3 w-3" />
+    ) : (
+      <MapPin className="h-3 w-3" />
+    )}
+    {session.location}
+  </div>
+</div>
+
                             </div>
                           </div>
                         </div>
