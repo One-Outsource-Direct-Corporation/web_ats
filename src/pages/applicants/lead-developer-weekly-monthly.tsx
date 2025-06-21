@@ -1,4 +1,5 @@
 "use client"
+import { useParams } from "react-router-dom"
 
 import type React from "react"
 
@@ -104,6 +105,20 @@ interface WeekDayObject {
   isCurrentMonth: boolean
   isToday: boolean
   fullDate: Date
+}
+
+interface StageSectionProps {
+  title: string
+  columns: { title: string; id: string }[]
+  applicantColumns: { [key: string]: Applicant[] }
+  isMultiRow?: boolean
+  selectedApplicants: Set<string>
+  isSelectionMode: boolean
+  onLongPress: (id: string) => void
+  onToggleSelect: (id: string) => void
+  onColumnClick: (columnId: string) => void
+  navigate: any
+  jobtitle?: string // Add this line
 }
 
 // ----------------------
@@ -253,8 +268,9 @@ function DroppableColumn({
   isSelectionMode,
   hasSelectedApplicants,
   onColumnClick,
-  navigate, // Add this prop
-}: StageColumnProps & { navigate: any }) {
+  navigate,
+  jobtitle, // Add this prop
+}: StageColumnProps & { navigate: any; jobtitle?: string }) {
   const [isMobile, setIsMobile] = useState(false)
   const { setNodeRef, isOver } = useDroppable({
     id,
@@ -277,12 +293,26 @@ function DroppableColumn({
   }
 
   const handleMaximizeClick = () => {
-    if (title === "Resume Screening") {
-      navigate("/applicants/jobdetails/leaddeveloper/LeadDeveloperRS")
-    } else if (title === "Phone-Call Interview") {
-      navigate("/applicants/jobdetails/leaddeveloper/LeadDeveloperPI")
-    } else if (title === "Shortlisted") {
-      navigate("/applicants/jobdetails/leaddeveloper/LeadDeveloperSL")
+    // Create a mapping from stage titles to route segments
+    const stageRouteMapping: Record<string, string> = {
+      "Resume Screening": "resumescreening",
+      "Phone-Call Interview": "phonecallinterview",
+      "Initial Interview": "initialinterview",
+      Shortlisted: "shortlisted",
+      Assessment: "assessments",
+      "Final Interview": "finalinterview",
+      "For Job Offer": "forjoboffer",
+      "Job Offer & Finalization": "forjoboffer", // You might want a different route for this
+      Onboarding: "onboarding",
+      Warm: "warm",
+      Failed: "failed",
+    }
+
+    const routeSegment = stageRouteMapping[title]
+    if (routeSegment) {
+      // Get the current job title from the URL params or use a default
+      const currentJobTitle = jobtitle || "leaddeveloper"
+      navigate(`/applicants/job/${currentJobTitle}/${routeSegment}`)
     }
   }
 
@@ -651,19 +681,6 @@ function Sidebar() {
 // Stage Section Component
 // ----------------------
 
-interface StageSectionProps {
-  title: string
-  columns: { title: string; id: string }[]
-  applicantColumns: { [key: string]: Applicant[] }
-  isMultiRow?: boolean
-  selectedApplicants: Set<string>
-  isSelectionMode: boolean
-  onLongPress: (id: string) => void
-  onToggleSelect: (id: string) => void
-  onColumnClick: (columnId: string) => void
-  navigate: any // Add this line
-}
-
 function StageSection({
   title,
   columns,
@@ -675,6 +692,7 @@ function StageSection({
   onToggleSelect,
   onColumnClick,
   navigate,
+  jobtitle,
 }: StageSectionProps) {
   if (isMultiRow && columns.length === 5) {
     // Special layout for Stage 3 with 5 columns
@@ -711,7 +729,8 @@ function StageSection({
               isSelectionMode={isSelectionMode}
               hasSelectedApplicants={selectedApplicants.size > 0}
               onColumnClick={onColumnClick}
-              navigate={navigate} // Add this line
+              navigate={navigate}
+              jobtitle={jobtitle} // Add this line
             />
           ))}
         </div>
@@ -736,7 +755,8 @@ function StageSection({
               isSelectionMode={isSelectionMode}
               hasSelectedApplicants={selectedApplicants.size > 0}
               onColumnClick={onColumnClick}
-              navigate={navigate} // Add this line
+              navigate={navigate}
+              jobtitle={jobtitle} // Add this line
             />
           ))}
         </div>
@@ -770,7 +790,8 @@ function StageSection({
             isSelectionMode={isSelectionMode}
             hasSelectedApplicants={selectedApplicants.size > 0}
             onColumnClick={onColumnClick}
-            navigate={navigate} // Add this line
+            navigate={navigate}
+            jobtitle={jobtitle} // Add this line
           />
         ))}
       </div>
@@ -1046,6 +1067,25 @@ export default function LeadDeveloperWeekly() {
     },
   ]
 
+  const formatJobTitle = (slug?: string) => {
+    const titleMap: Record<string, string> = {
+      leaddeveloper: "Lead Developer",
+      projectmanager: "Project Manager",
+      socialcontentmanager: "Social Content Manager",
+      senioruiuxdesigner: "Senior UI/UX Designer",
+      customersupport: "Customer Support",
+      qaengineer: "QA Engineer",
+      humanresourcescoordinator: "Human Resources Coordinator",
+      operationsmanager: "Operations Manager",
+      socialmediamanager: "Social Media Manager",
+      marketingspecialist: "Marketing Specialist",
+      seniorsoftwareengineer: "Senior Software Engineer",
+    }
+    return slug ? titleMap[slug.toLowerCase()] || slug.replace(/([a-z])([A-Z])/g, "$1 $2") : "Unknown Job"
+  }
+  const { jobtitle } = useParams<{ jobtitle: string }>()
+  const resolvedJobTitle = formatJobTitle(jobtitle)
+
   return (
     <>
       <Navbar />
@@ -1074,7 +1114,8 @@ export default function LeadDeveloperWeekly() {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div className="flex items-center gap-3">
-                <h2 className="text-2xl font-bold text-gray-900">Lead Developer</h2>
+                <h2 className="text-2xl font-bold text-gray-900 text-center sm:text-left">{resolvedJobTitle}</h2>
+
                 <Select defaultValue="active">
                   <SelectTrigger className="w-auto min-w-[80px] bg-green-100 text-green-800 border-green-300 hover:bg-green-200">
                     <SelectValue />
@@ -1138,8 +1179,8 @@ export default function LeadDeveloperWeekly() {
             {!isSelectionMode && (
               <div className="lg:hidden bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
                 <p className="text-sm text-blue-800">
-                  <strong>Mobile tip:</strong> Long press on any applicant to start selection mode. Then long press additional
-                  applicants to select multiple, and tap a column to move them all there.
+                  <strong>Mobile tip:</strong> Long press on any applicant to start selection mode. Then long press
+                  additional applicants to select multiple, and tap a column to move them all there.
                 </p>
               </div>
             )}
@@ -1167,6 +1208,7 @@ export default function LeadDeveloperWeekly() {
                     onToggleSelect={handleToggleSelect}
                     onColumnClick={handleColumnClick}
                     navigate={navigate}
+                    jobtitle={jobtitle} // Add this line
                   />
                 ))}
               </div>

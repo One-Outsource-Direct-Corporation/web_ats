@@ -1,4 +1,5 @@
 "use client"
+import { useParams } from "react-router-dom"
 import { useNavigate } from "react-router-dom";
 import { useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -79,6 +80,26 @@ export default function JobManagement() {
   )
 const [jobStatus, setJobStatus] = useState("active")
 const navigate = useNavigate();
+const formatJobTitle = (slug?: string) => {
+  const titleMap: Record<string, string> = {
+    leaddeveloper: "Lead Developer",
+    projectmanager: "Project Manager",
+    socialcontentmanager: "Social Content Manager",
+    senioruiuxdesigner: "Senior UI/UX Designer",
+    customersupport: "Customer Support",
+    qaengineer: "QA Engineer",
+    humanresourcescoordinator: "Human Resources Coordinator",
+    operationsmanager: "Operations Manager",
+    socialmediamanager: "Social Media Manager",
+    marketingspecialist: "Marketing Specialist",
+    seniorsoftwareengineer: "Senior Software Engineer",
+  }
+  return slug ? titleMap[slug.toLowerCase()] || slug.replace(/([a-z])([A-Z])/g, "$1 $2") : "Unknown Job"
+}
+
+const { jobtitle } = useParams<{ jobtitle: string }>()
+const resolvedJobTitle = formatJobTitle(jobtitle)
+
 
 
   return (
@@ -94,14 +115,15 @@ const navigate = useNavigate();
                 variant="outline"
                 size="sm"
                 className="flex items-center gap-2"
-                onClick={() => window.history.back()}
+                onClick={() => navigate(`/applicants/job/${jobtitle}`)}
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back
               </Button>
 
               <div className="flex flex-col items-center sm:flex-row sm:items-center sm:gap-3">
-                <h1 className="text-2xl font-bold text-gray-900 text-center sm:text-left">Senior Software Engineer</h1>
+                <h1 className="text-2xl font-bold text-gray-900 text-center sm:text-left">{resolvedJobTitle}</h1>
+
                 <Select value={jobStatus} onValueChange={setJobStatus}>
   <SelectTrigger
     className={`mt-10 sm:mt-0 w-auto min-w-[100px] text-sm font-medium border rounded px-2 py-0.5 ${statusStyles[jobStatus as keyof typeof statusStyles]}`}
@@ -137,41 +159,54 @@ const navigate = useNavigate();
             {/* Filter and Search */}
             <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between sm:items-center">
     <Select
-  value={selectedFilter || "phone-call"}
+  value={selectedFilter || "phonecallinterview"}
   onValueChange={(value) => {
     setSelectedFilter(value)
-    if (value === "resume-screening") {
-      window.location.href = "/applicants/jobdetails/leaddeveloper/LeadDeveloperRS/"
-    } else if (value === "shortlisted"){
-      window.location.href = "/applicants/jobdetails/leaddeveloper/LeadDeveloperSL"
-    } else if (value === "initial-interview") {
-      window.location.href = "/applicants/jobdetails/leaddeveloper/LeadDeveloperII"
-    } else if (value === "assessments") {
-      window.location.href = "/applicants/jobdetails/leaddeveloper/LeadDeveloperAS"
-    } else if (value === "final-interview") {
-      window.location.href = "/applicants/jobdetails/leaddeveloper/LeadDeveloperFI"
-    } else if (value === "job-offer"){
-      window.location.href = "/applicants/jobdetails/leaddeveloper/LeadDeveloperFJO"
+    if (jobtitle) {
+      navigate(`/applicants/job/${jobtitle}/${value}`)
     }
   }}
 >
-      <SelectTrigger className="w-64 border-none shadow-none font-bold text-black">
-        <SelectValue placeholder="Phone Call Interview" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem className="font-bold" value="resume-screening">Resume Screening</SelectItem>
-        <SelectItem value="phone-call" className="font-bold">Phone Call Interview</SelectItem>
-        <SelectItem value="shortlisted"className="font-bold">Shortlisted</SelectItem>
-        <SelectItem value="initial-interview"className="font-bold">Initial Interview</SelectItem>
-        <SelectItem value="assessments"className="font-bold">Assessments</SelectItem>
-        <SelectItem value="final-interview"className="font-bold">Final Interview</SelectItem>
-        <SelectItem value="job-offer"className="font-bold">For Job Offer</SelectItem>
-        <SelectItem value="offer-finalization"className="font-bold">For Offer and Finalization</SelectItem>
-        <SelectItem value="onboarding"className="font-bold">Onboarding</SelectItem>
-        <SelectItem value="warm"className="font-bold">Warm</SelectItem>
-        <SelectItem value="failed"className="font-bold">Failed</SelectItem>
-      </SelectContent>
-    </Select>
+
+                    <SelectTrigger className="w-40 border-none shadow-none font-bold text-black text-sm">
+                      <SelectValue placeholder="Shortlisted" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem className="font-bold" value="resumescreening">
+                        Resume Screening
+                      </SelectItem>
+                      <SelectItem value="phonecallinterview" className="font-bold">
+                        Phone Call Interview
+                      </SelectItem>
+                      <SelectItem value="shortlisted" className="font-bold">
+                        Shortlisted
+                      </SelectItem>
+                      <SelectItem value="initialinterview" className="font-bold">
+                        Initial Interview
+                      </SelectItem>
+                      <SelectItem value="assessments" className="font-bold">
+                        Assessments
+                      </SelectItem>
+                      <SelectItem value="finalinterview" className="font-bold">
+                        Final Interview
+                      </SelectItem>
+                      <SelectItem value="forjoboffer" className="font-bold">
+                        For Job Offer
+                      </SelectItem>
+                      <SelectItem value="offerfinalization" className="font-bold">
+                        For Offer and Finalization
+                      </SelectItem>
+                      <SelectItem value="onboarding" className="font-bold">
+                        Onboarding
+                      </SelectItem>
+                      <SelectItem value="warm" className="font-bold">
+                        Warm
+                      </SelectItem>
+                      <SelectItem value="failed" className="font-bold">
+                        Failed
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input

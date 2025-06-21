@@ -1,251 +1,178 @@
-import { Navbar } from "@/reusables/Navbar";
-import { useNavigate, Link } from "react-router-dom";
-import { Input } from "@/components/ui/input";
-import { ChevronLeft, CalendarDays, Users } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
-import { useEffect } from "react";
+"use client"
 
-const jobData = [
-  {
-    job: "Project Manager",
-    date: "Jun 01, 2024",
-    candidates: 10,
-    vacancies: 2,
-    status: "Published",
-    department: "CI",
-    type: "Full time",
-  },
-  {
-    job: "Social Content Manager",
-    date: "Jun 01, 2024",
-    candidates: 5,
-    vacancies: 1,
-    status: "Published",
-    department: "Marketing",
-    type: "Full time",
-  },
-  {
-    job: "Senior UI/UX Designer",
-    date: "Jul 29, 2024",
-    candidates: 12,
-    vacancies: 3,
-    status: "Published",
-    department: "CI",
-    type: "Full time",
-  },
-  {
-    job: "Lead Developer",
-    date: "Dec 24, 2022",
-    candidates: 12,
-    vacancies: 4,
-    status: "Pending",
-    department: "CI",
-    type: "Full time",
-  },
-  {
-    job: "Customer Support",
-    date: "Jul 22, 2023",
-    candidates: 21,
-    vacancies: 5,
-    status: "Published",
-    department: "CI",
-    type: "Full time",
-  },
-  {
-    job: "QA Engineer",
-    date: "Jan 26, 2022",
-    candidates: 18,
-    vacancies: 1,
-    status: "Closed",
-    department: "CI",
-    type: "Full time",
-  },
-  {
-    job: "Human Resources Coordinator",
-    date: "Apr 21, 2023",
-    candidates: 5,
-    vacancies: 1,
-    status: "Closed",
-    department: "HR",
-    type: "Full time",
-  },
-  {
-    job: "Operations Manager",
-    date: "Feb 02, 2020",
-    candidates: 10,
-    vacancies: 1,
-    status: "Closed",
-    department: "HR",
-    type: "Full time",
-  },
-  {
-    job: "Social Media Manager",
-    date: "Mar 21, 2020",
-    candidates: 2,
-    vacancies: 1,
-    status: "Closed",
-    department: "Marketing",
-    type: "Full time",
-  },
-  {
-    job: "Marketing Specialist",
-    date: "Apr 27, 2024",
-    candidates: 4,
-    vacancies: 2,
-    status: "Draft",
-    department: "Marketing",
-    type: "Full time",
-  },
-];
+import { useEffect, useState } from "react"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { ArrowLeft, LayoutGrid, List } from "lucide-react"
+import { useNavigate, useLocation, useParams } from "react-router-dom"
+import { Navbar } from "@/reusables/Navbar"
 
-const statusColor = {
-  Published: "bg-green-100 text-green-700",
-  Closed: "bg-red-100 text-red-700",
-  Draft: "bg-gray-100 text-gray-600",
-  Pending: "bg-yellow-100 text-yellow-700",
-};
+export default function LeadDeveloper() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { jobtitle } = useParams<{ jobtitle: string }>()
 
-export default function JobDetails() {
-  const navigate = useNavigate();
+  const [currentJobTitle, setCurrentJobTitle] = useState<string>("")
+  const [jobData, setJobData] = useState<any>(null)
+  const [selectedStage, setSelectedStage] = useState<string>("")
 
-  const formatJobSlug = (title: string) =>
-  title.toLowerCase().replace(/\s+/g, "");
+  // Format job title from slug
+  const formatJobTitle = (slug: string) => {
+    const titleMap: { [key: string]: string } = {
+      projectmanager: "Project Manager",
+      socialcontentmanager: "Social Content Manager",
+      senioruiuxdesigner: "Senior UI/UX Designer",
+      leaddeveloper: "Lead Developer",
+      customersupport: "Customer Support",
+      qaengineer: "QA Engineer",
+      humanresourcescoordinator: "Human Resources Coordinator",
+      operationsmanager: "Operations Manager",
+      socialmediamanager: "Social Media Manager",
+      marketingspecialist: "Marketing Specialist",
+    }
+    return titleMap[slug.toLowerCase()] || slug.replace(/([A-Z])/g, " $1").trim()
+  }
 
   useEffect(() => {
-    document.title = "Applicants | Job Details";
-  }, []);
+    if (location.state?.jobTitle) {
+      setCurrentJobTitle(location.state.jobTitle)
+      setJobData(location.state.jobData)
+    } else if (jobtitle) {
+      setCurrentJobTitle(formatJobTitle(jobtitle))
+    }
+  }, [location.state, jobtitle])
+
+  const handleStageClick = (stageName: string) => {
+    setSelectedStage(stageName)
+
+    const jobSlug = currentJobTitle.toLowerCase().replace(/\s+/g, "")
+    const stageSlug = stageName.toLowerCase().replace(/\s+/g, "").replace(/[^a-z0-9]/g, "")
+
+    navigate(`/applicants/job/${jobSlug}/${stageSlug}`, {
+      state: {
+        jobTitle: currentJobTitle,
+        stageName,
+        jobData,
+      },
+    })
+  }
+
+  useEffect(() => {
+    document.title = `Applicants - ${currentJobTitle || "Job Details"}`
+  }, [currentJobTitle])
+
+  const stages = [
+    {
+      title: "STAGE 01 - HR Interview",
+      steps: ["Resume Screening", "Phone Call Interview", "Shortlisted"],
+    },
+    {
+      title: "STAGE 02 - Hiring Manager/Client",
+      steps: ["Initial Interview", "Assessments", "Final Interview"],
+    },
+    {
+      title: "STAGE 03 - Final Stage",
+      steps: ["For Job Offer", "For Offer and Finalization", "Onboarding", "Warm", "Failed"],
+    },
+  ]
 
   return (
     <>
-      <Navbar />
-
-      <div className="min-h-screen bg-gray-50 p-6 pt-[100px]">
-        <div className="mx-auto max-w-7xl space-y-4">
-          {/* Title */}
-          <h1 className="text-3xl font-bold text-gray-800">Applicants</h1>
-
-          {/* Filters */}
-          <div className="w-full space-y-2">
-            {/* Clear filters */}
-            <div className="flex justify-end mb-2">
-              <a className="text-medium text-blue-500 hover:underline">
-                Clear filters
-              </a>
+    <Navbar/>
+    <div className="min-h-screen bg-gray-50 p-6 pt-[100px]">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <div className="w-full space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" onClick={() => navigate(`/applicants/job/`)}>
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <h2 className="text-3xl font-bold text-gray-800">{currentJobTitle || "Job Details"}</h2>
             </div>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() =>
+                  navigate(`/applicants/job/${currentJobTitle?.toLowerCase().replace(/\s+/g, "")}/weekly`, {
+                    state: { jobTitle: currentJobTitle, jobData },
+                  })
+                }
+              >
+                <LayoutGrid className="text-gray-600" />
+              </Button>
+              <Button variant="ghost" size="icon">
+                <List className="text-blue-800" />
+              </Button>
+            </div>
+          </div>
 
-            {/* Search bar and filters */}
-            <div className="flex flex-wrap justify-between items-center gap-4">
-              {/* Search bar */}
-              <Input
-                placeholder="Search applicants..."
-                className="w-64"
-              />
-
-              {/* Filter dropdowns */}
-              <div className="flex flex-wrap gap-2 ml-auto">
-                {[
-                  "All Internal",
-                  "All Status",
-                  "All Job Position",
-                  "All Departments",
-                  "Employment Type",
-                ].map((label) => (
-                  <Select key={label}>
-                    <SelectTrigger className="min-w-[160px] bg-gray-100">
-                      <SelectValue placeholder={label} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{label}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                ))}
+          {/* Job Info Display */}
+          {jobData && (
+            <div className="bg-white border rounded-lg p-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-500">Candidates:</span>
+                  <span className="ml-2 font-semibold">{jobData.candidates}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Vacancies:</span>
+                  <span className="ml-2 font-semibold">{jobData.vacancies}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Department:</span>
+                  <span className="ml-2 font-semibold">{jobData.department}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Status:</span>
+                  <span className="ml-2 font-semibold">{jobData.status}</span>
+                </div>
               </div>
             </div>
+          )}
+
+          {/* Selected Stage Display */}
+          {selectedStage && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-sm text-blue-700">
+                Last selected stage: <span className="font-semibold">{selectedStage}</span>
+              </p>
+            </div>
+          )}
+
+          {/* Search */}
+          <div>
+            <Input placeholder="Search" className="max-w-md bg-gray-100" />
           </div>
 
-          {/* Job Table */}
-          <div className="w-full overflow-auto rounded-lg border">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
-                <tr>
-                  <th className="px-4 py-2">Job</th>
-                  <th className="px-4 py-2">Position Created</th>
-                  <th className="px-4 py-2">Total Candidates</th>
-                  <th className="px-4 py-2">Vacancies</th>
-                  <th className="px-4 py-2">Status</th>
-                  <th className="px-4 py-2">Department</th>
-                  <th className="px-4 py-2">Employment Type</th>
-                </tr>
-              </thead>
-              <tbody>
-                {jobData.map((job, i) => (
-                  <tr key={i} className="border-t text-sm text-gray-800">
-                    <td className="px-4 py-3 hover:underline">
-                    <Link to={`/applicants/jobdetails/${formatJobSlug(job.job)}`}
-                    style={{color: '#343a40'}}>
-                      {job.job}
-                    </Link>
-                    </td>
+          <hr />
 
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1 text-gray-600">
-                        <CalendarDays className="w-4 h-4" />
-                        <span>{job.date}</span>
-                      </div>
-                    </td>
-
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1 text-gray-600">
-                        <Users className="w-4 h-4" />
-                        <span>{job.candidates}</span>
-                      </div>
-                    </td>
-
-                    <td className="px-4 py-3">{job.vacancies}</td>
-
-                    <td className="px-4 py-3">
-                      <span
-                        className={`text-xs font-medium px-2 py-0.5 rounded ${statusColor[job.status as keyof typeof statusColor]}`}
+          {/* Stages */}
+          <div className="space-y-10">
+            {stages.map((stage) => (
+              <div key={stage.title} className="space-y-4">
+                <h2 className="text-md font-semibold text-gray-800">{stage.title}</h2>
+                <div className="border rounded-md divide-y">
+                  {stage.steps.map((step, index) => (
+                    <div key={index} className="flex justify-between items-center px-4 py-3 hover:bg-gray-50">
+                      <span>{step}</span>
+                      <Button
+                        variant="link"
+                        className="text-blue-600 text-sm px-0 hover:underline"
+                        onClick={() => handleStageClick(step)}
                       >
-                        {job.status}
-                      </span>
-                    </td>
-
-                    <td className="px-4 py-3">{job.department}</td>
-
-                    <td className="px-4 py-3">
-                      <Badge
-                        className="bg-blue-100 text-blue-600 text-xs font-medium px-2 py-0.5"
-                        variant="outline"
-                      >
-                        {job.type}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Back Button */}
-          <div className="mt-6">
-            <button
-              onClick={() => navigate("/applicants")}
-              className="flex items-center text-blue-500 text-sm hover:underline"
-            >
-              <ChevronLeft className="w-4 h-4 mr-1" />
-              Back
-            </button>
+                        View Applicants
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
+    </div>
     </>
-  );
+  )
 }

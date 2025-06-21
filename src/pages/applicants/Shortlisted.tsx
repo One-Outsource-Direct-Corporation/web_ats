@@ -1,9 +1,12 @@
 "use client"
-import { useNavigate } from "react-router-dom"
+import { useParams, useNavigate } from "react-router-dom"
 import { useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -11,64 +14,63 @@ import { Calendar } from "@/components/ui/calendar"
 import { ArrowLeft, Search, MoreHorizontal } from "lucide-react"
 import { Navbar } from "@/reusables/Navbar"
 
-
-// Sample applicant data with status
+// Sample applicant data
 const applicants = [
   {
     id: "001",
     name: "John Doe",
     avatar: "https://i.pravatar.cc/32?u=001",
     department: "Engineering",
-    status: "In Progress",
+    status: "For Initial Interview",
   },
   {
     id: "002",
     name: "Sarah Johnson",
     avatar: "https://i.pravatar.cc/32?u=002",
     department: "Engineering",
-    status: "Completed",
+    status: "For Final Interview",
   },
   {
     id: "003",
     name: "Mike Chen",
     avatar: "https://i.pravatar.cc/32?u=003",
     department: "Engineering",
-    status: "In Progress",
+    status: "For Initial Interview",
   },
   {
     id: "004",
     name: "Emily Rodriguez",
     avatar: "https://i.pravatar.cc/32?u=004",
     department: "Engineering",
-    status: "Completed",
+    status: "For Final Interview",
   },
   {
     id: "005",
     name: "David Kim",
     avatar: "https://i.pravatar.cc/32?u=005",
     department: "Engineering",
-    status: "In Progress",
+    status: "For Initial Interview",
   },
   {
     id: "006",
     name: "Lisa Wang",
     avatar: "https://i.pravatar.cc/32?u=006",
     department: "Engineering",
-    status: "Completed",
+    status: "For Final Interview",
   },
   {
     id: "007",
     name: "Alex Thompson",
     avatar: "https://i.pravatar.cc/32?u=007",
     department: "Engineering",
-    status: "In Progress",
+    status: "For Initial Interview",
   },
   {
     id: "008",
     name: "Maria Garcia",
     avatar: "https://i.pravatar.cc/32?u=008",
     department: "Engineering",
-    status: "Completed",
+    status: "For Final Interview",
   },
 ]
 
@@ -85,6 +87,118 @@ interface SidebarCandidate {
   stage: number
   stageColor: "orange" | "red" | "green"
   timeAgo: string
+}
+
+// Interview Scheduler Modal Component
+function InterviewSchedulerModal({
+  isOpen,
+  onClose,
+  applicantName,
+}: { isOpen: boolean; onClose: () => void; applicantName: string }) {
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Transparent gray overlay */}
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+
+      {/* Form modal */}
+      <div className="relative z-10 w-full max-w-2xl mx-4">
+        <div className="bg-white rounded-lg shadow-xl p-6 max-h-[90vh] overflow-y-auto">
+          {/* Header */}
+          <div className="mb-6">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Schedule Interview</h2>
+            <p className="text-gray-600">Plan, organize, and schedule interview</p>
+            <p className="text-sm text-blue-600 mt-1">Candidate: {applicantName}</p>
+          </div>
+
+          {/* Interview Date */}
+          <div className="mb-6">
+            <Label htmlFor="interview-date" className="text-sm font-medium text-gray-700 mb-2 block">
+              Interview Date
+            </Label>
+            <Input id="interview-date" type="date" className="w-full" />
+          </div>
+
+          {/* Additional Information Card */}
+          <Card className="mb-6">
+            <CardContent className="p-4 space-y-4">
+              {/* First Row: Time, Duration, Interviewer Names */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="time" className="text-sm font-medium text-gray-700 mb-1 block">
+                    Time
+                  </Label>
+                  <Input id="time" type="time" placeholder="09:00" />
+                </div>
+                <div>
+                  <Label htmlFor="duration" className="text-sm font-medium text-gray-700 mb-1 block">
+                    Duration
+                  </Label>
+                  <Input id="duration" placeholder="1 hour" />
+                </div>
+                <div>
+                  <Label htmlFor="interviewers" className="text-sm font-medium text-gray-700 mb-1 block">
+                    Interviewer Names
+                  </Label>
+                  <Input id="interviewers" placeholder="John Doe, Jane Smith" />
+                </div>
+              </div>
+
+              {/* Second Row: Subject and Location */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="subject" className="text-sm font-medium text-gray-700 mb-1 block">
+                    Subject
+                  </Label>
+                  <Input id="subject" placeholder="Frontend Developer Interview" />
+                </div>
+                <div>
+                  <Label htmlFor="location" className="text-sm font-medium text-gray-700 mb-1 block">
+                    Schedule Interview Onsite
+                  </Label>
+                  <Input id="location" placeholder="Conference Room A, 2nd Floor" />
+                </div>
+              </div>
+
+              {/* Additional Notes */}
+              <div>
+                <Label htmlFor="notes" className="text-sm font-medium text-gray-700 mb-1 block">
+                  Additional Notes
+                </Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Any additional information or special requirements..."
+                  className="min-h-[100px] resize-none"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="bg-white text-blue-600 border-blue-600 hover:bg-blue-50"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                // Handle form submission here
+                console.log(`Interview scheduled for ${applicantName}!`)
+                onClose()
+              }}
+              className="bg-blue-600 text-white hover:bg-blue-700"
+            >
+              Confirm
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 // Sidebar Component
@@ -203,20 +317,40 @@ export default function JobManagement() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedFilter, setSelectedFilter] = useState("")
   const [jobStatus, setJobStatus] = useState("active")
+  const [isSchedulerOpen, setIsSchedulerOpen] = useState(false)
+  const [selectedApplicant, setSelectedApplicant] = useState("")
+  
   const navigate = useNavigate()
-
-  
-
-  
-  const handlePassFail = (applicantId: string, action: "pass" | "fail") => {
-    console.log(`${action} action for applicant ${applicantId}`)
-    // Handle pass/fail logic here
+  const formatJobTitle = (slug?: string) => {
+  const titleMap: Record<string, string> = {
+    leaddeveloper: "Lead Developer",
+    projectmanager: "Project Manager",
+    socialcontentmanager: "Social Content Manager",
+    senioruiuxdesigner: "Senior UI/UX Designer",
+    customersupport: "Customer Support",
+    qaengineer: "QA Engineer",
+    humanresourcescoordinator: "Human Resources Coordinator",
+    operationsmanager: "Operations Manager",
+    socialmediamanager: "Social Media Manager",
+    marketingspecialist: "Marketing Specialist",
+    seniorsoftwareengineer: "Senior Software Engineer",
   }
+  return slug ? titleMap[slug.toLowerCase()] || slug.replace(/([a-z])([A-Z])/g, "$1 $2") : "Unknown Job"
+}
+const { jobtitle } = useParams<{ jobtitle: string }>()
+const resolvedJobTitle = formatJobTitle(jobtitle)
+
+
 
   // Filter applicants based on search term
   const filteredApplicants = applicants.filter((applicant) =>
     applicant.name.toLowerCase().includes(searchTerm.toLowerCase()),
   )
+
+  const handleScheduleInterview = (applicantName: string) => {
+    setSelectedApplicant(applicantName)
+    setIsSchedulerOpen(true)
+  }
 
   return (
     <>
@@ -234,16 +368,15 @@ export default function JobManagement() {
                     variant="outline"
                     size="sm"
                     className="flex items-center gap-2"
-                    onClick={() => window.history.back()}
+                    onClick={() => navigate(`/applicants/job/${jobtitle}`)}
                   >
                     <ArrowLeft className="h-4 w-4" />
                     Back
                   </Button>
 
                   <div className="flex flex-col items-center sm:flex-row sm:items-center sm:gap-3">
-                    <h1 className="text-xl font-bold text-gray-900 text-center sm:text-left">
-                      Senior Software Engineer
-                    </h1>
+                    <h1 className="text-2xl font-bold text-gray-900 text-center sm:text-left">{resolvedJobTitle}</h1>
+
                     <Select value={jobStatus} onValueChange={setJobStatus}>
                       <SelectTrigger
                         className={`mt-10 sm:mt-0 w-auto min-w-[80px] text-xs font-medium border rounded px-2 py-0.5 ${statusStyles[jobStatus as keyof typeof statusStyles]}`}
@@ -278,50 +411,41 @@ export default function JobManagement() {
                 {/* Filter and Search */}
                 <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-between sm:items-center">
                   <Select
-                    value={selectedFilter || "assessments"}
-                    onValueChange={(value) => {
-                      setSelectedFilter(value)
-                      if (value === "resume-screening") {
-                        window.location.href = "/applicants/jobdetails/leaddeveloper/LeadDeveloperRS/"
-                      } else if (value === "phone-call") {
-                        window.location.href = "/applicants/jobdetails/leaddeveloper/LeadDeveloperPI"
-                      } else if (value === "shortlisted") {
-                        window.location.href = "/applicants/jobdetails/leaddeveloper/LeadDeveloperSL"
-                      } else if (value === "initial-interview") {
-                        window.location.href = "/applicants/jobdetails/leaddeveloper/LeadDeveloperII"
-                      } else if (value === "final-interview") {
-                        window.location.href = "/applicants/jobdetails/leaddeveloper/LeadDeveloperFI"
-                      } else if (value === "job-offer") {
-                        window.location.href = "/applicants/jobdetails/leaddeveloper/LeadDeveloperFJO"
-                      }
-                    }}
-                  >
+  value={selectedFilter || "shortlisted"}
+  onValueChange={(value) => {
+    setSelectedFilter(value)
+    if (jobtitle) {
+      navigate(`/applicants/job/${jobtitle}/${value}`)
+    }
+  }}
+>
+
                     <SelectTrigger className="w-40 border-none shadow-none font-bold text-black text-sm">
-                      <SelectValue placeholder="Assessment" />
+                      <SelectValue placeholder="Shortlisted" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem className="font-bold" value="resume-screening">
+                      <SelectItem className="font-bold" value="resumescreening">
                         Resume Screening
                       </SelectItem>
-                      <SelectItem value="phone-call" className="font-bold">
+                      <SelectItem value="phonecallinterview" className="font-bold">
                         Phone Call Interview
                       </SelectItem>
                       <SelectItem value="shortlisted" className="font-bold">
                         Shortlisted
                       </SelectItem>
-                      <SelectItem value="initial-interview" className="font-bold">
+                      <SelectItem value="initialinterview" className="font-bold">
                         Initial Interview
                       </SelectItem>
                       <SelectItem value="assessments" className="font-bold">
-                        Assessment
+                        Assessments
                       </SelectItem>
-                      <SelectItem value="final-interview" className="font-bold">
+                      <SelectItem value="finalinterview" className="font-bold">
                         Final Interview
                       </SelectItem>
-                      <SelectItem value="job-offer" className="font-bold">
+                      <SelectItem value="forjoboffer" className="font-bold">
                         For Job Offer
                       </SelectItem>
-                      <SelectItem value="offer-finalization" className="font-bold">
+                      <SelectItem value="offerfinalization" className="font-bold">
                         For Offer and Finalization
                       </SelectItem>
                       <SelectItem value="onboarding" className="font-bold">
@@ -352,20 +476,28 @@ export default function JobManagement() {
                 <Table className="text-xs lg:min-w-[800px]">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="border border-gray-200 py-2 px-3 w-16 lg:min-w-[80px] text-xs lg:text-sm lg:py-3 lg:px-4">
+                      <TableHead className="border border-gray-200 py-2 px-3 w-12 lg:min-w-[60px] text-xs lg:text-sm lg:py-3 lg:px-4">
                         ID
                       </TableHead>
-                      <TableHead className="border border-gray-200 py-2 px-3 w-48 lg:min-w-[200px] text-xs lg:text-sm lg:py-3 lg:px-4">
+                      <TableHead className="border border-gray-200 py-2 px-3 w-32 lg:min-w-[200px] text-xs lg:text-sm lg:py-3 lg:px-4">
                         Full Name
                       </TableHead>
-                      <TableHead className="border border-gray-200 py-2 px-3 w-32 lg:min-w-[140px] text-center text-xs lg:text-sm lg:py-3 lg:px-4">
-                        Action
+                      <TableHead className="border border-gray-200 py-2 px-3 w-20 lg:min-w-[120px] text-center text-xs lg:text-sm lg:py-3 lg:px-4">
+                        Set
+                        <br />
+                        Interview
                       </TableHead>
-                      <TableHead className="border border-gray-200 py-2 px-3 w-32 lg:min-w-[140px] text-center text-xs lg:text-sm lg:py-3 lg:px-4">
+                      <TableHead className="border border-gray-200 py-2 px-3 w-12 lg:min-w-[80px] text-center text-xs lg:text-sm lg:py-3 lg:px-4"></TableHead>
+                      <TableHead className="border border-gray-200 py-2 px-3 w-20 lg:min-w-[150px] text-center text-xs lg:text-sm lg:py-3 lg:px-4">
                         Status
                       </TableHead>
-                      <TableHead className="border border-gray-200 py-2 px-3 w-32 lg:min-w-[140px] text-center text-xs lg:text-sm lg:py-3 lg:px-4">
-                        Assessment
+                      <TableHead className="border border-gray-200 py-2 px-3 w-20 lg:min-w-[120px] text-xs lg:text-sm lg:py-3 lg:px-4">
+                        Department
+                      </TableHead>
+                      <TableHead className="border border-gray-200 py-2 px-3 w-24 lg:min-w-[160px] text-center text-xs lg:text-sm lg:py-3 lg:px-4">
+                        Interview Evaluation
+                        <br />
+                        Form
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -376,7 +508,7 @@ export default function JobManagement() {
                           <TableCell className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 font-medium text-xs lg:text-sm align-middle">
                             {applicant.id}
                           </TableCell>
-                          <TableCell className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 w-48 align-middle">
+                          <TableCell className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 w-32 align-middle">
                             <div className="flex items-center gap-2 lg:gap-3">
                               <Avatar className="h-6 w-6 lg:h-8 lg:w-8 flex-shrink-0">
                                 <AvatarImage src={applicant.avatar || "/placeholder.svg"} />
@@ -395,48 +527,67 @@ export default function JobManagement() {
                               </span>
                             </div>
                           </TableCell>
-                          <TableCell className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 text-center w-32 align-middle">
-                            <div className="flex gap-2 justify-center">
-                              <Button
-                                variant="default"
-                                size="sm"
-                                className="px-3 bg-green-600 hover:bg-green-700 text-white text-xs h-8"
-                                onClick={() => handlePassFail(applicant.id, "pass")}
-                              >
-                                Pass
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="px-3 bg-white border-red-500 text-red-500 hover:bg-red-50 text-xs h-8"
-                                onClick={() => handlePassFail(applicant.id, "fail")}
-                              >
-                                Fail
-                              </Button>
-                            </div>
-                          </TableCell>
-                          <TableCell className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 text-center w-32 align-middle">
-                            <span
-                              className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                                applicant.status === "In Progress"
-                                  ? "bg-yellow-100 text-yellow-700"
-                                  : "bg-green-100 text-green-700"
-                              }`}
+                          <TableCell className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 text-center w-20 align-middle">
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="w-full px-2 lg:px-3 bg-[#0056d2] text-xs lg:text-sm h-9 lg:h-10 leading-tight lg:whitespace-nowrap"
+                              onClick={() => handleScheduleInterview(applicant.name)}
                             >
-                              {applicant.status}
+                              Schedule
+                              <br />
+                              Interview
+                            </Button>
+                          </TableCell>
+                          <TableCell className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 text-center w-12 align-middle">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full px-1 lg:px-3 bg-white border-red-500 text-xs lg:text-sm h-7 lg:h-8 lg:whitespace-nowrap"
+                            >
+                              Fail
+                            </Button>
+                          </TableCell>
+                          <TableCell className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 text-center w-20 align-middle">
+                            <Badge
+                              variant="outline"
+                              className="text-xs lg:text-sm px-1 lg:px-2 leading-tight text-center"
+                            >
+                              {applicant.status === "For Initial Interview" ? (
+                                <>
+                                  For Initial
+                                  <br />
+                                  Interview
+                                </>
+                              ) : (
+                                <>
+                                  For Final
+                                  <br />
+                                  Interview
+                                </>
+                              )}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 w-20 text-xs lg:text-sm align-middle">
+                            <span className="break-words leading-tight lg:whitespace-nowrap">
+                              {applicant.department}
                             </span>
                           </TableCell>
-                          <TableCell className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 text-center w-32 align-middle">
-                            <button className="text-blue-600 hover:text-blue-800 text-xs lg:text-sm underline">
-                              View result
-                            </button>
+                          <TableCell className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 text-center w-24 align-middle">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full px-1 lg:px-3 text-xs lg:text-sm h-7 lg:h-8 lg:whitespace-nowrap"
+                            >
+                              View
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
                         <TableCell
-                          colSpan={5}
+                          colSpan={7}
                           className="border border-gray-200 p-6 lg:p-8 text-center text-gray-500 text-xs lg:text-sm"
                         >
                           No applicants found matching your search.
@@ -460,7 +611,13 @@ export default function JobManagement() {
           {/* Right Sidebar - Stacks below on mobile/tablet, side by side on xl screens */}
           <Sidebar />
         </div>
-   
+
+        {/* Interview Scheduler Modal */}
+        <InterviewSchedulerModal
+          isOpen={isSchedulerOpen}
+          onClose={() => setIsSchedulerOpen(false)}
+          applicantName={selectedApplicant}
+        />
       </div>
     </>
   )

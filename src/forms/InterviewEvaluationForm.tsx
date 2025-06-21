@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { Mic, Upload } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
 
 export default function InterviewEvaluationForm() {
@@ -49,18 +51,34 @@ export default function InterviewEvaluationForm() {
     // Handle file upload logic here
   }
 
+  const navigate = useNavigate()
+
   return (
     <>
       
       <div className="min-h-screen bg-gray-50 p-6 mt-20">
         <div className="mx-auto max-w-4xl">
           {/* Header Section */}
-<div className="flex items-center justify-between mb-8 flex-col sm:flex-row gap-4 sm:gap-0">
-  <div className="flex-1 text-center sm:text-left">
-    <h1 className="text-3xl font-bold text-gray-900 mb-2">Interview Evaluation Form</h1>
-    <div className="w-full h-1 bg-blue-500 rounded"></div>
+<div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
+  {/* Back + Title Section */}
+  <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 text-center sm:text-left w-full sm:w-auto">
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => navigate(-1)}
+      className="self-center sm:self-auto text-blue-600 hover:bg-blue-50 px-2"
+    >
+      <ArrowLeft className="h-4 w-4 mr-1" />
+      Back
+    </Button>
+    <div className="w-full">
+      <h1 className="text-3xl font-bold text-gray-900 mb-2">Interview Evaluation Form</h1>
+      <div className="w-full h-1 bg-blue-500 rounded"></div>
+    </div>
   </div>
-  <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+
+  {/* Pass/Fail Buttons */}
+  <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 w-full sm:w-auto justify-center">
     <Button
       onClick={handlePass}
       variant="outline"

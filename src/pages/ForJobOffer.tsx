@@ -1,6 +1,6 @@
 
 "use client"
-import { useNavigate } from "react-router-dom"
+import { useParams, useNavigate } from "react-router-dom"
 import { useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -1017,11 +1017,14 @@ function RescindOfferModal({
 }
 
 export default function JobOfferManagement() {
+
+  
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedFilter, setSelectedFilter] = useState("")
   const [jobStatus, setJobStatus] = useState("active")
+  
   const navigate = useNavigate()
-
+  
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false)
   const [isJobOfferFormOpen, setIsJobOfferFormOpen] = useState(false)
   const [selectedApplicant, setSelectedApplicant] = useState("")
@@ -1059,6 +1062,29 @@ export default function JobOfferManagement() {
     applicant.name.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
+  
+  const formatJobTitle = (slug?: string) => {
+  const titleMap: Record<string, string> = {
+    leaddeveloper: "Lead Developer",
+    projectmanager: "Project Manager",
+    socialcontentmanager: "Social Content Manager",
+    senioruiuxdesigner: "Senior UI/UX Designer",
+    customersupport: "Customer Support",
+    qaengineer: "QA Engineer",
+    humanresourcescoordinator: "Human Resources Coordinator",
+    operationsmanager: "Operations Manager",
+    socialmediamanager: "Social Media Manager",
+    marketingspecialist: "Marketing Specialist",
+    seniorsoftwareengineer: "Senior Software Engineer",
+  }
+  return slug ? titleMap[slug.toLowerCase()] || slug.replace(/([a-z])([A-Z])/g, "$1 $2") : "Unknown Job"
+}
+
+const { jobtitle } = useParams<{ jobtitle: string }>()
+const resolvedJobTitle = formatJobTitle(jobtitle)
+
+  
+
   return (
     <>
       <Navbar />
@@ -1075,16 +1101,15 @@ export default function JobOfferManagement() {
                     variant="outline"
                     size="sm"
                     className="flex items-center gap-2"
-                    onClick={() => window.history.back()}
+                    onClick={() => navigate(`/applicants/job/${jobtitle}`)}
                   >
                     <ArrowLeft className="h-4 w-4" />
                     Back
                   </Button>
 
                   <div className="flex flex-col items-center sm:flex-row sm:items-center sm:gap-3">
-                    <h1 className="text-xl font-bold text-gray-900 text-center sm:text-left">
-                      Senior Software Engineer
-                    </h1>
+                    <h1 className="text-2xl font-bold text-gray-900 text-center sm:text-left">{resolvedJobTitle}</h1>
+
                     <Select value={jobStatus} onValueChange={setJobStatus}>
                       <SelectTrigger
                         className={`mt-10 sm:mt-0 w-auto min-w-[80px] text-xs font-medium border rounded px-2 py-0.5 ${statusStyles[jobStatus as keyof typeof statusStyles]}`}
@@ -1119,50 +1144,41 @@ export default function JobOfferManagement() {
                 {/* Filter and Search */}
                 <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-between sm:items-center">
                   <Select
-                    value={selectedFilter || "job-offer"}
-                    onValueChange={(value) => {
-                      setSelectedFilter(value)
-                     if (value === "resume-screening") {
-                        window.location.href = "/applicants/jobdetails/leaddeveloper/LeadDeveloperRS/"
-                      } else if (value === "phone-call") {
-                        window.location.href = "/applicants/jobdetails/leaddeveloper/LeadDeveloperPI"
-                      } else if (value === "shortlisted") {
-                        window.location.href = "/applicants/jobdetails/leaddeveloper/LeadDeveloperSL"
-                      } else if (value === "assessments") {
-                        window.location.href = "/applicants/jobdetails/leaddeveloper/LeadDeveloperAS"
-                      } else if (value === "final-interview") {
-                        window.location.href = "/applicants/jobdetails/leaddeveloper/LeadDeveloperFI"
-                      } else if (value === "initial-interview"){
-                        window.location.href = "/applicants/jobdetails/leaddeveloper/LeadDeveloperII"
-                      }
-                    }}
-                  >
+  value={selectedFilter || "forjoboffer"}
+  onValueChange={(value) => {
+    setSelectedFilter(value)
+    if (jobtitle) {
+      navigate(`/applicants/job/${jobtitle}/${value}`)
+    }
+  }}
+>
+
                     <SelectTrigger className="w-40 border-none shadow-none font-bold text-black text-sm">
-                      <SelectValue placeholder="For Job Offer" />
+                      <SelectValue placeholder="Shortlisted" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem className="font-bold" value="resume-screening">
+                      <SelectItem className="font-bold" value="resumescreening">
                         Resume Screening
                       </SelectItem>
-                      <SelectItem value="phone-call" className="font-bold">
+                      <SelectItem value="phonecallinterview" className="font-bold">
                         Phone Call Interview
                       </SelectItem>
                       <SelectItem value="shortlisted" className="font-bold">
                         Shortlisted
                       </SelectItem>
-                      <SelectItem value="initial-interview" className="font-bold">
+                      <SelectItem value="initialinterview" className="font-bold">
                         Initial Interview
                       </SelectItem>
                       <SelectItem value="assessments" className="font-bold">
                         Assessments
                       </SelectItem>
-                      <SelectItem value="final-interview" className="font-bold">
+                      <SelectItem value="finalinterview" className="font-bold">
                         Final Interview
                       </SelectItem>
-                      <SelectItem value="job-offer" className="font-bold">
+                      <SelectItem value="forjoboffer" className="font-bold">
                         For Job Offer
                       </SelectItem>
-                      <SelectItem value="offer-finalization" className="font-bold">
+                      <SelectItem value="offerfinalization" className="font-bold">
                         For Offer and Finalization
                       </SelectItem>
                       <SelectItem value="onboarding" className="font-bold">

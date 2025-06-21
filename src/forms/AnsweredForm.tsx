@@ -1,9 +1,24 @@
-
 import { Button } from "@/components/ui/button"
 
-export default function AnsweredForm() {
+type Applicant = {
+  name: string
+  email: string
+  position: string
+  phone: string
+  address: string
+  avatar: string
+  status: string
+}
+
+type AnsweredFormProps = {
+  applicant: Applicant
+}
+
+export default function AnsweredForm({ applicant }: AnsweredFormProps) {
   return (
     <div className="mt-6 space-y-8">
+      {/* your form JSX continues here... */}
+
       {/* Personal Information Section */}
       <div className="space-y-4">
         <div className="flex items-center gap-4">
@@ -16,19 +31,18 @@ export default function AnsweredForm() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-              <input
-                type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                defaultValue="John"
-              />
+              <p className="px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700">
+  {applicant.name.split(" ")[0]}
+</p>
+
+
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-              <input
-                type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                defaultValue="Doe"
-              />
+              <p className="px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700">
+  {applicant.name.split(" ")[1]}
+</p>
+
             </div>
           </div>
 
@@ -97,7 +111,7 @@ export default function AnsweredForm() {
               <input
                 type="tel"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                defaultValue="+1 (555) 123-4567"
+                defaultValue={applicant.phone}
               />
             </div>
             <div>
@@ -107,7 +121,8 @@ export default function AnsweredForm() {
               <input
                 type="tel"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                defaultValue="+1 (555) 987-6543"
+                defaultValue={applicant.phone}
+
               />
             </div>
           </div>
@@ -119,7 +134,8 @@ export default function AnsweredForm() {
               <input
                 type="email"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                defaultValue="john.doe@email.com"
+                defaultValue={applicant.email}
+
               />
             </div>
             <div>
@@ -127,7 +143,8 @@ export default function AnsweredForm() {
               <input
                 type="url"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                defaultValue="https://linkedin.com/in/johndoe"
+                defaultValue={`https://linkedin.com/in/${applicant.name.replace(/\s+/g, '').toLowerCase()}`}
+
               />
             </div>
           </div>
