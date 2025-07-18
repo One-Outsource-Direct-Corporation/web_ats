@@ -32,6 +32,8 @@ export default function DocumentsPage() {
   const [selectedDocument, setSelectedDocument] = useState<DocumentData | null>(null)
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [dragActive, setDragActive] = useState(false)
+  // New state for the return to tracker confirmation modal
+  const [showReturnToTrackerModal, setShowReturnToTrackerModal] = useState(false)
 
   // Mock applicant data - would come from API/props in real app
   const applicantData = {
@@ -85,6 +87,22 @@ export default function DocumentsPage() {
       // Navigate to tracker with the search code and automatically load results
       navigation.goToTracker(trackingCode)
     }
+  }
+
+  // Modified function to show the confirmation modal
+  const handleReturnToTracker = () => {
+    setShowReturnToTrackerModal(true)
+  }
+
+  // Function to confirm navigation to tracker
+  const confirmReturnToTracker = () => {
+    navigation.goToTracker("") // Navigate to tracker, potentially with an empty code or a default one
+    setShowReturnToTrackerModal(false) // Close the modal after navigation
+  }
+
+  // Function to cancel navigation and close the modal
+  const cancelReturnToTracker = () => {
+    setShowReturnToTrackerModal(false)
   }
 
   const handleJobOpenings = () => {
@@ -143,7 +161,8 @@ export default function DocumentsPage() {
       {/* Header */}
       <header className="w-full mt-0 p-4 flex items-center justify-between bg-white shadow-md rounded-b-2xl">
         <div className="flex items-center gap-4 ml-6">
-          <div className="text-2xl font-bold text-blue-600">
+          {/* Added onClick to navigate to job openings when the logo is clicked */}
+          <div className="text-2xl font-bold text-blue-600 cursor-pointer" onClick={handleJobOpenings}>
             <img src="/OODC logo2.png" alt="OODC Logo" className="h-24 mx-auto" />
           </div>
         </div>
@@ -247,7 +266,16 @@ export default function DocumentsPage() {
                   </span>
                 </div>
               </div>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2">Submit</Button>
+              <div className="flex gap-2"> {/* Added a div to group the buttons */}
+                <Button
+                  variant="outline"
+                  onClick={handleReturnToTracker}
+                  className="border-blue-600 text-blue-600 bg-white hover:bg-blue-50 px-6 py-2 rounded-full"
+                >
+                  Return to Tracker
+                </Button>
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2">Submit</Button>
+              </div>
             </div>
 
             {/* Documents List and Preview */}
@@ -425,6 +453,30 @@ export default function DocumentsPage() {
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
               >
                 Upload
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Return to Tracker Confirmation Modal */}
+      {showReturnToTrackerModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-sm w-full p-6 text-center">
+            <h3 className="text-xl font-bold text-blue-600 mb-6">Return to tracker?</h3>
+            <div className="flex justify-center gap-4">
+              <Button
+                variant="outline"
+                onClick={cancelReturnToTracker}
+                className="px-6 py-2 border-gray-300 text-gray-700 hover:bg-gray-100"
+              >
+                No
+              </Button>
+              <Button
+                onClick={confirmReturnToTracker}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
+              >
+                Yes
               </Button>
             </div>
           </div>

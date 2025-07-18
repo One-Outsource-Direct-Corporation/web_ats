@@ -36,7 +36,9 @@ import {
   Linkedin, // Added for LinkedIn icon
   Cake, // Added for birthday icon
   Upload, // Added for upload icon
-  Check
+  Check,
+  MoreHorizontal,
+  AlertCircle
 } from "lucide-react"
 
 
@@ -140,6 +142,7 @@ export default function CreateNewPosition() {
   }, [])
 
   const [currentStep, setCurrentStep] = useState(1)
+  const [completedSteps, setCompletedSteps] = useState<number[]>([])
   const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate()
 
@@ -489,6 +492,10 @@ export default function CreateNewPosition() {
   const [nonNegotiableValues, setNonNegotiableValues] = useState<{ [key: string]: any }>({})
 
   const handleNext = () => {
+    if (!completedSteps.includes(currentStep)) {
+      setCompletedSteps((prev) => [...prev, currentStep]);
+    }
+
     if (currentStep === 3) {
       // Show non-negotiable modal before going to step 4
       setShowNonNegotiableModal(true)
@@ -506,6 +513,13 @@ export default function CreateNewPosition() {
       setCurrentStep(currentStep - 1)
     }
   }
+
+  const handleStepClick = (stepNumber: number) => {
+    // Allow navigation to a step only if it's the current step, or a completed step
+    if (stepNumber <= currentStep || completedSteps.includes(stepNumber)) {
+      setCurrentStep(stepNumber);
+    }
+  };
 
 
 
@@ -1045,7 +1059,8 @@ export default function CreateNewPosition() {
   const [savedQuestionnaires, setSavedQuestionnaires] = useState<SavedQuestionnaire[]>([])
   const [selectedTemplate, setSelectedTemplate] = useState("")
   const [isTemplateSelected, setIsTemplateSelected] = useState(false) // New state to track if a template is loaded
-
+  const [showTemplateOptions, setShowTemplateOptions] = useState(false); // State for ellipsis menu
+  const [includeInCandidateExperience, setIncludeInCandidateExperience] = useState(true); // New state for the checkbox, default to true
   // Step 5 question move mode
   const [moveQuestionModeStep5, setMoveQuestionModeStep5] = useState(false)
   const [selectedQuestionForMoveStep5, setSelectedQuestionForMoveStep5] = useState<number | null>(null)
@@ -1283,6 +1298,8 @@ export default function CreateNewPosition() {
   const handleSaveNonNegotiables = () => {
     setShowNonNegotiableModal(false)
     setCurrentStep(4) // Proceed to step 4
+
+    
   }
 
   // Function to handle editing a location row
@@ -1387,6 +1404,8 @@ export default function CreateNewPosition() {
       }
     }
   };
+
+  
 
 
   const renderStepContent = () => {
@@ -1557,7 +1576,7 @@ export default function CreateNewPosition() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">From</label>
                   <Input
-                    placeholder="Input text"
+                    placeholder="₱ 20,000"
                     value={formData.budgetFrom}
                     onChange={(e) => handleInputChange("budgetFrom", e.target.value)}
                   />
@@ -1565,7 +1584,7 @@ export default function CreateNewPosition() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">To</label>
                   <Input
-                    placeholder="Input text"
+                    placeholder="₱ 25,000"
                     value={formData.budgetTo}
                     onChange={(e) => handleInputChange("budgetTo", e.target.value)}
                   />
@@ -1924,14 +1943,7 @@ export default function CreateNewPosition() {
                         <tr key={index} className="border-b">
                           <td className="p-4 font-medium text-gray-800 w-2/5">{item.field}</td>
                           <td className="p-4 text-center w-1/6">
-                            <input
-                              type="checkbox"
-                              name={`personal_${index}_non_negotiable`}
-                              value="non-negotiable"
-                              checked={item.nonNegotiable}
-                              onChange={(e) => handleFormFieldNonNegotiableChange('personal', index, e.target.checked)}
-                              className="w-4 h-4 bg-white border-2 border-gray-400 rounded focus:ring-2 focus:ring-blue-500 checked:bg-white checked:border-blue-600 appearance-none relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-blue-600 checked:after:text-xs checked:after:font-bold"
-                            />
+                            
                           </td>
                           <td className="p-4 text-center w-1/6">
                             <input
@@ -2119,14 +2131,7 @@ export default function CreateNewPosition() {
                         <tr key={index} className="border-b">
                           <td className="p-4 font-medium text-gray-800 w-2/5">{item.field}</td>
                           <td className="p-4 text-center w-1/6">
-                            <input
-                              type="checkbox"
-                              name={`acknowledgement_${index}_non_negotiable`}
-                              value="non-negotiable"
-                              checked={item.nonNegotiable}
-                              onChange={(e) => handleFormFieldNonNegotiableChange('acknowledgement', index, e.target.checked)}
-                              className="w-4 h-4 bg-white border-2 border-gray-400 rounded focus:ring-2 focus:ring-blue-500 checked:bg-white checked:border-blue-600 appearance-none relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-blue-600 checked:after:text-xs checked:after:font-bold"
-                            />
+                            
                           </td>
                           <td className="p-4 text-center w-1/6">
                             <input
@@ -2165,20 +2170,23 @@ export default function CreateNewPosition() {
                 </div>
               </div>
 
-              {/* Non-negotiable Templates */}
+              
 <div className="mb-6">
-  <h4 className="text-base font-medium text-gray-800 mb-4">Non-negotiable Templates</h4>
-  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+  <h4 className="text-base font-medium text-gray-800 mb-4">Available Questionnaires</h4>
+  <p className="text-sm text-gray-600 mb-4">Questionnaires let you extend your Application Form with custom questions.</p>
+ <div className="flex flex-col gap-3 items-start">
+  {/* New flex container for the dropdown and ellipsis button */}
+  <div className="flex items-center gap-2"> {/* Added flex container and gap */}
     <select
-      className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white min-w-[200px] w-full sm:w-auto"
+      className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white w-[400px]" // Keep specific width for dropdown
       onChange={(e) => {
         const selected = e.target.value
         setSelectedTemplate(selected)
         if (selected !== "") {
           const template = savedQuestionnaires.find((q) => q.name === selected)
           if (template) {
-            setSections(template.sections)
             setQuestionnaireName(template.name)
+            setSections(template.sections)
             setIsTemplateSelected(true)
           } else {
             setSections([])
@@ -2194,29 +2202,87 @@ export default function CreateNewPosition() {
       value={selectedTemplate}
     >
       <option value="">Select Templates</option>
-      {savedQuestionnaires.map((template) => (
-        <option key={template.name} value={template.name}>
-          {template.name}
+      {savedQuestionnaires.map((q) => (
+        <option key={q.name} value={q.name}>
+          {q.name}
         </option>
       ))}
-      {questionnaireName && !savedQuestionnaires.find((q) => q.name === questionnaireName) && (
-        <option>{questionnaireName}</option>
-      )}
     </select>
 
-    <Button
-      className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 w-full sm:w-auto"
-      onClick={() => {
-        setShowQuestionnaireModal(true)
-        if (!isTemplateSelected) {
-          setQuestionnaireName("")
-          setSections([])
-        }
-      }}
-    >
-      Add Non-negotiable
-    </Button>
+    {selectedTemplate && ( // Ellipsis button and its menu
+      <div className="relative"> {/* Keep relative for the absolute menu positioning */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowTemplateOptions(!showTemplateOptions)}
+          className="p-1 h-auto"
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+        {showTemplateOptions && (
+          <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+            <button
+              onClick={() => {
+                const template = savedQuestionnaires.find((q) => q.name === selectedTemplate);
+                if (template) {
+                  setQuestionnaireName(template.name);
+                  setSections(template.sections);
+                  setIsTemplateSelected(true); // Indicate that we are editing a template
+                  setShowQuestionnaireModal(true); // Open the modal
+                  setShowTemplateOptions(false); // Close the ellipsis menu
+                }
+              }}
+              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => {
+                // Delete logic
+                setSavedQuestionnaires(savedQuestionnaires.filter(q => q.name !== selectedTemplate));
+                setSelectedTemplate("");
+                setIsTemplateSelected(false);
+                setShowTemplateOptions(false); // Close the ellipsis menu
+              }}
+              className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+            >
+              Delete
+            </button>
+          </div>
+        )}
+      </div>
+    )}
   </div>
+
+  {/* New Checkbox */}
+  <div className="flex items-center space-x-2 mt-2">
+  <Checkbox
+    id="include-candidate-experience"
+    checked={includeInCandidateExperience}
+    onCheckedChange={(checked) => {
+      if (typeof checked === 'boolean') {
+        setIncludeInCandidateExperience(checked);
+      }
+
+    }}
+  />
+  <Label htmlFor="include-candidate-experience" className="text-sm text-gray-700">
+    Include in Candidate Experience (Default)
+  </Label>
+</div>
+  {/* Moved Button below the checkbox */}
+  <Button
+    className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 w-[180px] mt-3"
+    onClick={() => {
+      setShowQuestionnaireModal(true)
+      setQuestionnaireName("") // Clear previous name for new template
+      setSections([]) // Clear sections for new template
+      setIsTemplateSelected(false) // Not a template selected when opening for 'Add'
+    }}
+  >
+    Add Questionnaire
+  </Button>
+</div>
 </div>
 
             </div>
@@ -2720,18 +2786,23 @@ export default function CreateNewPosition() {
     }
   }
 
+  
+
   const handleUpdateTemplate = () => {
-    if (selectedTemplate && questionnaireName.trim() && sections.length > 0) {
-      setSavedQuestionnaires((prev) =>
-        prev.map((template) =>
-          template.name === selectedTemplate
-            ? { ...template, name: questionnaireName, sections: sections }
-            : template,
-        ),
-      )
-      setShowQuestionnaireModal(false)
-    }
+  if (questionnaireName.trim() === "") {
+    alert("Questionnaire name cannot be empty.");
+    return;
   }
+
+  const updatedTemplates = savedQuestionnaires.map((template) =>
+    template.name === selectedTemplate
+      ? { name: questionnaireName, sections: sections }
+      : template
+  );
+  setSavedQuestionnaires(updatedTemplates);
+  setShowQuestionnaireModal(false);
+  setSelectedTemplate(questionnaireName); // Ensure the updated template is still selected
+};
 
   // Render the success page if showSuccessPage is true
   if (showSuccessPage) {
@@ -3319,7 +3390,16 @@ export default function CreateNewPosition() {
   {/* Progress steps */}
   <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start sm:gap-8">
     {steps.map((step) => (
-      <div key={step.number} className="flex items-center gap-2">
+      <div
+  key={step.number}
+  onClick={() => handleStepClick(step.number)}
+  className={`flex items-center gap-2 ${
+    step.number <= currentStep || completedSteps.includes(step.number)
+      ? "cursor-pointer"
+      : ""
+  }`}
+>
+
         <div
           className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
             step.active ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500"
@@ -4295,7 +4375,7 @@ export default function CreateNewPosition() {
           <div className="relative bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-gray-800">Set Non-negotiable Values</h3>
+                <h5 className="text-xl font-bold text-gray-800 text-center flex-grow">Non-Negotiable Requirements</h5>
                 <Button
                   onClick={() => setShowNonNegotiableModal(false)}
                   variant="ghost"
@@ -4409,7 +4489,16 @@ export default function CreateNewPosition() {
                   )
                 })}
               </div>
-
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 p-4 mt-6 flex items-start gap-3 rounded-md" role="alert">
+          <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-bold text-sm">Note:</p>
+            <p className="text-sm">
+              The non-negotiable requirements will be automatically evaluated by our AI system during the screening process.
+              Please ensure that all mandatory fields and qualifications are accurately filled in and meet the listed criteria. Failure to satisfy any of the non-negotiable conditions may result in automatic disqualification from proceeding to the next stage.
+            </p>
+          </div>
+        </div>
               <div className="flex justify-end gap-3 mt-6">
                 <Button
                   onClick={() => setShowNonNegotiableModal(false)}
@@ -4745,21 +4834,22 @@ export default function CreateNewPosition() {
 
               {/* Action Buttons */}
               <div className="flex justify-end mt-6 gap-3">
-                <Button
-                  onClick={handleUpdateTemplate}
-                  variant="outline"
-                  className="px-4 py-2 border-gray-300"
-                  disabled={!isTemplateSelected || !questionnaireName.trim()}
-                >
-                  Update Template
-                </Button>
-                <Button
-                  onClick={handleSaveAsNewTemplate}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white"
-                  disabled={!questionnaireName.trim() || sections.length === 0}
-                >
-                  Save as New Template
-                </Button>
+                {isTemplateSelected ? (
+  <Button
+    className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2"
+    onClick={handleUpdateTemplate} // You'll need to create this function
+  >
+    Update Template
+  </Button>
+) : (
+  <Button
+    className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2"
+    onClick={handleSaveAsNewTemplate} // This is for 'Save as New Template' when not editing
+  >
+    Save as New Template
+  </Button>
+)}
+
               </div>
             </div>
           </div>

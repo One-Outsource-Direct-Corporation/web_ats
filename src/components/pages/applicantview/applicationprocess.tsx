@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import {
   FileCode2,
   SquareActivity,
@@ -14,7 +14,7 @@ import {
   Cake,
   Upload,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button" // Corrected import syntax
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -36,6 +36,7 @@ interface JobData {
   category: string
   workType: string
   workSetup: string
+  fromApplication?: boolean; // Added fromApplication property
 }
 
 interface FormData {
@@ -106,6 +107,29 @@ export default function JobApplicationPage() {
   const [showCompletionModal, setShowCompletionModal] = useState(false)
   const [trackingCode, setTrackingCode] = useState("")
 
+  // useRef to hold the latest form data for saving, preventing stale closures
+  const formStateRef = useRef({
+    formData,
+    stage2Data,
+    stage3Data,
+    stage4Data,
+    currentStage,
+    acceptTerms,
+  });
+
+  // Update the ref whenever any of the form states change
+  useEffect(() => {
+    formStateRef.current = {
+      formData,
+      stage2Data,
+      stage3Data,
+      stage4Data,
+      currentStage,
+      acceptTerms,
+    };
+  }, [formData, stage2Data, stage3Data, stage4Data, currentStage, acceptTerms]);
+
+
   // Icon mapping function
   const getIconComponent = (jobTitle: string) => {
     const iconMap: { [key: string]: any } = {
@@ -119,15 +143,41 @@ export default function JobApplicationPage() {
     return iconMap[jobTitle] || FileCode2
   }
 
+  // Effect to load job data and persisted form data
   useEffect(() => {
-    // Get job data from navigation state
     const currentJob = navigation.getCurrentJob()
     if (currentJob) {
       const parsedJob = currentJob
       parsedJob.icon = getIconComponent(parsedJob.title)
       setJobData(parsedJob)
     }
-  }, [])
+
+    // Load persisted form data from localStorage
+    try {
+      const persistedData = localStorage.getItem('applicationFormData');
+      if (persistedData) {
+        const parsedData = JSON.parse(persistedData);
+        // Restore state, using default values if a specific piece of data is missing
+        setFormData(parsedData.formData || formData);
+        setStage2Data(parsedData.stage2Data || stage2Data);
+        setStage3Data(parsedData.stage3Data || stage3Data);
+        setStage4Data(parsedData.stage4Data || stage4Data);
+        setCurrentStage(parsedData.currentStage || 1);
+        setAcceptTerms(parsedData.acceptTerms || false);
+
+        // If data is loaded, it means the user was likely returning to an ongoing application,
+        // so we should not show the upload modal again.
+        setShowUploadModal(false);
+
+        // Clear the stored data after loading to prevent stale data on subsequent *new* applications
+        // or if the user refreshes the page after completing the application.
+        localStorage.removeItem('applicationFormData');
+      }
+    } catch (error) {
+      console.error("Failed to load application form data from localStorage:", error);
+      localStorage.removeItem('applicationFormData'); // Clear corrupted data
+    }
+  }, []); // Empty dependency array to run only once on mount
 
   // Prevent body scroll when modals are open
   useEffect(() => {
@@ -153,7 +203,7 @@ export default function JobApplicationPage() {
         primaryContact: resumeData.primaryContact || "+63 912 345 6789",
         secondaryContact: resumeData.secondaryContact || "+63 987 654 3210",
         email: resumeData.email || "john.doe@email.com",
-        linkedinProfile: resumeData.linkedinProfile || "https://linkedin.com/in/johndoe",
+        linkedinProfile: resumeData.linkedinProfile || "[https://linkedin.com/in/johndoe](https://linkedin.com/in/johndoe)",
         addressLine1: resumeData.addressLine1 || "123 Main Street, Barangay San Antonio",
         city: resumeData.city || "Makati City",
         district: resumeData.district || "Metro Manila",
@@ -228,6 +278,8 @@ export default function JobApplicationPage() {
       const code = Math.random().toString(36).substring(2, 8).toUpperCase()
       setTrackingCode(code)
       setShowCompletionModal(true)
+      // Clear local storage on successful submission to prevent re-loading old data
+      localStorage.removeItem('applicationFormData');
     }
   }
 
@@ -239,11 +291,26 @@ export default function JobApplicationPage() {
     navigation.goToTracker()
   }
 
-  const handleBackToJobDescription = () => {
-    const currentJob = navigation.getCurrentJob()
-    if (currentJob) {
-      navigation.goToJobDescription(currentJob)
+  // Modified handleBackToJobDescription to save current form state to localStorage
+  const handleBackToJobDescription = useCallback(() => {
+    if (jobData) {
+      try {
+        // Save all current form states to localStorage using the ref for latest values
+        const dataToPersist = formStateRef.current;
+        localStorage.setItem('applicationFormData', JSON.stringify(dataToPersist));
+        // Pass a flag to indicate navigation from application process
+        navigation.goToJobDescription({ ...jobData, fromApplication: true });
+      } catch (error) {
+        console.error("Failed to save application form data to localStorage:", error);
+        // Still navigate even if saving fails
+        navigation.goToJobDescription({ ...jobData, fromApplication: true });
+      }
     }
+  }, [jobData, navigation]); // Dependencies ensure the function is recreated if jobData or navigation changes
+
+  // Function to handle logo click, navigating to job openings
+  const handleLogoClick = () => {
+    navigation.goToJobOpenings()
   }
 
   if (!jobData) {
@@ -259,7 +326,10 @@ export default function JobApplicationPage() {
   const IconComponent = jobData.icon
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
+    // Main container now has min-h-screen to ensure it takes full viewport height
+    // It uses flex-row for desktop layout to place sidebar and main content side-by-side.
+    <div className="bg-gray-50 flex flex-col lg:flex-row min-h-screen">
+
       {/* Document Upload Modal */}
       {showUploadModal && (
         <div className="fixed inset-0 bg-gray-900/65 flex items-center justify-center z-50 p-4">
@@ -272,10 +342,12 @@ export default function JobApplicationPage() {
         </div>
       )}
 
-      {/* Mobile Navigation Bar */}
-      <div className="lg:hidden bg-white shadow-sm border-b border-gray-200 p-4">
+      {/* Mobile Navigation Bar (Sticky to viewport) */}
+      {/* This will stick to the top of the viewport on small screens */}
+      <div className="lg:hidden sticky top-0 z-10 bg-white shadow-sm border-b border-gray-200 p-4 w-full">
         <div className="flex items-center justify-between mb-4">
-          <img src="/OODC logo2.png" alt="OODC Logo" className="h-12" />
+          {/* Logo - Made clickable for mobile */}
+          <img src="/OODC logo2.png" alt="OODC Logo" className="h-12 cursor-pointer" onClick={handleLogoClick} />
           <div className="flex items-center gap-2">
             <IconComponent className="h-5 w-5 text-blue-600" />
             <span className="text-sm font-medium text-gray-900">{jobData.title}</span>
@@ -310,10 +382,11 @@ export default function JobApplicationPage() {
         </div>
       </div>
 
-      {/* Desktop Sidebar */}
-      <div className="hidden lg:flex w-80 bg-white shadow-lg p-6 flex-col">
-        {/* Logo */}
-        <div className="mb-8">
+      {/* Desktop Sidebar (Sticky to viewport) */}
+      {/* This sidebar will stick to the top left of the viewport and scroll its own content if needed. */}
+      <div className="hidden lg:flex w-80 bg-white shadow-lg p-6 flex-col sticky top-0 h-screen overflow-y-auto">
+        {/* Logo - Made clickable for desktop */}
+        <div className="mb-8 cursor-pointer" onClick={handleLogoClick}>
           <img src="/OODC logo2.png" alt="OODC Logo" className="h-16 mx-auto" />
         </div>
 
@@ -382,10 +455,13 @@ export default function JobApplicationPage() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Desktop Header */}
-        <header className="hidden lg:block bg-white shadow-sm p-6 border-b border-gray-200">
+      {/* Main Content Area (flex-1 to take remaining horizontal space, and becomes the scrollable container) */}
+      {/* This div will now handle its own scrolling for the header and form content. */}
+      <div className="flex-1 flex flex-col overflow-y-auto h-screen pb-20"> {/* Added pb-20 */}
+
+        {/* Desktop Header (Sticky within this scrollable area) */}
+        {/* This header will stick to the top of its parent's (the main content area's) scrollable region. */}
+        <header className="hidden lg:block bg-white shadow-sm p-6 border-b border-gray-200 sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <IconComponent className="h-6 w-6 text-blue-600 flex-shrink-0" />
@@ -401,8 +477,8 @@ export default function JobApplicationPage() {
           </div>
         </header>
 
-        {/* Form Content */}
-        <div className="flex-1 p-4 lg:p-8 overflow-y-auto">
+        {/* Form Content (flex-1 to take remaining vertical space within the scrollable main content area) */}
+        <div className="flex-1 p-4 lg:p-8">
           {currentStage === 1 && (
             <div className="max-w-4xl mx-auto space-y-8">
               {/* Data Privacy Section */}
@@ -414,8 +490,8 @@ export default function JobApplicationPage() {
                 <p className="text-gray-700 mb-4 leading-relaxed">
                   I agree to provide my personal information regarding my application. I understand that it will only be
                   used for this purpose. For more information, you may visit{" "}
-                  <a href="https://oodc.com.ph/privacy-policy/" className="text-blue-600 hover:underline">
-                    https://oodc.com.ph/privacy-policy/
+                  <a href="[https://oodc.com.ph/privacy-policy/](https://oodc.com.ph/privacy-policy/)" className="text-blue-600 hover:underline">
+                    [https://oodc.com.ph/privacy-policy/](https://oodc.com.ph/privacy-policy/)
                   </a>
                   .
                 </p>
@@ -425,8 +501,9 @@ export default function JobApplicationPage() {
                     checked={acceptTerms}
                     onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
                   />
-                  <Label htmlFor="terms" className="text-sm text-gray-700">
+                  <Label htmlFor="terms" className="text-sm text-gray-700 flex items-center">
                     I accept the terms and conditions
+                    <span className="text-red-500 ml-1">*</span>
                   </Label>
                 </div>
               </div>
@@ -642,17 +719,6 @@ export default function JobApplicationPage() {
                   </div>
                 </div>
               </div>
-
-              {/* Next Button */}
-              <div className="flex justify-end">
-                <Button
-                  onClick={handleNext}
-                  disabled={!acceptTerms}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2"
-                >
-                  Next
-                </Button>
-              </div>
             </div>
           )}
 
@@ -766,20 +832,6 @@ export default function JobApplicationPage() {
                     />
                   </div>
                 </div>
-              </div>
-
-              {/* Navigation Buttons */}
-              <div className="flex justify-between">
-                <Button
-                  onClick={handleBack}
-                  variant="outline"
-                  className="border-blue-600 text-blue-600 hover:bg-blue-50 bg-transparent px-8 py-2"
-                >
-                  Back
-                </Button>
-                <Button onClick={handleNext} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2">
-                  Next
-                </Button>
               </div>
             </div>
           )}
@@ -962,20 +1014,6 @@ export default function JobApplicationPage() {
                   )}
                 </div>
               </div>
-
-              {/* Navigation Buttons */}
-              <div className="flex justify-between">
-                <Button
-                  onClick={handleBack}
-                  variant="outline"
-                  className="border-blue-600 text-blue-600 hover:bg-blue-50 bg-transparent px-8 py-2"
-                >
-                  Back
-                </Button>
-                <Button onClick={handleNext} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2">
-                  Next
-                </Button>
-              </div>
             </div>
           )}
 
@@ -1026,74 +1064,79 @@ export default function JobApplicationPage() {
                   </div>
 
                   {/* Certification Checkbox */}
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-start space-x-2">
                     <Checkbox
                       id="certification"
                       checked={stage4Data.certificationAccepted}
                       onCheckedChange={(checked) => handleStage4Change("certificationAccepted", checked)}
                     />
-                    <Label htmlFor="certification" className="text-sm text-gray-700">
+                    <Label htmlFor="certification" className="text-sm text-gray-700 leading-relaxed">
                       This is to certify that all information provided is accurate to the best of my abilities and
-                      knowledge
+                      knowledge<span className="text-red-500 ml-1">*</span>
                     </Label>
                   </div>
 
                   {/* Signature Section */}
-                  {/* Signature Section */}
-<div>
-  <Label className="text-sm font-medium text-gray-700 mb-3 block">Signature</Label>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700 mb-3 block">Signature</Label>
 
-  <div className="flex flex-col md:flex-row gap-4">
-  {/* Signature Pad */}
-  <div className="flex-1 h-[260px]">
-    <SignaturePad />
-  </div>
+                    <div className="flex flex-col md:flex-row gap-4">
+                      {/* Signature Pad */}
+                      <div className="flex-1 h-[260px]">
+                        <SignaturePad />
+                      </div>
 
-  {/* Upload Signature */}
-  <div className="flex-1 h-[260px]">
-    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center h-full flex items-center justify-center bg-white w-full max-w-full">
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) => handleStage4Change("signature", e.target.files?.[0] || null)}
-        className="hidden"
-        id="signature-upload"
-      />
-      <label htmlFor="signature-upload" className="cursor-pointer">
-        <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-        <span className="text-sm text-gray-600">
-          {stage4Data.signature && typeof stage4Data.signature !== "string"
-            ? (stage4Data.signature as File).name
-            : "Upload signature"}
-        </span>
-      </label>
-    </div>
-  </div>
-</div>
-</div>
-
+                      {/* Upload Signature */}
+                      <div className="flex-1 h-[260px]">
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center h-full flex items-center justify-center bg-white w-full max-w-full">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleStage4Change("signature", e.target.files?.[0] || null)}
+                            className="hidden"
+                            id="signature-upload"
+                          />
+                          <label htmlFor="signature-upload" className="cursor-pointer">
+                            <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                            <span className="text-sm text-gray-600">
+                              {stage4Data.signature && typeof stage4Data.signature !== "string"
+                                ? (stage4Data.signature as File).name
+                                : "Upload signature"}
+                            </span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              {/* Navigation Buttons */}
-              <div className="flex justify-between">
-                <Button
-                  onClick={handleBack}
-                  variant="outline"
-                  className="border-blue-600 text-blue-600 hover:bg-blue-50 bg-transparent px-8 py-2"
-                >
-                  Back
-                </Button>
-                <Button
-                  onClick={handleNext}
-                  disabled={!stage4Data.certificationAccepted}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2"
-                >
-                  Submit Application
-                </Button>
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Fixed Footer for Navigation Buttons */}
+      <div className="fixed bottom-0 left-0 lg:left-80 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-40">
+        <div className="max-w-4xl mx-auto flex justify-between">
+          {currentStage > 1 && (
+            <Button
+              onClick={handleBack}
+              variant="outline"
+              className="border-blue-600 text-blue-600 hover:bg-blue-50 bg-transparent px-8 py-2"
+            >
+              Back
+            </Button>
+          )}
+          <Button
+            onClick={handleNext}
+            disabled={
+              (currentStage === 1 && !acceptTerms) ||
+              (currentStage === 4 && !stage4Data.certificationAccepted)
+            }
+            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2"
+          >
+            {currentStage === 4 ? "Submit Application" : "Next"}
+          </Button>
         </div>
       </div>
 

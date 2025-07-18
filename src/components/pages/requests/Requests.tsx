@@ -16,6 +16,13 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select"
 
 type Status = "Draft" | "Pending" | "On Hold" | "Closed" | "Cancelled"
 
@@ -204,6 +211,11 @@ export default function Requests() {
   const [statusFilter, setStatusFilter] = useState<Status | "All">("All")
   const [positions, setPositions] = useState<RequestedPosition[]>(generatePositions())
 
+  // State for filter dropdowns
+  const [selectedOffice, setSelectedOffice] = useState("all");
+  const [selectedDepartment, setSelectedDepartment] = useState("all");
+  const [selectedEmploymentType, setSelectedEmploymentType] = useState("all");
+
   useEffect(() => {
     document.title = "Requests"
   }, [])
@@ -305,48 +317,73 @@ export default function Requests() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-50 p-6 pt-[100px]">
-        <div className="mx-auto max-w-7xl space-y-6">
-          {/* Title */}
-          <h1 className="text-3xl font-bold text-gray-800">Request</h1>
-          <h4 className="text-2xl font-bold mb-4">Requested Positions</h4>
+      <div className="flex flex-col min-h-screen pt-[100px] bg-gray-50"> {/* Adjusted pt for fixed header */}
+        {/* Fixed top filter/search section */}
+        <div className="fixed top-[64px] left-0 right-0 z-20 bg-gray-50 border-b border-gray-200 shadow-sm px-6 pt-4 pb-3">
+          <div className="max-w-7xl mx-auto space-y-3">
+            {/* Title */}
+            <h1 className="text-3xl font-bold text-gray-800">Request</h1>
 
-          {/* Filters */}
-          <div className="flex flex-wrap justify-between gap-2">
-            <Input
-              placeholder="Search"
-              className="w-full max-w-xs"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <div className="flex gap-2 w-full sm:w-auto flex-col sm:flex-row">
-              <select
-                className="border p-2 rounded text-sm w-full sm:w-auto"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as Status | "All")}
-              >
-                <option value="All">All Status</option>
-                <option value="Draft">Draft</option>
-                <option value="Pending">Pending</option>
-                <option value="On Hold">On Hold</option>
-                <option value="Closed">Closed</option>
-                <option value="Cancelled">Cancelled</option>
-              </select>
-              <select className="border p-2 rounded text-sm w-full sm:w-auto">
-                <option>All Offices</option>
-              </select>
-              <select className="border p-2 rounded text-sm w-full sm:w-auto">
-                <option>All Departments</option>
-              </select>
-              <select className="border p-2 rounded text-sm w-full sm:w-auto">
-                <option>All Employment Type</option>
-              </select>
-              <Button variant="outline" className="w-full sm:w-auto bg-transparent" onClick={() => navigate("/prf")}>
-                Create PRF
-              </Button>
+            {/* Filters */}
+            <div className="flex flex-wrap justify-between items-center gap-4">
+              <Input
+                placeholder="Search requests..." // Updated placeholder
+                className="w-64" // Fixed width for consistency
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <div className="flex flex-wrap gap-2 ml-auto">
+                <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as Status | "All")}>
+                  <SelectTrigger className="min-w-[160px] bg-gray-100">
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Status</SelectItem>
+                    <SelectItem value="Draft">Draft</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="On Hold">On Hold</SelectItem>
+                    <SelectItem value="Closed">Closed</SelectItem>
+                    <SelectItem value="Cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={selectedOffice} onValueChange={setSelectedOffice}>
+                  <SelectTrigger className="min-w-[160px] bg-gray-100">
+                    <SelectValue placeholder="All Offices" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Offices</SelectItem>
+                    {/* Add more SelectItem components for specific offices if needed */}
+                  </SelectContent>
+                </Select>
+                <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+                  <SelectTrigger className="min-w-[160px] bg-gray-100">
+                    <SelectValue placeholder="All Departments" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Departments</SelectItem>
+                    {/* Add more SelectItem components for specific departments if needed */}
+                  </SelectContent>
+                </Select>
+                <Select value={selectedEmploymentType} onValueChange={setSelectedEmploymentType}>
+                  <SelectTrigger className="min-w-[160px] bg-gray-100">
+                    <SelectValue placeholder="All Employment Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Employment Type</SelectItem>
+                    {/* Add more SelectItem components for specific employment types if needed */}
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" className="w-full sm:w-auto bg-transparent" onClick={() => navigate("/prf")}>
+                  Create PRF
+                </Button>
+              </div>
             </div>
           </div>
+        </div>
 
+        {/* Main content section */}
+        <main className="flex-grow px-6 pt-[120px] pb-[80px] max-w-7xl mx-auto w-full"> {/* Adjusted pt for main content */}
+          <h4 className="text-2xl font-bold mb-4">Requested Positions</h4> {/* Moved here */}
           {/* Select All Row */}
           <div className="flex justify-between items-center pb-2">
             <div className="flex items-center gap-4">
@@ -441,7 +478,7 @@ export default function Requests() {
               </tbody>
             </table>
           </div>
-        </div>
+        </main>
       </div>
       {/* Cancel Request Dialog */}
       <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>

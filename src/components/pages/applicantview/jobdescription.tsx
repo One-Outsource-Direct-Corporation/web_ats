@@ -9,13 +9,32 @@ import {
   FileLineChartIcon as FileChartLine,
   MapPinned,
   FolderIcon as FolderCode,
+  ArrowLeft, // Import ArrowLeft icon
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAppNavigation } from "@/hooks/use-navigation"
 
+// Define the JobData interface to include the optional 'fromApplication' property
+interface JobData {
+  id: number
+  title: string
+  icon: any
+  department: string
+  role: string
+  description: string
+  filters: string[]
+  daysAgo: number
+  applicants: string
+  category: string
+  workType: string
+  workSetup: string
+  fromApplication?: boolean; // Optional property to indicate navigation origin
+}
+
 export default function JobDescription() {
   const navigation = useAppNavigation()
-  const [jobData, setJobData] = useState<any>(null)
+  const [jobData, setJobData] = useState<JobData | null>(null)
+  const [showReturnButton, setShowReturnButton] = useState(false); // State for conditional rendering
 
   // Icon mapping function
   const getIconComponent = (jobTitle: string) => {
@@ -32,11 +51,18 @@ export default function JobDescription() {
 
   useEffect(() => {
     // Get job data from navigation state
-    const currentJob = navigation.getCurrentJob()
+    const currentJob = navigation.getCurrentJob() as JobData; // Cast to JobData
     if (currentJob) {
       // Restore the icon component
       currentJob.icon = getIconComponent(currentJob.title)
       setJobData(currentJob)
+
+      // Check if the navigation came from the application process page
+      if (currentJob.fromApplication) {
+        setShowReturnButton(true);
+      } else {
+        setShowReturnButton(false);
+      }
     }
   }, [])
 
@@ -52,6 +78,20 @@ export default function JobDescription() {
     if (jobData) {
       navigation.goToApplicationProcess(jobData)
     }
+  }
+
+  // Function to return to application process
+  const handleReturnToApplication = () => {
+    if (jobData) {
+      // When returning, we don't need to pass the "fromApplication" flag again
+      // as the application process page doesn't need to know its origin for this flow.
+      navigation.goToApplicationProcess(jobData);
+    }
+  };
+
+  // Function to handle logo click, navigating to job openings
+  const handleLogoClick = () => {
+    navigation.goToJobOpenings()
   }
 
   if (!jobData) {
@@ -71,8 +111,8 @@ export default function JobDescription() {
       {/* Header */}
       <header className="bg-white shadow-sm p-6">
         <div className="max-w-4xl mx-auto">
-          {/* Logo */}
-          <div className="flex justify-center mb-6">
+          {/* Logo - Made clickable */}
+          <div className="flex justify-center mb-6 cursor-pointer" onClick={handleLogoClick}>
             <img src="/OODC logo3.png" alt="OODC Logo" className="h-16" />
           </div>
 
@@ -88,13 +128,24 @@ export default function JobDescription() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-4 ml-9">
+          <div className="flex gap-4 ml-9 flex-wrap"> {/* Added flex-wrap for responsiveness */}
             <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2" onClick={handleApplyNow}>
               Apply Now
             </Button>
             <Button variant="outline" className="px-6 py-2 bg-transparent" onClick={handleViewOtherOpenings}>
               View Other Opening
             </Button>
+            {/* Conditional rendering for Return to Application Button */}
+            {showReturnButton && (
+              <Button
+                variant="outline"
+                className="px-6 py-2 bg-transparent flex items-center gap-2"
+                onClick={handleReturnToApplication}
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Return to Application
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -105,7 +156,7 @@ export default function JobDescription() {
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <h3 className="font-bold text-gray-900 mb-2">Categories</h3>
+              <h3 className="font-bold text-gray-900 mb-2">Category</h3>
               <p className="text-gray-600">{jobData.category}</p>
             </div>
             <div>

@@ -1039,7 +1039,7 @@ function Step02({ goToNextStep, goToPreviousStep, step, formData, updateFormData
             ) : (
               <InputField
                 label="Salary Budget"
-                placeholder="₱ 20,000 - 25,000"
+                placeholder="₱ 20,000"
                 value={formData.salaryBudget}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateFormData({ salaryBudget: e.target.value })}
               />

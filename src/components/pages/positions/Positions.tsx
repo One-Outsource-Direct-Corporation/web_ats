@@ -19,6 +19,13 @@ import {
 } from "@/components/ui/dialog";
 import { User, Users2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { // Import Select components
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 interface BaseJobPosting {
   id: number;
@@ -577,6 +584,12 @@ export default function Positions() {
   const [selectedLink, setSelectedLink] = useState("");
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
+  // State for filter dropdowns
+  const [selectedOffice, setSelectedOffice] = useState("all");
+  const [selectedDepartment, setSelectedDepartment] = useState("all");
+  const [selectedEmploymentType, setSelectedEmploymentType] = useState("all");
+
+
   // State to hold all job postings, allowing modifications
   const [allPositions, setAllPositions] = useState(() => {
     // Initialize with generated data, ensuring published 'all' is correctly set
@@ -837,69 +850,93 @@ export default function Positions() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-white p-6 pt-[100px]">
-        <div className="mx-auto max-w-7xl space-y-6">
-          <h1 className="text-3xl font-bold text-gray-800">Positions</h1>
+      <div className="flex flex-col min-h-screen pt-[100px] bg-gray-50"> {/* Adjusted pt for fixed header */}
+        {/* Fixed top filter/search section */}
+        <div className="fixed top-[64px] left-0 right-0 z-20 bg-gray-50 border-b border-gray-200 shadow-sm px-6 pt-4 pb-3">
+          <div className="max-w-7xl mx-auto space-y-3"> {/* Adjusted space-y */}
+            <h1 className="text-3xl font-bold text-gray-800">Positions</h1>
 
-          {/* Filters */}
-          <div className="flex flex-wrap justify-between gap-2">
-            <Input
-              placeholder="Search"
-              className="w-full max-w-xs"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <div className="flex gap-2 w-full sm:w-auto flex-col sm:flex-row">
-              <select className="border p-2 rounded text-sm w-full sm:w-auto">
-                <option>All Offices</option>
-              </select>
-              <select className="border p-2 rounded text-sm w-full sm:w-auto">
-                <option>All Departments</option>
-              </select>
-              <select className="border p-2 rounded text-sm w-full sm:w-auto">
-                <option>All Employment Type</option>
-              </select>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="w-full sm:w-auto bg-transparent">
-                    Add New Position
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="text-center">
-                  <DialogHeader>
-                    <DialogTitle className="text-blue-700 text-sm font-semibold">SELECT TYPE OF HIRING</DialogTitle>
-                  </DialogHeader>
+            {/* Filters */}
+            <div className="flex flex-wrap justify-between items-center gap-4"> {/* Changed gap to gap-4 */}
+              <Input
+                placeholder="Search positions..." // Updated placeholder
+                className="w-64" // Fixed width for consistency
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <div className="flex flex-wrap gap-2 ml-auto">
+                <Select value={selectedOffice} onValueChange={setSelectedOffice}>
+                  <SelectTrigger className="min-w-[160px] bg-gray-100">
+                    <SelectValue placeholder="All Offices" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Offices</SelectItem>
+                    {/* Add more SelectItem components for specific offices if needed */}
+                  </SelectContent>
+                </Select>
+                <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+                  <SelectTrigger className="min-w-[160px] bg-gray-100">
+                    <SelectValue placeholder="All Departments" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Departments</SelectItem>
+                    {/* Add more SelectItem components for specific departments if needed */}
+                  </SelectContent>
+                </Select>
+                <Select value={selectedEmploymentType} onValueChange={setSelectedEmploymentType}>
+                  <SelectTrigger className="min-w-[160px] bg-gray-100">
+                    <SelectValue placeholder="All Employment Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Employment Type</SelectItem>
+                    {/* Add more SelectItem components for specific employment types if needed */}
+                  </SelectContent>
+                </Select>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full sm:w-auto bg-transparent">
+                      Add New Position
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="text-center">
+                    <DialogHeader>
+                      <DialogTitle className="text-blue-700 text-sm font-semibold">SELECT TYPE OF HIRING</DialogTitle>
+                    </DialogHeader>
 
-                  <div className="flex justify-center gap-12 mt-6">
-                    {/* Internal Hiring */}
-                    <div
-                      className="flex flex-col items-center space-y-2 cursor-pointer group"
-                      onClick={() => navigate("/prf")}
-                    >
-                      <div className="w-16 h-16 rounded-full border border-gray-500 text-gray-600 flex items-center justify-center group-hover:border-blue-500 group-hover:text-blue-500">
-                        <User className="w-6 h-6" />
+                    <div className="flex justify-center gap-12 mt-6">
+                      {/* Internal Hiring */}
+                      <div
+                        className="flex flex-col items-center space-y-2 cursor-pointer group"
+                        onClick={() => navigate("/prf")}
+                      >
+                        <div className="w-16 h-16 rounded-full border border-gray-500 text-gray-600 flex items-center justify-center group-hover:border-blue-500 group-hover:text-blue-500">
+                          <User className="w-6 h-6" />
+                        </div>
+                        <span className="text-sm text-gray-600  font-medium group-hover:text-blue-500">
+                          Internal Hiring
+                        </span>
                       </div>
-                      <span className="text-sm text-gray-600  font-medium group-hover:text-blue-500">
-                        Internal Hiring
-                      </span>
-                    </div>
 
-                    {/* Client */}
-                    <div
-                      className="flex flex-col items-center space-y-2 cursor-pointer group"
-                      onClick={() => navigate("/positions/create-new-position")}
-                    >
-                      <div className="w-16 h-16 rounded-full border border-gray-500 text-gray-600 group-hover:border-blue-500 group-hover:text-blue-500 flex items-center justify-center">
-                        <Users2 className="w-6 h-6" />
+                      {/* Client */}
+                      <div
+                        className="flex flex-col items-center space-y-2 cursor-pointer group"
+                        onClick={() => navigate("/positions/create-new-position")}
+                      >
+                        <div className="w-16 h-16 rounded-full border border-gray-500 text-gray-600 group-hover:border-blue-500 group-hover:text-blue-500 flex items-center justify-center">
+                          <Users2 className="w-6 h-6" />
+                        </div>
+                        <span className="text-sm text-gray-600 group-hover:text-blue-500 font-medium">Client</span>
                       </div>
-                      <span className="text-sm text-gray-600 group-hover:text-blue-500 font-medium">Client</span>
                     </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
           </div>
+        </div>
 
+        {/* Main content section */}
+        <main className="flex-grow px-6 pt-[120px] pb-[80px] max-w-7xl mx-auto w-full"> {/* Adjusted pt for main content */}
           {/* Select All Row */}
           <div className="flex justify-between items-center pb-2">
             <div className="flex items-center gap-4">
@@ -913,49 +950,6 @@ export default function Positions() {
                 Select All
               </label>
             </div>
-          </div>
-
-          {/* Tabs Row */}
-          <div className="flex justify-between items-center border-b pb-4">
-            <div className="flex flex-col gap-4">
-              <Tabs value={currentTab} onValueChange={handleTabChange} className="w-auto">
-                <TabsList className="flex gap-4 bg-transparent border-b-0">
-                  {["drafts", "on-hold", "published", "closed", "archive", "deleted"].map((tab) => (
-                    <TabsTrigger
-                      key={tab}
-                      value={tab}
-                      className="relative px-2 pb-2 text-sm font-medium text-gray-500 data-[state=active]:text-blue-600"
-                    >
-                      {tab.charAt(0).toUpperCase() + tab.slice(1).replace("-", " ")}
-                      <span className="absolute left-0 -bottom-0.5 w-full h-0.5 bg-blue-600 scale-x-0 data-[state=active]:scale-x-100 transition-transform origin-left" />
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
-
-              {/* Published Subtabs */}
-              {currentTab === "published" && (
-                <Tabs
-                  value={publishedSubTab}
-                  onValueChange={(value) => setPublishedSubTab(value as "all" | "Internal" | "External")}
-                  className="w-auto"
-                >
-                  <TabsList className="flex gap-4 bg-transparent border-b-0 ml-4">
-                    {["all", "Internal", "External"].map((subtab) => (
-                      <TabsTrigger
-                        key={subtab}
-                        value={subtab}
-                        className="relative px-2 pb-2 text-xs font-medium text-gray-400 data-[state=active]:text-blue-500"
-                      >
-                        {subtab.charAt(0).toUpperCase() + subtab.slice(1)}
-                        <span className="absolute left-0 -bottom-0.5 w-full h-0.5 bg-blue-500 scale-x-0 data-[state=active]:scale-x-100 transition-transform origin-left" />
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                </Tabs>
-              )}
-            </div>
-
             {/* Action Icons - appear when items are selected, aligned with tabs */}
             {selected.length > 0 && (
               <TooltipProvider>
@@ -1088,6 +1082,48 @@ export default function Positions() {
             )}
           </div>
 
+          {/* Tabs Row */}
+          <div className="flex justify-between items-center border-b pb-4">
+            <div className="flex flex-col gap-4">
+              <Tabs value={currentTab} onValueChange={handleTabChange} className="w-auto">
+                <TabsList className="flex gap-4 bg-transparent border-b-0">
+                  {["drafts", "on-hold", "published", "closed", "archive", "deleted"].map((tab) => (
+                    <TabsTrigger
+                      key={tab}
+                      value={tab}
+                      className="relative px-2 pb-2 text-sm font-medium text-gray-500 data-[state=active]:text-blue-600"
+                    >
+                      {tab.charAt(0).toUpperCase() + tab.slice(1).replace("-", " ")}
+                      <span className="absolute left-0 -bottom-0.5 w-full h-0.5 bg-blue-600 scale-x-0 data-[state=active]:scale-x-100 transition-transform origin-left" />
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+
+              {/* Published Subtabs */}
+              {currentTab === "published" && (
+                <Tabs
+                  value={publishedSubTab}
+                  onValueChange={(value) => setPublishedSubTab(value as "all" | "Internal" | "External")}
+                  className="w-auto"
+                >
+                  <TabsList className="flex gap-4 bg-transparent border-b-0 ml-4">
+                    {["all", "Internal", "External"].map((subtab) => (
+                      <TabsTrigger
+                        key={subtab}
+                        value={subtab}
+                        className="relative px-2 pb-2 text-xs font-medium text-gray-400 data-[state=active]:text-blue-500"
+                      >
+                        {subtab.charAt(0).toUpperCase() + subtab.slice(1)}
+                        <span className="absolute left-0 -bottom-0.5 w-full h-0.5 bg-blue-500 scale-x-0 data-[state=active]:scale-x-100 transition-transform origin-left" />
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+              )}
+            </div>
+          </div>
+
           {/* Postings */}
           <div className="space-y-2">
             {filteredPostings.length > 0 ? (
@@ -1142,7 +1178,7 @@ export default function Positions() {
               <div className="text-center text-gray-500 py-10">This tab is empty.</div>
             )}
           </div>
-        </div>
+        </main>
       </div>
 
       <ShareModal open={shareOpen} onOpenChange={setShareOpen} link={selectedLink} />

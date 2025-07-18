@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -10,10 +10,13 @@ import {
   Search,
   Bell,
   Settings,
+  ChevronsUpDown,
+  LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"; // Assuming you have Popover components
 
 function isActivePath(basePath: string) {
   return location.pathname === basePath || location.pathname.startsWith(`${basePath}/`);
@@ -23,7 +26,9 @@ import { useState } from "react";
 
 export function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false); // State for the user popover
 
   const routes = [
     {
@@ -52,6 +57,12 @@ export function Navbar() {
       icon: Library,
     },
   ];
+
+  const handleLogout = () => {
+    // Perform logout logic here (e.g., clear tokens, session)
+    navigate("/"); // Redirect to the root path
+    setUserMenuOpen(false); // Close the popover after logout
+  };
 
   return (
     <>
@@ -110,13 +121,39 @@ export function Navbar() {
               <span className="sr-only">Settings</span>
             </Button>
 
-            {/* User Info */}
-            <div className="flex items-center gap-2">
-              <div className="rounded-full bg-primary h-8 w-8 flex items-center justify-center text-white">
-                U
-              </div>
-              <span>Username</span>
-            </div>
+            {/* User Info with Popover */}
+            <Popover open={userMenuOpen} onOpenChange={setUserMenuOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" className="flex items-center gap-2 cursor-pointer">
+                  <div className="rounded-full bg-primary h-8 w-8 flex items-center justify-center text-white">
+                    U
+                  </div>
+                  <span>Username</span>
+                  <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-2">
+                <div className="flex items-center gap-3 p-2">
+                  <div className="rounded-full bg-primary h-10 w-10 flex items-center justify-center text-white">
+                    U
+                  </div>
+                  <div className="flex flex-col">
+                    <p className="font-bold">Username</p>
+                    <p className="text-sm text-muted-foreground">user@example.com</p>
+                  </div>
+                </div>
+                <div className="pt-2 border-t mt-2">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-2"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Log Out</span>
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
       </nav>

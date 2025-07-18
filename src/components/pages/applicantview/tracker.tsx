@@ -110,6 +110,11 @@ export default function TrackApplicationPage() {
     navigation.goToJobOpenings()
   }
 
+  // Function to handle logo click, navigating to job openings
+  const handleLogoClick = () => {
+    navigation.goToJobOpenings()
+  }
+
   const getStatusBadge = (status: "Received" | "On Hold" | "Hired") => {
     const styles = {
       Received: "bg-green-100 text-green-800",
@@ -141,7 +146,8 @@ export default function TrackApplicationPage() {
       {/* Header - Same as applicant landing page but without Track Application button */}
       <header className="w-full mt-0 p-4 flex items-center justify-between bg-white shadow-md rounded-b-2xl">
         <div className="flex items-center gap-4 ml-6">
-          <div className="text-2xl font-bold text-blue-600">
+          {/* Logo - Made clickable */}
+          <div className="text-2xl font-bold text-blue-600 cursor-pointer" onClick={handleLogoClick}>
             <img src="/OODC logo2.png" alt="OODC Logo" className="h-24 mx-auto" />
           </div>
         </div>
@@ -319,11 +325,13 @@ export default function TrackApplicationPage() {
         {/* Right Column (30%) */}
         <div className="w-full lg:w-[30%] p-6 pt-0 lg:pt-6">
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6 flex justify-center">
+            {/* Calendar component with fixed weeks and no padding */}
             <Calendar
               mode="single"
               selected={selectedDate}
               onSelect={setSelectedDate}
-              className="rounded-md border-0"
+              className="rounded-md border-0 p-0 w-full" /* Removed padding and set width to full */
+              fixedWeeks={true} /* Ensures the calendar always shows 5 weeks */
             />
           </div>
 

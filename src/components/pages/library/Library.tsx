@@ -93,21 +93,27 @@ export default function Library() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-50 p-6 pt-[100px]">
-        <div className="mx-auto max-w-7xl space-y-6">
-          <h1 className="text-3xl font-bold text-gray-800">Library</h1> {/* Always display Library heading */}
-          {path.length > 1 && ( // Show back button if not on the home view
-            <div className="flex items-center mb-4">
-              <Button
-                variant="ghost"
-                onClick={() => setPath((prev) => prev.slice(0, -1))} // Go back one level
-                className="text-gray-600 hover:text-blue-600 px-2 py-1 -ml-2"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-            </div>
-          )}
+      <div className="flex flex-col min-h-screen pt-[100px] bg-gray-50"> {/* Added pt for fixed header */}
+        {/* Fixed top header section */}
+        <div className="fixed top-[64px] left-0 right-0 z-20 bg-gray-50 border-b border-gray-200 shadow-sm px-6 pt-4 pb-3">
+          <div className="max-w-7xl mx-auto -space-y-2">
+            <h1 className="text-3xl font-bold text-gray-800 pb-12">Library</h1> {/* Always display Library heading */}
+            {path.length > 1 && ( // Show back button if not on the home view
+              <div className="flex items-center mb-4">
+                <Button
+                  variant="ghost"
+                  onClick={() => setPath((prev) => prev.slice(0, -1))} // Go back one level
+                  className="text-gray-600 hover:text-blue-600 px-2 py-1 -ml-2"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <main className="flex-grow px-6 pt-[120px] pb-[80px] max-w-7xl mx-auto w-full"> {/* Adjusted pt for main content */}
           <div className="flex items-start justify-between py-4">
             {/* Home View */}
             {currentView === "home" ? (
@@ -228,7 +234,7 @@ export default function Library() {
               </div>
             )}
           </div>
-        </div>
+        </main>
       </div>
 
       {/* Archive Confirmation Dialog */}
