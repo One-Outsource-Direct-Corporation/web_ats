@@ -1928,14 +1928,14 @@ export default function CreateNewPosition() {
               <div className="mb-8">
                 <h4 className="text-base font-medium text-gray-800 mb-4">Personal Information</h4>
                 <div className="border rounded-lg overflow-x-auto w-full">
-  <table className="min-w-[600px] text-sm">
+            <table className="min-w-full bg-white text-sm table-fixed">
                     <thead className="bg-gray-50 border-b">
                       <tr>
                         <th className="text-left p-4 font-medium text-gray-700 w-2/5">Field</th>
-                        <th className="text-center p-4 font-medium text-gray-700 w-1/6">Non-Negotiable</th>
-                        <th className="text-center p-4 font-medium text-gray-700 w-1/6">Required</th>
-                        <th className="text-center p-4 font-medium text-gray-700 w-1/6">Optional</th>
-                        <th className="text-center p-4 font-medium text-gray-700 w-1/6">Disabled</th>
+                        <th className="text-center p-4 font-medium text-gray-700 w-1/8"></th>
+                        <th className="text-center p-4 font-medium text-gray-700 w-1/8">Required</th>
+                        <th className="text-center p-4 font-medium text-gray-700 w-1/8">Optional</th>
+                        <th className="text-center p-4 font-medium text-gray-700 w-1/8">Disabled</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1986,14 +1986,14 @@ export default function CreateNewPosition() {
               <div className="mb-8">
                 <h4 className="text-base font-medium text-gray-800 mb-4">Job Details</h4>
                 <div className="border rounded-lg overflow-x-auto w-full">
-  <table className="min-w-[600px] text-sm">
+  <table className="min-w-full bg-white text-sm table-fixed">
                     <thead className="bg-gray-50 border-b">
                       <tr>
                         <th className="text-left p-4 font-medium text-gray-700 w-2/5">Field</th>
-                        <th className="text-center p-4 font-medium text-gray-700 w-1/6">Non-Negotiable</th>
-                        <th className="text-center p-4 font-medium text-gray-700 w-1/6">Required</th>
-                        <th className="text-center p-4 font-medium text-gray-700 w-1/6">Optional</th>
-                        <th className="text-center p-4 font-medium text-gray-700 w-1/6">Disabled</th>
+                        <th className="text-center p-4 font-medium text-gray-700 w-1/8">Non-Negotiable</th>
+                        <th className="text-center p-4 font-medium text-gray-700 w-1/8">Required</th>
+                        <th className="text-center p-4 font-medium text-gray-700 w-1/8">Optional</th>
+                        <th className="text-center p-4 font-medium text-gray-700 w-1/8">Disabled</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -2051,14 +2051,14 @@ export default function CreateNewPosition() {
               <div className="mb-8">
                 <h4 className="text-base font-medium text-gray-800 mb-4">Work and Education</h4>
                 <div className="border rounded-lg overflow-x-auto w-full">
-  <table className="min-w-[600px] text-sm">
-                    <thead className="bg-gray-50 border-b">
+  <table className="min-w-full bg-white text-sm table-fixed">
+                    <thead className="bg-gray-50 border-b w-full">
                       <tr>
                         <th className="text-left p-4 font-medium text-gray-700 w-2/5">Field</th>
-                        <th className="text-center p-4 font-medium text-gray-700 w-1/6">Non-Negotiable</th>
-                        <th className="text-center p-4 font-medium text-gray-700 w-1/6">Required</th>
-                        <th className="text-center p-4 font-medium text-gray-700 w-1/6">Optional</th>
-                        <th className="text-center p-4 font-medium text-gray-700 w-1/6">Disabled</th>
+                        <th className="text-center p-4 font-medium text-gray-700 w-1/8">Non-Negotiable</th>
+                        <th className="text-center p-4 font-medium text-gray-700 w-1/8">Required</th>
+                        <th className="text-center p-4 font-medium text-gray-700 w-1/8">Optional</th>
+                        <th className="text-center p-4 font-medium text-gray-700 w-1/8">Disabled</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -2116,14 +2116,14 @@ export default function CreateNewPosition() {
               <div className="mb-8">
                 <h4 className="text-base font-medium text-gray-800 mb-4">Acknowledgement</h4>
                 <div className="border rounded-lg overflow-x-auto w-full">
-  <table className="min-w-[600px] text-sm">
+  <table className="min-w-full bg-white text-sm table-fixed">
                     <thead className="bg-gray-50 border-b">
                       <tr>
                         <th className="text-left p-4 font-medium text-gray-700 w-2/5">Field</th>
-                        <th className="text-center p-4 font-medium text-gray-700 w-1/6">Non-Negotiable</th>
-                        <th className="text-center p-4 font-medium text-gray-700 w-1/6">Required</th>
-                        <th className="text-center p-4 font-medium text-gray-700 w-1/6">Optional</th>
-                        <th className="text-center p-4 font-medium text-gray-700 w-1/6">Disabled</th>
+                        <th className="text-center p-4 font-medium text-gray-700 w-1/8"></th>
+                        <th className="text-center p-4 font-medium text-gray-700 w-1/8">Required</th>
+                        <th className="text-center p-4 font-medium text-gray-700 w-1/8">Optional</th>
+                        <th className="text-center p-4 font-medium text-gray-700 w-1/8">Disabled</th>
                       </tr>
                     </thead>
                     <tbody>
