@@ -23,9 +23,9 @@ const LoginForm: React.FC = () => {
     const applicantPassword = "applicantpass";
 
     if (email === adminEmail && password === adminPassword) {
-      navigate("/dashboard");
+      navigate("/app");
     } else if (email === applicantEmail && password === applicantPassword) {
-      navigate("/applicantlandingpage");
+      navigate("/applicant");
     } else {
       alert("Invalid email or password");
     }
@@ -39,7 +39,9 @@ const LoginForm: React.FC = () => {
 
       {/* Email Field */}
       <div className="space-y-2">
-        <Label htmlFor="email" className="text-lg">Email</Label>
+        <Label htmlFor="email" className="text-lg">
+          Email
+        </Label>
         <div className="relative">
           <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
           <Input
@@ -56,7 +58,9 @@ const LoginForm: React.FC = () => {
 
       {/* Password Field */}
       <div className="space-y-2">
-        <Label htmlFor="password" className="text-lg">Password</Label>
+        <Label htmlFor="password" className="text-lg">
+          Password
+        </Label>
         <div className="relative">
           <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
           <Input
@@ -75,7 +79,11 @@ const LoginForm: React.FC = () => {
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 text-gray-600"
           >
-            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            {showPassword ? (
+              <EyeOff className="w-5 h-5" />
+            ) : (
+              <Eye className="w-5 h-5" />
+            )}
           </Button>
         </div>
       </div>

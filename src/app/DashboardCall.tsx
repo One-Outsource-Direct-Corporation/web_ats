@@ -1,4 +1,4 @@
-import Dashboard from "../components/pages/Dashboard";
+import Dashboard from "../pages/Dashboard.tsx";
 
 export default function DashboardCall() {
   return <Dashboard />

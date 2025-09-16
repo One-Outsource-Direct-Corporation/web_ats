@@ -16,10 +16,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"; // Assuming you have Popover components
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"; // Assuming you have Popover components
 
 function isActivePath(basePath: string) {
-  return location.pathname === basePath || location.pathname.startsWith(`${basePath}/`);
+  return (
+    location.pathname === basePath ||
+    location.pathname.startsWith(`${basePath}/`)
+  );
 }
 
 import { useState } from "react";
@@ -47,9 +54,9 @@ export function Navbar() {
       icon: Briefcase,
     },
     {
-    path: "/requests", 
-    label: "Requests",
-    icon: FilePen,
+      path: "/requests",
+      label: "Requests",
+      icon: FilePen,
     },
     {
       path: "/library",
@@ -73,7 +80,11 @@ export function Navbar() {
           <div className="flex items-center gap-4">
             {/* Logo */}
             <div className="flex items-center gap-2">
-              <img src="/OODC logo.png" alt="Company Logo" className="h-10 w-auto" />
+              <img
+                src="/OODC logo.png"
+                alt="Company Logo"
+                className="h-10 w-auto"
+              />
             </div>
 
             {/* Navigation Links */}
@@ -124,7 +135,10 @@ export function Navbar() {
             {/* User Info with Popover */}
             <Popover open={userMenuOpen} onOpenChange={setUserMenuOpen}>
               <PopoverTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2 cursor-pointer">
+                <Button
+                  variant="ghost"
+                  className="flex items-center gap-2 cursor-pointer"
+                >
                   <div className="rounded-full bg-primary h-8 w-8 flex items-center justify-center text-white">
                     U
                   </div>
@@ -139,7 +153,9 @@ export function Navbar() {
                   </div>
                   <div className="flex flex-col">
                     <p className="font-bold">Username</p>
-                    <p className="text-sm text-muted-foreground">user@example.com</p>
+                    <p className="text-sm text-muted-foreground">
+                      user@example.com
+                    </p>
                   </div>
                 </div>
                 <div className="pt-2 border-t mt-2">
@@ -165,7 +181,11 @@ export function Navbar() {
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
-                {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                {mobileOpen ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <Menu className="h-5 w-5" />
+                )}
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
@@ -174,7 +194,7 @@ export function Navbar() {
                 {/* Logo in mobile menu */}
                 <div className="p-4 border-b">
                   <Link
-                    to="/dashboard"
+                    to="/Dashboard"
                     className="flex items-center gap-2"
                     onClick={() => setMobileOpen(false)}
                   >
@@ -218,7 +238,9 @@ export function Navbar() {
                     </div>
                     <div>
                       <p className="font-medium">Username</p>
-                      <p className="text-sm text-muted-foreground">user@example.com</p>
+                      <p className="text-sm text-muted-foreground">
+                        user@example.com
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -228,10 +250,14 @@ export function Navbar() {
 
           {/* Mobile Logo */}
           <Link
-            to="/dashboard"
+            to="/Dashboard"
             className="absolute left-1/2 transform -translate-x-1/2"
           >
-            <img src="/OODC logo.png" alt="Company Logo" className="h-7 w-auto" />
+            <img
+              src="/OODC logo.png"
+              alt="Company Logo"
+              className="h-7 w-auto"
+            />
           </Link>
 
           {/* Mobile Icons: Search, Notification, Settings */}
