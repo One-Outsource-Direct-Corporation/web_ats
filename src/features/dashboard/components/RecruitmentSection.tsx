@@ -32,7 +32,7 @@ export function RecruitmentSection({
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6">
-        <div className="flex flex-col md:flex-row gap-0 items-start md:items-stretch">
+        <div className="flex flex-col md:flex-row gap-0 items-start md:items-stretch w-full">
           {/* Job Table */}
           <div className="flex-1 md:max-w-[55%] md:pr-6">
             <div className="overflow-x-auto w-full">
@@ -91,9 +91,9 @@ export function RecruitmentSection({
           </div>
 
           {/* Ongoing Processes */}
-          <div className="flex-1 space-y-4 min-h-[200px] md:min-h-[250px] md:pl-6">
+          <div className="flex-1 space-y-4 min-h-[300px] md:min-h-[250px] md:pl-6 w-full">
             <h3 className="font-semibold text-gray-900">Ongoing Process</h3>
-            <div className="space-y-3 max-h-[400px] overflow-y-auto">
+            <div className="space-y-3 md:max-h-[400px] md:overflow-y-auto">
               {ongoingProcesses.map((process, index) => (
                 <div
                   key={index}
