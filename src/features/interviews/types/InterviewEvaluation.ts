@@ -7,4 +7,3 @@ export interface InterviewEvaluation {
   comments?: string;
   stage: string;
 }
-// ...existing code from src/entities/InterviewEvaluation.ts...

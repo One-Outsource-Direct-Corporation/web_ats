@@ -1,10 +1,9 @@
 import { createBrowserRouter } from "react-router-dom";
 import RootLayout from "@/pages/RootLayout";
 import Login from "@/pages/Login.tsx";
-import Dashboard from "@/pages/Dashboard.tsx";
+import Dashboard from "@/features/dashboard/components/Dashboard";
 import Library from "@/pages/library/Library.tsx";
 import Requests from "@/pages/requests/Requests.tsx";
-import PRF from "@/pages/positions/PRF";
 import MainApp from "@/pages/applicantview/ApplicantMainPage";
 import { applicantsRoutes } from "@/features/applicants/routes/applicantsRoutes.tsx";
 import { jobsRoutes } from "@/features/jobs/routes/jobsRoutes.tsx";
@@ -41,16 +40,16 @@ export const router = createBrowserRouter([
       ...jobsRoutes,
       ...applicantsRoutes,
       ...interviewsRoutes,
-      {
-        path: "applicant",
-        children: [
-          {
-            index: true,
-            element: <MainApp />,
-          },
-        ],
-      },
       ...prfRoutes,
+    ],
+  },
+  {
+    path: "applicant",
+    children: [
+      {
+        index: true,
+        element: <MainApp />,
+      },
     ],
   },
 ]);

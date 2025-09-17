@@ -1,5 +1,5 @@
-import Dashboard from "../pages/Dashboard.tsx";
+import Dashboard from "../features/dashboard/components/Dashboard.tsx";
 
 export default function DashboardCall() {
-  return <Dashboard />
+  return <Dashboard />;
 }

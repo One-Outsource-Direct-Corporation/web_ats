@@ -51,3 +51,5 @@ export interface FormData {
   hardwareRequired: HardwareRequired;
   softwareRequired: SoftwareRequired;
 }
+
+export type FormDataType = FormData;

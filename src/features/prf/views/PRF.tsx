@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePRFForm } from "../hooks/usePRFForm";
@@ -12,6 +10,7 @@ import {
   SubmitConfirmModal,
   SuccessPopup,
 } from "../components/PRFModal";
+import type { FormDataType } from "../types/prfTypes";
 
 export default function PRF() {
   const navigate = useNavigate();
@@ -20,7 +19,7 @@ export default function PRF() {
   const [showCancelConfirmDialog, setShowCancelConfirmDialog] = useState(false);
   const [showSubmitConfirmDialog, setShowSubmitConfirmDialog] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-  const initialFormData = {
+  const initialFormData: FormDataType = {
     jobTitle: "",
     targetStartDate: "",
     numberOfVacancies: "",

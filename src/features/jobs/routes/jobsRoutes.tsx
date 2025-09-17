@@ -1,8 +1,6 @@
-// import Job from "@/pages/applicants/Job";
 import JobDetails from "../views/JobDetails";
-import Applicants from "../../applicants/views/Applicants";
-import PoolApplicants from "../../applicants/views/PoolApplicants";
-import Job from "@/features/applicants/views/Job";
+import Job from "../views/Job";
+import { applicantsRoutes } from "@/features/applicants/routes/applicantsRoutes";
 
 export const jobsRoutes = [
   {
@@ -16,19 +14,7 @@ export const jobsRoutes = [
         path: ":jobtitle",
         element: <JobDetails />,
       },
-      {
-        path: "list/applicants",
-        children: [
-          {
-            index: true,
-            element: <Applicants />,
-          },
-          {
-            path: "pool",
-            element: <PoolApplicants />,
-          },
-        ],
-      },
+      ...applicantsRoutes,
     ],
   },
 ];

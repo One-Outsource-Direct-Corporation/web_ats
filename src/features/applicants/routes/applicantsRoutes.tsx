@@ -1,5 +1,5 @@
-import Applicants from "@/pages/applicants/Applicants";
-import PoolApplicants from "@/pages/applicants/PoolApplicants";
+import Applicants from "../views/Applicants";
+import PoolApplicants from "../views/PoolApplicants";
 
 export const applicantsRoutes = [
   {

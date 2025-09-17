@@ -1,4 +1,4 @@
-import type { Applicant } from "../entities/Applicant";
+import type { Applicant } from "../types/Applicant";
 
 export async function getApplicants(): Promise<Applicant[]> {
   // TODO: Replace with actual API call

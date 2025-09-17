@@ -98,7 +98,6 @@ export default function PoolApplicants() {
 
   return (
     <>
-      <Navbar />
       <div className="min-h-screen bg-gray-50 p-4 mt-20">
         <div className="mx-auto max-w-none space-y-4">
           {/* Header with Cancel Button */}

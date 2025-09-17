@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { InterviewEvaluation } from "../types/InterviewEvaluation";
-import { getInterviewEvaluations } from "../../../services/interviewService";
+import { getInterviewEvaluations } from "../services/interviewService";
 
 export function useInterviewEvaluations(applicantId: string) {
   const [evaluations, setEvaluations] = useState<InterviewEvaluation[]>([]);
@@ -10,4 +10,3 @@ export function useInterviewEvaluations(applicantId: string) {
   }, [applicantId]);
   return evaluations;
 }
-// ...existing code from src/features/interviews/useInterviewEvaluations.ts...

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useJobByTitle } from "../../jobDetails";
+import { useJobByTitle } from "../hooks/useJobs";
 import { Input } from "@/components/ui/input.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { ArrowLeft, LayoutGrid, List } from "lucide-react";

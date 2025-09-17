@@ -1,5 +1,3 @@
-"use client";
-
 import { useApplicants } from "../hooks/useApplicants";
 import { ApplicantList } from "../components/ApplicantList";
 import { Input } from "@/components/ui/input.tsx";
