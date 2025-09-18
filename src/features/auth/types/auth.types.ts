@@ -1,0 +1,40 @@
+// export interface User {
+//   id: string;
+//   email: string;
+//   name: string;
+//   role: "admin" | "applicant" | "hr";
+//   avatar?: string;
+// }
+
+import type { AxiosResponse } from "axios";
+
+export interface User {
+  id: string;
+  email: string;
+  first_name: string;
+  middle_name: string;
+  last_name: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  message: string;
+  user: User;
+}
+
+export interface AuthContextType extends AuthState {
+  login: (
+    credentials: LoginCredentials
+  ) => Promise<AxiosResponse<AuthResponse>>;
+  //   logout: () => void;
+}

@@ -1,5 +1,7 @@
 import { RouterProvider } from "react-router-dom";
 import { router } from "@/routes/router";
+import { AuthProvider } from "./features/auth/context/AuthContext";
+import { ToastContainer } from "react-toastify";
 import "@/App.css";
 // import { BrowserRouter, Routes, Route } from 'react-router-dom'
 // import { Navbar } from "@/components/reusables/Navbar"
@@ -30,7 +32,14 @@ import "@/App.css";
 // import { FullExamResultPage } from './pages/FullExamResultPage.tsx'
 
 export default function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      <ToastContainer />
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </>
+  );
 }
 
 {

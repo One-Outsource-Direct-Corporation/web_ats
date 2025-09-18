@@ -1,11 +1,25 @@
 import React from "react";
 import LoginForm from "../components/LoginForm";
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 
 const Login: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
+
+  console.log(user);
+
   useEffect(() => {
     document.title = "Log In";
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      // Navigate based on user role
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated, user, navigate]);
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden">
       {/* Main */}
