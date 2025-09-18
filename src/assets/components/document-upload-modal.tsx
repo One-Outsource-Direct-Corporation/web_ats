@@ -1,45 +1,50 @@
-"use client"
-
-import type React from "react"
-import { useState } from "react"
-import { X, Upload, FileText } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import type React from "react";
+import { useState } from "react";
+import { X, Upload, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface DocumentUploadModalProps {
-  onClose: () => void
-  onDocumentsUploaded: (resumeData: any) => void
+  onClose: () => void;
+  onDocumentsUploaded: (resumeData: any) => void;
 }
 
-export function DocumentUploadModal({ onClose, onDocumentsUploaded }: DocumentUploadModalProps) {
-  const [resumeFile, setResumeFile] = useState<File | null>(null)
-  const [coverLetterFile, setCoverLetterFile] = useState<File | null>(null)
-  const [isProcessing, setIsProcessing] = useState(false)
+export function DocumentUploadModal({
+  onClose,
+  onDocumentsUploaded,
+}: DocumentUploadModalProps) {
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [coverLetterFile, setCoverLetterFile] = useState<File | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: "resume" | "cover") => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    type: "resume" | "cover"
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
     const valid =
       file.type === "application/pdf" ||
       file.type.startsWith("image/") ||
       file.type === "application/msword" ||
-      file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      file.type ===
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
-    if (!valid) return
+    if (!valid) return;
 
-    if (type === "resume") setResumeFile(file)
-    else setCoverLetterFile(file)
-  }
+    if (type === "resume") setResumeFile(file);
+    else setCoverLetterFile(file);
+  };
 
   const removeFile = (type: "resume" | "cover") => {
-    if (type === "resume") setResumeFile(null)
-    else setCoverLetterFile(null)
-  }
+    if (type === "resume") setResumeFile(null);
+    else setCoverLetterFile(null);
+  };
 
   const handleContinue = async () => {
-    setIsProcessing(true)
+    setIsProcessing(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     const mockResumeData = {
       firstName: "John",
@@ -55,10 +60,10 @@ export function DocumentUploadModal({ onClose, onDocumentsUploaded }: DocumentUp
       district: "Metro Manila",
       postalCode: "1203",
       country: "Philippines",
-    }
+    };
 
-    onDocumentsUploaded(mockResumeData)
-  }
+    onDocumentsUploaded(mockResumeData);
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
@@ -70,7 +75,8 @@ export function DocumentUploadModal({ onClose, onDocumentsUploaded }: DocumentUp
       </div>
 
       <p className="text-gray-600 mb-4">
-        Please upload your resume and cover letter. We’ll extract the information to help fill out your application.
+        Please upload your resume and cover letter. We’ll extract the
+        information to help fill out your application.
       </p>
 
       {/* Resume Upload */}
@@ -80,7 +86,9 @@ export function DocumentUploadModal({ onClose, onDocumentsUploaded }: DocumentUp
           <div className="text-4xl mb-2">📄</div>
           {!resumeFile ? (
             <>
-              <p className="text-gray-600 mb-2">Drag & drop your resume here or</p>
+              <p className="text-gray-600 mb-2">
+                Drag & drop your resume here or
+              </p>
               <input
                 type="file"
                 accept=".pdf,.doc,.docx,image/*"
@@ -94,18 +102,27 @@ export function DocumentUploadModal({ onClose, onDocumentsUploaded }: DocumentUp
               >
                 Browse Resume
               </label>
-              <p className="text-xs text-gray-500 mt-2">Supported: PDF, DOC, DOCX, JPG, PNG (Max 10MB)</p>
+              <p className="text-xs text-gray-500 mt-2">
+                Supported: PDF, DOC, DOCX, JPG, PNG (Max 10MB)
+              </p>
             </>
           ) : (
             <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3 mt-2">
               <div className="flex items-center gap-3">
                 <FileText className="h-5 w-5 text-blue-600" />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{resumeFile.name}</p>
-                  <p className="text-xs text-gray-500">{(resumeFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {resumeFile.name}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {(resumeFile.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
                 </div>
               </div>
-              <button onClick={() => removeFile("resume")} className="text-gray-400 hover:text-red-600">
+              <button
+                onClick={() => removeFile("resume")}
+                className="text-gray-400 hover:text-red-600"
+              >
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -120,7 +137,9 @@ export function DocumentUploadModal({ onClose, onDocumentsUploaded }: DocumentUp
           <div className="text-4xl mb-2">📋</div>
           {!coverLetterFile ? (
             <>
-              <p className="text-gray-600 mb-2">Drag & drop your cover letter here or</p>
+              <p className="text-gray-600 mb-2">
+                Drag & drop your cover letter here or
+              </p>
               <input
                 type="file"
                 accept=".pdf,.doc,.docx,image/*"
@@ -134,18 +153,27 @@ export function DocumentUploadModal({ onClose, onDocumentsUploaded }: DocumentUp
               >
                 Browse Cover Letter
               </label>
-              <p className="text-xs text-gray-500 mt-2">Supported: PDF, DOC, DOCX, JPG, PNG (Max 10MB)</p>
+              <p className="text-xs text-gray-500 mt-2">
+                Supported: PDF, DOC, DOCX, JPG, PNG (Max 10MB)
+              </p>
             </>
           ) : (
             <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3 mt-2">
               <div className="flex items-center gap-3">
                 <FileText className="h-5 w-5 text-blue-600" />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{coverLetterFile.name}</p>
-                  <p className="text-xs text-gray-500">{(coverLetterFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {coverLetterFile.name}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {(coverLetterFile.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
                 </div>
               </div>
-              <button onClick={() => removeFile("cover")} className="text-gray-400 hover:text-red-600">
+              <button
+                onClick={() => removeFile("cover")}
+                className="text-gray-400 hover:text-red-600"
+              >
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -158,14 +186,20 @@ export function DocumentUploadModal({ onClose, onDocumentsUploaded }: DocumentUp
         <div className="mb-6 p-4 bg-blue-50 rounded-lg">
           <div className="flex items-center gap-3">
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-            <p className="text-sm text-blue-800">Processing documents and extracting information...</p>
+            <p className="text-sm text-blue-800">
+              Processing documents and extracting information...
+            </p>
           </div>
         </div>
       )}
 
       {/* Action Buttons */}
       <div className="flex justify-between gap-3">
-        <Button variant="outline" onClick={onClose} className="px-6 py-2 bg-transparent">
+        <Button
+          variant="outline"
+          onClick={onClose}
+          className="px-6 py-2 bg-transparent"
+        >
           Skip for Now
         </Button>
         <Button
@@ -177,5 +211,5 @@ export function DocumentUploadModal({ onClose, onDocumentsUploaded }: DocumentUp
         </Button>
       </div>
     </div>
-  )
+  );
 }

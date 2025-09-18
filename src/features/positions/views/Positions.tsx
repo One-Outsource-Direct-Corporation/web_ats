@@ -1,7 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import FilterBar from "../components/FilterBar";
-import { Navbar } from "@/components/reusables/Navbar.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs.tsx";
 import { useState, useEffect } from "react";
@@ -371,7 +370,6 @@ export default function Positions() {
 
   return (
     <>
-      <Navbar />
       <div className="flex flex-col min-h-screen pt-[100px] bg-gray-50">
         {" "}
         {/* Adjusted pt for fixed header */}

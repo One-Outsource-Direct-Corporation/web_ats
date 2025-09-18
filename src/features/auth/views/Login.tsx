@@ -1,9 +1,9 @@
-import React from "react"
-import LoginForm from "@/components/forms/LoginForm.tsx"
-import { useEffect } from "react"
+import React from "react";
+import LoginForm from "../components/LoginForm";
+import { useEffect } from "react";
 
 const Login: React.FC = () => {
-    useEffect(() => {
+  useEffect(() => {
     document.title = "Log In";
   }, []);
   return (
@@ -35,7 +35,7 @@ const Login: React.FC = () => {
         </a>
       </footer>
     </div>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;
