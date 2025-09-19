@@ -4,16 +4,16 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@/components/ui/avatar.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { Input } from "@/components/ui/input.tsx";
+} from "@/shared/components/ui/avatar.tsx";
+import { Button } from "@/shared/components/ui/button.tsx";
+import { Input } from "@/shared/components/ui/input.tsx";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select.tsx";
+} from "@/shared/components/ui/select.tsx";
 import {
   Table,
   TableBody,
@@ -21,15 +21,18 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table.tsx";
-import { Badge } from "@/components/ui/badge.tsx";
-import { Calendar } from "@/components/ui/calendar.tsx";
+} from "@/shared/components/ui/table.tsx";
+import { Badge } from "@/shared/components/ui/badge.tsx";
+import { Calendar } from "@/shared/components/ui/calendar.tsx";
 import { ArrowLeft, Search, MoreHorizontal } from "lucide-react";
-import { Navbar } from "@/components/reusables/Navbar.tsx";
-import { Label } from "@/components/ui/label.tsx";
-import { Textarea } from "@/components/ui/textarea.tsx";
-import { Card, CardContent } from "@/components/ui/card.tsx";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group.tsx";
+import { Navbar } from "@/shared/components/reusables/Navbar.tsx";
+import { Label } from "@/shared/components/ui/label.tsx";
+import { Textarea } from "@/shared/components/ui/textarea.tsx";
+import { Card, CardContent } from "@/shared/components/ui/card.tsx";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@/shared/components/ui/radio-group.tsx";
 import { useParams } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 

@@ -5,16 +5,16 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@/components/ui/avatar.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { Input } from "@/components/ui/input.tsx";
+} from "@/shared/components/ui/avatar.tsx";
+import { Button } from "@/shared/components/ui/button.tsx";
+import { Input } from "@/shared/components/ui/input.tsx";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select.tsx";
+} from "@/shared/components/ui/select.tsx";
 import {
   Table,
   TableBody,
@@ -22,9 +22,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table.tsx";
+} from "@/shared/components/ui/table.tsx";
 import { ArrowLeft, Search } from "lucide-react";
-import { Navbar } from "@/components/reusables/Navbar.tsx";
+import { Navbar } from "@/shared/components/reusables/Navbar.tsx";
 import { useLocation } from "react-router-dom";
 
 // Sample applicant data

@@ -13,6 +13,7 @@ import type { AxiosError, AxiosResponse } from "axios";
 const AuthContext = createContext<AuthContextType | undefined>({
   user: null,
   isAuthenticated: false,
+  isAuthChecking: true,
   isLoading: false,
   login: async (
     credentials: LoginCredentials
@@ -44,6 +45,11 @@ function authReducer(
         ...state,
         isLoading: false,
       };
+    case "AUTH_CHECK_END":
+      return {
+        ...state,
+        isAuthChecking: false,
+      };
     default:
       return state;
   }
@@ -55,6 +61,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const [state, dispatch] = useReducer(authReducer, {
     user: null,
+    isAuthChecking: true,
     isAuthenticated: false,
     isLoading: false,
   });
@@ -73,17 +80,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       } catch (error: AxiosError | any) {
         console.error("Auth initialization error:", error);
 
+        // Refactor this later
         if (error.status === 401) {
-          // Refactor this later
-          const refreshResponse = await refreshToken();
-          console.log("=".repeat(20));
-          console.log(refreshResponse);
-          if (refreshResponse.status === 200) {
-            initializeAuth();
+          try {
+            const refreshResponse = await refreshToken();
+            if (refreshResponse.status === 200) {
+              initializeAuth();
+              return;
+            }
+          } catch (error: AxiosError | any) {
+            console.error("Token refresh failed:", error);
           }
         }
       } finally {
         dispatch({ type: "LOGIN_FAILURE" });
+        dispatch({ type: "AUTH_CHECK_END" });
       }
     };
 

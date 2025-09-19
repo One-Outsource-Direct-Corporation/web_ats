@@ -1,8 +1,8 @@
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card } from "@/shared/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
 import FilterBar from "../components/FilterBar";
-import { Button } from "@/components/ui/button.tsx";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs.tsx";
+import { Button } from "@/shared/components/ui/button.tsx";
+import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs.tsx";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ActionDialog from "../components/ActionDialog";
@@ -13,7 +13,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/shared/components/ui/dialog";
 
 // Dummy data and types (move to a types.ts if needed)
 import initialJobData from "../data/initialJobData";
@@ -34,7 +34,7 @@ import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
-} from "@/components/ui/tooltip";
+} from "@/shared/components/ui/tooltip";
 // Removed stray bracket
 
 export default function Positions() {

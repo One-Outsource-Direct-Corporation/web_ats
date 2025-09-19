@@ -1,12 +1,12 @@
 import React from "react";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/shared/components/ui/input";
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from "@/components/ui/select.tsx";
+} from "@/shared/components/ui/select.tsx";
 
 interface FilterBarProps {
   search: string;

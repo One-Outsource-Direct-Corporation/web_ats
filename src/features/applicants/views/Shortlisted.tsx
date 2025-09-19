@@ -5,19 +5,19 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@/components/ui/avatar.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { Input } from "@/components/ui/input.tsx";
-import { Label } from "@/components/ui/label.tsx";
-import { Textarea } from "@/components/ui/textarea.tsx";
-import { Card, CardContent } from "@/components/ui/card.tsx";
+} from "@/shared/components/ui/avatar.tsx";
+import { Button } from "@/shared/components/ui/button.tsx";
+import { Input } from "@/shared/components/ui/input.tsx";
+import { Label } from "@/shared/components/ui/label.tsx";
+import { Textarea } from "@/shared/components/ui/textarea.tsx";
+import { Card, CardContent } from "@/shared/components/ui/card.tsx";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select.tsx";
+} from "@/shared/components/ui/select.tsx";
 import {
   Table,
   TableBody,

@@ -3,16 +3,16 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@/components/ui/avatar.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { Input } from "@/components/ui/input.tsx";
+} from "@/shared/components/ui/avatar.tsx";
+import { Button } from "@/shared/components/ui/button.tsx";
+import { Input } from "@/shared/components/ui/input.tsx";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select.tsx";
+} from "@/shared/components/ui/select.tsx";
 import {
   Table,
   TableBody,
@@ -20,13 +20,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table.tsx";
-import { Badge } from "@/components/ui/badge.tsx";
-import { Calendar } from "@/components/ui/calendar.tsx";
+} from "@/shared/components/ui/table.tsx";
+import { Badge } from "@/shared/components/ui/badge.tsx";
+import { Calendar } from "@/shared/components/ui/calendar.tsx";
 import { ArrowLeft, Search, MoreHorizontal } from "lucide-react";
-import { Navbar } from "@/components/reusables/Navbar.tsx";
+import { Navbar } from "@/shared/components/reusables/Navbar.tsx";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import ExamForm from "@/pages/Exam-Form.tsx";
+import ExamForm from "@/shared/pages/Exam-Form.tsx";
 
 // Sample applicant data with status
 const applicants = [

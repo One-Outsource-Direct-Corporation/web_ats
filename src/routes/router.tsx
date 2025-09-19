@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
-import RootLayout from "@/pages/RootLayout";
-import Requests from "@/pages/requests/Requests.tsx";
-import MainApp from "@/pages/applicantview/ApplicantMainPage";
+import RootLayout from "@/shared/pages/RootLayout";
+import Requests from "@/shared/pages/requests/Requests.tsx";
+import MainApp from "@/shared/pages/applicantview/ApplicantMainPage";
 import { applicantsRoutes } from "@/features/applicants/routes/applicantsRoutes.tsx";
 import { jobsRoutes } from "@/features/jobs/routes/jobsRoutes.tsx";
 import { interviewsRoutes } from "@/features/interviews/routes/interviewsRoutes.tsx";

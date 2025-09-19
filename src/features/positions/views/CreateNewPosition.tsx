@@ -1,4 +1,4 @@
-import { Button } from "../../../components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { useCreateNewPosition } from "../hooks/useCreateNewPosition";
 import DetailsStep from "../components/DetailsStep";
 import DescriptionStep from "../components/DescriptionStep";

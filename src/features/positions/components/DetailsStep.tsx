@@ -1,6 +1,6 @@
-import { Card } from "../../../components/ui/card";
-import { Button } from "../../../components/ui/button";
-import { Input } from "../../../components/ui/input";
+import { Card } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
 import { Edit2, Trash2, Plus } from "lucide-react";
 import type {
   FormData,
@@ -154,9 +154,7 @@ export default function DetailsStep({
           <Input
             placeholder="Input text"
             value={formData.headcountsNeeded}
-            onChange={(e) =>
-              onInputChange("headcountsNeeded", e.target.value)
-            }
+            onChange={(e) => onInputChange("headcountsNeeded", e.target.value)}
           />
         </div>
 
@@ -259,9 +257,7 @@ export default function DetailsStep({
 
       {/* Location */}
       <div className="mb-8">
-        <h3 className="text-lg font-medium text-gray-800 mb-4">
-          Location
-        </h3>
+        <h3 className="text-lg font-medium text-gray-800 mb-4">Location</h3>
 
         {/* Location Table */}
         <div className="overflow-x-auto border rounded-lg mb-4">

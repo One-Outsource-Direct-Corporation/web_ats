@@ -18,6 +18,7 @@ export interface User {
 
 export interface AuthState {
   user: User | null;
+  isAuthChecking: boolean;
   isAuthenticated: boolean;
   isLoading: boolean;
 }

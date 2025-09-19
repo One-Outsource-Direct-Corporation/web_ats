@@ -40,22 +40,22 @@ import {
   X,
   LayoutGrid,
 } from "lucide-react";
-import { Button } from "@/components/ui/button.tsx";
+import { Button } from "@/shared/components/ui/button.tsx";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@/components/ui/avatar.tsx";
-import { Badge } from "@/components/ui/badge.tsx";
+} from "@/shared/components/ui/avatar.tsx";
+import { Badge } from "@/shared/components/ui/badge.tsx";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select.tsx";
-import { Input } from "@/components/ui/input.tsx";
-import { Navbar } from "@/components/reusables/Navbar.tsx";
+} from "@/shared/components/ui/select.tsx";
+import { Input } from "@/shared/components/ui/input.tsx";
+import { Navbar } from "@/shared/components/reusables/Navbar.tsx";
 
 // ----------------------
 // Interfaces

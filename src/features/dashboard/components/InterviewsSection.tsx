@@ -1,4 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/shared/components/ui/card";
 import { CircleUser, ClockAlert, MapPin, Video, Pin } from "lucide-react";
 import type { InterviewDay } from "../types/upcomingEvents.types";
 

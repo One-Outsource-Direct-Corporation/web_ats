@@ -6,8 +6,8 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from "@/shared/components/ui/dialog";
+import { Button } from "@/shared/components/ui/button";
 
 // Cancel Confirmation Modal
 interface CancelConfirmModalProps {

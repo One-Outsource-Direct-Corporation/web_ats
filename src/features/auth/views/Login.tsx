@@ -8,8 +8,6 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
 
-  console.log(user);
-
   useEffect(() => {
     document.title = "Log In";
   }, []);

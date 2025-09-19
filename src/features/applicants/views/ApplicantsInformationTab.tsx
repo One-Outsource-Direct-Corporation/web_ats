@@ -6,22 +6,22 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@/components/ui/avatar.tsx";
-import { Badge } from "@/components/ui/badge.tsx";
-import { Button } from "@/components/ui/button.tsx";
+} from "@/shared/components/ui/avatar.tsx";
+import { Badge } from "@/shared/components/ui/badge.tsx";
+import { Button } from "@/shared/components/ui/button.tsx";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card.tsx";
+} from "@/shared/components/ui/card.tsx";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/ui/tabs.tsx";
-import { Textarea } from "@/components/ui/textarea.tsx";
+} from "@/shared/components/ui/tabs.tsx";
+import { Textarea } from "@/shared/components/ui/textarea.tsx";
 import {
   Briefcase,
   Mail,
@@ -39,8 +39,8 @@ import {
   Scaling,
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import { Navbar } from "@/components/reusables/Navbar.tsx";
-import AnsweredForm from "@/components/forms/AnsweredForm.tsx";
+import { Navbar } from "@/shared/components/reusables/Navbar.tsx";
+import AnsweredForm from "@/shared/components/forms/AnsweredForm.tsx";
 
 const applicantsData = {
   "maria-white": {

@@ -1,6 +1,6 @@
 // import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { useInterviewEvaluations } from "@/features/interviews/useInterviewEvaluations";
+import { Button } from "@/shared/components/ui/button";
+import { useInterviewEvaluations } from "../../interviews/hooks/useInterviewEvaluations";
 import { useNavigate } from "react-router-dom";
 
 export default function InterviewEvaluationForm() {

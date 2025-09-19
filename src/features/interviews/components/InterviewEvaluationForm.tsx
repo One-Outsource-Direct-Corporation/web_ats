@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { useInterviewEvaluations } from "../hooks/useInterviewEvaluations";
 import { useNavigate } from "react-router-dom";
 

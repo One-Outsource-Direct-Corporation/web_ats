@@ -1,14 +1,14 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button.tsx";
-import { Input } from "@/components/ui/input.tsx";
+import { Button } from "@/shared/components/ui/button.tsx";
+import { Input } from "@/shared/components/ui/input.tsx";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select.tsx";
+} from "@/shared/components/ui/select.tsx";
 import {
   Table,
   TableBody,
@@ -16,14 +16,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table.tsx";
+} from "@/shared/components/ui/table.tsx";
 import { Search, ArrowLeft } from "lucide-react";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@/components/ui/avatar.tsx";
-import { Navbar } from "@/components/reusables/Navbar.tsx";
+} from "@/shared/components/ui/avatar.tsx";
+import { Navbar } from "@/shared/components/reusables/Navbar.tsx";
 import { useLocation } from "react-router-dom";
 // Sample data with email and phone
 const applicants = [

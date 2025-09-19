@@ -1,4 +1,4 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/shared/components/ui/card";
 import type { Metric } from "../types/upcomingEvents.types";
 
 interface MetricsSectionProps {

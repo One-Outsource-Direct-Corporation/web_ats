@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useState } from "react"
+import { useState } from "react";
 import {
   Search,
   FileCode2,
@@ -13,34 +13,40 @@ import {
   Briefcase,
   Linkedin,
   Mail,
-} from "lucide-react"
-import { Button } from "@/components/ui/button.tsx"
-import { Input } from "@/components/ui/input.tsx"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.tsx"
-import { useAppNavigation } from "@/hooks/use-navigation.ts"
+} from "lucide-react";
+import { Button } from "@/shared/components/ui/button.tsx";
+import { Input } from "@/shared/components/ui/input.tsx";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select.tsx";
+import { useAppNavigation } from "@/hooks/use-navigation.ts";
 
 interface JobData {
-  id: number
-  title: string
-  icon: any
-  department: string
-  role: string
-  description: string
-  filters: string[]
-  daysAgo: number
-  applicants: string
-  category: string
-  workType: string
-  workSetup: string
+  id: number;
+  title: string;
+  icon: any;
+  department: string;
+  role: string;
+  description: string;
+  filters: string[];
+  daysAgo: number;
+  applicants: string;
+  category: string;
+  workType: string;
+  workSetup: string;
 }
 
 export default function ApplicantLandingPage() {
-  const navigation = useAppNavigation()
-  const [searchTerm, setSearchTerm] = useState("")
-  const [categoryFilter, setCategoryFilter] = useState("All")
-  const [workTypeFilter, setWorkTypeFilter] = useState("All")
-  const [workSetupFilter, setWorkSetupFilter] = useState("All")
-  const [isSearchActive, setIsSearchActive] = useState(false)
+  const navigation = useAppNavigation();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("All");
+  const [workTypeFilter, setWorkTypeFilter] = useState("All");
+  const [workSetupFilter, setWorkSetupFilter] = useState("All");
+  const [isSearchActive, setIsSearchActive] = useState(false);
 
   const jobCards: JobData[] = [
     {
@@ -49,7 +55,8 @@ export default function ApplicantLandingPage() {
       icon: FileCode2,
       department: "Engineering",
       role: "Supervisory",
-      description: "Seeking a skilled Lead Developer to manage projects, mentor teams, and drive technical excellence.",
+      description:
+        "Seeking a skilled Lead Developer to manage projects, mentor teams, and drive technical excellence.",
       filters: ["Full-time", "Hybrid", "Senior-level"],
       daysAgo: 2,
       applicants: "150+",
@@ -132,27 +139,27 @@ export default function ApplicantLandingPage() {
       workType: "Full-time",
       workSetup: "Remote",
     },
-  ]
+  ];
 
   const handleSearch = () => {
-    setIsSearchActive(true)
-  }
+    setIsSearchActive(true);
+  };
 
   const handleClearFilters = () => {
-    setSearchTerm("")
-    setCategoryFilter("All")
-    setWorkTypeFilter("All")
-    setWorkSetupFilter("All")
-    setIsSearchActive(false)
-  }
+    setSearchTerm("");
+    setCategoryFilter("All");
+    setWorkTypeFilter("All");
+    setWorkSetupFilter("All");
+    setIsSearchActive(false);
+  };
 
   const handleApplyNow = (job: JobData) => {
-    navigation.goToJobDescription(job)
-  }
+    navigation.goToJobDescription(job);
+  };
 
   const handleTrackApplication = () => {
-    navigation.goToTracker()
-  }
+    navigation.goToTracker();
+  };
 
   const filteredJobs = isSearchActive
     ? jobCards.filter((job) => {
@@ -160,15 +167,23 @@ export default function ApplicantLandingPage() {
           searchTerm === "" ||
           job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
           job.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          job.description.toLowerCase().includes(searchTerm.toLowerCase())
+          job.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-        const matchesCategory = categoryFilter === "All" || job.category === categoryFilter
-        const matchesWorkType = workTypeFilter === "All" || job.workType === workTypeFilter
-        const matchesWorkSetup = workSetupFilter === "All" || job.workSetup === workSetupFilter
+        const matchesCategory =
+          categoryFilter === "All" || job.category === categoryFilter;
+        const matchesWorkType =
+          workTypeFilter === "All" || job.workType === workTypeFilter;
+        const matchesWorkSetup =
+          workSetupFilter === "All" || job.workSetup === workSetupFilter;
 
-        return matchesSearch && matchesCategory && matchesWorkType && matchesWorkSetup
+        return (
+          matchesSearch &&
+          matchesCategory &&
+          matchesWorkType &&
+          matchesWorkSetup
+        );
       })
-    : jobCards
+    : jobCards;
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -177,7 +192,11 @@ export default function ApplicantLandingPage() {
         <header className="w-full mt-0 p-4 flex items-center justify-between bg-white shadow-md rounded-b-2xl">
           <div className="flex items-center gap-4 ml-6">
             <div className="text-2xl font-bold text-blue-600">
-              <img src="/OODC%20logo2.png" alt="OODC Logo" className="h-24 mx-auto" />
+              <img
+                src="/OODC%20logo2.png"
+                alt="OODC Logo"
+                className="h-24 mx-auto"
+              />
             </div>
           </div>
           <Button
@@ -197,7 +216,9 @@ export default function ApplicantLandingPage() {
               style={{ padding: "5px", height: "160px", width: "40px" }}
             >
               <div className="transform rotate-90 whitespace-nowrap">
-                <span className="text-white font-bold text-xl tracking-wider">JOB OPENING</span>
+                <span className="text-white font-bold text-xl tracking-wider">
+                  JOB OPENING
+                </span>
               </div>
             </div>
           </div>
@@ -218,7 +239,10 @@ export default function ApplicantLandingPage() {
               </div>
 
               <div className="min-w-[150px]">
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <Select
+                  value={categoryFilter}
+                  onValueChange={setCategoryFilter}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
@@ -227,13 +251,18 @@ export default function ApplicantLandingPage() {
                     <SelectItem value="Entry-level">Entry-level</SelectItem>
                     <SelectItem value="Mid-level">Mid-level</SelectItem>
                     <SelectItem value="Senior-level">Senior-level</SelectItem>
-                    <SelectItem value="Executive/Management">Executive/Management</SelectItem>
+                    <SelectItem value="Executive/Management">
+                      Executive/Management
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="min-w-[150px]">
-                <Select value={workTypeFilter} onValueChange={setWorkTypeFilter}>
+                <Select
+                  value={workTypeFilter}
+                  onValueChange={setWorkTypeFilter}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Work Type" />
                   </SelectTrigger>
@@ -243,15 +272,22 @@ export default function ApplicantLandingPage() {
                     <SelectItem value="Part-time">Part-time</SelectItem>
                     <SelectItem value="Contract">Contract</SelectItem>
                     <SelectItem value="Freelance">Freelance</SelectItem>
-                    <SelectItem value="Temporary employment">Temporary employment</SelectItem>
+                    <SelectItem value="Temporary employment">
+                      Temporary employment
+                    </SelectItem>
                     <SelectItem value="Internships">Internships</SelectItem>
-                    <SelectItem value="Apprenticeships">Apprenticeships</SelectItem>
+                    <SelectItem value="Apprenticeships">
+                      Apprenticeships
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="min-w-[150px]">
-                <Select value={workSetupFilter} onValueChange={setWorkSetupFilter}>
+                <Select
+                  value={workSetupFilter}
+                  onValueChange={setWorkSetupFilter}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Work Setup" />
                   </SelectTrigger>
@@ -265,7 +301,10 @@ export default function ApplicantLandingPage() {
               </div>
 
               <div className="flex gap-2">
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6" onClick={handleSearch}>
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+                  onClick={handleSearch}
+                >
                   Search
                 </Button>
                 <Button variant="outline" onClick={handleClearFilters}>
@@ -279,13 +318,17 @@ export default function ApplicantLandingPage() {
           <div className="mx-auto max-w-6xl mt-6 mb-16 bg-white rounded-lg shadow-sm p-6 relative z-20">
             {filteredJobs.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">No jobs found matching your criteria.</p>
-                <p className="text-gray-400 text-sm mt-2">Try adjusting your filters or search terms.</p>
+                <p className="text-gray-500 text-lg">
+                  No jobs found matching your criteria.
+                </p>
+                <p className="text-gray-400 text-sm mt-2">
+                  Try adjusting your filters or search terms.
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredJobs.map((job) => {
-                  const IconComponent = job.icon
+                  const IconComponent = job.icon;
                   return (
                     <div
                       key={job.id}
@@ -294,7 +337,9 @@ export default function ApplicantLandingPage() {
                       {/* Header with Icon and Title */}
                       <div className="flex items-start gap-3 mb-3">
                         <IconComponent className="h-6 w-6 text-blue-600 mt-1 flex-shrink-0" />
-                        <h3 className="text-lg font-semibold text-gray-900 leading-tight">{job.title}</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 leading-tight">
+                          {job.title}
+                        </h3>
                       </div>
 
                       {/* Department and Role */}
@@ -303,12 +348,17 @@ export default function ApplicantLandingPage() {
                       </div>
 
                       {/* Description */}
-                      <p className="text-gray-700 text-sm mb-4 line-clamp-3">{job.description}</p>
+                      <p className="text-gray-700 text-sm mb-4 line-clamp-3">
+                        {job.description}
+                      </p>
 
                       {/* Filter Tags */}
                       <div className="flex flex-wrap gap-2 mb-4">
                         {job.filters.map((filter, index) => (
-                          <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+                          <span
+                            key={index}
+                            className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
+                          >
                             {filter}
                           </span>
                         ))}
@@ -318,7 +368,9 @@ export default function ApplicantLandingPage() {
                       <div className="space-y-3">
                         <div className="text-sm text-gray-500">
                           Opened {job.daysAgo} days ago |{" "}
-                          <span className="text-green-600 font-medium">{job.applicants} Applicants</span>
+                          <span className="text-green-600 font-medium">
+                            {job.applicants} Applicants
+                          </span>
                         </div>
                         <div className="flex justify-end">
                           <Button
@@ -331,7 +383,7 @@ export default function ApplicantLandingPage() {
                         </div>
                       </div>
                     </div>
-                  )
+                  );
                 })}
               </div>
             )}
@@ -347,10 +399,12 @@ export default function ApplicantLandingPage() {
               <Linkedin className="h-6 w-6 text-white" />
               <Mail className="h-6 w-6 text-white" />
             </div>
-            <div className="text-white text-sm">© 2025 One Outsource Direct Group • Privacy • Terms • Sitemap</div>
+            <div className="text-white text-sm">
+              © 2025 One Outsource Direct Group • Privacy • Terms • Sitemap
+            </div>
           </div>
         </footer>
       </div>
     </div>
-  )
+  );
 }

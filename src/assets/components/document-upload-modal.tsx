@@ -1,7 +1,7 @@
 import type React from "react";
 import { useState } from "react";
 import { X, Upload, FileText } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 
 interface DocumentUploadModalProps {
   onClose: () => void;

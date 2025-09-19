@@ -1,21 +1,23 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { appNavigation } from "@/utils/navigation"
+import { useState, useEffect } from "react";
+import { appNavigation } from "@/shared/utils/navigation";
 
 export const useAppNavigation = () => {
-  const [appState, setAppState] = useState(appNavigation.getAppState())
+  const [appState, setAppState] = useState(appNavigation.getAppState());
 
   useEffect(() => {
-    const unsubscribe = appNavigation.subscribe(setAppState)
-    return unsubscribe
-  }, [])
+    const unsubscribe = appNavigation.subscribe(setAppState);
+    return unsubscribe;
+  }, []);
 
   return {
     // Navigation methods
     goToJobOpenings: () => appNavigation.goToJobOpenings(),
-    goToJobDescription: (jobData: any) => appNavigation.goToJobDescription(jobData),
-    goToApplicationProcess: (jobData: any) => appNavigation.goToApplicationProcess(jobData),
+    goToJobDescription: (jobData: any) =>
+      appNavigation.goToJobDescription(jobData),
+    goToApplicationProcess: (jobData: any) =>
+      appNavigation.goToApplicationProcess(jobData),
     goToTracker: (searchCode?: string) => appNavigation.goToTracker(searchCode),
     goToDocuments: () => appNavigation.goToDocuments(),
 
@@ -28,5 +30,5 @@ export const useAppNavigation = () => {
 
     // Current state
     appState,
-  }
-}
+  };
+};

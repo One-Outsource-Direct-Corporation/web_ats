@@ -1,5 +1,5 @@
 import type { Applicant } from "../types/Applicant";
-import { Badge } from "@/components/ui/badge.tsx";
+import { Badge } from "@/shared/components/ui/badge.tsx";
 import { Link } from "react-router-dom";
 
 interface Props {

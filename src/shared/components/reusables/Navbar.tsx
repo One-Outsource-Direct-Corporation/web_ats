@@ -13,14 +13,18 @@ import {
   ChevronsUpDown,
   LogOut,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/shared/components/ui/sheet";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"; // Assuming you have Popover components
+} from "@/shared/components/ui/popover"; // Assuming you have Popover components
 
 function isActivePath(basePath: string) {
   return (

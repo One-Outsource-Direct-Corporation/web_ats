@@ -1,14 +1,14 @@
 import { useApplicants } from "../hooks/useApplicants";
 import { ApplicantList } from "../components/ApplicantList";
-import { Input } from "@/components/ui/input.tsx";
-import { Button } from "@/components/ui/button.tsx";
+import { Input } from "@/shared/components/ui/input.tsx";
+import { Button } from "@/shared/components/ui/button.tsx";
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from "@/components/ui/select.tsx";
+} from "@/shared/components/ui/select.tsx";
 import { ChevronRightCircle } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";

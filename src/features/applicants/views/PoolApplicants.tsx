@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
-import { Input } from "@/components/ui/input.tsx";
+import { Input } from "@/shared/components/ui/input.tsx";
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from "@/components/ui/select.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { Navbar } from "@/components/reusables/Navbar.tsx";
+} from "@/shared/components/ui/select.tsx";
+import { Button } from "@/shared/components/ui/button.tsx";
 
 const applicants = [
   {

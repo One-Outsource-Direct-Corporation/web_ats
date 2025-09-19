@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useJobByTitle } from "../hooks/useJobs";
-import { Input } from "@/components/ui/input.tsx";
-import { Button } from "@/components/ui/button.tsx";
+import { Input } from "@/shared/components/ui/input.tsx";
+import { Button } from "@/shared/components/ui/button.tsx";
 import { ArrowLeft, LayoutGrid, List } from "lucide-react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { Navbar } from "@/components/reusables/Navbar.tsx";
+import { Navbar } from "@/shared/components/reusables/Navbar.tsx";
 
 export default function JobDetails() {
   const navigate = useNavigate();

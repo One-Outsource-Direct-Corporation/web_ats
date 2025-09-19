@@ -1,63 +1,76 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { Search } from "lucide-react"
-import { Button } from "@/components/ui/button.tsx"
-import { Input } from "@/components/ui/input.tsx"
-import { Calendar } from "@/components/ui/calendar.tsx"
-import { Facebook, Briefcase, Linkedin, Mail } from "lucide-react"
-import { useAppNavigation } from "@/hooks/use-navigation.ts"
+import { useState, useEffect } from "react";
+import { Search } from "lucide-react";
+import { Button } from "@/shared/components/ui/button.tsx";
+import { Input } from "@/shared/components/ui/input.tsx";
+import { Calendar } from "@/shared/components/ui/calendar.tsx";
+import { Facebook, Briefcase, Linkedin, Mail } from "lucide-react";
+import { useAppNavigation } from "@/hooks/use-navigation.ts";
 
 interface JobData {
-  id: number
-  title: string
-  icon: any
-  department: string
-  role: string
-  description: string
-  filters: string[]
-  daysAgo: number
-  applicants: string
-  category: string
-  workType: string
-  workSetup: string
+  id: number;
+  title: string;
+  icon: any;
+  department: string;
+  role: string;
+  description: string;
+  filters: string[];
+  daysAgo: number;
+  applicants: string;
+  category: string;
+  workType: string;
+  workSetup: string;
 }
 
 interface ApplicationData {
-  jobTitle: string
-  jobReq: string
-  status: "Received" | "On Hold" | "Hired"
-  date: string
+  jobTitle: string;
+  jobReq: string;
+  status: "Received" | "On Hold" | "Hired";
+  date: string;
 }
 
 interface TaskData {
-  jobTitle: string
-  jobReq: string
-  taskTitle: string
-  taskStatus: "Done" | "Pending"
-  scheduledDate: string
+  jobTitle: string;
+  jobReq: string;
+  taskTitle: string;
+  taskStatus: "Done" | "Pending";
+  scheduledDate: string;
 }
 
 interface JobOfferData {
-  jobTitle: string
-  jobReq: string
-  date: string
+  jobTitle: string;
+  jobReq: string;
+  date: string;
 }
 
 interface EventData {
-  date: string
-  month: string
-  day: string
-  title: string
-  location?: string
-  type: "Interview" | "Examination" | "Upload Documents"
+  date: string;
+  month: string;
+  day: string;
+  title: string;
+  location?: string;
+  type: "Interview" | "Examination" | "Upload Documents";
 }
 
 const mockApplications: ApplicationData[] = [
-  { jobTitle: "Software Engineer", jobReq: "REQ123", status: "Received", date: "2023-10-01" },
-  { jobTitle: "Product Manager", jobReq: "REQ456", status: "On Hold", date: "2023-09-25" },
-  { jobTitle: "Data Scientist", jobReq: "REQ789", status: "Hired", date: "2023-09-10" },
-]
+  {
+    jobTitle: "Software Engineer",
+    jobReq: "REQ123",
+    status: "Received",
+    date: "2023-10-01",
+  },
+  {
+    jobTitle: "Product Manager",
+    jobReq: "REQ456",
+    status: "On Hold",
+    date: "2023-09-25",
+  },
+  {
+    jobTitle: "Data Scientist",
+    jobReq: "REQ789",
+    status: "Hired",
+    date: "2023-09-10",
+  },
+];
 
 const mockTasks: TaskData[] = [
   {
@@ -74,72 +87,113 @@ const mockTasks: TaskData[] = [
     taskStatus: "Pending",
     scheduledDate: "2023-10-10",
   },
-]
+];
 
-const mockJobOffers: JobOfferData[] = [{ jobTitle: "Software Engineer", jobReq: "REQ123", date: "2023-10-15" }]
+const mockJobOffers: JobOfferData[] = [
+  { jobTitle: "Software Engineer", jobReq: "REQ123", date: "2023-10-15" },
+];
 
 const mockEvents: EventData[] = [
-  { date: "2023-10-01", month: "Oct", day: "1", title: "Interview", location: "Building A", type: "Interview" },
-  { date: "2023-10-10", month: "Oct", day: "10", title: "Examination", type: "Examination" },
-  { date: "2023-10-15", month: "Oct", day: "15", title: "Upload Documents", type: "Upload Documents" },
-]
+  {
+    date: "2023-10-01",
+    month: "Oct",
+    day: "1",
+    title: "Interview",
+    location: "Building A",
+    type: "Interview",
+  },
+  {
+    date: "2023-10-10",
+    month: "Oct",
+    day: "10",
+    title: "Examination",
+    type: "Examination",
+  },
+  {
+    date: "2023-10-15",
+    month: "Oct",
+    day: "15",
+    title: "Upload Documents",
+    type: "Upload Documents",
+  },
+];
 
 export default function TrackApplicationPage() {
-  const navigation = useAppNavigation()
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
+  const navigation = useAppNavigation();
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    new Date()
+  );
 
   // Get search query from navigation state
-  const searchQuery = navigation.getSearchQuery()
-  const [trackingCode, setTrackingCode] = useState(searchQuery || "")
-  const [showResults, setShowResults] = useState(!!searchQuery)
+  const searchQuery = navigation.getSearchQuery();
+  const [trackingCode, setTrackingCode] = useState(searchQuery || "");
+  const [showResults, setShowResults] = useState(!!searchQuery);
 
   // Clear search query after using it to prevent it from persisting
   useEffect(() => {
     if (searchQuery) {
-      navigation.clearSearchQuery()
+      navigation.clearSearchQuery();
     }
-  }, [searchQuery])
+  }, [searchQuery]);
 
   const handleSearch = () => {
     if (trackingCode.trim()) {
-      setShowResults(true)
+      setShowResults(true);
     }
-  }
+  };
 
   const handleJobOpenings = () => {
-    navigation.goToJobOpenings()
-  }
+    navigation.goToJobOpenings();
+  };
 
   // Function to handle logo click, navigating to job openings
   const handleLogoClick = () => {
-    navigation.goToJobOpenings()
-  }
+    navigation.goToJobOpenings();
+  };
 
   const getStatusBadge = (status: "Received" | "On Hold" | "Hired") => {
     const styles = {
       Received: "bg-green-100 text-green-800",
       "On Hold": "bg-yellow-100 text-yellow-800",
       Hired: "bg-blue-100 text-blue-800",
-    }
-    return <span className={`px-3 py-1 rounded-full text-sm font-medium ${styles[status]}`}>{status}</span>
-  }
+    };
+    return (
+      <span
+        className={`px-3 py-1 rounded-full text-sm font-medium ${styles[status]}`}
+      >
+        {status}
+      </span>
+    );
+  };
 
   const getTaskStatusBadge = (status: "Done" | "Pending") => {
     const styles = {
       Done: "bg-green-100 text-green-800",
       Pending: "bg-yellow-100 text-yellow-800",
-    }
-    return <span className={`px-3 py-1 rounded-full text-sm font-medium ${styles[status]}`}>{status}</span>
-  }
+    };
+    return (
+      <span
+        className={`px-3 py-1 rounded-full text-sm font-medium ${styles[status]}`}
+      >
+        {status}
+      </span>
+    );
+  };
 
-  const getEventTypeBadge = (type: "Interview" | "Examination" | "Upload Documents") => {
+  const getEventTypeBadge = (
+    type: "Interview" | "Examination" | "Upload Documents"
+  ) => {
     const styles = {
       Interview: "bg-blue-100 text-blue-800",
       Examination: "bg-green-100 text-green-800",
       "Upload Documents": "bg-red-100 text-red-800",
-    }
-    return <span className={`px-2 py-1 rounded text-xs font-medium ${styles[type]}`}>{type}</span>
-  }
+    };
+    return (
+      <span className={`px-2 py-1 rounded text-xs font-medium ${styles[type]}`}>
+        {type}
+      </span>
+    );
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -147,8 +201,15 @@ export default function TrackApplicationPage() {
       <header className="w-full mt-0 p-4 flex items-center justify-between bg-white shadow-md rounded-b-2xl">
         <div className="flex items-center gap-4 ml-6">
           {/* Logo - Made clickable */}
-          <div className="text-2xl font-bold text-blue-600 cursor-pointer" onClick={handleLogoClick}>
-            <img src="/OODC%20logo2.png" alt="OODC Logo" className="h-24 mx-auto" />
+          <div
+            className="text-2xl font-bold text-blue-600 cursor-pointer"
+            onClick={handleLogoClick}
+          >
+            <img
+              src="/OODC%20logo2.png"
+              alt="OODC Logo"
+              className="h-24 mx-auto"
+            />
           </div>
         </div>
         {/* No Track Application button since we're already on the track page */}
@@ -194,7 +255,9 @@ export default function TrackApplicationPage() {
               {/* Progress Section */}
               <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
                 <div className="flex items-center gap-3 mb-6">
-                  <h2 className="text-lg font-semibold text-blue-600">Progress</h2>
+                  <h2 className="text-lg font-semibold text-blue-600">
+                    Progress
+                  </h2>
                   <div className="flex-1 h-px bg-blue-600"></div>
                 </div>
 
@@ -204,17 +267,27 @@ export default function TrackApplicationPage() {
                       <tr className="bg-blue-600 text-white">
                         <th className="px-4 py-3 text-left">Job Title</th>
                         <th className="px-4 py-3 text-left">Job Req</th>
-                        <th className="px-4 py-3 text-left">Application Status</th>
+                        <th className="px-4 py-3 text-left">
+                          Application Status
+                        </th>
                         <th className="px-4 py-3 text-left">Date</th>
                       </tr>
                     </thead>
                     <tbody>
                       {mockApplications.map((app, index) => (
                         <tr key={index} className="border-t border-gray-300">
-                          <td className="px-4 py-3 text-gray-900">{app.jobTitle}</td>
-                          <td className="px-4 py-3 text-gray-900">{app.jobReq}</td>
-                          <td className="px-4 py-3">{getStatusBadge(app.status)}</td>
-                          <td className="px-4 py-3 text-gray-900">{app.date}</td>
+                          <td className="px-4 py-3 text-gray-900">
+                            {app.jobTitle}
+                          </td>
+                          <td className="px-4 py-3 text-gray-900">
+                            {app.jobReq}
+                          </td>
+                          <td className="px-4 py-3">
+                            {getStatusBadge(app.status)}
+                          </td>
+                          <td className="px-4 py-3 text-gray-900">
+                            {app.date}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -225,7 +298,9 @@ export default function TrackApplicationPage() {
               {/* My Tasks Section */}
               <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
                 <div className="flex items-center gap-3 mb-6">
-                  <h2 className="text-lg font-semibold text-blue-600">My Tasks</h2>
+                  <h2 className="text-lg font-semibold text-blue-600">
+                    My Tasks
+                  </h2>
                   <div className="flex-1 h-px bg-blue-600"></div>
                 </div>
 
@@ -244,11 +319,19 @@ export default function TrackApplicationPage() {
                         <tr key={index} className="border-t border-gray-300">
                           <td className="px-4 py-3">
                             <div className="text-gray-900">{task.jobTitle}</div>
-                            <div className="text-gray-500 text-sm">{task.jobReq}</div>
+                            <div className="text-gray-500 text-sm">
+                              {task.jobReq}
+                            </div>
                           </td>
-                          <td className="px-4 py-3 text-gray-900">{task.taskTitle}</td>
-                          <td className="px-4 py-3">{getTaskStatusBadge(task.taskStatus)}</td>
-                          <td className="px-4 py-3 text-gray-900">{task.scheduledDate}</td>
+                          <td className="px-4 py-3 text-gray-900">
+                            {task.taskTitle}
+                          </td>
+                          <td className="px-4 py-3">
+                            {getTaskStatusBadge(task.taskStatus)}
+                          </td>
+                          <td className="px-4 py-3 text-gray-900">
+                            {task.scheduledDate}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -259,7 +342,9 @@ export default function TrackApplicationPage() {
               {/* Job Offer Section */}
               <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
                 <div className="flex items-center gap-3 mb-6">
-                  <h2 className="text-lg font-semibold text-blue-600">Job Offer</h2>
+                  <h2 className="text-lg font-semibold text-blue-600">
+                    Job Offer
+                  </h2>
                   <div className="flex-1 h-px bg-blue-600"></div>
                 </div>
 
@@ -277,8 +362,12 @@ export default function TrackApplicationPage() {
                       {mockJobOffers.map((offer, index) => (
                         <tr key={index} className="border-t border-gray-300">
                           <td className="px-4 py-3">
-                            <div className="text-gray-900">{offer.jobTitle}</div>
-                            <div className="text-gray-500 text-sm">{offer.jobReq}</div>
+                            <div className="text-gray-900">
+                              {offer.jobTitle}
+                            </div>
+                            <div className="text-gray-500 text-sm">
+                              {offer.jobReq}
+                            </div>
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex gap-2">
@@ -290,7 +379,9 @@ export default function TrackApplicationPage() {
                               </button>
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-gray-900">{offer.date}</td>
+                          <td className="px-4 py-3 text-gray-900">
+                            {offer.date}
+                          </td>
                           <td className="px-4 py-3">
                             <Button
                               onClick={() => navigation.goToDocuments()}
@@ -314,9 +405,12 @@ export default function TrackApplicationPage() {
               <div className="text-gray-400 mb-4">
                 <Search className="h-16 w-16 mx-auto" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Enter Your Tracking Code</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Enter Your Tracking Code
+              </h3>
               <p className="text-gray-600">
-                Please enter your tracking code in the search field above to view your application status and tasks.
+                Please enter your tracking code in the search field above to
+                view your application status and tasks.
               </p>
             </div>
           )}
@@ -344,19 +438,34 @@ export default function TrackApplicationPage() {
 
             <div className="space-y-4">
               {mockEvents.map((event, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4">
+                <div
+                  key={index}
+                  className="border border-gray-200 rounded-lg p-4"
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex gap-3">
                       <div className="text-center">
-                        <div className="text-lg font-bold text-gray-900">{event.month}</div>
-                        <div className="text-2xl font-bold text-blue-600">{event.day}</div>
+                        <div className="text-lg font-bold text-gray-900">
+                          {event.month}
+                        </div>
+                        <div className="text-2xl font-bold text-blue-600">
+                          {event.day}
+                        </div>
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-medium text-gray-900 mb-1">{event.title}</h4>
-                        {event.location && <p className="text-sm text-gray-600">{event.location}</p>}
+                        <h4 className="font-medium text-gray-900 mb-1">
+                          {event.title}
+                        </h4>
+                        {event.location && (
+                          <p className="text-sm text-gray-600">
+                            {event.location}
+                          </p>
+                        )}
                       </div>
                     </div>
-                    <div className="ml-2 whitespace-nowrap">{getEventTypeBadge(event.type)}</div>
+                    <div className="ml-2 whitespace-nowrap">
+                      {getEventTypeBadge(event.type)}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -374,9 +483,11 @@ export default function TrackApplicationPage() {
             <Linkedin className="h-6 w-6 text-white" />
             <Mail className="h-6 w-6 text-white" />
           </div>
-          <div className="text-white text-sm">© 2025 One Outsource Direct Group • Privacy • Terms • Sitemap</div>
+          <div className="text-white text-sm">
+            © 2025 One Outsource Direct Group • Privacy • Terms • Sitemap
+          </div>
         </div>
       </footer>
     </div>
-  )
+  );
 }
