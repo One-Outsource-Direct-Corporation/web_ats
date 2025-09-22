@@ -1,3 +1,5 @@
+import type { User } from "@/features/auth/types/auth.types";
+
 // PRF feature types
 export interface AssessmentTypes {
   technical: boolean;

@@ -106,7 +106,7 @@ export const Step02: React.FC<Step02Props> = ({
                 }
               />
             </div>
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-5 items-center">
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1">
                   Work Schedule From
@@ -117,7 +117,6 @@ export const Step02: React.FC<Step02Props> = ({
                   onChange={handleFromTimeChange}
                 />
               </div>
-              <span>-</span>
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1">
                   Work Schedule To

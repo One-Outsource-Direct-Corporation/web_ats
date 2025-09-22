@@ -15,9 +15,7 @@ const AuthContext = createContext<AuthContextType | undefined>({
   isAuthenticated: false,
   isAuthChecking: true,
   isLoading: false,
-  login: async (
-    credentials: LoginCredentials
-  ): Promise<AxiosResponse<AuthResponse>> => {
+  login: async (): Promise<AxiosResponse<AuthResponse>> => {
     throw new Error("AuthProvider not found");
   },
   //   logout: () => {},

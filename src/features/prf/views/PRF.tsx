@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePRFForm } from "../hooks/usePRFForm";
 import { Step01 } from "../components/Step01";
@@ -27,7 +27,7 @@ export default function PRF() {
     otherReasonForPosting: "",
     businessUnit: "",
     departmentName: "",
-    interviewLevels: 4,
+    interviewLevels: 1,
     immediateSupervisor: "",
     hiringManagers: [],
     contractType: "",
@@ -77,7 +77,6 @@ export default function PRF() {
     },
   };
   const { formData, updateFormData } = usePRFForm(initialFormData);
-  console.log(formData);
 
   useEffect(() => {
     document.title = "Personnel Requisition Form";
@@ -90,6 +89,7 @@ export default function PRF() {
       return nextStep;
     });
   };
+
   const goToPreviousStep = () => setStep((prev) => Math.max(prev - 1, 1));
 
   const handleCancelRequest = () => {

@@ -7,7 +7,6 @@ import { Checkbox } from "@/shared/components/ui/checkbox";
 import { useAuth } from "../hooks/useAuth";
 import { toast } from "react-toastify";
 import type { AxiosError } from "axios";
-import type { AxiosResponse } from "axios";
 
 const LoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -21,12 +20,11 @@ const LoginForm: React.FC = () => {
     e.preventDefault();
 
     try {
-      const response: AxiosResponse = await login({ email, password });
+      const response = await login({ email, password });
       if (response.status === 200) {
         toast.success("Login successful!");
       }
     } catch (err: any | AxiosError) {
-      // Error is handled by the auth context
       toast.error(
         err.response?.data?.detail ||
           "Login failed. Please check your credentials."

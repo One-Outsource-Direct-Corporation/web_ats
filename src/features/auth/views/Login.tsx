@@ -14,10 +14,10 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      // Navigate based on user role
       navigate("/dashboard");
     }
   }, [isAuthenticated, user, navigate]);
+
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden">
       {/* Main */}

@@ -14,6 +14,8 @@ export interface User {
   first_name: string;
   middle_name: string;
   last_name: string;
+  department: string;
+  role: string;
 }
 
 export interface AuthState {

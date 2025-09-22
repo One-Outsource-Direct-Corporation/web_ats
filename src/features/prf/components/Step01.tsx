@@ -10,6 +10,10 @@ import {
 } from "@/shared/components/ui/select";
 import type { FormData } from "../types/prfTypes";
 import { PreviewInfo } from "./PreviewInfo";
+import { useUsersByDepartment } from "../hooks/useUsersByDepartment";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
+import type { User } from "@/features/auth/types/auth.types";
 
 interface Step01Props {
   goToNextStep: () => void;
@@ -24,11 +28,14 @@ export const Step01: React.FC<Step01Props> = ({
   formData,
   updateFormData,
 }) => {
+  const { users, loading } = useUsersByDepartment();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const handleInterviewLevelChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const value = e.target.value.replace(/^0+/, "");
     const parsedValue = Number.parseInt(value);
+
     updateFormData({
       interviewLevels: Number.isNaN(parsedValue) ? 0 : Math.max(0, parsedValue),
     });
@@ -42,11 +49,14 @@ export const Step01: React.FC<Step01Props> = ({
     });
   };
 
+  if (isAuthLoading) return <LoadingComponent />;
+
   const handleHiringManagerChange = (index: number, value: string) => {
     const updatedManagers = [...formData.hiringManagers];
     updatedManagers[index] = value;
     updateFormData({ hiringManagers: updatedManagers });
   };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
       <div className="lg:col-span-2 space-y-6">
@@ -137,7 +147,7 @@ export const Step01: React.FC<Step01Props> = ({
                   type="radio"
                   name="businessUnit"
                   value="OODC"
-                  checked={formData.businessUnit === "OODC"}
+                  checked={user ? user.department === "oodc" : false}
                   onChange={(e) =>
                     updateFormData({ businessUnit: e.target.value })
                   }
@@ -147,7 +157,7 @@ export const Step01: React.FC<Step01Props> = ({
                   type="radio"
                   name="businessUnit"
                   value="OORS"
-                  checked={formData.businessUnit === "OORS"}
+                  checked={user ? user.department === "oors" : false}
                   onChange={(e) =>
                     updateFormData({ businessUnit: e.target.value })
                   }
@@ -208,8 +218,19 @@ export const Step01: React.FC<Step01Props> = ({
                   <SelectValue placeholder="Ex: Ms. Hailey Adams" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Hailey Adams">Ms. Hailey Adams</SelectItem>
-                  <SelectItem value="John Smith">Mr. John Smith</SelectItem>
+                  {users.length > 0 ? (
+                    users
+                      .filter((usr: User) => usr.role === "supervisor")
+                      .map((usr: User) => (
+                        <SelectItem key={usr.id} value={usr.id}>
+                          {usr.first_name} {usr.last_name}
+                        </SelectItem>
+                      ))
+                  ) : (
+                    <>
+                      <SelectItem value="">No Supervisor</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -235,8 +256,19 @@ export const Step01: React.FC<Step01Props> = ({
                     <SelectValue placeholder="Name" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Manager A">Manager A</SelectItem>
-                    <SelectItem value="Manager B">Manager B</SelectItem>
+                    {users.length > 0 ? (
+                      users
+                        .filter((usr: User) => usr.role === "manager")
+                        .map((usr: User) => (
+                          <SelectItem key={usr.id} value={usr.id}>
+                            {usr.first_name} {usr.last_name}
+                          </SelectItem>
+                        ))
+                    ) : (
+                      <>
+                        <SelectItem value="">No Hiring Manager</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>

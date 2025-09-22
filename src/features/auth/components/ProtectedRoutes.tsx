@@ -10,8 +10,7 @@ export default function ProtectedRoutes({
 }) {
   const { isAuthenticated, isAuthChecking } = useAuth();
 
-  if (isAuthChecking)
-    return <LoadingComponent message="Checking authentication..." />;
+  if (isAuthChecking) return <LoadingComponent />;
 
   if (!isAuthenticated) return <Navigate to="/" replace />;
   return <>{children}</>;
