@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useReducer, createContext } from "react";
 import type { ReactNode } from "react";
-import { login, checkAuth, refreshToken } from "../api/authApi";
+import { login, logout, checkAuth, refreshToken } from "../api/authApi";
 import type {
   AuthContextType,
   LoginCredentials,
@@ -18,7 +18,9 @@ const AuthContext = createContext<AuthContextType | undefined>({
   login: async (): Promise<AxiosResponse<AuthResponse>> => {
     throw new Error("AuthProvider not found");
   },
-  //   logout: () => {},
+  logout: async (): Promise<void> => {
+    throw new Error("AuthProvider not found");
+  },
 });
 
 function authReducer(
@@ -47,6 +49,12 @@ function authReducer(
       return {
         ...state,
         isAuthChecking: false,
+      };
+    case "LOGOUT_SUCCESS":
+      return {
+        ...state,
+        user: null,
+        isAuthenticated: false,
       };
     default:
       return state;
@@ -99,7 +107,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     initializeAuth();
   }, []);
 
-  const handleLogin = useCallback(async (credentials: LoginCredentials) => {
+  const handleLogin = async (credentials: LoginCredentials) => {
     try {
       dispatch({ type: "LOGIN_START" });
       const response = await login(credentials.email, credentials.password);
@@ -117,23 +125,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     } finally {
       dispatch({ type: "LOGIN_FAILURE" });
     }
-  }, []);
+  };
 
-  //   // Logout function
-  //   const handleLogout = useCallback(() => {
-  //     authService.logout();
-  //     setAuthState({
-  //       user: null,
-  //       isAuthenticated: false,
-  //       isLoading: false,
-  //     });
-  //     // Navigation will be handled by the component using this hook
-  //   }, []);
+  // Logout function
+  const handleLogout = async () => {
+    try {
+      const response = await logout();
+      console.log("I GOT EXECUTED");
+      console.log(response);
+      if (response.status === 200) {
+        dispatch({ type: "LOGOUT_SUCCESS" });
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
 
   const contextValue: AuthContextType = {
     ...state,
     login: handleLogin,
-    // logout: handleLogout,
+    logout: handleLogout,
   };
 
   return (

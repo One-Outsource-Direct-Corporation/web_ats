@@ -39,5 +39,5 @@ export interface AuthContextType extends AuthState {
   login: (
     credentials: LoginCredentials
   ) => Promise<AxiosResponse<AuthResponse>>;
-  //   logout: () => void;
+  logout: () => Promise<void>;
 }

@@ -1,5 +1,6 @@
 import api from "@/config/axios";
-import type { AuthResponse, LoginCredentials } from "../types/auth.types";
+import type { AuthResponse } from "../types/auth.types";
+import type { AxiosError } from "axios";
 
 export const login = async (email: string, password: string) => {
   try {
@@ -14,18 +15,13 @@ export const login = async (email: string, password: string) => {
   }
 };
 
-// Alternative login function that accepts credentials object
-export const loginWithCredentials = async (credentials: LoginCredentials) => {
-  return login(credentials.email, credentials.password);
-};
-
 // Logout function
 export const logout = async () => {
   try {
-    await api.post("/api/logout/");
-  } catch (error) {
-    // Even if logout fails on server, we clear local state
-    console.warn("Server logout failed:", error);
+    const response = await api.post("/api/auth/logout/");
+    return response;
+  } catch (error: AxiosError | any) {
+    throw error;
   }
 };
 
@@ -34,7 +30,7 @@ export const refreshToken = async () => {
   try {
     const response = await api.post("/api/auth/token/refresh/");
     return response;
-  } catch (error: any) {
+  } catch (error: AxiosError | any) {
     throw error;
   }
 };
@@ -48,3 +44,18 @@ export const checkAuth = async () => {
     throw error;
   }
 };
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError | any) => {
+    if (error.response && error.response.status === 401) {
+      try {
+        await refreshToken();
+        return Promise.resolve();
+      } catch (refreshError) {
+        return Promise.reject(refreshError);
+      }
+    }
+    return Promise.reject(error);
+  }
+);

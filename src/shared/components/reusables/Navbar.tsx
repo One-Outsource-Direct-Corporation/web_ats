@@ -33,13 +33,17 @@ function isActivePath(basePath: string) {
   );
 }
 
-import { useState } from "react";
+import { useState, useContext } from "react";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { toast } from "react-toastify";
+import type { AxiosError } from "axios";
 
 export function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false); // State for the user popover
+  const { user, logout } = useAuth();
 
   const routes = [
     {
@@ -69,10 +73,15 @@ export function Navbar() {
     },
   ];
 
-  const handleLogout = () => {
-    // Perform logout logic here (e.g., clear tokens, session)
-    navigate("/"); // Redirect to the root path
-    setUserMenuOpen(false); // Close the popover after logout
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Logged out successfully");
+      navigate("/", { replace: true }); // Redirect to the root path
+    } catch (error: AxiosError | any) {
+      console.log(error.status);
+      console.error("Logout failed:", error);
+    }
   };
 
   return (
@@ -144,21 +153,35 @@ export function Navbar() {
                   className="flex items-center gap-2 cursor-pointer"
                 >
                   <div className="rounded-full bg-primary h-8 w-8 flex items-center justify-center text-white">
-                    U
+                    {user?.first_name[0].toUpperCase()}
                   </div>
-                  <span>Username</span>
+                  <span>
+                    {user &&
+                      user?.first_name[0].toUpperCase() +
+                        user?.first_name.slice(1)}{" "}
+                    {user &&
+                      user?.last_name[0].toUpperCase() +
+                        user?.last_name.slice(1)}
+                  </span>
                   <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-64 p-2">
                 <div className="flex items-center gap-3 p-2">
                   <div className="rounded-full bg-primary h-10 w-10 flex items-center justify-center text-white">
-                    U
+                    {user?.first_name[0].toUpperCase()}
                   </div>
                   <div className="flex flex-col">
-                    <p className="font-bold">Username</p>
+                    <p className="font-bold">
+                      {user &&
+                        user?.first_name[0].toUpperCase() +
+                          user?.first_name.slice(1)}{" "}
+                      {user &&
+                        user?.last_name[0].toUpperCase() +
+                          user?.last_name.slice(1)}
+                    </p>
                     <p className="text-sm text-muted-foreground">
-                      user@example.com
+                      {user?.email}
                     </p>
                   </div>
                 </div>

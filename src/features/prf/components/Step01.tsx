@@ -49,13 +49,13 @@ export const Step01: React.FC<Step01Props> = ({
     });
   };
 
-  if (isAuthLoading) return <LoadingComponent />;
-
   const handleHiringManagerChange = (index: number, value: string) => {
     const updatedManagers = [...formData.hiringManagers];
     updatedManagers[index] = value;
     updateFormData({ hiringManagers: updatedManagers });
   };
+
+  if (isAuthLoading || loading) return <LoadingComponent />;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
@@ -228,7 +228,9 @@ export const Step01: React.FC<Step01Props> = ({
                       ))
                   ) : (
                     <>
-                      <SelectItem value="">No Supervisor</SelectItem>
+                      <SelectItem value="no-supervisor">
+                        No Supervisor
+                      </SelectItem>
                     </>
                   )}
                 </SelectContent>
@@ -266,7 +268,9 @@ export const Step01: React.FC<Step01Props> = ({
                         ))
                     ) : (
                       <>
-                        <SelectItem value="">No Hiring Manager</SelectItem>
+                        <SelectItem value="no-hiring-manager">
+                          No Hiring Manager
+                        </SelectItem>
                       </>
                     )}
                   </SelectContent>
