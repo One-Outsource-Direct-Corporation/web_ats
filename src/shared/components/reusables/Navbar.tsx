@@ -33,7 +33,7 @@ function isActivePath(basePath: string) {
   );
 }
 
-import { useState, useContext } from "react";
+import { useState } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { toast } from "react-toastify";
 import type { AxiosError } from "axios";

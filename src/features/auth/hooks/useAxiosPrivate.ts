@@ -1,55 +1,47 @@
 import { useEffect } from "react";
-// import { useNavigate, useLocation } from "react-router-dom";
-import api from "@/config/axios";
-import { useRefreshToken } from "./useRefreshToken";
+import { axiosPrivate } from "@/config/axios";
+import useRefreshToken from "./useRefreshToken";
 import { useAuth } from "./useAuth";
+import type { AxiosError } from "axios";
 
 const useAxiosPrivate = () => {
-  const refresh = useRefreshToken;
+  const refresh = useRefreshToken();
   const { user, logout } = useAuth();
-  // const navigate = useNavigate();
-  // const location = useLocation();
 
   useEffect(() => {
-    const requestIntercept = api.interceptors.request.use((config) => {
+    const requestIntercept = axiosPrivate.interceptors.request.use((config) => {
       if (!config.headers["Authorization"]) {
         config.headers["Authorization"] = `Bearer ${user?.access}`;
       }
+
       return config;
     });
 
-    const responseIntercept = api.interceptors.response.use(
+    const responseIntercept = axiosPrivate.interceptors.response.use(
       (response) => response,
-      async (error) => {
+      async (error: AxiosError | any) => {
         const prevRequest = error?.config;
         if (error?.response?.status === 401 && !prevRequest?.sent) {
           prevRequest.sent = true;
 
-          const errorMessage = error.response.data?.error;
-          // const newAccessToken = await refresh();
-          // prevRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
-          // return api(prevRequest);
-
-          if (errorMessage === "no refresh token provided") {
-            // No refresh token: Logout and redirect to login
-            logout(); // Clear auth state
-            // navigate("/", { state: { from: location } }); // Store current path
+          const errorMessage = error?.response?.data?.error;
+          if (errorMessage === "No refresh token provided") {
+            await logout();
             return Promise.reject(error);
           } else {
-            // Other 401: Try refresh
             try {
               const newAccessToken = await refresh();
+
               if (newAccessToken) {
                 prevRequest.headers[
                   "Authorization"
                 ] = `Bearer ${newAccessToken}`;
-                return api(prevRequest);
+                return axiosPrivate(prevRequest);
               }
-            } catch (refreshError) {
-              // Refresh failed: Logout and redirect
-              logout();
-              // navigate("/", { state: { from: location } });
-              return Promise.reject(refreshError);
+            } catch (err) {
+              console.error("Token refresh failed:", err);
+              await logout();
+              return Promise.reject(err);
             }
           }
         }
@@ -59,12 +51,12 @@ const useAxiosPrivate = () => {
     );
 
     return () => {
-      api.interceptors.response.eject(responseIntercept);
-      api.interceptors.request.eject(requestIntercept);
+      axiosPrivate.interceptors.request.eject(requestIntercept);
+      axiosPrivate.interceptors.response.eject(responseIntercept);
     };
-  }, [user, refresh]);
+  }, [user, refresh, logout]);
 
-  return api;
+  return axiosPrivate;
 };
 
 export default useAxiosPrivate;

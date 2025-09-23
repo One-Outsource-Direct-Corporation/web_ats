@@ -1,7 +1,6 @@
-import { useEffect, useReducer, createContext } from "react";
+import { useEffect, useCallback, useReducer, createContext } from "react";
 import type { ReactNode } from "react";
-import { login, logout } from "../api/authApi";
-// import {useRefres}
+import { login, logout, checkAuth, refreshToken } from "../api/authApi";
 import type {
   AuthContextType,
   LoginCredentials,
@@ -9,7 +8,6 @@ import type {
   AuthResponse,
 } from "../types/auth.types";
 import type { AxiosError, AxiosResponse } from "axios";
-import useAxiosPrivate from "../hooks/useAxiosPrivate";
 
 // Create Auth Context
 const AuthContext = createContext<AuthContextType | undefined>({
@@ -59,7 +57,6 @@ function authReducer(
         ...state,
         user: null,
         isAuthenticated: false,
-        isAuthChecking: false,
       };
     default:
       return state;
@@ -76,16 +73,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     isAuthenticated: false,
     isLoading: false,
   });
-  const axiosPrivate = useAxiosPrivate();
 
   useEffect(() => {
-    const abortController = new AbortController();
-
     const initializeAuth = async () => {
       try {
-        const response = await axiosPrivate.post("/api/auth/check-login/", {
-          signal: abortController.signal,
-        });
+        const response = await checkAuth();
 
         if (response.status === 200 && response.data.user) {
           dispatch({
@@ -95,6 +87,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         }
       } catch (error: AxiosError | any) {
         console.error("Auth initialization error:", error);
+
+        // Refactor this later
+        if (error.status === 401) {
+          try {
+            const refreshResponse = await refreshToken();
+            if (refreshResponse.status === 200) {
+              initializeAuth();
+              return;
+            }
+          } catch (error: AxiosError | any) {
+            console.error("Token refresh failed:", error);
+          }
+        }
       } finally {
         dispatch({ type: "LOGIN_FAILURE" });
         dispatch({ type: "AUTH_CHECK_END" });
@@ -102,16 +107,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     };
 
     initializeAuth();
-
-    return () => {
-      abortController.abort();
-    };
   }, []);
 
   const handleLogin = async (credentials: LoginCredentials) => {
     try {
       dispatch({ type: "LOGIN_START" });
       const response = await login(credentials.email, credentials.password);
+
       if (response.status === 200) {
         const obj = { ...response.data.user };
         obj["access"] = response.data.access;
@@ -124,24 +126,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       return response;
     } catch (error: any) {
-      console.error("Login error:", error);
-      dispatch({ type: "LOGIN_FAILURE" });
       throw error;
+    } finally {
+      dispatch({ type: "LOGIN_FAILURE" });
     }
   };
 
   // Logout function
   const handleLogout = async () => {
-    console.log("I got called");
     try {
-      await logout();
-      dispatch({ type: "LOGOUT_SUCCESS" });
-    } catch (error: AxiosError | any) {
-      // Ignore logout errors - still logout locally to clear frontend state
-      console.error("Logout error:", error);
-      if (error?.response?.status === 401) {
+      const response = await logout();
+      console.log("I GOT EXECUTED");
+      console.log(response);
+      if (response.status === 200) {
         dispatch({ type: "LOGOUT_SUCCESS" });
       }
+    } catch (error) {
+      throw error;
     }
   };
 

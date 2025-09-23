@@ -1,12 +1,14 @@
-import { defaultAxios } from "@/config/axios";
-import type { AxiosError } from "axios";
+import axios from "@/config/axios";
 
-// Refresh token function
-export const useRefreshToken = async () => {
-  try {
-    const response = await defaultAxios.post("/api/auth/token/refresh/");
+const useRefreshToken = () => {
+  const refresh = async (): Promise<string | undefined> => {
+    const response = await axios.post("/api/auth/token/refresh/", {
+      withCredentials: true,
+    });
     return response.data?.access;
-  } catch (error: AxiosError | any) {
-    throw error;
-  }
+  };
+
+  return refresh;
 };
+
+export default useRefreshToken;

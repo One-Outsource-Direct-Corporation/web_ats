@@ -15,6 +15,7 @@ export interface User {
   middle_name: string;
   last_name: string;
   department: string;
+  access: string;
   role: string;
   access: string;
 }

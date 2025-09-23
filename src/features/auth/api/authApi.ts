@@ -48,11 +48,12 @@ export const checkAuth = async (signal: AbortSignal) => {
 //   async (error: AxiosError | any) => {
 //     if (error.response && error.response.status === 401) {
 //       try {
-//         await useRefreshToken();
+//         await refreshToken();
 //         return Promise.resolve();
 //       } catch (refreshError) {
 //         return Promise.reject(refreshError);
 //       }
 //     }
+//     return Promise.reject(error);
 //   }
 // );
