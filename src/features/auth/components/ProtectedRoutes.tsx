@@ -8,7 +8,11 @@ export default function ProtectedRoutes({
 }: {
   children: JSX.Element;
 }) {
-  const { isAuthenticated, isAuthChecking } = useAuth();
+  const { isAuthenticated, isAuthChecking, user } = useAuth();
+
+  console.log("ProtectedRoutes - isAuthenticated:", isAuthenticated);
+  console.log("ProtectedRoutes - isAuthChecking:", isAuthChecking);
+  console.log("ProtectedRoutes - user:", user);
 
   if (isAuthChecking) return <LoadingComponent />;
 

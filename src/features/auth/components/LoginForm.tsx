@@ -7,12 +7,15 @@ import { Checkbox } from "@/shared/components/ui/checkbox";
 import { useAuth } from "../hooks/useAuth";
 import { toast } from "react-toastify";
 import type { AxiosError } from "axios";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const LoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const { login, isLoading } = useAuth();
 
@@ -23,6 +26,8 @@ const LoginForm: React.FC = () => {
       const response = await login({ email, password });
       if (response.status === 200) {
         toast.success("Login successful!");
+        const from = location.state?.from?.pathname || "/dashboard";
+        navigate(from, { replace: true });
       }
     } catch (err: any | AxiosError) {
       toast.error(

@@ -9,6 +9,7 @@ export const fetchUserByDepartment = async (
     const response = await api.get(`/api/user/list/${department}/`);
     return response.data;
   } catch (error: AxiosError | any) {
+    console.log(error);
     throw error;
   }
 };
