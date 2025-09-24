@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Button } from "@/shared/components/ui/button";
@@ -7,35 +7,51 @@ import { Checkbox } from "@/shared/components/ui/checkbox";
 import { useAuth } from "../hooks/useAuth";
 import { toast } from "react-toastify";
 import type { AxiosError } from "axios";
-import { useNavigate, useLocation } from "react-router-dom";
+import { defaultAxios } from "@/config/axios";
 
 const LoginForm: React.FC = () => {
+  const { setUser, persist, setPersist } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const { login, isLoading } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      const response = await login({ email, password });
+      setIsLoading(true);
+      const response = await defaultAxios.post(
+        "/api/auth/login/",
+        { email, password },
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
       if (response.status === 200) {
+        const obj = response.data.user;
+        obj.access = response.data.access;
         toast.success("Login successful!");
-        const from = location.state?.from?.pathname || "/dashboard";
-        navigate(from, { replace: true });
+        setUser(obj);
       }
     } catch (err: any | AxiosError) {
       toast.error(
         err.response?.data?.detail ||
           "Login failed. Please check your credentials."
       );
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  const togglePersist = () => {
+    setPersist((prev) => !prev);
+  };
+
+  useEffect(() => {
+    localStorage.setItem("persist", JSON.stringify(persist));
+  }, [persist]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-10">
@@ -108,13 +124,14 @@ const LoginForm: React.FC = () => {
       <div className="mb-6 flex items-center space-x-3">
         <Checkbox
           id="keep-logged-in"
-          checked={rememberMe}
-          onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+          checked={persist}
+          // onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+          onCheckedChange={togglePersist}
           className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
           disabled={isLoading}
         />
         <label htmlFor="keep-logged-in" className="text-lg">
-          Keep me logged in
+          Trust this device
         </label>
       </div>
 

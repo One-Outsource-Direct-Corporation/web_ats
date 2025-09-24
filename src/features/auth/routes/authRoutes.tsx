@@ -2,7 +2,7 @@ import Login from "../views/Login";
 
 export const authRoutes = [
   {
-    path: "/",
+    path: "login",
     children: [
       {
         index: true,

@@ -29,7 +29,7 @@ export const Step01: React.FC<Step01Props> = ({
   updateFormData,
 }) => {
   const { users, loading } = useUsersByDepartment();
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user } = useAuth();
   const handleInterviewLevelChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -55,7 +55,7 @@ export const Step01: React.FC<Step01Props> = ({
     updateFormData({ hiringManagers: updatedManagers });
   };
 
-  if (isAuthLoading || loading) return <LoadingComponent />;
+  if (loading) return <LoadingComponent />;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">

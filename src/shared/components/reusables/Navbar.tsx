@@ -37,13 +37,15 @@ import { useState } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { toast } from "react-toastify";
 import type { AxiosError } from "axios";
+import { useLogout } from "@/features/auth/hooks/useLogout";
 
 export function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false); // State for the user popover
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const { logout } = useLogout();
 
   const routes = [
     {

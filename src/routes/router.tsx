@@ -9,32 +9,48 @@ import { positionRoutes } from "@/features/positions/routes/positionRoutes";
 import { prfRoutes } from "@/features/prf/routes/prfRoutes";
 import { libraryRoutes } from "@/features/library/routes/libraryRoutes";
 import { dashboardRoutes } from "@/features/dashboard/routes/dashboardRoutes";
-import { authRoutes } from "@/features/auth/routes/authRoutes";
+import Layout from "@/shared/pages/Layout";
+import ProtectedRoutes from "@/features/auth/components/ProtectedRoutes";
+import Login from "@/features/auth/views/Login";
+import PersistLogin from "@/shared/pages/PersistLogin";
 
 export const router = createBrowserRouter([
-  ...authRoutes,
   {
-    element: <RootLayout />,
-    children: [
-      ...dashboardRoutes,
-      ...positionRoutes,
-      ...libraryRoutes,
-      {
-        path: "requests",
-        element: <Requests />,
-      },
-      ...jobsRoutes,
-      ...applicantsRoutes,
-      ...interviewsRoutes,
-      ...prfRoutes,
-    ],
-  },
-  {
-    path: "applicant",
+    path: "/",
+    element: <PersistLogin />,
     children: [
       {
         index: true,
         element: <MainApp />,
+      },
+      {
+        path: "login",
+        children: [
+          {
+            index: true,
+            element: <Login />,
+          },
+        ],
+      },
+      {
+        element: (
+          <ProtectedRoutes>
+            <RootLayout />
+          </ProtectedRoutes>
+        ),
+        children: [
+          ...dashboardRoutes,
+          ...positionRoutes,
+          ...libraryRoutes,
+          {
+            path: "requests",
+            element: <Requests />,
+          },
+          ...jobsRoutes,
+          ...applicantsRoutes,
+          ...interviewsRoutes,
+          ...prfRoutes,
+        ],
       },
     ],
   },

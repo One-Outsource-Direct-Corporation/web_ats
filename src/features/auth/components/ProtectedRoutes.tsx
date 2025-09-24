@@ -1,21 +1,17 @@
 import { type JSX } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
+import { useLocation } from "react-router-dom";
 
 export default function ProtectedRoutes({
   children,
 }: {
   children: JSX.Element;
 }) {
-  const { isAuthenticated, isAuthChecking, user } = useAuth();
+  const { user } = useAuth();
+  const location = useLocation();
 
-  console.log("ProtectedRoutes - isAuthenticated:", isAuthenticated);
-  console.log("ProtectedRoutes - isAuthChecking:", isAuthChecking);
-  console.log("ProtectedRoutes - user:", user);
+  if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
 
-  if (isAuthChecking) return <LoadingComponent />;
-
-  if (!isAuthenticated) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
