@@ -1,5 +1,3 @@
-import type { User } from "@/features/auth/types/auth.types";
-
 // PRF feature types
 export interface AssessmentTypes {
   technical: boolean;
@@ -22,36 +20,36 @@ export interface SoftwareRequired {
 }
 
 export interface FormData {
-  jobTitle: string;
-  targetStartDate: string;
-  numberOfVacancies: string;
-  reasonForPosting: string;
-  otherReasonForPosting: string;
-  businessUnit: string;
-  departmentName: string;
-  interviewLevels: number;
-  immediateSupervisor: string;
-  hiringManagers: string[];
-  contractType: string;
-  workArrangement: string;
+  job_title: string;
+  target_start_date: string;
+  number_of_vacancies: string;
+  reason_for_posting: string;
+  other_reason_for_posting: string;
+  business_unit: string;
+  department_name: string;
+  interview_levels: number;
+  immediate_supervisor: string;
+  hiring_managers: string[];
+  contract_type: string;
+  work_arrangement: string;
   category: string;
   position: string;
-  workingSite: string;
-  workScheduleFrom: string;
-  workScheduleTo: string;
-  jobDescription: string;
+  working_site: string;
+  work_schedule_from: string;
+  work_schedule_to: string;
+  job_description: string;
   responsibilities: string;
   qualifications: string;
-  nonNegotiables: string;
-  salaryBudget: string;
-  isSalaryRange: boolean;
-  minSalary: string;
-  maxSalary: string;
-  assessmentRequired: string;
-  assessmentTypes: AssessmentTypes;
-  otherAssessment: string;
-  hardwareRequired: HardwareRequired;
-  softwareRequired: SoftwareRequired;
+  non_negotiables: string;
+  salary_budget: string;
+  is_salary_range: boolean;
+  min_salary: string;
+  max_salary: string;
+  assessment_required: boolean;
+  assessment_types: AssessmentTypes;
+  other_assessment: string;
+  hardware_required: HardwareRequired;
+  software_required: SoftwareRequired;
 }
 
 export type FormDataType = FormData;

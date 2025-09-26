@@ -10,7 +10,7 @@ import {
   ArrowLeft, // Import ArrowLeft icon
 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button.tsx";
-import { useAppNavigation } from "@/hooks/use-navigation.ts";
+import { useAppNavigation } from "@/shared/hooks/use-navigation.ts";
 
 // Define the JobData interface to include the optional 'fromApplication' property
 interface JobData {

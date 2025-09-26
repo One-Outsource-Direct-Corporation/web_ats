@@ -25,14 +25,14 @@ export const useUsersByDepartment = () => {
       setError(null);
       try {
         const response = await axiosPrivate.get(
-          `/api/user/list/${user.department}/`,
+          `/api/user/${user.business_unit ? user.business_unit + "/" : ""}`,
           { signal: controller.signal }
         );
+        console.log(response);
         isMounted && setUsers(response.data);
       } catch (error: AxiosError | any) {
         if (error.code === "ERR_CANCELED") return; // Ignore abort errors
         setError(error.response?.data?.detail || "Failed to fetch users");
-        navigate("/login", { state: { from: location }, replace: true });
       } finally {
         setLoading(false);
       }

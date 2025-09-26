@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import {
   Search,
@@ -23,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select.tsx";
-import { useAppNavigation } from "@/hooks/use-navigation.ts";
+import { useAppNavigation } from "@/shared/hooks/use-navigation.ts";
 
 interface JobData {
   id: number;

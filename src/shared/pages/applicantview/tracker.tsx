@@ -4,7 +4,7 @@ import { Button } from "@/shared/components/ui/button.tsx";
 import { Input } from "@/shared/components/ui/input.tsx";
 import { Calendar } from "@/shared/components/ui/calendar.tsx";
 import { Facebook, Briefcase, Linkedin, Mail } from "lucide-react";
-import { useAppNavigation } from "@/hooks/use-navigation.ts";
+import { useAppNavigation } from "@/shared/hooks/use-navigation.ts";
 
 interface JobData {
   id: number;

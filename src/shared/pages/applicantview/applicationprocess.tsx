@@ -22,7 +22,7 @@ import {
 } from "@/shared/components/ui/radio-group.tsx";
 import { DocumentUploadModal } from "@/assets/components/document-upload-modal.tsx";
 import SignaturePad from "@/shared/components/ui/signaturepad.tsx";
-import { useAppNavigation } from "@/hooks/use-navigation.ts";
+import { useAppNavigation } from "@/shared/hooks/use-navigation.ts";
 
 interface JobData {
   id: number;

@@ -2,6 +2,7 @@ import React from "react";
 import { Button } from "@/shared/components/ui/button";
 import type { FormData } from "../types/prfTypes";
 import { PreviewInfo } from "./PreviewInfo";
+import formatName from "@/shared/utils/formatName";
 
 interface Step03Props {
   goToNextStep: () => void;
@@ -20,36 +21,36 @@ export const Step03: React.FC<Step03Props> = ({
 }) => {
   // Handlers for toggles and input changes
   const handleAssessmentRequiredChange = (value: string) => {
-    updateFormData({ assessmentRequired: value });
+    updateFormData({ assessment_required: value === "true" });
   };
   const handleAssessmentTypeToggle = (
-    type: keyof FormData["assessmentTypes"]
+    type: keyof FormData["assessment_types"]
   ) => {
     updateFormData({
-      assessmentTypes: {
-        ...formData.assessmentTypes,
-        [type]: !formData.assessmentTypes[type],
+      assessment_types: {
+        ...formData.assessment_types,
+        [type]: !formData.assessment_types[type],
       },
     });
   };
   const handleOtherAssessmentChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
-    updateFormData({ otherAssessment: e.target.value });
+    updateFormData({ other_assessment: e.target.value });
   };
-  const handleHardwareToggle = (type: keyof FormData["hardwareRequired"]) => {
+  const handleHardwareToggle = (type: keyof FormData["hardware_required"]) => {
     updateFormData({
-      hardwareRequired: {
-        ...formData.hardwareRequired,
-        [type]: !formData.hardwareRequired[type],
+      hardware_required: {
+        ...formData.hardware_required,
+        [type]: !formData.hardware_required[type],
       },
     });
   };
   const handleSoftwareToggle = (type: string) => {
     updateFormData({
-      softwareRequired: {
-        ...formData.softwareRequired,
-        [type]: !formData.softwareRequired[type],
+      software_required: {
+        ...formData.software_required,
+        [type]: !formData.software_required[type],
       },
     });
   };
@@ -68,11 +69,15 @@ export const Step03: React.FC<Step03Props> = ({
             </label>
             <select
               className="border rounded px-2 py-1 w-full"
-              value={formData.assessmentRequired}
-              onChange={(e) => handleAssessmentRequiredChange(e.target.value)}
+              value={formData.assessment_required ? "true" : "false"}
+              onChange={(e) =>
+                updateFormData({
+                  assessment_required: e.target.value === "true",
+                })
+              }
             >
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
             </select>
           </div>
           <div className="mb-4">
@@ -80,22 +85,22 @@ export const Step03: React.FC<Step03Props> = ({
               Assessment Types
             </label>
             <div className="grid grid-cols-2 gap-2">
-              {Object.keys(formData.assessmentTypes).map((type) => (
+              {Object.keys(formData.assessment_types).map((type) => (
                 <label key={type} className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     checked={
-                      formData.assessmentTypes[
-                        type as keyof FormData["assessmentTypes"]
+                      formData.assessment_types[
+                        type as keyof FormData["assessment_types"]
                       ]
                     }
                     onChange={() =>
                       handleAssessmentTypeToggle(
-                        type as keyof FormData["assessmentTypes"]
+                        type as keyof FormData["assessment_types"]
                       )
                     }
                   />
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                  {formatName(type)}
                 </label>
               ))}
             </div>
@@ -107,7 +112,7 @@ export const Step03: React.FC<Step03Props> = ({
             <input
               className="border rounded px-2 py-1 w-full"
               type="text"
-              value={formData.otherAssessment}
+              value={formData.other_assessment}
               onChange={handleOtherAssessmentChange}
               placeholder="Enter other assessment"
             />
@@ -123,22 +128,22 @@ export const Step03: React.FC<Step03Props> = ({
               Hardware Required
             </label>
             <div className="grid grid-cols-2 gap-2">
-              {Object.keys(formData.hardwareRequired).map((type) => (
+              {Object.keys(formData.hardware_required).map((type) => (
                 <label key={type} className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     checked={
-                      formData.hardwareRequired[
-                        type as keyof FormData["hardwareRequired"]
+                      formData.hardware_required[
+                        type as keyof FormData["hardware_required"]
                       ]
                     }
                     onChange={() =>
                       handleHardwareToggle(
-                        type as keyof FormData["hardwareRequired"]
+                        type as keyof FormData["hardware_required"]
                       )
                     }
                   />
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                  {formatName(type)}
                 </label>
               ))}
             </div>
@@ -148,14 +153,14 @@ export const Step03: React.FC<Step03Props> = ({
               Software Required
             </label>
             <div className="grid grid-cols-2 gap-2">
-              {Object.keys(formData.softwareRequired).map((type) => (
+              {Object.keys(formData.software_required).map((type) => (
                 <label key={type} className="flex items-center gap-2">
                   <input
                     type="checkbox"
-                    checked={formData.softwareRequired[type]}
+                    checked={formData.software_required[type]}
                     onChange={() => handleSoftwareToggle(type)}
                   />
-                  {type}
+                  {formatName(type)}
                 </label>
               ))}
             </div>

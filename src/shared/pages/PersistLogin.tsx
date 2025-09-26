@@ -40,12 +40,6 @@ export default function PersistLogin() {
     handlePersistLogin();
   }, []);
 
-  useEffect(() => {
-    console.log("isLoading:", isLoading);
-    console.log("user:", user);
-    console.log("persist:", persist);
-  }, [isLoading, user, persist]);
-
   if (isLoading) {
     return <p>Loading...</p>;
   }

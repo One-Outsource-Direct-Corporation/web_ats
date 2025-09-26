@@ -10,7 +10,11 @@ import {
   SubmitConfirmModal,
   SuccessPopup,
 } from "../components/PRFModal";
-import type { FormDataType } from "../types/prfTypes";
+
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { formatForJSON } from "@/shared/utils/formatName";
+import { defaultAxios } from "@/config/axios";
+import initialData from "../data/prfInitialData";
 
 export default function PRF() {
   const navigate = useNavigate();
@@ -19,64 +23,8 @@ export default function PRF() {
   const [showCancelConfirmDialog, setShowCancelConfirmDialog] = useState(false);
   const [showSubmitConfirmDialog, setShowSubmitConfirmDialog] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-  const initialFormData: FormDataType = {
-    jobTitle: "",
-    targetStartDate: "",
-    numberOfVacancies: "",
-    reasonForPosting: "",
-    otherReasonForPosting: "",
-    businessUnit: "",
-    departmentName: "",
-    interviewLevels: 1,
-    immediateSupervisor: "",
-    hiringManagers: [],
-    contractType: "",
-    workArrangement: "",
-    category: "",
-    position: "",
-    workingSite: "",
-    workScheduleFrom: "",
-    workScheduleTo: "",
-    jobDescription: "",
-    responsibilities: "",
-    qualifications: "",
-    nonNegotiables: "",
-    salaryBudget: "",
-    isSalaryRange: false,
-    minSalary: "",
-    maxSalary: "",
-    assessmentRequired: "Yes",
-    assessmentTypes: {
-      technical: true,
-      language: true,
-      cognitive: false,
-      personality: true,
-      behavioral: false,
-      cultural: false,
-    },
-    otherAssessment: "Psychological Test",
-    hardwareRequired: {
-      desktop: false,
-      handset: false,
-      headset: true,
-      laptop: true,
-    },
-    softwareRequired: {
-      "Adobe Photoshop": true,
-      "Google Chrome": false,
-      "MS Teams": false,
-      "Open VPN": false,
-      WinRAR: false,
-      ZOHO: false,
-      Email: false,
-      "Microsoft Office": true,
-      "Nitro Pro 8 PDF": false,
-      Viber: true,
-      Xlite: false,
-      Zoom: false,
-    },
-  };
-  const { formData, updateFormData } = usePRFForm(initialFormData);
+  const { user } = useAuth();
+  const { formData, updateFormData } = usePRFForm(initialData(user));
 
   useEffect(() => {
     document.title = "Personnel Requisition Form";
@@ -115,8 +63,45 @@ export default function PRF() {
     setShowSuccessPopup(true);
     setTimeout(() => {
       setShowSuccessPopup(false);
-      navigate("/requests");
+      // navigate("/requests");
     }, 1500);
+
+    const data = {
+      ...formData,
+      reason_for_posting: formatForJSON(formData.reason_for_posting),
+      other_reason_for_posting:
+        formData.reason_for_posting !== "Other"
+          ? ""
+          : formatForJSON(formData.reason_for_posting),
+      other_assessment: formData.other_assessment
+        ? formData.other_assessment
+            .split(",")
+            .map((item) => formatForJSON(item))
+        : [],
+      immediate_supervisor:
+        formData.immediate_supervisor === "No Supervisor"
+          ? formatForJSON(formData.immediate_supervisor)
+          : formData.immediate_supervisor,
+      hiring_managers:
+        formData.interview_levels < 0 ||
+        formData.hiring_managers.some((hm) => hm === "no-hiring-manager")
+          ? []
+          : formData.hiring_managers,
+      business_unit: formData.business_unit.toLowerCase().replace(/\s+/g, "_"),
+      category: formData.category.toLowerCase().replace(/\s+/g, "_"),
+      work_arrangement: formatForJSON(formData.work_arrangement),
+      department_name: formatForJSON(formData.department_name),
+      number_of_vacancies: Number(formData.number_of_vacancies),
+      interview_levels: Number(formData.interview_levels),
+      max_salary: formData.max_salary ? Number(formData.max_salary) : 0,
+      min_salary: formData.min_salary ? Number(formData.min_salary) : 0,
+      salary_budget: Number(formData.salary_budget),
+    };
+
+    console.log("Submitted Data:", data);
+    defaultAxios.post("/api/prf/", data).catch((error) => {
+      console.error("Error submitting PRF:", error.response || error);
+    });
   };
 
   return (

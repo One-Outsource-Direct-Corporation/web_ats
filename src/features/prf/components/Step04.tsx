@@ -2,6 +2,7 @@ import React from "react";
 import { Button } from "@/shared/components/ui/button";
 import type { FormData } from "../types/prfTypes";
 import { PreviewInfo } from "./PreviewInfo";
+import formatName from "@/shared/utils/formatName";
 
 interface Step04Props {
   goToPreviousStep: () => void;
@@ -30,21 +31,21 @@ export const Step04: React.FC<Step04Props> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <span className="font-medium">Job Title:</span>{" "}
-                {formData.jobTitle}
+                {formData.job_title}
               </div>
               <div>
                 <span className="font-medium">Target Start Date:</span>{" "}
-                {formData.targetStartDate}
+                {formData.target_start_date}
               </div>
               <div>
                 <span className="font-medium">No. of Vacancies:</span>{" "}
-                {formData.numberOfVacancies}
+                {formData.number_of_vacancies}
               </div>
               <div>
                 <span className="font-medium">Reason for Posting:</span>{" "}
-                {formData.reasonForPosting}{" "}
-                {formData.reasonForPosting === "Other" &&
-                  `(${formData.otherReasonForPosting})`}
+                {formData.reason_for_posting}{" "}
+                {formData.reason_for_posting === "Other" &&
+                  `(${formData.other_reason_for_posting})`}
               </div>
             </div>
           </div>
@@ -55,19 +56,19 @@ export const Step04: React.FC<Step04Props> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <span className="font-medium">Business Unit:</span>{" "}
-                {formData.businessUnit}
+                {formData.business_unit}
               </div>
               <div>
                 <span className="font-medium">Department Name:</span>{" "}
-                {formData.departmentName}
+                {formData.department_name}
               </div>
               <div>
                 <span className="font-medium">Immediate Supervisor:</span>{" "}
-                {formData.immediateSupervisor}
+                {formData.immediate_supervisor}
               </div>
               <div>
                 <span className="font-medium">Interview Levels:</span>{" "}
-                {formData.interviewLevels}
+                {formData.interview_levels}
               </div>
             </div>
           </div>
@@ -77,11 +78,11 @@ export const Step04: React.FC<Step04Props> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <span className="font-medium">Contract Type:</span>{" "}
-                {formData.contractType}
+                {formData.contract_type}
               </div>
               <div>
                 <span className="font-medium">Work Arrangement:</span>{" "}
-                {formData.workArrangement}
+                {formData.work_arrangement}
               </div>
               <div>
                 <span className="font-medium">Category:</span>{" "}
@@ -93,11 +94,11 @@ export const Step04: React.FC<Step04Props> = ({
               </div>
               <div>
                 <span className="font-medium">Working Site:</span>{" "}
-                {formData.workingSite}
+                {formData.working_site}
               </div>
               <div>
                 <span className="font-medium">Work Schedule:</span>{" "}
-                {formData.workScheduleFrom} - {formData.workScheduleTo}
+                {formData.work_schedule_from} - {formData.work_schedule_to}
               </div>
             </div>
           </div>
@@ -107,7 +108,7 @@ export const Step04: React.FC<Step04Props> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <span className="font-medium">Description:</span>{" "}
-                {formData.jobDescription}
+                {formData.job_description}
               </div>
               <div>
                 <span className="font-medium">Responsibilities:</span>{" "}
@@ -119,7 +120,7 @@ export const Step04: React.FC<Step04Props> = ({
               </div>
               <div>
                 <span className="font-medium">Non-Negotiables:</span>{" "}
-                {formData.nonNegotiables}
+                {formData.non_negotiables}
               </div>
             </div>
           </div>
@@ -129,21 +130,21 @@ export const Step04: React.FC<Step04Props> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <span className="font-medium">Budget:</span>{" "}
-                {formData.salaryBudget}
+                {formData.salary_budget}
               </div>
               <div>
                 <span className="font-medium">Is Salary Range:</span>{" "}
-                {formData.isSalaryRange ? "Yes" : "No"}
+                {formData.is_salary_range ? "Yes" : "No"}
               </div>
-              {formData.isSalaryRange && (
+              {formData.is_salary_range && (
                 <>
                   <div>
                     <span className="font-medium">Min Salary:</span>{" "}
-                    {formData.minSalary}
+                    {formData.min_salary}
                   </div>
                   <div>
                     <span className="font-medium">Max Salary:</span>{" "}
-                    {formData.maxSalary}
+                    {formData.max_salary}
                   </div>
                 </>
               )}
@@ -155,19 +156,19 @@ export const Step04: React.FC<Step04Props> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <span className="font-medium">Required:</span>{" "}
-                {formData.assessmentRequired}
+                {formData.assessment_required}
               </div>
               <div>
                 <span className="font-medium">Types:</span>{" "}
-                {Object.entries(formData.assessmentTypes)
+                {Object.entries(formData.assessment_types)
                   .filter(([_, v]) => v)
                   .map(([k]) => k.charAt(0).toUpperCase() + k.slice(1))
                   .join(", ")}
               </div>
-              {formData.otherAssessment && (
+              {formData.other_assessment && (
                 <div>
                   <span className="font-medium">Other Assessment:</span>{" "}
-                  {formData.otherAssessment}
+                  {formData.other_assessment}
                 </div>
               )}
             </div>
@@ -178,16 +179,16 @@ export const Step04: React.FC<Step04Props> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <span className="font-medium">Hardware:</span>{" "}
-                {Object.entries(formData.hardwareRequired)
+                {Object.entries(formData.hardware_required)
                   .filter(([_, v]) => v)
                   .map(([k]) => k.charAt(0).toUpperCase() + k.slice(1))
                   .join(", ")}
               </div>
               <div>
                 <span className="font-medium">Software:</span>{" "}
-                {Object.entries(formData.softwareRequired)
+                {Object.entries(formData.software_required)
                   .filter(([_, v]) => v)
-                  .map(([k]) => k)
+                  .map(([k]) => formatName(k))
                   .join(", ")}
               </div>
             </div>

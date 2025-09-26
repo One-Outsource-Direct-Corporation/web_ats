@@ -10,7 +10,7 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
   const [showMore, setShowMore] = useState(false);
 
   // Get selected assessment types
-  const selectedAssessments = Object.entries(formData.assessmentTypes)
+  const selectedAssessments = Object.entries(formData.assessment_types)
     .filter(([, selected]) => selected)
     .map(([type]) => {
       const typeMap: { [key: string]: string } = {
@@ -25,22 +25,22 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
     });
 
   // Get selected hardware
-  const selectedHardware = Object.entries(formData.hardwareRequired)
+  const selectedHardware = Object.entries(formData.hardware_required)
     .filter(([, selected]) => selected)
     .map(([hardware]) => hardware.charAt(0).toUpperCase() + hardware.slice(1));
 
   // Get selected software
-  const selectedSoftware = Object.entries(formData.softwareRequired)
+  const selectedSoftware = Object.entries(formData.software_required)
     .filter(([, selected]) => selected)
     .map(([software]) => software);
 
-  const displaySalary = formData.isSalaryRange
-    ? `${formData.minSalary || "N/A"} - ${formData.maxSalary || "N/A"}`
-    : formData.salaryBudget || "Not specified";
+  const displaySalary = formData.is_salary_range
+    ? `${formData.min_salary || "N/A"} - ${formData.max_salary || "N/A"}`
+    : formData.salary_budget || "Not specified";
 
   const displayWorkSchedule =
-    formData.workScheduleFrom && formData.workScheduleTo
-      ? `${formData.workScheduleFrom} - ${formData.workScheduleTo}`
+    formData.work_schedule_from && formData.work_schedule_to
+      ? `${formData.work_schedule_from} - ${formData.work_schedule_to}`
       : "Not specified";
 
   return (
@@ -53,21 +53,22 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
               POSITION INFORMATION
             </h2>
             <p>
-              <strong>Job Title:</strong> {formData.jobTitle || "Not specified"}
+              <strong>Job Title:</strong>{" "}
+              {formData.job_title || "Not specified"}
             </p>
             <p>
               <strong>Target Start Date:</strong>{" "}
-              {formData.targetStartDate || "Not specified"}
+              {formData.target_start_date || "Not specified"}
             </p>
             <p>
               <strong>Number of Vacancies:</strong>{" "}
-              {formData.numberOfVacancies || "Not specified"}
+              {formData.number_of_vacancies || "Not specified"}
             </p>
             <p>
               <strong>Reason for Posting Position:</strong>{" "}
-              {formData.reasonForPosting === "Other"
-                ? formData.otherReasonForPosting
-                : formData.reasonForPosting || "Not specified"}
+              {formData.reason_for_posting === "Other"
+                ? formData.other_reason_for_posting
+                : formData.reason_for_posting || "Not specified"}
             </p>
           </div>
           {/* DEPARTMENT INFORMATION */}
@@ -77,18 +78,18 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
             </h2>
             <p>
               <strong>Business Unit:</strong>{" "}
-              {formData.businessUnit || "Not specified"}
+              {formData.business_unit || "Not specified"}
             </p>
             <p>
-              <strong>Levels of Interview:</strong> {formData.interviewLevels}
+              <strong>Levels of Interview:</strong> {formData.interview_levels}
             </p>
             <p>
               <strong>Department Name:</strong>{" "}
-              {formData.departmentName || "Not specified"}
+              {formData.department_name || "Not specified"}
             </p>
             <p>
               <strong>Immediate Supervisor:</strong>{" "}
-              {formData.immediateSupervisor || "Not specified"}
+              {formData.immediate_supervisor || "Not specified"}
             </p>
           </div>
           {step >= 2 && (
@@ -100,11 +101,11 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
                 </h2>
                 <p>
                   <strong>Contract Type:</strong>{" "}
-                  {formData.contractType || "Not specified"}
+                  {formData.contract_type || "Not specified"}
                 </p>
                 <p>
                   <strong>Work Arrangement:</strong>{" "}
-                  {formData.workArrangement || "Not specified"}
+                  {formData.work_arrangement || "Not specified"}
                 </p>
                 <p>
                   <strong>Category:</strong>{" "}
@@ -116,7 +117,7 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
                 </p>
                 <p>
                   <strong>Working Site:</strong>{" "}
-                  {formData.workingSite || "Not specified"}
+                  {formData.working_site || "Not specified"}
                 </p>
                 <p>
                   <strong>Working Schedule:</strong> {displayWorkSchedule}
@@ -128,7 +129,7 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
                   JOB DESCRIPTION
                 </h2>
                 <p>
-                  {formData.jobDescription ||
+                  {formData.job_description ||
                     "Job description not provided yet..."}
                 </p>
               </div>
@@ -156,7 +157,7 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
                   <div className="space-y-2">
                     <h3 className="font-semibold text-sm">Non-Negotiables:</h3>
                     <p className="text-sm">
-                      {formData.nonNegotiables ||
+                      {formData.non_negotiables ||
                         "Non-negotiables not specified yet..."}
                     </p>
                   </div>
@@ -168,15 +169,15 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
                       </h2>
                       <p>
                         <strong>Assessment Required:</strong>{" "}
-                        {formData.assessmentRequired}
+                        {formData.assessment_required}
                       </p>
                       {selectedAssessments.length > 0 && (
                         <ul className="list-disc list-inside space-y-1">
                           {selectedAssessments.map((assessment, index) => (
                             <li key={index}>{assessment}</li>
                           ))}
-                          {formData.otherAssessment && (
-                            <li>{formData.otherAssessment}</li>
+                          {formData.other_assessment && (
+                            <li>{formData.other_assessment}</li>
                           )}
                         </ul>
                       )}

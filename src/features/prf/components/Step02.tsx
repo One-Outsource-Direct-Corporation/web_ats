@@ -29,12 +29,12 @@ export const Step02: React.FC<Step02Props> = ({
 }) => {
   // Logic for handling work schedule
   const handleFromTimeChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    updateFormData({ workScheduleFrom: e.target.value });
+    updateFormData({ work_schedule_from: e.target.value });
   const handleToTimeChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    updateFormData({ workScheduleTo: e.target.value });
+    updateFormData({ work_schedule_to: e.target.value });
 
   const handleSalaryRangeToggle = () =>
-    updateFormData({ isSalaryRange: !formData.isSalaryRange });
+    updateFormData({ is_salary_range: !formData.is_salary_range });
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
@@ -46,8 +46,10 @@ export const Step02: React.FC<Step02Props> = ({
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Select
-              value={formData.contractType}
-              onValueChange={(value) => updateFormData({ contractType: value })}
+              value={formData.contract_type}
+              onValueChange={(value) =>
+                updateFormData({ contract_type: value })
+              }
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Contract Type" />
@@ -60,9 +62,9 @@ export const Step02: React.FC<Step02Props> = ({
               </SelectContent>
             </Select>
             <Select
-              value={formData.workArrangement}
+              value={formData.work_arrangement}
               onValueChange={(value) =>
-                updateFormData({ workArrangement: value })
+                updateFormData({ work_arrangement: value })
               }
             >
               <SelectTrigger className="w-full">
@@ -100,9 +102,9 @@ export const Step02: React.FC<Step02Props> = ({
               </label>
               <Input
                 placeholder="Enter Working Site"
-                value={formData.workingSite}
+                value={formData.working_site}
                 onChange={(e) =>
-                  updateFormData({ workingSite: e.target.value })
+                  updateFormData({ working_site: e.target.value })
                 }
               />
             </div>
@@ -113,7 +115,7 @@ export const Step02: React.FC<Step02Props> = ({
                 </label>
                 <Input
                   type="time"
-                  value={formData.workScheduleFrom}
+                  value={formData.work_schedule_from}
                   onChange={handleFromTimeChange}
                 />
               </div>
@@ -123,7 +125,7 @@ export const Step02: React.FC<Step02Props> = ({
                 </label>
                 <Input
                   type="time"
-                  value={formData.workScheduleTo}
+                  value={formData.work_schedule_to}
                   onChange={handleToTimeChange}
                 />
               </div>
@@ -142,9 +144,9 @@ export const Step02: React.FC<Step02Props> = ({
               </label>
               <Textarea
                 placeholder="Enter job description"
-                value={formData.jobDescription}
+                value={formData.job_description}
                 onChange={(e) =>
-                  updateFormData({ jobDescription: e.target.value })
+                  updateFormData({ job_description: e.target.value })
                 }
               />
             </div>
@@ -178,9 +180,9 @@ export const Step02: React.FC<Step02Props> = ({
               </label>
               <Textarea
                 placeholder="Enter non-negotiables"
-                value={formData.nonNegotiables}
+                value={formData.non_negotiables}
                 onChange={(e) =>
-                  updateFormData({ nonNegotiables: e.target.value })
+                  updateFormData({ non_negotiables: e.target.value })
                 }
               />
             </div>
@@ -199,16 +201,16 @@ export const Step02: React.FC<Step02Props> = ({
               <Input
                 type="number"
                 placeholder="Enter Salary Budget"
-                value={formData.salaryBudget}
+                value={formData.salary_budget}
                 onChange={(e) =>
-                  updateFormData({ salaryBudget: e.target.value })
+                  updateFormData({ salary_budget: e.target.value })
                 }
               />
             </div>
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
-                checked={formData.isSalaryRange}
+                checked={formData.is_salary_range}
                 onChange={handleSalaryRangeToggle}
                 id="salaryRangeToggle"
               />
@@ -216,7 +218,7 @@ export const Step02: React.FC<Step02Props> = ({
                 Is Salary Range?
               </label>
             </div>
-            {formData.isSalaryRange && (
+            {formData.is_salary_range && (
               <>
                 <div>
                   <label className="text-sm font-medium text-gray-700 block mb-1">
@@ -225,9 +227,9 @@ export const Step02: React.FC<Step02Props> = ({
                   <Input
                     type="number"
                     placeholder="Minimum Salary"
-                    value={formData.minSalary}
+                    value={formData.min_salary}
                     onChange={(e) =>
-                      updateFormData({ minSalary: e.target.value })
+                      updateFormData({ min_salary: e.target.value })
                     }
                   />
                 </div>
@@ -238,9 +240,9 @@ export const Step02: React.FC<Step02Props> = ({
                   <Input
                     type="number"
                     placeholder="Maximum Salary"
-                    value={formData.maxSalary}
+                    value={formData.max_salary}
                     onChange={(e) =>
-                      updateFormData({ maxSalary: e.target.value })
+                      updateFormData({ max_salary: e.target.value })
                     }
                   />
                 </div>

@@ -43,7 +43,6 @@ const useAxiosPrivate = () => {
             if (err?.response?.status === 401) {
               await logout();
             }
-
             return Promise.reject(err);
           }
         }
@@ -56,7 +55,7 @@ const useAxiosPrivate = () => {
       axiosPrivate.interceptors.request.eject(requestIntercept);
       axiosPrivate.interceptors.response.eject(responseIntercept);
     };
-  }, [user, refresh, logout]);
+  }, [user?.access, refresh, logout]);
 
   return axiosPrivate;
 };

@@ -11,7 +11,6 @@ import {
 import type { FormData } from "../types/prfTypes";
 import { PreviewInfo } from "./PreviewInfo";
 import { useUsersByDepartment } from "../hooks/useUsersByDepartment";
-import { useAuth } from "@/features/auth/hooks/useAuth";
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import type { User } from "@/features/auth/types/auth.types";
 
@@ -29,7 +28,6 @@ export const Step01: React.FC<Step01Props> = ({
   updateFormData,
 }) => {
   const { users, loading } = useUsersByDepartment();
-  const { user } = useAuth();
   const handleInterviewLevelChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -37,22 +35,24 @@ export const Step01: React.FC<Step01Props> = ({
     const parsedValue = Number.parseInt(value);
 
     updateFormData({
-      interviewLevels: Number.isNaN(parsedValue) ? 0 : Math.max(0, parsedValue),
+      interview_levels: Number.isNaN(parsedValue)
+        ? 0
+        : Math.max(0, parsedValue),
     });
   };
 
   const handleReasonForPostingChange = (value: string) => {
     updateFormData({
-      reasonForPosting: value,
-      otherReasonForPosting:
-        value === "Other" ? "" : formData.otherReasonForPosting,
+      reason_for_posting: value,
+      other_reason_for_posting:
+        value === "Other" ? "" : formData.other_reason_for_posting,
     });
   };
 
   const handleHiringManagerChange = (index: number, value: string) => {
-    const updatedManagers = [...formData.hiringManagers];
+    const updatedManagers = [...formData.hiring_managers];
     updatedManagers[index] = value;
-    updateFormData({ hiringManagers: updatedManagers });
+    updateFormData({ hiring_managers: updatedManagers });
   };
 
   if (loading) return <LoadingComponent />;
@@ -72,8 +72,8 @@ export const Step01: React.FC<Step01Props> = ({
               </label>
               <Input
                 placeholder="Enter Job Title"
-                value={formData.jobTitle}
-                onChange={(e) => updateFormData({ jobTitle: e.target.value })}
+                value={formData.job_title}
+                onChange={(e) => updateFormData({ job_title: e.target.value })}
               />
             </div>
             <div>
@@ -82,9 +82,9 @@ export const Step01: React.FC<Step01Props> = ({
               </label>
               <Input
                 type="date"
-                value={formData.targetStartDate}
+                value={formData.target_start_date}
                 onChange={(e) =>
-                  updateFormData({ targetStartDate: e.target.value })
+                  updateFormData({ target_start_date: e.target.value })
                 }
               />
             </div>
@@ -95,9 +95,9 @@ export const Step01: React.FC<Step01Props> = ({
               <Input
                 type="number"
                 placeholder="e.g. 3"
-                value={formData.numberOfVacancies}
+                value={formData.number_of_vacancies}
                 onChange={(e) =>
-                  updateFormData({ numberOfVacancies: e.target.value })
+                  updateFormData({ number_of_vacancies: e.target.value })
                 }
               />
             </div>
@@ -106,26 +106,26 @@ export const Step01: React.FC<Step01Props> = ({
                 Reason for Posting Position
               </label>
               <Select
-                value={formData.reasonForPosting}
+                value={formData.reason_for_posting}
                 onValueChange={handleReasonForPostingChange}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a reason" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="New position">New position</SelectItem>
+                  <SelectItem value="New Position">New position</SelectItem>
                   <SelectItem value="Replacement">Replacement</SelectItem>
                   <SelectItem value="Reliver">Reliver</SelectItem>
                   <SelectItem value="Other">Other</SelectItem>
                 </SelectContent>
               </Select>
-              {formData.reasonForPosting === "Other" && (
+              {formData.reason_for_posting === "Other" && (
                 <Input
                   className="w-full mt-2"
                   placeholder="Please specify"
-                  value={formData.otherReasonForPosting}
+                  value={formData.other_reason_for_posting}
                   onChange={(e) =>
-                    updateFormData({ otherReasonForPosting: e.target.value })
+                    updateFormData({ other_reason_for_posting: e.target.value })
                   }
                 />
               )}
@@ -147,9 +147,9 @@ export const Step01: React.FC<Step01Props> = ({
                   type="radio"
                   name="businessUnit"
                   value="OODC"
-                  checked={user ? user.department === "oodc" : false}
+                  checked={formData.business_unit === "OODC"}
                   onChange={(e) =>
-                    updateFormData({ businessUnit: e.target.value })
+                    updateFormData({ business_unit: e.target.value })
                   }
                 />{" "}
                 OODC
@@ -157,9 +157,9 @@ export const Step01: React.FC<Step01Props> = ({
                   type="radio"
                   name="businessUnit"
                   value="OORS"
-                  checked={user ? user.department === "oors" : false}
+                  checked={formData.business_unit === "OORS"}
                   onChange={(e) =>
-                    updateFormData({ businessUnit: e.target.value })
+                    updateFormData({ business_unit: e.target.value })
                   }
                 />{" "}
                 OORS
@@ -170,9 +170,9 @@ export const Step01: React.FC<Step01Props> = ({
                 Department Name
               </label>
               <Select
-                value={formData.departmentName}
+                value={formData.department_name}
                 onValueChange={(value) =>
-                  updateFormData({ departmentName: value })
+                  updateFormData({ department_name: value })
                 }
               >
                 <SelectTrigger className="w-full">
@@ -185,9 +185,12 @@ export const Step01: React.FC<Step01Props> = ({
                   <SelectItem value="Human Resources">
                     Human Resources
                   </SelectItem>
-                  <SelectItem value="Continuous Improvement Department">
-                    Continuous Improvement Department
+                  <SelectItem value="Continuous Improvement">
+                    Continuous Improvement
                   </SelectItem>
+                  <SelectItem value="Sales">Sales</SelectItem>
+                  <SelectItem value="Finance">Finance</SelectItem>
+                  <SelectItem value="Operations">Operations</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -199,7 +202,9 @@ export const Step01: React.FC<Step01Props> = ({
                 type="number"
                 className="w-full"
                 value={
-                  formData.interviewLevels === 0 ? "" : formData.interviewLevels
+                  formData.interview_levels === 0
+                    ? ""
+                    : formData.interview_levels
                 }
                 onChange={handleInterviewLevelChange}
               />
@@ -209,16 +214,17 @@ export const Step01: React.FC<Step01Props> = ({
                 Immediate Supervisor
               </label>
               <Select
-                value={formData.immediateSupervisor}
+                value={formData.immediate_supervisor}
                 onValueChange={(value) =>
-                  updateFormData({ immediateSupervisor: value })
+                  updateFormData({ immediate_supervisor: value })
                 }
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Ex: Ms. Hailey Adams" />
                 </SelectTrigger>
                 <SelectContent>
-                  {users.length > 0 ? (
+                  {users.length > 0 &&
+                  users.some((usr: User) => usr.role === "supervisor") ? (
                     users
                       .filter((usr: User) => usr.role === "supervisor")
                       .map((usr: User) => (
@@ -228,7 +234,7 @@ export const Step01: React.FC<Step01Props> = ({
                       ))
                   ) : (
                     <>
-                      <SelectItem value="no-supervisor">
+                      <SelectItem value="No Supervisor">
                         No Supervisor
                       </SelectItem>
                     </>
@@ -242,7 +248,7 @@ export const Step01: React.FC<Step01Props> = ({
               <div>LEVELS OF INTERVIEW</div>
               <div>HIRING MANAGERS</div>
             </div>
-            {Array.from({ length: formData.interviewLevels }, (_, i) => (
+            {Array.from({ length: formData.interview_levels }, (_, i) => (
               <div
                 key={i}
                 className="grid grid-cols-2 gap-4 items-center border-b border-gray-200 p-3"
@@ -251,16 +257,17 @@ export const Step01: React.FC<Step01Props> = ({
                   Hiring Manager {i + 1}
                 </div>
                 <Select
-                  value={formData.hiringManagers?.[i] || ""}
+                  value={formData.hiring_managers?.[i] || ""}
                   onValueChange={(value) => handleHiringManagerChange(i, value)}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Name" />
                   </SelectTrigger>
                   <SelectContent>
-                    {users.length > 0 ? (
+                    {users.length > 0 &&
+                    users.some((usr: User) => usr.role === "hiring_manager") ? (
                       users
-                        .filter((usr: User) => usr.role === "manager")
+                        .filter((usr: User) => usr.role === "hiring_manager")
                         .map((usr: User) => (
                           <SelectItem key={usr.id} value={usr.id}>
                             {usr.first_name} {usr.last_name}

@@ -30,6 +30,7 @@ const LoginForm: React.FC = () => {
       );
 
       if (response.status === 200) {
+        toast.dismiss();
         const obj = response.data.user;
         obj.access = response.data.access;
         toast.success("Login successful!");
