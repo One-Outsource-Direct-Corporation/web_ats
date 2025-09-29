@@ -13,8 +13,11 @@ import {
 
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { formatForJSON } from "@/shared/utils/formatName";
-import { defaultAxios } from "@/config/axios";
 import initialData from "../data/prfInitialData";
+import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
+import type { FormDataType } from "../types/prfTypes";
+import type { AxiosResponse } from "axios";
+import { toast } from "react-toastify";
 
 export default function PRF() {
   const navigate = useNavigate();
@@ -25,6 +28,7 @@ export default function PRF() {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const { user } = useAuth();
   const { formData, updateFormData } = usePRFForm(initialData(user));
+  const axiosPrivate = useAxiosPrivate();
 
   useEffect(() => {
     document.title = "Personnel Requisition Form";
@@ -58,7 +62,7 @@ export default function PRF() {
     setShowSubmitConfirmDialog(true);
   };
 
-  const handleConfirmSubmit = () => {
+  const handleConfirmSubmit = async () => {
     setShowSubmitConfirmDialog(false);
     setShowSuccessPopup(true);
     setTimeout(() => {
@@ -99,9 +103,14 @@ export default function PRF() {
     };
 
     console.log("Submitted Data:", data);
-    defaultAxios.post("/api/prf/", data).catch((error) => {
-      console.error("Error submitting PRF:", error.response || error);
-    });
+    const response = await axiosPrivate.post<AxiosResponse<FormDataType>>(
+      "/api/prf/",
+      data
+    );
+
+    if (response.status === 201) {
+      toast.success("PRF submitted successfully!");
+    }
   };
 
   return (

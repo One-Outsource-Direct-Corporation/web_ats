@@ -53,3 +53,7 @@ export interface FormData {
 }
 
 export type FormDataType = FormData;
+
+export type PRFResponse = FormDataType & {
+  id: number;
+};
