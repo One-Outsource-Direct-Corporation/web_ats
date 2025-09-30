@@ -6,7 +6,7 @@ import type {
   FormData,
   LocationEntry,
   BatchEntry,
-} from "../types/createNewPositionTypes";
+} from "../types/createPosition";
 
 interface DetailsStepProps {
   formData: FormData;
@@ -60,7 +60,7 @@ export default function DetailsStep({
           </label>
           <Input
             placeholder="Input text"
-            value={formData.jobTitle}
+            value={formData.job_title}
             onChange={(e) => onInputChange("jobTitle", e.target.value)}
           />
         </div>
@@ -89,7 +89,7 @@ export default function DetailsStep({
           </label>
           <select
             className="w-full p-2 border border-gray-300 rounded-md text-sm"
-            value={formData.employmentType}
+            value={formData.employment_type}
             onChange={(e) => onInputChange("employmentType", e.target.value)}
           >
             <option value="Full-Time">Full-Time</option>
@@ -105,7 +105,7 @@ export default function DetailsStep({
           </label>
           <select
             className="w-full p-2 border border-gray-300 rounded-md text-sm"
-            value={formData.educationNeeded}
+            value={formData.education_level}
             onChange={(e) => onInputChange("educationNeeded", e.target.value)}
           >
             <option value="Bachelor's Degree">Bachelor's Degree</option>
@@ -121,7 +121,7 @@ export default function DetailsStep({
           </label>
           <select
             className="w-full p-2 border border-gray-300 rounded-md text-sm"
-            value={formData.workSetup}
+            value={formData.work_setup}
             onChange={(e) => onInputChange("workSetup", e.target.value)}
           >
             <option value="Hybrid">Hybrid</option>
@@ -137,7 +137,7 @@ export default function DetailsStep({
           </label>
           <select
             className="w-full p-2 border border-gray-300 rounded-md text-sm"
-            value={formData.experience}
+            value={formData.experience_level}
             onChange={(e) => onInputChange("experience", e.target.value)}
           >
             <option value="Entry Level">Entry Level</option>
@@ -153,7 +153,7 @@ export default function DetailsStep({
           </label>
           <Input
             placeholder="Input text"
-            value={formData.headcountsNeeded}
+            value={formData.headcount}
             onChange={(e) => onInputChange("headcountsNeeded", e.target.value)}
           />
         </div>
@@ -167,7 +167,7 @@ export default function DetailsStep({
             <Input
               type="date"
               placeholder="Input text"
-              value={formData.dateNeeded}
+              value={formData.date_needed}
               onChange={(e) => onInputChange("dateNeeded", e.target.value)}
             />
           </div>
@@ -185,7 +185,7 @@ export default function DetailsStep({
               type="radio"
               name="reasonForHire"
               value="Replacement"
-              checked={formData.reasonForHire === "Replacement"}
+              checked={formData.reason_for_hiring === "Replacement"}
               onChange={(e) => onInputChange("reasonForHire", e.target.value)}
               className="w-4 h-4 bg-white border-2 border-gray-400 rounded-full appearance-none focus:ring-2 focus:ring-blue-500 checked:bg-white checked:border-blue-600 checked:after:content-[''] checked:after:w-2 checked:after:h-2 checked:after:bg-blue-600 checked:after:rounded-full checked:after:absolute checked:after:top-1/2 checked:after:left-1/2 checked:after:transform checked:after:-translate-x-1/2 checked:after:-translate-y-1/2 relative"
             />
@@ -196,7 +196,7 @@ export default function DetailsStep({
               type="radio"
               name="reasonForHire"
               value="New Position"
-              checked={formData.reasonForHire === "New Position"}
+              checked={formData.reason_for_hiring === "New Position"}
               onChange={(e) => onInputChange("reasonForHire", e.target.value)}
               className="w-4 h-4 bg-white border-2 border-gray-400 rounded-full appearance-none focus:ring-2 focus:ring-blue-500 checked:bg-white checked:border-blue-600 checked:after:content-[''] checked:after:w-2 checked:after:h-2 checked:after:bg-blue-600 checked:after:rounded-full checked:after:absolute checked:after:top-1/2 checked:after:left-1/2 checked:after:transform checked:after:-translate-x-1/2 checked:after:-translate-y-1/2 relative"
             />
@@ -207,7 +207,7 @@ export default function DetailsStep({
               type="radio"
               name="reasonForHire"
               value="Others, Please Specify"
-              checked={formData.reasonForHire === "Others, Please Specify"}
+              checked={formData.reason_for_hiring === "Others, Please Specify"}
               onChange={(e) => onInputChange("reasonForHire", e.target.value)}
               className="w-4 h-4 bg-white border-2 border-gray-400 rounded-full appearance-none focus:ring-2 focus:ring-blue-500 checked:bg-white checked:border-blue-600 checked:after:content-[''] checked:after:w-2 checked:after:h-2 checked:after:bg-blue-600 checked:after:rounded-full checked:after:absolute checked:after:top-1/2 checked:after:left-1/2 checked:after:transform checked:after:-translate-x-1/2 checked:after:-translate-y-1/2 relative"
             />
@@ -215,12 +215,14 @@ export default function DetailsStep({
               Others, Please Specify
             </span>
           </label>
-          {formData.reasonForHire === "Others, Please Specify" && (
+          {formData.reason_for_hiring === "Others, Please Specify" && (
             <Input
               placeholder="Input text"
               className="ml-6 max-w-xs"
-              value={formData.reasonSpecify}
-              onChange={(e) => onInputChange("reasonSpecify", e.target.value)}
+              value={formData.other_reason_for_hiring}
+              onChange={(e) =>
+                onInputChange("other_reason_for_hiring", e.target.value)
+              }
             />
           )}
         </div>
@@ -238,7 +240,7 @@ export default function DetailsStep({
             </label>
             <Input
               placeholder="₱ 20,000"
-              value={formData.budgetFrom}
+              value={formData.min_budget}
               onChange={(e) => onInputChange("budgetFrom", e.target.value)}
             />
           </div>
@@ -248,7 +250,7 @@ export default function DetailsStep({
             </label>
             <Input
               placeholder="₱ 25,000"
-              value={formData.budgetTo}
+              value={formData.max_budget}
               onChange={(e) => onInputChange("budgetTo", e.target.value)}
             />
           </div>

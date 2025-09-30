@@ -94,18 +94,24 @@ export interface StagePopupData {
 }
 
 export interface FormData {
-  jobTitle: string;
+  job_title: string;
+  education_level: string;
   department: string;
-  employmentType: string;
-  educationNeeded: string;
-  workSetup: string;
-  experience: string;
-  headcountsNeeded: string;
-  dateNeeded: string;
-  reasonForHire: string;
-  reasonSpecify: string;
-  budgetFrom: string;
-  budgetTo: string;
+  experience_level: string;
+  employment_type: string;
+  headcount: string;
+  work_setup: string;
+  date_needed: string;
+
+  reason_for_hiring: string;
+  reason_specify: string;
+
+  min_budget: string;
+  max_budget: string;
+
+  description: string;
+  location: string;
+  posted_by: string; // User ID
 }
 
 export interface FormFieldStatus {

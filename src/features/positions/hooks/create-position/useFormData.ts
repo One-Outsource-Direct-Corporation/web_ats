@@ -3,18 +3,18 @@ import type { CreatePositionFormData } from "../../types/createPosition";
 
 export const useFormData = () => {
   const [formData, setFormData] = useState<CreatePositionFormData>({
-    jobTitle: "",
+    job_title: "",
     department: "",
-    employmentType: "Full-Time",
-    educationNeeded: "Bachelor's Degree",
-    workSetup: "Hybrid",
-    experience: "Entry Level",
-    headcountsNeeded: "",
-    dateNeeded: "",
-    reasonForHire: "Others, Please Specify",
-    reasonSpecify: "",
-    budgetFrom: "",
-    budgetTo: "",
+    employment_type: "Full-Time",
+    education_level: "Bachelor's Degree",
+    work_setup: "Hybrid",
+    experience_level: "Entry Level",
+    headcount: "",
+    date_needed: "",
+    reason_for_hiring: "Others, Please Specify",
+    other_reason_for_hiring: "",
+    min_budget: "",
+    max_budget: "",
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -23,18 +23,18 @@ export const useFormData = () => {
 
   const resetFormData = () => {
     setFormData({
-      jobTitle: "",
+      job_title: "",
       department: "",
-      employmentType: "Full-Time",
-      educationNeeded: "Bachelor's Degree",
-      workSetup: "Hybrid",
-      experience: "Entry Level",
-      headcountsNeeded: "",
-      dateNeeded: "",
-      reasonForHire: "Others, Please Specify",
-      reasonSpecify: "",
-      budgetFrom: "",
-      budgetTo: "",
+      employment_type: "Full-Time",
+      education_level: "Bachelor's Degree",
+      work_setup: "Hybrid",
+      experience_level: "Entry Level",
+      headcount: "",
+      date_needed: "",
+      reason_for_hiring: "Others, Please Specify",
+      other_reason_for_hiring: "",
+      min_budget: "",
+      max_budget: "",
     });
   };
 

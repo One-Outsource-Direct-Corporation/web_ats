@@ -23,13 +23,6 @@ export const useFormFieldManagement = () => {
         { field: "Address", status: "required", nonNegotiable: false },
       ],
       job: [
-        { field: "Job Title", status: "required", nonNegotiable: false },
-        { field: "Company Name", status: "required", nonNegotiable: false },
-        {
-          field: "Years of Experience",
-          status: "required",
-          nonNegotiable: true,
-        },
         {
           field: "Position Applying for",
           status: "required",
@@ -42,6 +35,16 @@ export const useFormFieldManagement = () => {
           nonNegotiable: true,
         },
         { field: "Upload 2×2 photo", status: "required", nonNegotiable: false },
+        {
+          field: "Upload medical certificate from the last 6 months",
+          status: "required",
+          nonNegotiable: false,
+        },
+        {
+          field: "Preferred Interview Schedule",
+          status: "required",
+          nonNegotiable: false,
+        },
       ],
       education: [
         {

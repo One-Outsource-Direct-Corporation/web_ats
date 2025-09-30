@@ -4,7 +4,7 @@ import type {
   StepConfig,
   TeamMember,
   TimePickerValues,
-} from "../types/createNewPositionTypes";
+} from "../types/createPosition";
 
 import { useFormData } from "./useFormData";
 import { useLocationsBatches } from "./useLocationsBatches";

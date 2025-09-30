@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "@/shared/components/ui/button";
 import { X, Briefcase } from "lucide-react";
-import type { CreatePositionFormData } from "../../../types/createPosition";
+import type { CreatePositionFormData } from "@/features/positions/types/createPosition";
 
 interface CancelModalProps {
   show: boolean;
@@ -93,13 +93,13 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
           <div className="space-y-6">
             <div>
               <h3 className="text-xl font-bold text-gray-800 mb-2">
-                {formData.jobTitle || "Position Title"}
+                {formData.job_title || "Position Title"}
               </h3>
               <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                 <span>{formData.department}</span>
-                <span>{formData.employmentType}</span>
-                <span>{formData.workSetup}</span>
-                <span>{formData.experience}</span>
+                <span>{formData.employment_type}</span>
+                <span>{formData.work_setup}</span>
+                <span>{formData.experience_level}</span>
               </div>
             </div>
 
@@ -118,21 +118,21 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <strong className="text-gray-700">Headcount:</strong>
-                <span className="ml-2">{formData.headcountsNeeded}</span>
+                <span className="ml-2">{formData.headcount}</span>
               </div>
               <div>
                 <strong className="text-gray-700">Date Needed:</strong>
-                <span className="ml-2">{formData.dateNeeded}</span>
+                <span className="ml-2">{formData.date_needed}</span>
               </div>
               <div>
                 <strong className="text-gray-700">Budget Range:</strong>
                 <span className="ml-2">
-                  {formData.budgetFrom} - {formData.budgetTo}
+                  {formData.min_budget} - {formData.max_budget}
                 </span>
               </div>
               <div>
                 <strong className="text-gray-700">Education:</strong>
-                <span className="ml-2">{formData.educationNeeded}</span>
+                <span className="ml-2">{formData.education_level}</span>
               </div>
             </div>
           </div>
@@ -172,7 +172,7 @@ export const PoolApplicantsModal: React.FC<PoolApplicantsModalProps> = ({
 
         <p className="text-sm text-gray-600 mb-6">
           You're about to publish the job post for:{" "}
-          <strong>{formData.jobTitle}</strong>
+          <strong>{formData.job_title}</strong>
         </p>
 
         <div className="flex items-center justify-center gap-4 mb-6">
@@ -180,7 +180,7 @@ export const PoolApplicantsModal: React.FC<PoolApplicantsModalProps> = ({
             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-2">
               <Briefcase className="w-6 h-6 text-blue-600" />
             </div>
-            <p className="text-sm font-medium">{formData.jobTitle}</p>
+            <p className="text-sm font-medium">{formData.job_title}</p>
           </div>
         </div>
 

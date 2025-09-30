@@ -2,13 +2,16 @@ import React from "react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Plus, Trash2, Edit, Check } from "lucide-react";
-import type { BatchEntry, LocationEntry } from "../../../types/createPosition";
+import type {
+  BatchEntry,
+  LocationEntry,
+} from "@/features/positions/types/createPosition";
 
 interface BatchManagementProps {
   batches: BatchEntry[];
   locations: LocationEntry[];
   editingBatchId: number | null;
-  onBatchChange: (id: number, field: keyof BatchEntry, value: any) => void;
+  onBatchChange: (id: number, field: string, value: any) => void;
   onEditBatch: (id: number) => void;
   onDeleteBatch: (id: number) => void;
   onAddBatch: () => void;

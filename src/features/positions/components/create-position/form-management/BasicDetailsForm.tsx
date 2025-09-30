@@ -21,8 +21,8 @@ export const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
             </label>
             <input
               type="text"
-              value={formData.jobTitle}
-              onChange={(e) => onInputChange("jobTitle", e.target.value)}
+              value={formData.job_title}
+              onChange={(e) => onInputChange("job_title", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter job title"
             />
@@ -50,8 +50,8 @@ export const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
               Employment Type *
             </label>
             <select
-              value={formData.employmentType}
-              onChange={(e) => onInputChange("employmentType", e.target.value)}
+              value={formData.employment_type}
+              onChange={(e) => onInputChange("employment_type", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="Full-Time">Full-Time</option>
@@ -66,8 +66,8 @@ export const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
               Work Setup *
             </label>
             <select
-              value={formData.workSetup}
-              onChange={(e) => onInputChange("workSetup", e.target.value)}
+              value={formData.work_setup}
+              onChange={(e) => onInputChange("work_setup", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="Onsite">Onsite</option>
@@ -83,8 +83,10 @@ export const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
               Education Needed *
             </label>
             <select
-              value={formData.educationNeeded}
-              onChange={(e) => onInputChange("educationNeeded", e.target.value)}
+              value={formData.education_level}
+              onChange={(e) =>
+                onInputChange("education_needed", e.target.value)
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="High School">High School</option>
@@ -100,7 +102,7 @@ export const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
               Experience Level *
             </label>
             <select
-              value={formData.experience}
+              value={formData.experience_level}
               onChange={(e) => onInputChange("experience", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
@@ -117,9 +119,9 @@ export const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
             </label>
             <input
               type="number"
-              value={formData.headcountsNeeded}
+              value={formData.headcount}
               onChange={(e) =>
-                onInputChange("headcountsNeeded", e.target.value)
+                onInputChange("headcounts_needed", e.target.value)
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter number of positions"
@@ -133,8 +135,8 @@ export const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
             </label>
             <input
               type="date"
-              value={formData.dateNeeded}
-              onChange={(e) => onInputChange("dateNeeded", e.target.value)}
+              value={formData.date_needed}
+              onChange={(e) => onInputChange("date_needed", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -144,8 +146,10 @@ export const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
               Reason for Hire *
             </label>
             <select
-              value={formData.reasonForHire}
-              onChange={(e) => onInputChange("reasonForHire", e.target.value)}
+              value={formData.reason_for_hiring}
+              onChange={(e) =>
+                onInputChange("reason_for_hiring", e.target.value)
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="New Position">New Position</option>
@@ -159,15 +163,17 @@ export const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
             </select>
           </div>
 
-          {formData.reasonForHire === "Others, Please Specify" && (
+          {formData.reason_for_hiring === "Others, Please Specify" && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Please Specify *
               </label>
               <input
                 type="text"
-                value={formData.reasonSpecify}
-                onChange={(e) => onInputChange("reasonSpecify", e.target.value)}
+                value={formData.other_reason_for_hiring}
+                onChange={(e) =>
+                  onInputChange("other_reason_for_hiring", e.target.value)
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Please specify the reason for hire"
               />
@@ -188,8 +194,8 @@ export const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
             </label>
             <input
               type="number"
-              value={formData.budgetFrom}
-              onChange={(e) => onInputChange("budgetFrom", e.target.value)}
+              value={formData.min_budget}
+              onChange={(e) => onInputChange("min_budget", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Minimum salary"
             />
@@ -200,8 +206,8 @@ export const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
             </label>
             <input
               type="number"
-              value={formData.budgetTo}
-              onChange={(e) => onInputChange("budgetTo", e.target.value)}
+              value={formData.max_budget}
+              onChange={(e) => onInputChange("max_budget", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Maximum salary"
             />

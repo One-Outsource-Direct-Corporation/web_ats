@@ -113,18 +113,21 @@ export interface FormFieldStatuses {
 
 // Main Form Data Type
 export interface CreatePositionFormData {
-  jobTitle: string;
+  job_title: string;
+  education_level: string;
   department: string;
-  employmentType: string;
-  educationNeeded: string;
-  workSetup: string;
-  experience: string;
-  headcountsNeeded: string;
-  dateNeeded: string;
-  reasonForHire: string;
-  reasonSpecify: string;
-  budgetFrom: string;
-  budgetTo: string;
+  experience_level: string;
+  employment_type: string;
+  headcount: string;
+  work_setup: string;
+  date_needed: string;
+  reason_for_hiring: string;
+  other_reason_for_hiring: string;
+  min_budget: string;
+  max_budget: string;
+  description?: string;
+  location?: string;
+  posted_by?: string; // User ID
 }
 
 // Step Component Props
@@ -148,6 +151,24 @@ export interface TimePickerValues {
   minutes: string;
   seconds: string;
 }
+
+// Assessment Form Types
+export interface AssessmentForm {
+  type: string;
+  title: string;
+  description: string;
+  required: boolean;
+}
+
+// Step Configuration Types
+export interface StepConfig {
+  number: number;
+  title: string;
+  active: boolean;
+}
+
+// Alternative interface names for compatibility
+export type FormData = CreatePositionFormData;
 
 // Non-negotiable Field Types
 export interface NonNegotiableField {

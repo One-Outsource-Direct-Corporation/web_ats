@@ -3,7 +3,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Label } from "@/shared/components/ui/label";
 import { MoreHorizontal } from "lucide-react";
-import type { FormFieldStatuses } from "../types/createNewPositionTypes";
+import type { FormFieldStatuses } from "../types/createPosition";
 
 interface ApplicationFormStepProps {
   formFieldStatuses: FormFieldStatuses;

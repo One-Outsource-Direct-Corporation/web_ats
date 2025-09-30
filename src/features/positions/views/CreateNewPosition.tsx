@@ -73,6 +73,8 @@ export default function CreateNewPosition() {
     if (currentStep === 3) {
       modalHooks.setShowNonNegotiableModal(true);
     } else if (currentStep === 5) {
+      console.log("Current form data:", formData);
+      return;
       modalHooks.setShowPoolApplicantsPopup(true);
     } else {
       stepHandleNext();

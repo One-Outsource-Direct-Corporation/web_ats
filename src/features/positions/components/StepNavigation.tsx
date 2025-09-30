@@ -1,5 +1,5 @@
 import { Button } from "@/shared/components/ui/button";
-import type { StepConfig } from "../types/createNewPositionTypes";
+import type { StepConfig } from "../types/createPosition";
 
 interface StepNavigationProps {
   steps: StepConfig[];

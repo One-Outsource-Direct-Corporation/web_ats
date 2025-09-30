@@ -3,7 +3,7 @@ import type {
   PipelineStage,
   PipelineStep,
   StagePopupData,
-} from "../types/createNewPositionTypes";
+} from "../types/createPosition";
 
 const initialPipelineStages: PipelineStage[] = [
   {

@@ -4,7 +4,7 @@ import type {
   AssessmentForm,
   AssessmentSettings,
   Question,
-} from "../types/createNewPositionTypes";
+} from "../types/createPosition";
 
 export function useAssessments() {
   const [globalAssessments, setGlobalAssessments] = useState<Assessment[]>([]);

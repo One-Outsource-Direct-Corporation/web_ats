@@ -83,11 +83,7 @@ export const useLocationBatchManagement = () => {
     setEditingBatchId(id);
   };
 
-  const handleBatchChange = (
-    id: number,
-    field: keyof BatchEntry,
-    value: any
-  ) => {
+  const handleBatchChange = (id: number, field: string, value: any) => {
     setBatches((prevBatches) =>
       prevBatches.map((batch) =>
         batch.id === id ? { ...batch, [field]: value } : batch

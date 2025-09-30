@@ -3,7 +3,7 @@ import type {
   Question,
   QuestionnaireSection,
   SavedQuestionnaire,
-} from "../types/createNewPositionTypes";
+} from "../types/createPosition";
 
 export function useQuestionnaires() {
   const [sections, setSections] = useState<QuestionnaireSection[]>([]);
