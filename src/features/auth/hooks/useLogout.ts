@@ -13,6 +13,7 @@ export const useLogout = () => {
     } finally {
       setUser(null);
       localStorage.removeItem("persist");
+      localStorage.removeItem("isAuth");
     }
   }, []);
 

@@ -35,6 +35,7 @@ const LoginForm: React.FC = () => {
         obj.access = response.data.access;
         toast.success("Login successful!");
         setUser(obj);
+        localStorage.setItem("isAuth", "true");
       }
     } catch (err: any | AxiosError) {
       toast.error(

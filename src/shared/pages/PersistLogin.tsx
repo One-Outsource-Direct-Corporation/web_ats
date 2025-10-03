@@ -3,11 +3,12 @@ import { useLogout } from "@/features/auth/hooks/useLogout";
 import useRefreshToken from "@/features/auth/hooks/useRefreshToken";
 import { useEffect, useRef, useState } from "react";
 import { Outlet } from "react-router-dom";
+import LoadingComponent from "../components/reusables/LoadingComponent";
 
 export default function PersistLogin() {
   const [isLoading, setIsLoading] = useState(true);
   const refresh = useRefreshToken();
-  const { user, persist } = useAuth();
+  const { user, persist, isAuth } = useAuth();
   const { logout } = useLogout();
   const hasInitialized = useRef(false);
 
@@ -26,7 +27,7 @@ export default function PersistLogin() {
         return;
       }
 
-      if (persist && !user?.access) {
+      if (persist && isAuth && !user?.access) {
         try {
           await refresh();
         } catch (err) {
@@ -41,7 +42,7 @@ export default function PersistLogin() {
   }, []);
 
   if (isLoading) {
-    return <p>Loading...</p>;
+    return <LoadingComponent message="Auth checking" />;
   }
 
   return <Outlet />;

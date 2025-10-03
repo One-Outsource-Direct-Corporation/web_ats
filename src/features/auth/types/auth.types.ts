@@ -36,5 +36,7 @@ export interface AuthResponse {
 export interface AuthContextType extends AuthState {
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
   persist: boolean;
+  isAuth: boolean;
   setPersist: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsAuth: React.Dispatch<React.SetStateAction<boolean>>;
 }

@@ -5,7 +5,9 @@ export const AuthContext = createContext<AuthContextType>({
   user: null,
   setUser: () => {},
   persist: false,
+  isAuth: false,
   setPersist: () => {},
+  setIsAuth: () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -13,9 +15,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [persist, setPersist] = useState<boolean>(
     JSON.parse(localStorage.getItem("persist") || "false")
   );
+  const [isAuth, setIsAuth] = useState<boolean>(
+    JSON.parse(localStorage.getItem("isAuth") || "false")
+  );
 
   return (
-    <AuthContext.Provider value={{ user, setUser, persist, setPersist }}>
+    <AuthContext.Provider
+      value={{ user, setUser, persist, setPersist, isAuth, setIsAuth }}
+    >
       {children}
     </AuthContext.Provider>
   );
