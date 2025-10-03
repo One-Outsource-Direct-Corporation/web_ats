@@ -1,15 +1,18 @@
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import type { PersonalFormData } from "../../types/applicationForm";
+import type { ApplicationForm } from "../../types/job";
 
 interface AddressInfoSectionProps {
   formData: PersonalFormData;
   onInputChange: (field: keyof PersonalFormData, value: string) => void;
+  errors?: Record<string, string>;
 }
 
 export const AddressInfoSection: React.FC<AddressInfoSectionProps> = ({
   formData,
   onInputChange,
+  errors = {},
 }) => {
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
@@ -19,7 +22,7 @@ export const AddressInfoSection: React.FC<AddressInfoSectionProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Address Line 1 */}
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 space-y-2">
           <Label htmlFor="addressLine1">Street Address</Label>
           <Input
             id="addressLine1"
@@ -30,7 +33,7 @@ export const AddressInfoSection: React.FC<AddressInfoSectionProps> = ({
         </div>
 
         {/* City */}
-        <div>
+        <div className="space-y-2">
           <Label htmlFor="city">City</Label>
           <Input
             id="city"
@@ -41,7 +44,7 @@ export const AddressInfoSection: React.FC<AddressInfoSectionProps> = ({
         </div>
 
         {/* District/Province */}
-        <div>
+        <div className="space-y-2">
           <Label htmlFor="district">District/Province</Label>
           <Input
             id="district"
@@ -52,7 +55,7 @@ export const AddressInfoSection: React.FC<AddressInfoSectionProps> = ({
         </div>
 
         {/* Postal Code */}
-        <div>
+        <div className="space-y-2">
           <Label htmlFor="postalCode">Postal Code</Label>
           <Input
             id="postalCode"
@@ -63,7 +66,7 @@ export const AddressInfoSection: React.FC<AddressInfoSectionProps> = ({
         </div>
 
         {/* Country */}
-        <div>
+        <div className="space-y-2">
           <Label htmlFor="country">Country</Label>
           <Input
             id="country"
@@ -73,6 +76,9 @@ export const AddressInfoSection: React.FC<AddressInfoSectionProps> = ({
           />
         </div>
       </div>
+      {errors.address && (
+        <p className="text-sm text-red-600 mt-4">{errors.address}</p>
+      )}
     </div>
   );
 };

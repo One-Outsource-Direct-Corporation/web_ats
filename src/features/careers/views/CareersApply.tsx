@@ -29,6 +29,7 @@ export default function CareersApply() {
   const [showUploadModal, setShowUploadModal] = useState(true);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [trackingCode, setTrackingCode] = useState("");
+  const [errorMessage, setErrorMessage] = useState({});
 
   const {
     formData,
@@ -80,6 +81,11 @@ export default function CareersApply() {
   };
 
   const handleNext = () => {
+    // Validate current stage before proceeding
+    if (!validateCurrentStage()) {
+      return;
+    }
+
     if (currentStage < 4) {
       goToNextStage();
     } else {
@@ -89,6 +95,176 @@ export default function CareersApply() {
       setShowCompletionModal(true);
       clearFormState();
     }
+  };
+
+  const validateCurrentStage = () => {
+    const applicationForm = jobDetail?.application_form;
+    const errors: any = {};
+
+    switch (currentStage) {
+      case 1:
+        // Check data privacy acceptance
+        if (!acceptTerms) {
+          errors.acceptTerms =
+            "Please accept the data privacy terms to continue.";
+        }
+
+        // Validate personal information
+        if (applicationForm?.name === "required") {
+          if (!formData.firstName.trim() || !formData.lastName.trim()) {
+            errors.name = "Please fill in your first and last name.";
+          }
+        }
+
+        if (applicationForm?.birth_date === "required") {
+          if (!formData.birthday) {
+            errors.birthday = "Please select your birthday.";
+          }
+        }
+
+        if (applicationForm?.gender === "required") {
+          if (!formData.gender) {
+            errors.gender = "Please select your gender.";
+          }
+        }
+
+        // Validate contact information
+        if (applicationForm?.primary_contact_number === "required") {
+          if (!formData.primaryContact.trim()) {
+            errors.primaryContact =
+              "Please provide your primary contact number.";
+          }
+        }
+
+        if (applicationForm?.email === "required") {
+          if (!formData.email.trim()) {
+            errors.email = "Please provide your email address.";
+          }
+        }
+
+        // Validate address if enabled
+        if (applicationForm?.address !== "disabled") {
+          if (applicationForm?.address === "required") {
+            if (
+              !formData.addressLine1.trim() ||
+              !formData.city.trim() ||
+              !formData.district.trim() ||
+              !formData.postalCode.trim() ||
+              !formData.country.trim()
+            ) {
+              errors.address = "Please fill in all address fields.";
+            }
+          }
+        }
+        break;
+
+      case 2:
+        // Validate job details
+        if (!stage2Data.positionApplyingFor.trim()) {
+          errors.positionApplyingFor =
+            "Please specify the position you're applying for.";
+        }
+
+        // Check if photo is required
+        if (applicationForm?.photo_2x2 === "required") {
+          if (!stage2Data.photo) {
+            errors.photo = "Please upload your 2x2 photo.";
+          }
+        }
+
+        // Check if medical certificate is required
+        if (applicationForm?.upload_med_cert === "required") {
+          if (!stage2Data.medicalCertificate) {
+            errors.medicalCertificate =
+              "Please upload your medical certificate.";
+          }
+        }
+
+        // Check if expected salary is required
+        if (applicationForm?.expected_salary === "required") {
+          if (!stage2Data.expectedSalary.trim()) {
+            errors.expectedSalary = "Please specify your expected salary.";
+          }
+        }
+
+        // Check if willing to work onsite is required
+        if (applicationForm?.willing_to_work_onsite === "required") {
+          if (!stage2Data.willingToWorkOnsite) {
+            errors.willingToWorkOnsite =
+              "Please specify if you're willing to work onsite.";
+          }
+        }
+
+        // Check if preferred interview schedule is required
+        if (applicationForm?.preferred_interview_schedule === "required") {
+          if (!stage2Data.interviewSchedule.trim()) {
+            errors.interviewSchedule =
+              "Please specify your preferred interview schedule.";
+          }
+        }
+        break;
+
+      case 3:
+        // Validate education
+        if (applicationForm?.education_attained === "required") {
+          if (!stage3Data.highestEducation) {
+            errors.highestEducation =
+              "Please specify your highest education attained.";
+          }
+        }
+
+        if (applicationForm?.year_graduated === "required") {
+          if (!stage3Data.yearGraduated) {
+            errors.yearGraduated = "Please specify your year of graduation.";
+          }
+        }
+
+        if (applicationForm?.university === "required") {
+          if (!stage3Data.institution) {
+            errors.institution = "Please specify your educational institution.";
+          }
+        }
+
+        if (applicationForm?.course === "required") {
+          if (!stage3Data.program) {
+            errors.program = "Please specify your course/program.";
+          }
+        }
+
+        // Validate work experience if enabled
+        if (
+          applicationForm?.work_experience &&
+          applicationForm?.work_experience !== "disabled"
+        ) {
+          if (applicationForm?.work_experience === "required") {
+            if (
+              stage3Data.hasWorkExperience === "yes" &&
+              stage3Data.workExperience.length === 0
+            ) {
+              errors.workExperience =
+                "Please add at least one work experience entry.";
+            }
+          }
+        }
+        break;
+
+      case 4:
+        // Check certification acceptance
+        if (!stage4Data.certificationAccepted) {
+          errors.certificationAccepted =
+            "Please accept the certification and acknowledgement.";
+        }
+
+        // Validate signature
+        if (!stage4Data.signature) {
+          errors.signature =
+            "Please provide your signature (either by typing or uploading).";
+        }
+        break;
+    }
+
+    setErrorMessage(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleBack = () => {
@@ -104,15 +280,17 @@ export default function CareersApply() {
   };
 
   const handleLogoClick = () => {
-    navigate("/careers");
+    navigate("/");
   };
 
   const handleBackToJobDescription = useCallback(() => {
     if (jobDetail) {
       saveFormState();
-      navigate(`/careers/jobs/${jobDetail.id}`);
+      navigate(`/careers/${jobDetail.id}`);
     }
   }, [jobDetail, saveFormState, navigate]);
+
+  console.log(jobDetail);
 
   if (loading) {
     return <LoadingComponent />;
@@ -197,15 +375,22 @@ export default function CareersApply() {
               <PersonalInfoSection
                 formData={formData}
                 onInputChange={handlePersonalInfoChange}
+                applicationForm={jobDetail?.application_form}
+                errors={errorMessage}
               />
               <ContactInfoSection
                 formData={formData}
                 onInputChange={handlePersonalInfoChange}
+                applicationForm={jobDetail?.application_form}
+                errors={errorMessage}
               />
-              <AddressInfoSection
-                formData={formData}
-                onInputChange={handlePersonalInfoChange}
-              />
+              {jobDetail?.application_form?.address !== "disabled" && (
+                <AddressInfoSection
+                  formData={formData}
+                  onInputChange={handlePersonalInfoChange}
+                  errors={errorMessage}
+                />
+              )}
             </div>
           )}
 
@@ -215,6 +400,8 @@ export default function CareersApply() {
               <JobDetailsSection
                 data={stage2Data}
                 onChange={handleJobDetailsChange}
+                applicationForm={jobDetail?.application_form}
+                errors={errorMessage}
               />
             </div>
           )}
@@ -225,13 +412,18 @@ export default function CareersApply() {
               <EducationSection
                 data={stage3Data}
                 onChange={handleEducationWorkChange}
+                applicationForm={jobDetail?.application_form}
+                errors={errorMessage}
               />
-              <WorkExperienceSection
-                data={stage3Data}
-                onChange={handleEducationWorkChange}
-                onAddExperience={handleAddWorkExperience}
-                onRemoveExperience={handleRemoveWorkExperience}
-              />
+              {jobDetail?.application_form?.work_experience && (
+                <WorkExperienceSection
+                  data={stage3Data}
+                  onChange={handleEducationWorkChange}
+                  onAddExperience={handleAddWorkExperience}
+                  onRemoveExperience={handleRemoveWorkExperience}
+                  errors={errorMessage}
+                />
+              )}
             </div>
           )}
 
@@ -241,6 +433,8 @@ export default function CareersApply() {
               <AcknowledgementSection
                 data={stage4Data}
                 onChange={handleAcknowledgementChange}
+                applicationForm={jobDetail?.application_form}
+                errors={errorMessage}
               />
             </div>
           )}

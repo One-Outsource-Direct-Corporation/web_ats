@@ -23,11 +23,6 @@ export const useFormFieldManagement = () => {
         { field: "Address", status: "required", nonNegotiable: false },
       ],
       job: [
-        {
-          field: "Position Applying for",
-          status: "required",
-          nonNegotiable: false,
-        },
         { field: "Expected Salary", status: "required", nonNegotiable: true },
         {
           field: "Are you willing to work onsite?",

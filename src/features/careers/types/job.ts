@@ -18,7 +18,7 @@ export interface ApplicationForm {
   preferred_interview_schedule: ApplicationFormType;
   education_attained: ApplicationFormType;
   year_graduated: ApplicationFormType;
-  university_name: ApplicationFormType;
+  university: ApplicationFormType;
   course: ApplicationFormType;
   work_experience: ApplicationFormType;
   how_did_you_hear_about_us: ApplicationFormType;
@@ -34,9 +34,11 @@ export interface PipelineStep {
   stage: number;
 }
 
-export interface JobData extends ApplicationForm, PipelineStep {
+export interface JobData {
   id: number;
   client: string;
+  pipeline: PipelineStep[];
+  application_form: ApplicationForm;
   job_title: string;
   education_level: string;
   department: string;

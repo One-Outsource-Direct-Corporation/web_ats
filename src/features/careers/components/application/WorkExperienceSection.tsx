@@ -10,6 +10,7 @@ interface WorkExperienceSectionProps {
   onChange: (field: string, value: string) => void;
   onAddExperience: () => void;
   onRemoveExperience: (index: number) => void;
+  errors: Record<string, string>;
 }
 
 export const WorkExperienceSection: React.FC<WorkExperienceSectionProps> = ({
@@ -17,6 +18,7 @@ export const WorkExperienceSection: React.FC<WorkExperienceSectionProps> = ({
   onChange,
   onAddExperience,
   onRemoveExperience,
+  errors,
 }) => {
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
@@ -50,6 +52,9 @@ export const WorkExperienceSection: React.FC<WorkExperienceSectionProps> = ({
               </Label>
             </div>
           </RadioGroup>
+          {errors.hasWorkExperience && (
+            <p className="text-sm text-red-600">{errors.hasWorkExperience}</p>
+          )}
         </div>
 
         {/* Show work experience form if yes */}
@@ -69,6 +74,11 @@ export const WorkExperienceSection: React.FC<WorkExperienceSectionProps> = ({
                   onChange={(e) => onChange("currentJobTitle", e.target.value)}
                   placeholder="Software Developer"
                 />
+                {errors.currentJobTitle && (
+                  <p className="text-sm text-red-600">
+                    {errors.currentJobTitle}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -79,6 +89,11 @@ export const WorkExperienceSection: React.FC<WorkExperienceSectionProps> = ({
                   onChange={(e) => onChange("currentCompany", e.target.value)}
                   placeholder="Tech Solutions Inc."
                 />
+                {errors.currentCompany && (
+                  <p className="text-sm text-red-600">
+                    {errors.currentCompany}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -95,6 +110,11 @@ export const WorkExperienceSection: React.FC<WorkExperienceSectionProps> = ({
                   placeholder="3"
                   min="0"
                 />
+                {errors.currentYearsExperience && (
+                  <p className="text-sm text-red-600">
+                    {errors.currentYearsExperience}
+                  </p>
+                )}
               </div>
 
               <Button
