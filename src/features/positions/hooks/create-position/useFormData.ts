@@ -35,6 +35,9 @@ export const useFormData = () => {
       other_reason_for_hiring: "",
       min_budget: "",
       max_budget: "",
+      description: "",
+      responsibilities: "",
+      qualifications: "",
     });
   };
 

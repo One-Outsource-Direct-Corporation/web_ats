@@ -11,6 +11,7 @@ import {
 } from "@/shared/components/ui/select";
 import type { FormData } from "../types/prfTypes";
 import { PreviewInfo } from "./PreviewInfo";
+import { RichTextEditor } from "@/features/positions/components/create-position/rich-text-editor/RichTextEditor";
 
 interface Step02Props {
   goToNextStep: () => void;
@@ -137,55 +138,41 @@ export const Step02: React.FC<Step02Props> = ({
           <h2 className="text-[#0056D2] font-bold text-sm mb-4 border-l-4 border-[#0056D2] pl-2 uppercase">
             Job Description
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">
-                Description
-              </label>
-              <Textarea
-                placeholder="Enter job description"
-                value={formData.job_description}
-                onChange={(e) =>
-                  updateFormData({ job_description: e.target.value })
-                }
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">
-                Responsibilities
-              </label>
-              <Textarea
-                placeholder="Enter responsibilities"
-                value={formData.responsibilities}
-                onChange={(e) =>
-                  updateFormData({ responsibilities: e.target.value })
-                }
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">
-                Qualifications
-              </label>
-              <Textarea
-                placeholder="Enter qualifications"
-                value={formData.qualifications}
-                onChange={(e) =>
-                  updateFormData({ qualifications: e.target.value })
-                }
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">
-                Non-Negotiables
-              </label>
-              <Textarea
-                placeholder="Enter non-negotiables"
-                value={formData.non_negotiables}
-                onChange={(e) =>
-                  updateFormData({ non_negotiables: e.target.value })
-                }
-              />
-            </div>
+          <div>
+            <RichTextEditor
+              title="Description"
+              value={formData.job_description}
+              onChange={(value) => updateFormData({ job_description: value })}
+              placeholder="Enter job description"
+            />
+          </div>
+          <div>
+            <RichTextEditor
+              title="Responsibilities"
+              value={formData.responsibilities}
+              onChange={(value) => updateFormData({ responsibilities: value })}
+              placeholder="Enter responsibilities"
+            />
+          </div>
+          <div>
+            <RichTextEditor
+              title="Qualifications"
+              value={formData.qualifications}
+              onChange={(value) => updateFormData({ qualifications: value })}
+              placeholder="Enter qualifications"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 block mb-1">
+              Non-Negotiables
+            </label>
+            <Textarea
+              placeholder="Enter non-negotiables"
+              value={formData.non_negotiables}
+              onChange={(e) =>
+                updateFormData({ non_negotiables: e.target.value })
+              }
+            />
           </div>
         </div>
         {/* Salary Budget */}

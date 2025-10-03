@@ -126,6 +126,8 @@ export interface CreatePositionFormData {
   min_budget: string;
   max_budget: string;
   description?: string;
+  responsibilities?: string;
+  qualifications?: string;
   location?: string;
   posted_by?: string; // User ID
 }

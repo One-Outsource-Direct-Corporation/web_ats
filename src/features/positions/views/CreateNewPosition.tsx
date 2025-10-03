@@ -12,7 +12,6 @@ import {
   usePipelineManagement,
   useAssessmentManagement,
   useFormFieldManagement,
-  useRichTextEditor,
   useModalManagement,
 } from "../hooks/create-position";
 
@@ -56,7 +55,6 @@ export default function CreateNewPosition() {
   const pipelineHooks = usePipelineManagement();
   const assessmentHooks = useAssessmentManagement();
   const formFieldHooks = useFormFieldManagement();
-  const richTextHooks = useRichTextEditor();
   const modalHooks = useModalManagement();
 
   // Steps Configuration
@@ -161,15 +159,26 @@ export default function CreateNewPosition() {
         return (
           <Card className="p-6">
             <RichTextEditor
-              jobDescriptionRef={richTextHooks.jobDescriptionRef}
-              jobDescription={richTextHooks.jobDescription}
-              setJobDescription={richTextHooks.setJobDescription}
-              showAlignmentOptions={richTextHooks.showAlignmentOptions}
-              setShowAlignmentOptions={richTextHooks.setShowAlignmentOptions}
-              onFormat={richTextHooks.handleFormat}
-              onAlignment={richTextHooks.handleAlignment}
-              onList={richTextHooks.handleList}
-              onLink={richTextHooks.handleLink}
+              title="Job Description"
+              value={formData.description || ""}
+              onChange={(content) => handleInputChange("description", content)}
+              placeholder="Enter the job description here..."
+            />
+            <RichTextEditor
+              title="Responsibilities"
+              value={formData.responsibilities || ""}
+              onChange={(content) =>
+                handleInputChange("responsibilities", content)
+              }
+              placeholder="Enter the responsibilities here..."
+            />
+            <RichTextEditor
+              title="Qualifications"
+              value={formData.qualifications || ""}
+              onChange={(content) =>
+                handleInputChange("qualifications", content)
+              }
+              placeholder="Enter the qualifications here..."
             />
           </Card>
         );
@@ -325,7 +334,7 @@ export default function CreateNewPosition() {
         show={modalHooks.showPreview}
         onClose={() => modalHooks.setShowPreview(false)}
         formData={formData}
-        jobDescription={richTextHooks.jobDescription}
+        jobDescription={formData.description || ""}
         currentStep={currentStep}
       />
 

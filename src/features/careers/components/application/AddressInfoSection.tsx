@@ -1,7 +1,6 @@
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import type { PersonalFormData } from "../../types/applicationForm";
-import type { ApplicationForm } from "../../types/job";
 
 interface AddressInfoSectionProps {
   formData: PersonalFormData;
