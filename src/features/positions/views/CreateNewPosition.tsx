@@ -22,7 +22,7 @@ import { BatchManagement } from "../components/create-position/location-manageme
 import { PipelineManagement } from "../components/create-position/pipeline-management/PipelineManagement";
 import { StagePopupModal } from "../components/create-position/pipeline-management/StagePopupModal";
 import { AssessmentManagement } from "../components/create-position/assessment-management/AssessmentManagement";
-import { RichTextEditor } from "../components/create-position/rich-text-editor/RichTextEditor";
+import { RichTextEditor } from "../../../shared/components/reusables/RichTextEditor";
 import { StepNavigation } from "../components/create-position/navigation/StepNavigation";
 import { CancelModal } from "../components/create-position/navigation/Modals";
 import { PreviewModal } from "../components/create-position/navigation/Modals";
@@ -39,7 +39,8 @@ export default function CreateNewPosition() {
   const navigate = useNavigate();
 
   // Initialize all our custom hooks
-  const { formData, handleInputChange } = useFormData();
+  const { formData, handleInputChange, handleApplicationFormChange } =
+    useFormData();
 
   const {
     currentStep,
@@ -187,11 +188,8 @@ export default function CreateNewPosition() {
         return (
           <Card className="p-6">
             <ApplicationFormManagement
-              formFieldStatuses={formFieldHooks.formFieldStatuses}
-              onFieldStatusChange={formFieldHooks.handleFormFieldStatusChange}
-              onFieldNonNegotiableChange={
-                formFieldHooks.handleFormFieldNonNegotiableChange
-              }
+              formData={formData}
+              onFieldStatusChange={handleApplicationFormChange}
               includeInCandidateExperience={
                 formFieldHooks.includeInCandidateExperience
               }
@@ -334,7 +332,6 @@ export default function CreateNewPosition() {
         show={modalHooks.showPreview}
         onClose={() => modalHooks.setShowPreview(false)}
         formData={formData}
-        jobDescription={formData.description || ""}
         currentStep={currentStep}
       />
 

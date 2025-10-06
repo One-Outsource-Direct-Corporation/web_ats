@@ -22,13 +22,48 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 }) => {
   const editorRef = useRef(null);
 
-  // Jodit editor configuration
   const config = useMemo(
     () => ({
       readonly: disabled,
       placeholder: placeholder,
       height: height,
       buttons: [
+        "bold",
+        "italic",
+        "underline",
+        "|",
+        "ul",
+        "ol",
+        "|",
+        "outdent",
+        "indent",
+        "|",
+        "align",
+        "|",
+        "link",
+        "|",
+        "undo",
+        "redo",
+      ],
+      buttonsMD: [
+        "bold",
+        "italic",
+        "underline",
+        "|",
+        "ul",
+        "ol",
+        "|",
+        "outdent",
+        "indent",
+        "|",
+        "align",
+        "|",
+        "link",
+        "|",
+        "undo",
+        "redo",
+      ],
+      buttonsSM: [
         "bold",
         "italic",
         "underline",
@@ -62,8 +97,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         ref={editorRef}
         value={value}
         config={config}
-        tabIndex={-1}
-        onChange={(newContent) => onChange(newContent)}
+        onBlur={(newContent) => onChange(newContent)}
       />
     </div>
   );

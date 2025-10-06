@@ -98,21 +98,24 @@ export interface StagePopupData {
 }
 
 // Form Field Status Types
-export interface FormFieldStatus {
+export type FormFieldStatus = "required" | "optional" | "disabled";
+
+export interface FormFieldItem {
   field: string;
-  status: "required" | "optional" | "disabled";
+  status: FormFieldStatus;
   nonNegotiable: boolean;
 }
 
 export interface FormFieldStatuses {
-  personal: FormFieldStatus[];
-  job: FormFieldStatus[];
-  education: FormFieldStatus[];
-  acknowledgement: FormFieldStatus[];
+  personal: FormFieldItem[];
+  job: FormFieldItem[];
+  education: FormFieldItem[];
+  acknowledgement: FormFieldItem[];
 }
 
 // Main Form Data Type
 export interface CreatePositionFormData {
+  client: number | null;
   job_title: string;
   education_level: string;
   department: string;
@@ -120,16 +123,44 @@ export interface CreatePositionFormData {
   employment_type: string;
   headcount: string;
   work_setup: string;
-  date_needed: string;
+  date_needed: Date | null;
   reason_for_hiring: string;
   other_reason_for_hiring: string;
   min_budget: string;
   max_budget: string;
-  description?: string;
-  responsibilities?: string;
-  qualifications?: string;
+  description: string;
+  responsibilities: string;
+  qualifications: string;
   location?: string;
-  posted_by?: string; // User ID
+  posted_by?: string; // User ID, will be handled in backend
+  application_form: FormFields;
+}
+
+export interface FormFields {
+  name: FormFieldStatus;
+  birth_date: FormFieldStatus;
+  gender: FormFieldStatus;
+  primary_contact_number: FormFieldStatus;
+  secondary_contact_number: FormFieldStatus;
+  email: FormFieldStatus;
+  linkedin_profile: FormFieldStatus;
+  address: FormFieldStatus;
+
+  expect_salary: FormFieldStatus;
+  willing_to_work_onsite: FormFieldStatus;
+  photo_2x2: FormFieldStatus;
+  upload_med_cert: FormFieldStatus;
+  preferred_interview_schedule: FormFieldStatus;
+
+  education_attained: FormFieldStatus;
+  year_graduated: FormFieldStatus;
+  university: FormFieldStatus;
+  course: FormFieldStatus;
+  work_experience: FormFieldStatus;
+
+  how_did_you_hear_about_us: FormFieldStatus;
+  agreement: FormFieldStatus;
+  signature: FormFieldStatus;
 }
 
 // Step Component Props

@@ -1,4 +1,3 @@
-import React from "react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
@@ -11,7 +10,7 @@ import {
 } from "@/shared/components/ui/select";
 import type { FormData } from "../types/prfTypes";
 import { PreviewInfo } from "./PreviewInfo";
-import { RichTextEditor } from "@/features/positions/components/create-position/rich-text-editor/RichTextEditor";
+import { RichTextEditor } from "@/shared/components/reusables/RichTextEditor";
 
 interface Step02Props {
   goToNextStep: () => void;

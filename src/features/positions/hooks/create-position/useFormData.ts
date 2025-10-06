@@ -3,41 +3,102 @@ import type { CreatePositionFormData } from "../../types/createPosition";
 
 export const useFormData = () => {
   const [formData, setFormData] = useState<CreatePositionFormData>({
+    client: null,
     job_title: "",
     department: "",
-    employment_type: "Full-Time",
-    education_level: "Bachelor's Degree",
-    work_setup: "Hybrid",
-    experience_level: "Entry Level",
+    employment_type: "full_time",
+    education_level: "bachelors_degree",
+    work_setup: "hybrid",
+    experience_level: "entry_level",
     headcount: "",
-    date_needed: "",
-    reason_for_hiring: "Others, Please Specify",
+    date_needed: null,
+    reason_for_hiring: "",
     other_reason_for_hiring: "",
     min_budget: "",
     max_budget: "",
+    description: "",
+    responsibilities: "",
+    qualifications: "",
+    application_form: {
+      name: "optional",
+      birth_date: "optional",
+      gender: "optional",
+      primary_contact_number: "optional",
+      secondary_contact_number: "optional",
+      email: "optional",
+      linkedin_profile: "optional",
+      address: "optional",
+      expect_salary: "optional",
+      willing_to_work_onsite: "optional",
+      photo_2x2: "optional",
+      upload_med_cert: "optional",
+      preferred_interview_schedule: "optional",
+      education_attained: "optional",
+      year_graduated: "optional",
+      university: "optional",
+      course: "optional",
+      work_experience: "optional",
+      how_did_you_hear_about_us: "optional",
+      agreement: "optional",
+      signature: "optional",
+    },
   });
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleApplicationFormChange = (fieldName: string, status: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      application_form: {
+        ...prev.application_form, // Preserve all existing fields
+        [fieldName]: status, // Update only the specific field
+      },
+    }));
+  };
+
   const resetFormData = () => {
     setFormData({
+      client: null,
       job_title: "",
       department: "",
-      employment_type: "Full-Time",
-      education_level: "Bachelor's Degree",
-      work_setup: "Hybrid",
-      experience_level: "Entry Level",
+      employment_type: "full_time",
+      education_level: "bachelors_degree",
+      work_setup: "hybrid",
+      experience_level: "entry_level",
       headcount: "",
-      date_needed: "",
-      reason_for_hiring: "Others, Please Specify",
+      date_needed: null,
+      reason_for_hiring: "",
       other_reason_for_hiring: "",
       min_budget: "",
       max_budget: "",
       description: "",
       responsibilities: "",
       qualifications: "",
+      application_form: {
+        name: "optional",
+        birth_date: "optional",
+        gender: "optional",
+        primary_contact_number: "optional",
+        secondary_contact_number: "optional",
+        email: "optional",
+        linkedin_profile: "optional",
+        address: "optional",
+        expect_salary: "optional",
+        willing_to_work_onsite: "optional",
+        photo_2x2: "optional",
+        upload_med_cert: "optional",
+        preferred_interview_schedule: "optional",
+        education_attained: "optional",
+        year_graduated: "optional",
+        university: "optional",
+        course: "optional",
+        work_experience: "optional",
+        how_did_you_hear_about_us: "optional",
+        agreement: "optional",
+        signature: "optional",
+      },
     });
   };
 
@@ -45,6 +106,7 @@ export const useFormData = () => {
     formData,
     setFormData,
     handleInputChange,
+    handleApplicationFormChange,
     resetFormData,
   };
 };

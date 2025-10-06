@@ -1,218 +1,273 @@
-import React from "react";
 import type { CreatePositionFormData } from "../../../types/createPosition";
+import {
+  FieldSet,
+  FieldGroup,
+  Field,
+  FieldLabel,
+  FieldLegend,
+  FieldDescription,
+} from "@/shared/components/ui/field";
+import { Input } from "@/shared/components/ui/input";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/shared/components/ui/popover";
+import { Button } from "@/shared/components/ui/button";
+import { CalendarIcon } from "lucide-react";
+import { Calendar } from "@/shared/components/ui/calendar";
 
 interface BasicDetailsFormProps {
   formData: CreatePositionFormData;
   onInputChange: (field: string, value: string) => void;
 }
 
-export const BasicDetailsForm: React.FC<BasicDetailsFormProps> = ({
+export const BasicDetailsForm = ({
   formData,
   onInputChange,
-}) => {
+}: BasicDetailsFormProps) => {
   return (
     <div>
       {/* Basic Details */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Job Title *
-            </label>
-            <input
-              type="text"
-              value={formData.job_title}
-              onChange={(e) => onInputChange("job_title", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter job title"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Department *
-            </label>
-            <select
-              value={formData.department}
-              onChange={(e) => onInputChange("department", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select Department</option>
-              <option value="Engineering">Engineering</option>
-              <option value="Marketing">Marketing</option>
-              <option value="Sales">Sales</option>
-              <option value="HR">Human Resources</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Employment Type *
-            </label>
-            <select
-              value={formData.employment_type}
-              onChange={(e) => onInputChange("employment_type", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="Full-Time">Full-Time</option>
-              <option value="Part-Time">Part-Time</option>
-              <option value="Contract">Contract</option>
-              <option value="Internship">Internship</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Work Setup *
-            </label>
-            <select
-              value={formData.work_setup}
-              onChange={(e) => onInputChange("work_setup", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="Onsite">Onsite</option>
-              <option value="Remote">Remote</option>
-              <option value="Hybrid">Hybrid</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Education Needed *
-            </label>
-            <select
-              value={formData.education_level}
-              onChange={(e) =>
-                onInputChange("education_needed", e.target.value)
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="High School">High School</option>
-              <option value="Associate's Degree">Associate's Degree</option>
-              <option value="Bachelor's Degree">Bachelor's Degree</option>
-              <option value="Master's Degree">Master's Degree</option>
-              <option value="PhD">PhD</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Experience Level *
-            </label>
-            <select
-              value={formData.experience_level}
-              onChange={(e) => onInputChange("experience", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="Entry Level">Entry Level</option>
-              <option value="Mid Level">Mid Level</option>
-              <option value="Senior Level">Senior Level</option>
-              <option value="Executive">Executive</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Headcounts Needed *
-            </label>
-            <input
-              type="number"
-              value={formData.headcount}
-              onChange={(e) =>
-                onInputChange("headcounts_needed", e.target.value)
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter number of positions"
-              min="1"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Date Needed *
-            </label>
-            <input
-              type="date"
-              value={formData.date_needed}
-              onChange={(e) => onInputChange("date_needed", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Reason for Hire *
-            </label>
-            <select
-              value={formData.reason_for_hiring}
-              onChange={(e) =>
-                onInputChange("reason_for_hiring", e.target.value)
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="New Position">New Position</option>
-              <option value="Replacement">Replacement</option>
-              <option value="Expansion">Expansion</option>
-              <option value="Temporary Coverage">Temporary Coverage</option>
-              <option value="Project-Based">Project-Based</option>
-              <option value="Others, Please Specify">
-                Others, Please Specify
-              </option>
-            </select>
-          </div>
-
-          {formData.reason_for_hiring === "Others, Please Specify" && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Please Specify *
-              </label>
-              <input
+        <FieldSet>
+          <FieldGroup>
+            <Field>
+              <FieldLabel>Client *</FieldLabel>
+              <Select onValueChange={(value) => onInputChange("client", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Client" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">Light</SelectItem>
+                  <SelectItem value="dark">Dark</SelectItem>
+                  <SelectItem value="system">System</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field>
+              <FieldLabel>Job Title *</FieldLabel>
+              <Input
                 type="text"
-                value={formData.other_reason_for_hiring}
-                onChange={(e) =>
-                  onInputChange("other_reason_for_hiring", e.target.value)
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Please specify the reason for hire"
+                value={formData.job_title}
+                onChange={(e) => onInputChange("job_title", e.target.value)}
+                placeholder="Enter job title"
               />
-            </div>
-          )}
-        </div>
+            </Field>
+            <Field>
+              <FieldLabel>Department *</FieldLabel>
+              <Select
+                onValueChange={(value) => onInputChange("department", value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Department" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="engineering">Engineering</SelectItem>
+                  <SelectItem value="marketing">Marketing</SelectItem>
+                  <SelectItem value="sales">Sales</SelectItem>
+                  <SelectItem value="hr">Human Resources</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field>
+              <FieldLabel>Employment Type *</FieldLabel>
+              <Select
+                onValueChange={(value) =>
+                  onInputChange("employment_type", value)
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Employment Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="full-time">Full-Time</SelectItem>
+                  <SelectItem value="part-time">Part-Time</SelectItem>
+                  <SelectItem value="contract">Contract</SelectItem>
+                  <SelectItem value="internship">Internship</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field>
+              <FieldLabel>Work Setup *</FieldLabel>
+              <Select
+                onValueChange={(value) => onInputChange("work_setup", value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Work Setup" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="onsite">Onsite</SelectItem>
+                  <SelectItem value="remote">Remote</SelectItem>
+                  <SelectItem value="hybrid">Hybrid</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+          </FieldGroup>
+        </FieldSet>
+
+        <FieldSet>
+          <FieldGroup>
+            <Field>
+              <FieldLabel>Education Needed *</FieldLabel>
+              <Select
+                onValueChange={(value) =>
+                  onInputChange("education_level", value)
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Education Level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="high_school">High School</SelectItem>
+                  <SelectItem value="associate_degree">
+                    Associate's Degree
+                  </SelectItem>
+                  <SelectItem value="bachelor_degree">
+                    Bachelor's Degree
+                  </SelectItem>
+                  <SelectItem value="master_degree">Master's Degree</SelectItem>
+                  <SelectItem value="phd">PhD</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field>
+              <FieldLabel>Experience Level *</FieldLabel>
+              <Select
+                onValueChange={(value) =>
+                  onInputChange("experience_level", value)
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Experience Level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="entry_level">Entry Level</SelectItem>
+                  <SelectItem value="mid_level">Mid Level</SelectItem>
+                  <SelectItem value="senior_level">Senior Level</SelectItem>
+                  <SelectItem value="executive">Executive</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field>
+              <FieldLabel>Headcounts Needed *</FieldLabel>
+              <Input
+                type="number"
+                value={formData.headcount}
+                onChange={(e) => onInputChange("headcount", e.target.value)}
+                placeholder="Enter number of positions"
+              />
+            </Field>
+            <Field>
+              <FieldLabel>Date Needed *</FieldLabel>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    // data-empty={!date}
+                    className="data-[empty=true]:text-muted-foreground w-[280px] justify-start text-left font-normal"
+                  >
+                    {formData.date_needed
+                      ? new Date(formData.date_needed).toLocaleDateString(
+                          "en-PH",
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "2-digit",
+                          }
+                        )
+                      : "Pick a date"}
+                    <CalendarIcon />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={
+                      formData.date_needed
+                        ? new Date(formData.date_needed)
+                        : new Date()
+                    }
+                    onSelect={(date) =>
+                      onInputChange(
+                        "date_needed",
+                        date ? date.toLocaleDateString("en-PH") : ""
+                      )
+                    }
+                  />
+                </PopoverContent>
+              </Popover>
+            </Field>
+            <Field>
+              <FieldLabel>Reason for Hire *</FieldLabel>
+              <Select
+                onValueChange={(value) =>
+                  onInputChange("reason_for_hiring", value)
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Reason for Hire" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="new_position">New Position</SelectItem>
+                  <SelectItem value="replacement">Replacement</SelectItem>
+                  <SelectItem value="others">Others, Please Specify</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            {formData.reason_for_hiring === "others" && (
+              <Field>
+                <FieldLabel>Please Specify *</FieldLabel>
+                <Input
+                  type="text"
+                  value={formData.other_reason_for_hiring}
+                  onChange={(e) =>
+                    onInputChange("other_reason_for_hiring", e.target.value)
+                  }
+                  placeholder="Enter reason for hire"
+                />
+              </Field>
+            )}
+          </FieldGroup>
+        </FieldSet>
       </div>
 
       {/* Budget Range */}
       <div className="mb-8">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
-          Budget Range
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Budget From *
-            </label>
-            <input
-              type="number"
-              value={formData.min_budget}
-              onChange={(e) => onInputChange("min_budget", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Minimum salary"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Budget To *
-            </label>
-            <input
-              type="number"
-              value={formData.max_budget}
-              onChange={(e) => onInputChange("max_budget", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Maximum salary"
-            />
-          </div>
-        </div>
+        <FieldSet>
+          <FieldLegend>Budget Range</FieldLegend>
+          <FieldDescription>
+            Specify the minimum and maximum budget for this position.
+          </FieldDescription>
+          <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Field>
+              <FieldLabel>Minimum</FieldLabel>
+              <Input
+                type="number"
+                value={formData.min_budget}
+                onChange={(e) => onInputChange("min_budget", e.target.value)}
+                placeholder="Minimum salary"
+              />
+            </Field>
+            <Field>
+              <FieldLabel>Maximum</FieldLabel>
+              <Input
+                type="number"
+                value={formData.max_budget}
+                onChange={(e) => onInputChange("max_budget", e.target.value)}
+                placeholder="Maximum salary"
+              />
+            </Field>
+          </FieldGroup>
+        </FieldSet>
       </div>
     </div>
   );

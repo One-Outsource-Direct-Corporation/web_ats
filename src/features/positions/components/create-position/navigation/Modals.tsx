@@ -2,6 +2,9 @@ import React from "react";
 import { Button } from "@/shared/components/ui/button";
 import { X, Briefcase } from "lucide-react";
 import type { CreatePositionFormData } from "@/features/positions/types/createPosition";
+import formatName from "@/shared/utils/formatName";
+import formatMoney from "@/shared/utils/formatMoney";
+import formatDate from "@/shared/utils/formatDate";
 
 interface CancelModalProps {
   show: boolean;
@@ -13,7 +16,6 @@ interface PreviewModalProps {
   show: boolean;
   onClose: () => void;
   formData: CreatePositionFormData;
-  jobDescription: string;
   currentStep: number;
 }
 
@@ -66,7 +68,6 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
   show,
   onClose,
   formData,
-  jobDescription,
   currentStep,
 }) => {
   if (!show) return null;
@@ -96,23 +97,38 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
                 {formData.job_title || "Position Title"}
               </h3>
               <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                <span>{formData.department}</span>
-                <span>{formData.employment_type}</span>
-                <span>{formData.work_setup}</span>
-                <span>{formData.experience_level}</span>
+                <span>{formatName(formData.department)}</span>
+                <span>{formatName(formData.employment_type)}</span>
+                <span>{formatName(formData.work_setup)}</span>
+                <span>{formatName(formData.experience_level)}</span>
               </div>
             </div>
 
             {currentStep >= 2 && (
-              <div>
-                <h4 className="text-lg font-semibold text-gray-800 mb-2">
-                  Job Description
-                </h4>
-                <div
-                  className="prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: jobDescription }}
-                />
-              </div>
+              <>
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-800 mb-2">
+                    Job Description
+                  </h4>
+                  <div
+                    className="prose prose-sm max-w-none preview-content"
+                    dangerouslySetInnerHTML={{
+                      __html: formData.description || "",
+                    }}
+                  />
+                </div>
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-800 mb-2">
+                    Responsibilities
+                  </h4>
+                  <div
+                    className="prose prose-sm max-w-none preview-content"
+                    dangerouslySetInnerHTML={{
+                      __html: formData.responsibilities || "",
+                    }}
+                  />
+                </div>
+              </>
             )}
 
             <div className="grid grid-cols-2 gap-4 text-sm">
@@ -122,17 +138,23 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
               </div>
               <div>
                 <strong className="text-gray-700">Date Needed:</strong>
-                <span className="ml-2">{formData.date_needed}</span>
+                <span className="ml-2">
+                  {formData.date_needed &&
+                    formatDate(String(formData.date_needed))}
+                </span>
               </div>
               <div>
                 <strong className="text-gray-700">Budget Range:</strong>
                 <span className="ml-2">
-                  {formData.min_budget} - {formData.max_budget}
+                  {formatMoney(Number(formData.min_budget))} -{" "}
+                  {formatMoney(Number(formData.max_budget))}
                 </span>
               </div>
               <div>
                 <strong className="text-gray-700">Education:</strong>
-                <span className="ml-2">{formData.education_level}</span>
+                <span className="ml-2">
+                  {formatName(formData.education_level)}
+                </span>
               </div>
             </div>
           </div>
