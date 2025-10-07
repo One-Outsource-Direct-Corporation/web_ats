@@ -24,6 +24,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { CalendarIcon } from "lucide-react";
 import { Calendar } from "@/shared/components/ui/calendar";
+import useClient from "@/features/positions/hooks/create-position/useClient";
 
 interface BasicDetailsFormProps {
   formData: CreatePositionFormData;
@@ -34,6 +35,7 @@ export const BasicDetailsForm = ({
   formData,
   onInputChange,
 }: BasicDetailsFormProps) => {
+  const { clients, loading, error } = useClient();
   return (
     <div>
       {/* Basic Details */}
@@ -47,9 +49,17 @@ export const BasicDetailsForm = ({
                   <SelectValue placeholder="Select Client" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
-                  <SelectItem value="system">System</SelectItem>
+                  {loading && (
+                    <SelectItem value="loading">Loading...</SelectItem>
+                  )}
+                  {error && (
+                    <SelectItem value="error">Something went wrong!</SelectItem>
+                  )}
+                  {clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </Field>

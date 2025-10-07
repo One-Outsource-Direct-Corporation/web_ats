@@ -100,18 +100,18 @@ export interface StagePopupData {
 // Form Field Status Types
 export type FormFieldStatus = "required" | "optional" | "disabled";
 
-export interface FormFieldItem {
-  field: string;
-  status: FormFieldStatus;
-  nonNegotiable: boolean;
-}
+// export interface FormFieldItem {
+//   field: string;
+//   status: FormFieldStatus;
+//   nonNegotiable: boolean;
+// }
 
-export interface FormFieldStatuses {
-  personal: FormFieldItem[];
-  job: FormFieldItem[];
-  education: FormFieldItem[];
-  acknowledgement: FormFieldItem[];
-}
+// export interface FormFieldStatuses {
+//   personal: FormFieldItem[];
+//   job: FormFieldItem[];
+//   education: FormFieldItem[];
+//   acknowledgement: FormFieldItem[];
+// }
 
 // Main Form Data Type
 export interface CreatePositionFormData {
@@ -179,11 +179,11 @@ export interface AssessmentSettings {
 }
 
 // Time Picker Values
-export interface TimePickerValues {
-  hours: string;
-  minutes: string;
-  seconds: string;
-}
+// export interface TimePickerValues {
+//   hours: string;
+//   minutes: string;
+//   seconds: string;
+// }
 
 // Assessment Form Types
 export interface AssessmentForm {
@@ -209,4 +209,12 @@ export interface NonNegotiableField {
   field: string;
   type: "text" | "select" | "radio" | "checkbox" | "file" | "date" | "number";
   options?: string[];
+}
+
+export interface Client {
+  id: string;
+  name: string;
+  email: string;
+  contact_number: string;
+  posted_by: string;
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import type { CreatePositionFormData } from "../../types/createPosition";
 
 export const useFormData = () => {
@@ -44,19 +44,22 @@ export const useFormData = () => {
     },
   });
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = useCallback((field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+  }, []);
 
-  const handleApplicationFormChange = (fieldName: string, status: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      application_form: {
-        ...prev.application_form, // Preserve all existing fields
-        [fieldName]: status, // Update only the specific field
-      },
-    }));
-  };
+  const handleApplicationFormChange = useCallback(
+    (fieldName: string, status: string) => {
+      setFormData((prev) => ({
+        ...prev,
+        application_form: {
+          ...prev.application_form, // Preserve all existing fields
+          [fieldName]: status, // Update only the specific field
+        },
+      }));
+    },
+    []
+  );
 
   const resetFormData = () => {
     setFormData({

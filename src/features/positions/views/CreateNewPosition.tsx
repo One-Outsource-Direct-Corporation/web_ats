@@ -4,16 +4,12 @@ import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { Eye } from "lucide-react";
 
-// Import all our hooks
-import {
-  useFormData,
-  useStepNavigation,
-  useLocationBatchManagement,
-  usePipelineManagement,
-  useAssessmentManagement,
-  useFormFieldManagement,
-  useModalManagement,
-} from "../hooks/create-position";
+import { useFormData } from "../hooks/create-position/useFormData";
+import { useStepNavigation } from "../hooks/create-position/useStepNavigation";
+import { useLocationBatchManagement } from "../hooks/create-position/useLocationBatchManagement";
+import { usePipelineManagement } from "../hooks/create-position/usePipelineManagement";
+import { useAssessmentManagement } from "../hooks/create-position/useAssessmentManagement";
+import { useModalManagement } from "../hooks/create-position/useModalManagement";
 
 import { BasicDetailsForm } from "../components/create-position/form-management/BasicDetailsForm";
 import { ApplicationFormManagement } from "../components/create-position/form-management/ApplicationFormManagement";
@@ -55,7 +51,6 @@ export default function CreateNewPosition() {
   const locationBatchHooks = useLocationBatchManagement();
   const pipelineHooks = usePipelineManagement();
   const assessmentHooks = useAssessmentManagement();
-  const formFieldHooks = useFormFieldManagement();
   const modalHooks = useModalManagement();
 
   // Steps Configuration
@@ -189,22 +184,7 @@ export default function CreateNewPosition() {
           <Card className="p-6">
             <ApplicationFormManagement
               formData={formData}
-              onFieldStatusChange={handleApplicationFormChange}
-              includeInCandidateExperience={
-                formFieldHooks.includeInCandidateExperience
-              }
-              onIncludeInCandidateExperienceChange={
-                formFieldHooks.setIncludeInCandidateExperience
-              }
-              showTemplateOptions={formFieldHooks.showTemplateOptions}
-              onToggleTemplateOptions={() =>
-                formFieldHooks.setShowTemplateOptions(
-                  !formFieldHooks.showTemplateOptions
-                )
-              }
-              onAddQuestionnaire={() => {
-                /* Handle add questionnaire */
-              }}
+              setFormData={handleApplicationFormChange}
             />
           </Card>
         );
