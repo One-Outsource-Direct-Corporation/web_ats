@@ -34,24 +34,18 @@ export interface Assessment {
   timeLimit?: string;
 }
 
-export interface PipelineStep {
-  id: number;
-  name: string;
-  type: string;
-  icon: any;
-  description?: string;
-  redactedInfo?: boolean;
-  assessments?: Assessment[];
-  teamMembers?: TeamMember[];
-  templateType?: string;
-  reminderTime?: string;
-}
-
-export interface PipelineStage {
-  id: number;
-  name: string;
-  steps: PipelineStep[];
-}
+// export interface PipelineStep {
+//   id: number;
+//   name: string;
+//   type: string;
+//   icon: any;
+//   description?: string;
+//   redactedInfo?: boolean;
+//   assessments?: Assessment[];
+//   teamMembers?: TeamMember[];
+//   templateType?: string;
+//   reminderTime?: string;
+// }
 
 // Question and Assessment Types
 export interface Question {
@@ -112,29 +106,6 @@ export type FormFieldStatus = "required" | "optional" | "disabled";
 //   education: FormFieldItem[];
 //   acknowledgement: FormFieldItem[];
 // }
-
-// Main Form Data Type
-export interface CreatePositionFormData {
-  client: number | null;
-  job_title: string;
-  education_level: string;
-  department: string;
-  experience_level: string;
-  employment_type: string;
-  headcount: string;
-  work_setup: string;
-  date_needed: Date | null;
-  reason_for_hiring: string;
-  other_reason_for_hiring: string;
-  min_budget: string;
-  max_budget: string;
-  description: string;
-  responsibilities: string;
-  qualifications: string;
-  location?: string;
-  posted_by?: string; // User ID, will be handled in backend
-  application_form: FormFields;
-}
 
 export interface FormFields {
   name: FormFieldStatus;
@@ -200,9 +171,6 @@ export interface StepConfig {
   active: boolean;
 }
 
-// Alternative interface names for compatibility
-export type FormData = CreatePositionFormData;
-
 // Non-negotiable Field Types
 export interface NonNegotiableField {
   category: string;
@@ -211,6 +179,26 @@ export interface NonNegotiableField {
   options?: string[];
 }
 
+// -- Refactored Types --
+
+// Pipeline
+export interface PipelineStep {
+  id?: number;
+  pipeline_identifier?: number; // Only for React to identify steps uniquely
+  process_type: string;
+  process_title: string;
+  description: string;
+  order: number;
+  stage: number;
+}
+
+export interface PipelineStage {
+  id: number;
+  name: string;
+  steps: PipelineStep[];
+}
+
+// Client
 export interface Client {
   id: string;
   name: string;
@@ -218,3 +206,30 @@ export interface Client {
   contact_number: string;
   posted_by: string;
 }
+
+// Form Data
+export interface CreatePositionFormData {
+  client: number | null;
+  job_title: string;
+  education_level: string;
+  department: string;
+  experience_level: string;
+  employment_type: string;
+  headcount: string;
+  work_setup: string;
+  date_needed: Date | null;
+  reason_for_hiring: string;
+  other_reason_for_hiring: string;
+  min_budget: string;
+  max_budget: string;
+  description: string;
+  responsibilities: string;
+  qualifications: string;
+  location?: string;
+  posted_by?: string; // User ID, will be handled in backend
+  application_form: FormFields;
+  pipeline: PipelineStep[];
+}
+
+// TYPES
+export type FormData = CreatePositionFormData;

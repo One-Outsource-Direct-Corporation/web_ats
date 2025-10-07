@@ -6,61 +6,54 @@ import { Eye } from "lucide-react";
 
 import { useFormData } from "../hooks/create-position/useFormData";
 import { useStepNavigation } from "../hooks/create-position/useStepNavigation";
-import { useLocationBatchManagement } from "../hooks/create-position/useLocationBatchManagement";
 import { usePipelineManagement } from "../hooks/create-position/usePipelineManagement";
 import { useAssessmentManagement } from "../hooks/create-position/useAssessmentManagement";
 import { useModalManagement } from "../hooks/create-position/useModalManagement";
 
-import { BasicDetailsForm } from "../components/create-position/form-management/BasicDetailsForm";
-import { ApplicationFormManagement } from "../components/create-position/form-management/ApplicationFormManagement";
-import { LocationManagement } from "../components/create-position/location-management/LocationManagement";
-import { BatchManagement } from "../components/create-position/location-management/BatchManagement";
 import { PipelineManagement } from "../components/create-position/pipeline-management/PipelineManagement";
-import { StagePopupModal } from "../components/create-position/pipeline-management/StagePopupModal";
 import { AssessmentManagement } from "../components/create-position/assessment-management/AssessmentManagement";
-import { RichTextEditor } from "../../../shared/components/reusables/RichTextEditor";
 import { StepNavigation } from "../components/create-position/navigation/StepNavigation";
-import { CancelModal } from "../components/create-position/navigation/Modals";
+
 import { PreviewModal } from "../components/create-position/navigation/Modals";
-import { PoolApplicantsModal } from "../components/create-position/navigation/Modals";
+// import { PoolApplicantsModal } from "../components/create-position/navigation/Modals";
 import { SuccessPage } from "../components/create-position/navigation/SuccessPage";
 
-import type { StepProps } from "../types/createPosition";
+import Step01 from "../components/create-position/steps/Step01";
+import Step02 from "../components/create-position/steps/Step02";
+import Step03 from "../components/create-position/steps/Step03";
+
+let counter = 0;
 
 export default function CreateNewPosition() {
   useEffect(() => {
     document.title = "Create New Position";
   }, []);
-
-  const navigate = useNavigate();
-
-  // Initialize all our custom hooks
-  const { formData, handleInputChange, handleApplicationFormChange } =
-    useFormData();
-
   const {
+    steps,
     currentStep,
     completedSteps,
     handleNext: stepHandleNext,
     handleBack,
-    handleStepClick,
     getStepTitle,
     resetSteps,
   } = useStepNavigation();
 
-  const locationBatchHooks = useLocationBatchManagement();
+  const navigate = useNavigate();
+
+  console.log("Hey: ", counter++);
+
+  // Initialize all our custom hooks
+  const {
+    formData,
+    handleInputChange,
+    handleApplicationFormChange,
+    handlePipelineChange,
+    resetFormData,
+  } = useFormData();
+
   const pipelineHooks = usePipelineManagement();
   const assessmentHooks = useAssessmentManagement();
   const modalHooks = useModalManagement();
-
-  // Steps Configuration
-  const steps: StepProps[] = [
-    { number: 1, title: "Details", active: currentStep === 1 },
-    { number: 2, title: "Description", active: currentStep === 2 },
-    { number: 3, title: "Application Form", active: currentStep === 3 },
-    { number: 4, title: "Pipeline", active: currentStep === 4 },
-    { number: 5, title: "Assessment", active: currentStep === 5 },
-  ];
 
   // Enhanced handlers
   const handleNext = () => {
@@ -75,22 +68,9 @@ export default function CreateNewPosition() {
     }
   };
 
-  const handleCancel = () => {
-    modalHooks.setShowModal(true);
-  };
-
-  const handleConfirmCancel = () => {
-    navigate("/positions");
-  };
-
   const handleSaveNonNegotiables = () => {
     modalHooks.setShowNonNegotiableModal(false);
     stepHandleNext();
-  };
-
-  const handlePublish = () => {
-    modalHooks.setShowPoolApplicantsPopup(false);
-    modalHooks.setShowSuccessPage(true);
   };
 
   const handleViewAllPositions = () => {
@@ -102,100 +82,30 @@ export default function CreateNewPosition() {
     resetSteps();
   };
 
-  const handleStagePopupSave = () => {
-    pipelineHooks.saveStageData(assessmentHooks.setGlobalAssessments);
-    modalHooks.setShowStagePopup(false);
-    pipelineHooks.resetStagePopup();
-  };
-
-  const handleStagePopupClose = () => {
-    modalHooks.setShowStagePopup(false);
-    pipelineHooks.resetStagePopup();
-  };
-
-  const handleAddStepToStage = (stageId: number) => {
-    pipelineHooks.addStepToStage(stageId);
-    modalHooks.setShowStagePopup(true);
-  };
-
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
         return (
-          <Card className="p-6">
-            <BasicDetailsForm
-              formData={formData}
-              onInputChange={handleInputChange}
-            />
-
-            <LocationManagement
-              locations={locationBatchHooks.locations}
-              editingLocationId={locationBatchHooks.editingLocationId}
-              onLocationChange={locationBatchHooks.handleLocationChange}
-              onEditLocation={locationBatchHooks.handleEditLocation}
-              onDeleteLocation={locationBatchHooks.deleteLocation}
-              onAddLocation={locationBatchHooks.addLocation}
-              setEditingLocationId={locationBatchHooks.setEditingLocationId}
-            />
-
-            <BatchManagement
-              batches={locationBatchHooks.batches}
-              locations={locationBatchHooks.locations}
-              editingBatchId={locationBatchHooks.editingBatchId}
-              onBatchChange={locationBatchHooks.handleBatchChange}
-              onEditBatch={locationBatchHooks.handleEditBatch}
-              onDeleteBatch={locationBatchHooks.deleteBatch}
-              onAddBatch={locationBatchHooks.addBatch}
-              setEditingBatchId={locationBatchHooks.setEditingBatchId}
-            />
-          </Card>
+          <Step01 formData={formData} handleInputChange={handleInputChange} />
         );
-
       case 2:
         return (
-          <Card className="p-6">
-            <RichTextEditor
-              title="Job Description"
-              value={formData.description || ""}
-              onChange={(content) => handleInputChange("description", content)}
-              placeholder="Enter the job description here..."
-            />
-            <RichTextEditor
-              title="Responsibilities"
-              value={formData.responsibilities || ""}
-              onChange={(content) =>
-                handleInputChange("responsibilities", content)
-              }
-              placeholder="Enter the responsibilities here..."
-            />
-            <RichTextEditor
-              title="Qualifications"
-              value={formData.qualifications || ""}
-              onChange={(content) =>
-                handleInputChange("qualifications", content)
-              }
-              placeholder="Enter the qualifications here..."
-            />
-          </Card>
+          <Step02 formData={formData} handleInputChange={handleInputChange} />
         );
-
       case 3:
         return (
-          <Card className="p-6">
-            <ApplicationFormManagement
-              formData={formData}
-              setFormData={handleApplicationFormChange}
-            />
-          </Card>
+          <Step03
+            formData={formData}
+            handleApplicationFormChange={handleApplicationFormChange}
+          />
         );
-
       case 4:
         return (
           <Card className="p-6">
             <PipelineManagement
+              pipelineSteps={formData.pipeline}
+              pipelineHandler={handlePipelineChange}
               pipelineStages={pipelineHooks.pipelineStages}
-              onAddStepToStage={handleAddStepToStage}
-              onEditStep={pipelineHooks.editStep}
             />
           </Card>
         );
@@ -214,18 +124,6 @@ export default function CreateNewPosition() {
               }}
               onGoToPipeline={() => stepHandleNext()}
             />
-          </Card>
-        );
-
-      default:
-        return (
-          <Card className="p-6">
-            <div className="text-center py-12">
-              <h3 className="text-lg font-semibold mb-2">
-                Create New Position
-              </h3>
-              <p className="text-gray-600">Select a step to get started.</p>
-            </div>
           </Card>
         );
     }
@@ -258,8 +156,7 @@ export default function CreateNewPosition() {
             steps={steps}
             currentStep={currentStep}
             completedSteps={completedSteps}
-            onStepClick={handleStepClick}
-            onCancel={handleCancel}
+            resetForm={resetFormData}
           />
 
           {/* Main Content */}
@@ -302,12 +199,6 @@ export default function CreateNewPosition() {
       </div>
 
       {/* All Modals */}
-      <CancelModal
-        show={modalHooks.showModal}
-        onClose={() => modalHooks.setShowModal(false)}
-        onConfirm={handleConfirmCancel}
-      />
-
       <PreviewModal
         show={modalHooks.showPreview}
         onClose={() => modalHooks.setShowPreview(false)}
@@ -315,25 +206,15 @@ export default function CreateNewPosition() {
         currentStep={currentStep}
       />
 
-      <PoolApplicantsModal
+      {/* <PoolApplicantsModal
         show={modalHooks.showPoolApplicantsPopup}
         onClose={() => modalHooks.setShowPoolApplicantsPopup(false)}
         formData={formData}
         selectedPoolingOption={modalHooks.selectedPoolingOption}
         onPoolingOptionChange={modalHooks.setSelectedPoolingOption}
         onPublish={handlePublish}
-      />
+      /> */}
 
-      <StagePopupModal
-        show={modalHooks.showStagePopup}
-        onClose={handleStagePopupClose}
-        stagePopupData={pipelineHooks.stagePopupData}
-        setStagePopupData={pipelineHooks.setStagePopupData}
-        editingStepId={pipelineHooks.editingStepId}
-        onSave={handleStagePopupSave}
-      />
-
-      {/* Non-Negotiable Requirements Modal - You can create this as a separate component */}
       {modalHooks.showNonNegotiableModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div

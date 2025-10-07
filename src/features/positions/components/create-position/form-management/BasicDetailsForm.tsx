@@ -31,11 +31,14 @@ interface BasicDetailsFormProps {
   onInputChange: (field: string, value: string) => void;
 }
 
+// To do: Optimize the function on onChange, it is laggy
+
 export const BasicDetailsForm = ({
   formData,
   onInputChange,
 }: BasicDetailsFormProps) => {
   const { clients, loading, error } = useClient();
+
   return (
     <div>
       {/* Basic Details */}

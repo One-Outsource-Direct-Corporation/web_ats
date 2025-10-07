@@ -42,6 +42,7 @@ export const useFormData = () => {
       agreement: "optional",
       signature: "optional",
     },
+    pipeline: [],
   });
 
   const handleInputChange = useCallback((field: string, value: string) => {
@@ -56,6 +57,20 @@ export const useFormData = () => {
           ...prev.application_form, // Preserve all existing fields
           [fieldName]: status, // Update only the specific field
         },
+      }));
+    },
+    []
+  );
+
+  const handlePipelineChange = useCallback(
+    (pipeline_identifier: number, field: string, value: any) => {
+      setFormData((prev) => ({
+        ...prev,
+        pipeline: prev.pipeline.map((step) =>
+          step.pipeline_identifier === pipeline_identifier
+            ? { ...step, [field]: value }
+            : step
+        ),
       }));
     },
     []
@@ -102,6 +117,7 @@ export const useFormData = () => {
         agreement: "optional",
         signature: "optional",
       },
+      pipeline: [],
     });
   };
 
@@ -110,6 +126,7 @@ export const useFormData = () => {
     setFormData,
     handleInputChange,
     handleApplicationFormChange,
+    handlePipelineChange,
     resetFormData,
   };
 };

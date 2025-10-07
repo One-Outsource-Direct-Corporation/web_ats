@@ -1,20 +1,49 @@
 import React from "react";
 import { Button } from "@/shared/components/ui/button";
-import { Plus, Edit, Trash2 } from "lucide-react";
-import type { PipelineStage } from "../../../types/createPosition";
+import { Plus, Edit, Trash2, X } from "lucide-react";
+import type {
+  PipelineStage,
+  PipelineStep,
+} from "../../../types/createPosition";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/shared/components/ui/dialog";
+import { Field, FieldLabel, FieldSet } from "@/shared/components/ui/field";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
+import { Input } from "@/shared/components/ui/input";
 
 interface PipelineManagementProps {
+  pipelineSteps: PipelineStep[];
+  pipelineHandler: (
+    pipeline_identifier: number,
+    field: string,
+    value: any
+  ) => void;
   pipelineStages: PipelineStage[];
-  onAddStepToStage: (stageId: number) => void;
-  onEditStep?: (stageId: number, stepId: number) => void;
-  onDeleteStep?: (stageId: number, stepId: number) => void;
 }
 
+// Dummy ID
+let dummy_id = 1;
+
 export const PipelineManagement: React.FC<PipelineManagementProps> = ({
+  pipelineSteps,
+  pipelineHandler,
   pipelineStages,
-  onAddStepToStage,
-  onEditStep,
-  onDeleteStep,
 }) => {
   return (
     <div>
@@ -37,30 +66,9 @@ export const PipelineManagement: React.FC<PipelineManagementProps> = ({
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <step.icon className="w-4 h-4 text-blue-600" />
-                      <span className="text-sm font-medium">{step.name}</span>
-                    </div>
-                    <div className="flex gap-1">
-                      {onEditStep && (
-                        <Button
-                          onClick={() => onEditStep(stage.id, step.id)}
-                          variant="ghost"
-                          size="sm"
-                          className="p-1"
-                        >
-                          <Edit className="w-3 h-3" />
-                        </Button>
-                      )}
-                      {onDeleteStep && (
-                        <Button
-                          onClick={() => onDeleteStep(stage.id, step.id)}
-                          variant="ghost"
-                          size="sm"
-                          className="p-1 text-red-600"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      )}
+                      <span className="text-sm font-medium">
+                        {step.process_title}
+                      </span>
                     </div>
                   </div>
 
@@ -70,7 +78,7 @@ export const PipelineManagement: React.FC<PipelineManagementProps> = ({
                     </p>
                   )}
 
-                  {step.assessments && step.assessments.length > 0 && (
+                  {/* {step.assessments && step.assessments.length > 0 && (
                     <div className="mt-2">
                       <span className="text-xs text-blue-600">
                         {step.assessments.length} assessment(s)
@@ -84,20 +92,78 @@ export const PipelineManagement: React.FC<PipelineManagementProps> = ({
                         {step.teamMembers.length} team member(s)
                       </span>
                     </div>
-                  )}
+                  )} */}
                 </div>
               ))}
             </div>
 
-            <Button
-              onClick={() => onAddStepToStage(stage.id)}
-              variant="outline"
-              size="sm"
-              className="w-full text-blue-600 border-blue-600"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Step
-            </Button>
+            <Dialog>
+              <DialogTrigger className="w-full text-blue-600 border-blue-600 border rounded-lg flex items-center justify-center py-2">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Step
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create Pipeline Step</DialogTitle>
+                  <DialogDescription hidden></DialogDescription>
+                  <div className="py-4">
+                    <FieldSet>
+                      <Field>
+                        <FieldLabel>Process Type *</FieldLabel>
+                        <Select>
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Select Process Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectItem value="resume_screening">
+                                Resume Screening
+                              </SelectItem>
+                              <SelectItem value="phone_call_interview">
+                                Phone Call Interview
+                              </SelectItem>
+                              <SelectItem value="initial_interview">
+                                Initial Interview
+                              </SelectItem>
+                              <SelectItem value="assessments">
+                                Assessments
+                              </SelectItem>
+                              <SelectItem value="final_interview">
+                                Final Interview
+                              </SelectItem>
+                              <SelectItem value="for_job_offer">
+                                For Job Offer
+                              </SelectItem>
+                              <SelectItem value="onboarding">
+                                Onboarding
+                              </SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </Field>
+                      <Field>
+                        <FieldLabel>Process Title *</FieldLabel>
+                        <Input placeholder="Enter process title" />
+                      </Field>
+                      <Field>
+                        <FieldLabel>Description</FieldLabel>
+                        <Input placeholder="Enter process description" />
+                      </Field>
+                      <Field className="flex flex-row items-center space-x-2">
+                        <FieldLabel>Redacted</FieldLabel>
+                      </Field>
+                    </FieldSet>
+                  </div>
+                  <DialogFooter className="sm:justify-start">
+                    <DialogClose asChild>
+                      <Button type="button" variant="secondary">
+                        Close
+                      </Button>
+                    </DialogClose>
+                  </DialogFooter>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
           </div>
         ))}
       </div>
