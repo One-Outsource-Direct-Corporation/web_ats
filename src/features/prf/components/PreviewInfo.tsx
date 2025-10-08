@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import type { FormData } from "../types/prfTypes";
+import formatName from "@/shared/utils/formatName";
 
 interface PreviewInfoProps {
   step: number;
@@ -100,12 +101,15 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
                   JOB DETAILS
                 </h2>
                 <p>
-                  <strong>Contract Type:</strong>{" "}
-                  {formData.contract_type || "Not specified"}
+                  <strong>Employment Type:</strong>{" "}
+                  {(formData.employment_type &&
+                    formatName(formData.employment_type)) ||
+                    "Not specified"}
                 </p>
                 <p>
-                  <strong>Work Arrangement:</strong>{" "}
-                  {formData.work_arrangement || "Not specified"}
+                  <strong>Work Setup:</strong>{" "}
+                  {(formData.work_setup && formatName(formData.work_setup)) ||
+                    "Not specified"}
                 </p>
                 <p>
                   <strong>Category:</strong>{" "}
@@ -129,7 +133,7 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
                   JOB DESCRIPTION
                 </h2>
                 <p>
-                  {formData.job_description ||
+                  {formData.description ||
                     "Job description not provided yet..."}
                 </p>
               </div>

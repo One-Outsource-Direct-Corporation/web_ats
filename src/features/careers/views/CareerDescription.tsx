@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { useJobDetail } from "../hooks/useJobDetail";
 import { useParams } from "react-router-dom";
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
+import DOMPurify from "dompurify";
+import formatName from "@/shared/utils/formatName";
 
 export default function CareerDescription() {
   const navigate = useNavigate();
@@ -64,7 +66,11 @@ export default function CareerDescription() {
           </div>
 
           {/* Department and Role */}
-          <div className="text-gray-600 mb-6 ml-9">{jobDetail?.department}</div>
+          {jobDetail?.department && (
+            <div className="text-gray-600 mb-6 ml-9">
+              {formatName(jobDetail.department)}
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex gap-4 ml-9 flex-wrap">
@@ -95,20 +101,20 @@ export default function CareerDescription() {
       <main className="max-w-4xl mx-auto p-6">
         {/* Filter Information */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
+          <div className="flex justify-between flex-wrap gap-6">
+            <div className="flex flex-col items-center">
               <h3 className="font-bold text-gray-900 mb-2">Category</h3>
               <p className="text-gray-600">
                 {jobDetail?.experience_level_display}
               </p>
             </div>
-            <div>
+            <div className="flex flex-col items-center">
               <h3 className="font-bold text-gray-900 mb-2">Work Type</h3>
               <p className="text-gray-600">
                 {jobDetail?.employment_type_display}
               </p>
             </div>
-            <div>
+            <div className="flex flex-col items-center">
               <h3 className="font-bold text-gray-900 mb-2">Work Setup</h3>
               <p className="text-gray-600">{jobDetail?.work_setup_display}</p>
             </div>
@@ -116,15 +122,23 @@ export default function CareerDescription() {
         </div>
 
         {/* Job Summary */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-1 h-6 bg-blue-600 rounded-full"></div>
-            <h2 className="text-xl font-bold text-gray-900">Job Description</h2>
+        {jobDetail?.description && (
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-1 h-6 bg-blue-600 rounded-full"></div>
+              <h2 className="text-xl font-bold text-gray-900">
+                Job Description
+              </h2>
+            </div>
+
+            <div
+              className="text-gray-700 mb-4 preview-content"
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(jobDetail?.description),
+              }}
+            />
           </div>
-          <div className="text-gray-700 leading-relaxed">
-            <p className="mb-4">{jobDetail?.description}</p>
-          </div>
-        </div>
+        )}
 
         {/* Responsibilities */}
         {jobDetail?.responsibilities && (
@@ -135,9 +149,12 @@ export default function CareerDescription() {
                 Responsibilities
               </h2>
             </div>
-            <p className="text-gray-700 leading-relaxed">
-              {jobDetail.responsibilities}
-            </p>
+            <div
+              className="text-gray-700 text-sm mb-4 preview-content"
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(jobDetail.responsibilities),
+              }}
+            />
           </div>
         )}
 
@@ -150,9 +167,12 @@ export default function CareerDescription() {
                 Qualifications
               </h2>
             </div>
-            <p className="text-gray-700 leading-relaxed">
-              {jobDetail.qualifications}
-            </p>
+            <div
+              className="text-gray-700 text-sm mb-4 preview-content"
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(jobDetail.qualifications),
+              }}
+            />
           </div>
         )}
 
@@ -161,6 +181,7 @@ export default function CareerDescription() {
           <Button
             variant="outline"
             className="flex items-center gap-2 bg-transparent"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           >
             <ArrowUp className="h-4 w-4" />
             Back To Top

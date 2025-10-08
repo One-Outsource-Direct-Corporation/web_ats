@@ -30,14 +30,14 @@ export interface FormData {
   interview_levels: number;
   immediate_supervisor: string;
   hiring_managers: string[];
-  contract_type: string;
-  work_arrangement: string;
+  employment_type: string;
+  work_setup: string;
   category: string;
   position: string;
   working_site: string;
   work_schedule_from: string;
   work_schedule_to: string;
-  job_description: string;
+  description: string;
   responsibilities: string;
   qualifications: string;
   non_negotiables: string;

@@ -36,6 +36,7 @@ export interface PipelineStep {
 
 export interface JobData {
   id: number;
+  unique_id: number;
   client: string;
   pipeline: PipelineStep[];
   application_form: ApplicationForm;

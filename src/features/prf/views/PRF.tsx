@@ -16,7 +16,7 @@ import { formatForJSON } from "@/shared/utils/formatName";
 import initialData from "../data/prfInitialData";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import type { FormDataType } from "../types/prfTypes";
-import type { AxiosResponse } from "axios";
+import type { AxiosError, AxiosResponse } from "axios";
 import { toast } from "react-toastify";
 
 export default function PRF() {
@@ -93,7 +93,7 @@ export default function PRF() {
           : formData.hiring_managers,
       business_unit: formData.business_unit.toLowerCase().replace(/\s+/g, "_"),
       category: formData.category.toLowerCase().replace(/\s+/g, "_"),
-      work_arrangement: formatForJSON(formData.work_arrangement),
+      work_setup: formatForJSON(formData.work_setup),
       department_name: formatForJSON(formData.department_name),
       number_of_vacancies: Number(formData.number_of_vacancies),
       interview_levels: Number(formData.interview_levels),
@@ -102,14 +102,18 @@ export default function PRF() {
       salary_budget: Number(formData.salary_budget),
     };
 
-    console.log("Submitted Data:", data);
-    const response = await axiosPrivate.post<AxiosResponse<FormDataType>>(
-      "/api/prf/",
-      data
-    );
+    try {
+      const response = await axiosPrivate.post<AxiosResponse<FormDataType>>(
+        "/api/prf/",
+        data
+      );
 
-    if (response.status === 201) {
-      toast.success("PRF submitted successfully!");
+      if (response.status === 201) {
+        toast.success("PRF submitted successfully!");
+      }
+    } catch (err: AxiosError | any) {
+      toast.error("Failed to submit PRF. Please try again.");
+      console.error("Error submitting PRF:", err);
     }
   };
 

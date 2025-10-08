@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { Eye } from "lucide-react";
+import DOMPurify from "dompurify";
 
 import { useFormData } from "../hooks/create-position/useFormData";
 import { useStepNavigation } from "../hooks/create-position/useStepNavigation";
@@ -21,6 +22,7 @@ import Step03 from "../components/create-position/steps/Step03";
 import Step04 from "../components/create-position/steps/Step04";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import type { AxiosError } from "axios";
+import { toast } from "react-toastify";
 
 export default function CreateNewPosition() {
   useEffect(() => {
@@ -62,19 +64,33 @@ export default function CreateNewPosition() {
       const submissionData = {
         ...formData,
         date_needed:
-          formData.date_needed instanceof Date &&
-          !isNaN(formData.date_needed.getTime())
-            ? formData.date_needed.toISOString().split("T")[0]
-            : formData.date_needed,
+          formData.date_needed &&
+          new Date(formData.date_needed).toISOString().split("T")[0],
         headcount: Number(formData.headcount),
         min_budget: Number(formData.min_budget),
         max_budget: Number(formData.max_budget),
+        description: DOMPurify.sanitize(formData.description),
+        responsibilities: DOMPurify.sanitize(formData.responsibilities),
+        qualifications: DOMPurify.sanitize(formData.qualifications),
       };
 
       console.log("Final form data to submit:", submissionData);
       try {
         const response = await axiosPrivate.post("/api/job/", submissionData);
         console.log("Response from server:", response);
+        if (response.status === 201) {
+          toast.success(
+            <div>
+              Position created successfully!{" "}
+              <button
+                onClick={() => navigate("/")}
+                className="text-blue-600 underline hover:text-blue-800"
+              >
+                View Positions Posted
+              </button>
+            </div>
+          );
+        }
       } catch (err: AxiosError | any) {
         console.log(err);
         setError(err.response?.data || { detail: "An error occurred" });

@@ -108,7 +108,7 @@ export const Step04: React.FC<Step04Props> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <span className="font-medium">Description:</span>{" "}
-                {formData.job_description}
+                {formData.description}
               </div>
               <div>
                 <span className="font-medium">Responsibilities:</span>{" "}
