@@ -68,7 +68,7 @@ export default function CareerDescription() {
           {/* Department and Role */}
           {jobDetail?.department && (
             <div className="text-gray-600 mb-6 ml-9">
-              {formatName(jobDetail.department)}
+              {formatName(jobDetail.department)} • {jobDetail.client}
             </div>
           )}
 

@@ -18,33 +18,41 @@ export default function Step02({
 }: Step02Props) {
   return (
     <Card className="p-6">
-      <RichTextEditor
-        title="Job Description"
-        value={formData.description || ""}
-        onChange={(content) => handleInputChange("description", content)}
-        placeholder="Enter the job description here..."
-      />
-      {error?.description && (
-        <p className="my-4 text-sm text-red-500">{error.description[0]}</p>
-      )}
-      <RichTextEditor
-        title="Responsibilities"
-        value={formData.responsibilities || ""}
-        onChange={(content) => handleInputChange("responsibilities", content)}
-        placeholder="Enter the responsibilities here..."
-      />
-      {error?.responsibilities && (
-        <p className="my-4 text-sm text-red-500">{error.responsibilities[0]}</p>
-      )}
-      <RichTextEditor
-        title="Qualifications"
-        value={formData.qualifications || ""}
-        onChange={(content) => handleInputChange("qualifications", content)}
-        placeholder="Enter the qualifications here..."
-      />
-      {error?.qualifications && (
-        <p className="my-4 text-sm text-red-500">{error.qualifications[0]}</p>
-      )}
+      <div className="space-y-2 ">
+        {error?.description && (
+          <p className="text-sm text-red-500">{error.description[0]}</p>
+        )}
+        <RichTextEditor
+          title="Job Description"
+          value={formData.description || ""}
+          onChange={(content) => handleInputChange("description", content)}
+          placeholder="Enter the job description here..."
+        />
+      </div>
+
+      <div className="space-y-2 ">
+        {error?.responsibilities && (
+          <p className="text-sm text-red-500">{error.responsibilities[0]}</p>
+        )}
+        <RichTextEditor
+          title="Responsibilities"
+          value={formData.responsibilities || ""}
+          onChange={(content) => handleInputChange("responsibilities", content)}
+          placeholder="Enter the responsibilities here..."
+        />
+      </div>
+
+      <div className="space-y-2 ">
+        {error?.qualifications && (
+          <p className="text-sm text-red-500">{error.qualifications[0]}</p>
+        )}
+        <RichTextEditor
+          title="Qualifications"
+          value={formData.qualifications || ""}
+          onChange={(content) => handleInputChange("qualifications", content)}
+          placeholder="Enter the qualifications here..."
+        />
+      </div>
     </Card>
   );
 }

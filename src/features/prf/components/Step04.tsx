@@ -77,12 +77,12 @@ export const Step04: React.FC<Step04Props> = ({
             <h3 className="font-semibold text-md mb-2">Job Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <span className="font-medium">Contract Type:</span>{" "}
-                {formData.contract_type}
+                <span className="font-medium">Employment Type:</span>{" "}
+                {formData.employment_type}
               </div>
               <div>
-                <span className="font-medium">Work Arrangement:</span>{" "}
-                {formData.work_arrangement}
+                <span className="font-medium">Work Setup:</span>{" "}
+                {formData.work_setup}
               </div>
               <div>
                 <span className="font-medium">Category:</span>{" "}

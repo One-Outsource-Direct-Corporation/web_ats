@@ -43,17 +43,11 @@ export const useStepNavigation = () => {
     }
   };
 
-  // To do: Bring back clicking the step and not to reset the completedSteps when going back
-
-  // const handleStepClick = (stepNumber: number) => {
-  //   if (stepNumber <= currentStep || completedSteps.includes(stepNumber)) {
-  //     setCurrentStep(stepNumber);
-  //   }
-  // };
-
-  // const goToStep = (stepNumber: number) => {
-  //   setCurrentStep(stepNumber);
-  // };
+  const handleStepClick = (stepNumber: number) => {
+    if (stepNumber <= currentStep || completedSteps.includes(stepNumber)) {
+      setCurrentStep(stepNumber);
+    }
+  };
 
   const resetSteps = () => {
     setCurrentStep(1);
@@ -66,8 +60,7 @@ export const useStepNavigation = () => {
     completedSteps,
     handleNext,
     handleBack,
-    // handleStepClick,
-    // goToStep,
+    handleStepClick,
     getStepTitle,
     resetSteps,
   };

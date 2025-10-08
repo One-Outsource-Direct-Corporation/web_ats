@@ -17,14 +17,17 @@ interface StepNavigationProps {
   steps: StepProps[];
   currentStep: number;
   completedSteps: number[];
+  onStepClick: (stepNumber: number) => void;
   resetForm: () => void;
+  stepErrors: { [key: number]: any };
 }
 
 export const StepNavigation = ({
   steps,
-  currentStep,
   completedSteps,
+  onStepClick,
   resetForm,
+  stepErrors,
 }: StepNavigationProps) => {
   const navigate = useNavigate();
 
@@ -36,32 +39,54 @@ export const StepNavigation = ({
   return (
     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between border-b pb-4">
       <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start sm:gap-8">
-        {steps.map((step) => (
-          <div key={step.number} className="flex items-center gap-2">
+        {steps.map((step) => {
+          const hasError = stepErrors[step.number];
+          const isCompleted = completedSteps.includes(step.number);
+          const isActive = step.active;
+
+          return (
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                step.active
-                  ? "bg-blue-600 text-white"
-                  : completedSteps.includes(step.number)
-                  ? "bg-green-600 text-white"
-                  : "bg-gray-300 text-gray-600"
-              }`}
-            >
-              {step.number}
-            </div>
-            <span
-              className={`text-sm font-medium ${
-                step.active
+              key={step.number}
+              className={`flex items-center gap-2 ${
+                hasError
+                  ? "text-red-600"
+                  : isActive
                   ? "text-blue-600"
-                  : completedSteps.includes(step.number)
+                  : isCompleted
                   ? "text-green-600"
                   : "text-gray-600"
-              }`}
+              } ${isCompleted ? "cursor-pointer" : ""}`}
+              onClick={() => onStepClick(step.number)}
             >
-              {step.title}
-            </span>
-          </div>
-        ))}
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                  hasError
+                    ? "bg-red-600 text-white"
+                    : isActive
+                    ? "bg-blue-600 text-white"
+                    : isCompleted
+                    ? "bg-green-600 text-white"
+                    : "bg-gray-300 text-gray-600"
+                }`}
+              >
+                {step.number}
+              </div>
+              <span
+                className={`text-sm font-medium ${
+                  hasError
+                    ? "text-red-600"
+                    : isActive
+                    ? "text-blue-600"
+                    : isCompleted
+                    ? "text-green-600"
+                    : "text-gray-600"
+                }`}
+              >
+                {step.title}
+              </span>
+            </div>
+          );
+        })}
       </div>
 
       <div className="mt-4 sm:mt-0">

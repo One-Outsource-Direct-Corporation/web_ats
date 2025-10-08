@@ -5,7 +5,7 @@ import type {
 } from "@/features/positions/types/createPosition";
 import { useState } from "react";
 import { Button } from "@/shared/components/ui/button";
-import { Plus, Edit, Trash2, X } from "lucide-react";
+import { Plus, Edit, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogClose,
@@ -37,14 +37,14 @@ interface Step04Props {
   pipelineSteps: PipelineStep[];
   pipelineHandler: (pipeline_identifier: number, data: PipelineStep) => void;
   pipelineDeleteHandler: (pipeline_identifier: number) => void;
-  error?: any;
+  errors: any;
 }
 
 export default function Step04({
   pipelineSteps,
   pipelineHandler,
   pipelineDeleteHandler,
-  error,
+  errors,
 }: Step04Props) {
   const [pipelineStages] = useState<PipelineStage[]>([
     { id: 1, name: "STAGE 01" },
@@ -64,6 +64,9 @@ export default function Step04({
   const [openDialogs, setOpenDialogs] = useState<{ [key: number]: boolean }>(
     {}
   );
+
+  console.log(pipelineSteps);
+  console.log(errors?.pipeline);
 
   const handleInputChange = (field: string, value: string) => {
     setStepData((prev) => ({ ...prev, [field]: value }));
@@ -113,7 +116,7 @@ export default function Step04({
   };
 
   return (
-    <Card>
+    <Card className="p-6">
       <h3 className="text-lg font-semibold text-gray-800 mb-6">
         Pipeline Configuration
       </h3>
@@ -127,12 +130,25 @@ export default function Step04({
 
             <div className="space-y-3 mb-4">
               {pipelineSteps.map(
-                (step) =>
+                (step, index) =>
                   step.stage === stage.id && (
                     <div
                       key={step.id || step.pipeline_identifier}
                       className="p-3 border border-gray-200 rounded-md bg-gray-50"
                     >
+                      {errors?.pipeline && errors.pipeline[index] && (
+                        <div className="text-red-600 text-sm">
+                          {Object.entries(errors.pipeline[index]).map(
+                            ([field, messages]) => (
+                              <p key={field + index}>
+                                {Array.isArray(messages)
+                                  ? messages.join(", ")
+                                  : String(messages)}
+                              </p>
+                            )
+                          )}
+                        </div>
+                      )}
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">
                           {step.process_title}
@@ -203,8 +219,8 @@ export default function Step04({
                               <SelectItem value="resume_screening">
                                 Resume Screening
                               </SelectItem>
-                              <SelectItem value="phone_call_interview">
-                                Phone Call Interview
+                              <SelectItem value="phone_interview">
+                                Phone Interview
                               </SelectItem>
                               <SelectItem value="initial_interview">
                                 Initial Interview
@@ -215,9 +231,7 @@ export default function Step04({
                               <SelectItem value="final_interview">
                                 Final Interview
                               </SelectItem>
-                              <SelectItem value="for_job_offer">
-                                For Job Offer
-                              </SelectItem>
+                              <SelectItem value="offer">Offer</SelectItem>
                               <SelectItem value="onboarding">
                                 Onboarding
                               </SelectItem>

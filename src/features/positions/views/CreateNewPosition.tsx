@@ -30,12 +30,14 @@ export default function CreateNewPosition() {
   }, []);
   const axiosPrivate = useAxiosPrivate();
   const [error, setError] = useState(null);
+  const [stepErrors, setStepErrors] = useState<{ [key: number]: any }>({});
   const {
     steps,
     currentStep,
     completedSteps,
     handleNext: stepHandleNext,
     handleBack,
+    handleStepClick,
     getStepTitle,
     resetSteps,
   } = useStepNavigation();
@@ -51,6 +53,30 @@ export default function CreateNewPosition() {
     handleDeletePipelineChange,
     resetFormData,
   } = useFormData();
+
+  const fieldToStep: { [key: string]: number } = {
+    // Step01 fields
+    client: 1,
+    job_title: 1,
+    department: 1,
+    employment_type: 1,
+    education_level: 1,
+    work_setup: 1,
+    experience_level: 1,
+    headcount: 1,
+    date_needed: 1,
+    reason_for_hiring: 1,
+    other_reason_for_hiring: 1,
+    min_budget: 1,
+    max_budget: 1,
+    // Step02 fields
+    description: 2,
+    responsibilities: 2,
+    qualifications: 2,
+    // Step04 fields
+    pipeline: 4,
+    // Add the other fields
+  };
 
   const assessmentHooks = useAssessmentManagement();
   const modalHooks = useModalManagement();
@@ -92,8 +118,16 @@ export default function CreateNewPosition() {
           );
         }
       } catch (err: AxiosError | any) {
-        console.log(err);
-        setError(err.response?.data || { detail: "An error occurred" });
+        const errorData = err.response?.data || { detail: "An error occurred" };
+        setError(errorData);
+
+        const newStepErrors: { [key: number]: any } = {};
+        Object.keys(errorData).forEach((field) => {
+          if (fieldToStep[field]) {
+            newStepErrors[fieldToStep[field]] = { [field]: errorData[field] };
+          }
+        });
+        setStepErrors(newStepErrors);
       }
     } else {
       stepHandleNext();
@@ -145,7 +179,7 @@ export default function CreateNewPosition() {
             pipelineSteps={formData.pipeline}
             pipelineHandler={handlePipelineChange}
             pipelineDeleteHandler={handleDeletePipelineChange}
-            error={error}
+            errors={error}
           />
         );
 
@@ -192,7 +226,9 @@ export default function CreateNewPosition() {
             steps={steps}
             currentStep={currentStep}
             completedSteps={completedSteps}
+            onStepClick={handleStepClick}
             resetForm={resetFormData}
+            stepErrors={stepErrors}
           />
 
           {/* Main Content */}
@@ -202,7 +238,7 @@ export default function CreateNewPosition() {
             </h2>
             <Button
               variant="outline"
-              className="text-blue-600 border-blue-600 bg-transparent"
+              className="text-blue-600 border-blue-600 bg-transparent hover:bg-blue-600 hover:text-white"
               onClick={() => modalHooks.setShowPreview(true)}
               disabled={currentStep === 4 || currentStep === 5}
             >
