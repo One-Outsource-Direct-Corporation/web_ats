@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
@@ -6,28 +6,28 @@ import { Eye } from "lucide-react";
 
 import { useFormData } from "../hooks/create-position/useFormData";
 import { useStepNavigation } from "../hooks/create-position/useStepNavigation";
-import { usePipelineManagement } from "../hooks/create-position/usePipelineManagement";
 import { useAssessmentManagement } from "../hooks/create-position/useAssessmentManagement";
 import { useModalManagement } from "../hooks/create-position/useModalManagement";
 
-import { PipelineManagement } from "../components/create-position/pipeline-management/PipelineManagement";
 import { AssessmentManagement } from "../components/create-position/assessment-management/AssessmentManagement";
 import { StepNavigation } from "../components/create-position/navigation/StepNavigation";
 
 import { PreviewModal } from "../components/create-position/navigation/Modals";
-// import { PoolApplicantsModal } from "../components/create-position/navigation/Modals";
 import { SuccessPage } from "../components/create-position/navigation/SuccessPage";
 
 import Step01 from "../components/create-position/steps/Step01";
 import Step02 from "../components/create-position/steps/Step02";
 import Step03 from "../components/create-position/steps/Step03";
-
-let counter = 0;
+import Step04 from "../components/create-position/steps/Step04";
+import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
+import type { AxiosError } from "axios";
 
 export default function CreateNewPosition() {
   useEffect(() => {
     document.title = "Create New Position";
   }, []);
+  const axiosPrivate = useAxiosPrivate();
+  const [error, setError] = useState(null);
   const {
     steps,
     currentStep,
@@ -40,29 +40,45 @@ export default function CreateNewPosition() {
 
   const navigate = useNavigate();
 
-  console.log("Hey: ", counter++);
-
   // Initialize all our custom hooks
   const {
     formData,
     handleInputChange,
     handleApplicationFormChange,
     handlePipelineChange,
+    handleDeletePipelineChange,
     resetFormData,
   } = useFormData();
 
-  const pipelineHooks = usePipelineManagement();
   const assessmentHooks = useAssessmentManagement();
   const modalHooks = useModalManagement();
 
-  // Enhanced handlers
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep === 3) {
       modalHooks.setShowNonNegotiableModal(true);
     } else if (currentStep === 5) {
-      console.log("Current form data:", formData);
-      return;
-      modalHooks.setShowPoolApplicantsPopup(true);
+      // To do: bring back the Pool Applicants Here
+      // Prepare a copy of formData for submission with proper types
+      const submissionData = {
+        ...formData,
+        date_needed:
+          formData.date_needed instanceof Date &&
+          !isNaN(formData.date_needed.getTime())
+            ? formData.date_needed.toISOString().split("T")[0]
+            : formData.date_needed,
+        headcount: Number(formData.headcount),
+        min_budget: Number(formData.min_budget),
+        max_budget: Number(formData.max_budget),
+      };
+
+      console.log("Final form data to submit:", submissionData);
+      try {
+        const response = await axiosPrivate.post("/api/job/", submissionData);
+        console.log("Response from server:", response);
+      } catch (err: AxiosError | any) {
+        console.log(err);
+        setError(err.response?.data || { detail: "An error occurred" });
+      }
     } else {
       stepHandleNext();
     }
@@ -86,11 +102,19 @@ export default function CreateNewPosition() {
     switch (currentStep) {
       case 1:
         return (
-          <Step01 formData={formData} handleInputChange={handleInputChange} />
+          <Step01
+            formData={formData}
+            handleInputChange={handleInputChange}
+            error={error}
+          />
         );
       case 2:
         return (
-          <Step02 formData={formData} handleInputChange={handleInputChange} />
+          <Step02
+            formData={formData}
+            handleInputChange={handleInputChange}
+            error={error}
+          />
         );
       case 3:
         return (
@@ -101,13 +125,12 @@ export default function CreateNewPosition() {
         );
       case 4:
         return (
-          <Card className="p-6">
-            <PipelineManagement
-              pipelineSteps={formData.pipeline}
-              pipelineHandler={handlePipelineChange}
-              pipelineStages={pipelineHooks.pipelineStages}
-            />
-          </Card>
+          <Step04
+            pipelineSteps={formData.pipeline}
+            pipelineHandler={handlePipelineChange}
+            pipelineDeleteHandler={handleDeletePipelineChange}
+            error={error}
+          />
         );
 
       case 5:
@@ -129,7 +152,6 @@ export default function CreateNewPosition() {
     }
   };
 
-  // Render success page if needed
   if (modalHooks.showSuccessPage) {
     return (
       <SuccessPage
@@ -144,14 +166,12 @@ export default function CreateNewPosition() {
     <>
       <div className="min-h-screen bg-gray-50 p-6 pt-[100px]">
         <div className="mx-auto max-w-7xl space-y-6">
-          {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <span>Positions</span>
             <span>/</span>
             <span>Create New Position</span>
           </div>
 
-          {/* Steps Navigation */}
           <StepNavigation
             steps={steps}
             currentStep={currentStep}
@@ -205,15 +225,6 @@ export default function CreateNewPosition() {
         formData={formData}
         currentStep={currentStep}
       />
-
-      {/* <PoolApplicantsModal
-        show={modalHooks.showPoolApplicantsPopup}
-        onClose={() => modalHooks.setShowPoolApplicantsPopup(false)}
-        formData={formData}
-        selectedPoolingOption={modalHooks.selectedPoolingOption}
-        onPoolingOptionChange={modalHooks.setSelectedPoolingOption}
-        onPublish={handlePublish}
-      /> */}
 
       {modalHooks.showNonNegotiableModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">

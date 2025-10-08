@@ -1,21 +1,24 @@
 import { useState, useCallback } from "react";
-import type { CreatePositionFormData } from "../../types/createPosition";
+import type {
+  CreatePositionFormData,
+  PipelineStep,
+} from "../../types/createPosition";
 
 export const useFormData = () => {
   const [formData, setFormData] = useState<CreatePositionFormData>({
     client: null,
     job_title: "",
     department: "",
-    employment_type: "full_time",
-    education_level: "bachelors_degree",
-    work_setup: "hybrid",
-    experience_level: "entry_level",
-    headcount: "",
+    employment_type: "",
+    education_level: "",
+    work_setup: "",
+    experience_level: "",
+    headcount: 0,
     date_needed: null,
     reason_for_hiring: "",
     other_reason_for_hiring: "",
-    min_budget: "",
-    max_budget: "",
+    min_budget: 0,
+    max_budget: 0,
     description: "",
     responsibilities: "",
     qualifications: "",
@@ -54,8 +57,8 @@ export const useFormData = () => {
       setFormData((prev) => ({
         ...prev,
         application_form: {
-          ...prev.application_form, // Preserve all existing fields
-          [fieldName]: status, // Update only the specific field
+          ...prev.application_form,
+          [fieldName]: status,
         },
       }));
     },
@@ -63,13 +66,42 @@ export const useFormData = () => {
   );
 
   const handlePipelineChange = useCallback(
-    (pipeline_identifier: number, field: string, value: any) => {
+    (pipeline_identifier: number, data: PipelineStep) => {
+      setFormData((prev) => {
+        const existingStep = prev.pipeline.filter(
+          (step) => step.pipeline_identifier === pipeline_identifier
+        );
+
+        if (existingStep.length > 0) {
+          // Update existing step
+          return {
+            ...prev,
+            pipeline: prev.pipeline.map((step) => {
+              if (
+                step.pipeline_identifier === existingStep[0].pipeline_identifier
+              ) {
+                return { ...data };
+              }
+              return step;
+            }),
+          };
+        } else {
+          return {
+            ...prev,
+            pipeline: [...prev.pipeline, data],
+          };
+        }
+      });
+    },
+    []
+  );
+
+  const handleDeletePipelineChange = useCallback(
+    (pipeline_identifier: number) => {
       setFormData((prev) => ({
         ...prev,
-        pipeline: prev.pipeline.map((step) =>
-          step.pipeline_identifier === pipeline_identifier
-            ? { ...step, [field]: value }
-            : step
+        pipeline: prev.pipeline.filter(
+          (step) => step.pipeline_identifier !== pipeline_identifier
         ),
       }));
     },
@@ -85,12 +117,12 @@ export const useFormData = () => {
       education_level: "bachelors_degree",
       work_setup: "hybrid",
       experience_level: "entry_level",
-      headcount: "",
+      headcount: 0,
       date_needed: null,
       reason_for_hiring: "",
       other_reason_for_hiring: "",
-      min_budget: "",
-      max_budget: "",
+      min_budget: 0,
+      max_budget: 0,
       description: "",
       responsibilities: "",
       qualifications: "",
@@ -120,13 +152,13 @@ export const useFormData = () => {
       pipeline: [],
     });
   };
-
   return {
     formData,
     setFormData,
     handleInputChange,
     handleApplicationFormChange,
     handlePipelineChange,
+    handleDeletePipelineChange,
     resetFormData,
   };
 };

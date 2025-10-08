@@ -8,9 +8,14 @@ interface Step02Props {
     field: keyof CreatePositionFormData,
     content: string
   ) => void;
+  error?: any;
 }
 
-export default function Step02({ formData, handleInputChange }: Step02Props) {
+export default function Step02({
+  formData,
+  handleInputChange,
+  error,
+}: Step02Props) {
   return (
     <Card className="p-6">
       <RichTextEditor
@@ -19,18 +24,27 @@ export default function Step02({ formData, handleInputChange }: Step02Props) {
         onChange={(content) => handleInputChange("description", content)}
         placeholder="Enter the job description here..."
       />
+      {error?.description && (
+        <p className="my-4 text-sm text-red-500">{error.description[0]}</p>
+      )}
       <RichTextEditor
         title="Responsibilities"
         value={formData.responsibilities || ""}
         onChange={(content) => handleInputChange("responsibilities", content)}
         placeholder="Enter the responsibilities here..."
       />
+      {error?.responsibilities && (
+        <p className="my-4 text-sm text-red-500">{error.responsibilities[0]}</p>
+      )}
       <RichTextEditor
         title="Qualifications"
         value={formData.qualifications || ""}
         onChange={(content) => handleInputChange("qualifications", content)}
         placeholder="Enter the qualifications here..."
       />
+      {error?.qualifications && (
+        <p className="my-4 text-sm text-red-500">{error.qualifications[0]}</p>
+      )}
     </Card>
   );
 }

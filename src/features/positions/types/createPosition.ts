@@ -190,12 +190,12 @@ export interface PipelineStep {
   description: string;
   order: number;
   stage: number;
+  // To do: Add other fields like assessments, redactedInfo, etc
 }
 
 export interface PipelineStage {
   id: number;
   name: string;
-  steps: PipelineStep[];
 }
 
 // Client
@@ -215,13 +215,13 @@ export interface CreatePositionFormData {
   department: string;
   experience_level: string;
   employment_type: string;
-  headcount: string;
+  headcount: number;
   work_setup: string;
   date_needed: Date | null;
   reason_for_hiring: string;
   other_reason_for_hiring: string;
-  min_budget: string;
-  max_budget: string;
+  min_budget: number;
+  max_budget: number;
   description: string;
   responsibilities: string;
   qualifications: string;

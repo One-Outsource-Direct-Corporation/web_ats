@@ -4,6 +4,8 @@ import useRefreshToken from "@/features/auth/hooks/useRefreshToken";
 import { useEffect, useRef, useState } from "react";
 import { Outlet } from "react-router-dom";
 import LoadingComponent from "../components/reusables/LoadingComponent";
+import { Card } from "../components/ui/card";
+import { Button } from "../components/ui/button";
 
 export default function PersistLogin() {
   const [isLoading, setIsLoading] = useState(true);
@@ -40,6 +42,18 @@ export default function PersistLogin() {
 
     handlePersistLogin();
   }, []);
+
+  // To do: Remove this if the view for manager is created
+  if (user && user.role === "manager") {
+    return (
+      <Card className="p-6 m-6 text-center text-red-600 font-semibold">
+        <h1>Managers are not authorized to access this section.</h1>
+        <Button variant="ghost" onClick={logout}>
+          Logout
+        </Button>
+      </Card>
+    );
+  }
 
   if (isLoading) {
     return <LoadingComponent message="Auth checking" />;
