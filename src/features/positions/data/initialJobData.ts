@@ -1,7 +1,7 @@
 // All job data for Positions feature
 // This file exports initialJobData for use in Positions.tsx
 
-import type { JobPosting } from "../types/jobTypes";
+import type { JobPosting } from "../types/positionTypes";
 
 const initialJobData: {
   drafts: JobPosting[];

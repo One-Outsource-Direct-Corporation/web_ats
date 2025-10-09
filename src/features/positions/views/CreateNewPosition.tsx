@@ -89,9 +89,9 @@ export default function CreateNewPosition() {
       // Prepare a copy of formData for submission with proper types
       const submissionData = {
         ...formData,
-        date_needed:
-          formData.date_needed &&
-          new Date(formData.date_needed).toISOString().split("T")[0],
+        target_start_date:
+          formData.target_start_date &&
+          new Date(formData.target_start_date).toISOString().split("T")[0],
         headcount: Number(formData.headcount),
         min_budget: Number(formData.min_budget),
         max_budget: Number(formData.max_budget),

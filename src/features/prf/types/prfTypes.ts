@@ -1,3 +1,5 @@
+import type { User } from "@/features/auth/types/auth.types";
+
 // PRF feature types
 export interface AssessmentTypes {
   technical: boolean;
@@ -19,14 +21,16 @@ export interface SoftwareRequired {
   [key: string]: boolean;
 }
 
-export interface FormData {
+export interface PRFData {
+  id: number;
+  unique_id: number;
   job_title: string;
   target_start_date: string;
   number_of_vacancies: string;
   reason_for_posting: string;
   other_reason_for_posting: string;
   business_unit: string;
-  department_name: string;
+  department: string;
   interview_levels: number;
   immediate_supervisor: string;
   hiring_managers: string[];
@@ -50,9 +54,17 @@ export interface FormData {
   other_assessment: string;
   hardware_required: HardwareRequired;
   software_required: SoftwareRequired;
+  type: "position" | "prf";
+  type_display: "Position" | "PRF";
+  status: "draft" | "active" | "closed" | "cancelled" | "pending";
+  active: boolean;
+  published: boolean;
+  posted_by: User;
+  created_at: string;
+  updated_at: string;
 }
 
-export type FormDataType = FormData;
+export type FormDataType = PRFData;
 
 export type PRFResponse = FormDataType & {
   id: number;

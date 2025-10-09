@@ -80,7 +80,7 @@ export default function PRF() {
       other_assessment: formData.other_assessment
         ? formData.other_assessment
             .split(",")
-            .map((item) => formatForJSON(item))
+            .map((item: string) => formatForJSON(item))
         : [],
       immediate_supervisor:
         formData.immediate_supervisor === "No Supervisor"
@@ -88,7 +88,9 @@ export default function PRF() {
           : formData.immediate_supervisor,
       hiring_managers:
         formData.interview_levels < 0 ||
-        formData.hiring_managers.some((hm) => hm === "no-hiring-manager")
+        formData.hiring_managers.some(
+          (hm: string) => hm === "no-hiring-manager"
+        )
           ? []
           : formData.hiring_managers,
       business_unit: formData.business_unit.toLowerCase().replace(/\s+/g, "_"),

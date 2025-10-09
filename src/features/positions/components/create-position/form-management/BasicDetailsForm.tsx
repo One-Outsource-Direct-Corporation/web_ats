@@ -228,8 +228,8 @@ export const BasicDetailsForm = ({
                     // data-empty={!date}
                     className="w-[280px] justify-start text-left font-normal"
                   >
-                    {formData.date_needed
-                      ? new Date(formData.date_needed).toLocaleDateString(
+                    {formData.target_start_date
+                      ? new Date(formData.target_start_date).toLocaleDateString(
                           "en-PH",
                           {
                             year: "numeric",
@@ -245,21 +245,21 @@ export const BasicDetailsForm = ({
                   <Calendar
                     mode="single"
                     selected={
-                      formData.date_needed
-                        ? new Date(formData.date_needed)
+                      formData.target_start_date
+                        ? new Date(formData.target_start_date)
                         : new Date()
                     }
                     onSelect={(date) =>
                       onInputChange(
-                        "date_needed",
+                        "target_start_date",
                         date ? date.toLocaleDateString("en-PH") : ""
                       )
                     }
                   />
                 </PopoverContent>
               </Popover>
-              {errorFields?.date_needed && (
-                <FieldError>{errorFields.date_needed[0]}</FieldError>
+              {errorFields?.target_start_date && (
+                <FieldError>{errorFields.target_start_date[0]}</FieldError>
               )}
             </Field>
             <Field>

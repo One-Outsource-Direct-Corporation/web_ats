@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/shared/components/ui/button";
-import type { FormData } from "../types/prfTypes";
+import type { PRFData } from "../types/prfTypes";
 import { PreviewInfo } from "./PreviewInfo";
 import formatName from "@/shared/utils/formatName";
 
@@ -8,8 +8,8 @@ interface Step03Props {
   goToNextStep: () => void;
   goToPreviousStep: () => void;
   step: number;
-  formData: FormData;
-  updateFormData: (updates: Partial<FormData>) => void;
+  formData: PRFData;
+  updateFormData: (updates: Partial<PRFData>) => void;
 }
 
 export const Step03: React.FC<Step03Props> = ({

@@ -181,6 +181,33 @@ export interface NonNegotiableField {
 
 // -- Refactored Types --
 
+// Application Form
+export type ApplicationFormType = "required" | "optional" | "disabled";
+
+export interface ApplicationForm {
+  name: ApplicationFormType;
+  birth_date: ApplicationFormType;
+  gender: ApplicationFormType;
+  primary_contact_number: ApplicationFormType;
+  secondary_contact_number: ApplicationFormType;
+  email: ApplicationFormType;
+  linkedin_profile: ApplicationFormType;
+  address: ApplicationFormType;
+  expected_salary: ApplicationFormType;
+  willing_to_work_onsite: ApplicationFormType;
+  photo_2x2: ApplicationFormType;
+  upload_med_cert: ApplicationFormType;
+  preferred_interview_schedule: ApplicationFormType;
+  education_attained: ApplicationFormType;
+  year_graduated: ApplicationFormType;
+  university: ApplicationFormType;
+  course: ApplicationFormType;
+  work_experience: ApplicationFormType;
+  how_did_you_hear_about_us: ApplicationFormType;
+  agreement: ApplicationFormType;
+  signature: ApplicationFormType;
+}
+
 // Pipeline
 export interface PipelineStep {
   id?: number;
@@ -217,7 +244,7 @@ export interface CreatePositionFormData {
   employment_type: string;
   headcount: number;
   work_setup: string;
-  date_needed: Date | null;
+  target_start_date: Date | null;
   reason_for_hiring: string;
   other_reason_for_hiring: string;
   min_budget: number;

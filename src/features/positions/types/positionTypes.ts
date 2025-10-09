@@ -1,18 +1,46 @@
-// Types and interfaces for Positions feature
+import type { ApplicationForm } from "@/features/careers/types/job";
+import type { PipelineStep } from "./createPosition";
+import type { User } from "@/features/auth/types/auth.types";
 
-export interface BaseJobPosting {
+export interface PositionData {
   id: number;
-  title: string;
+  unique_id: number;
+  client: string;
+  pipeline: PipelineStep[];
+  application_form: ApplicationForm;
+  job_title: string;
+  education_level: string;
   department: string;
+  experience_level: string;
+  experience_level_display: string;
+  employment_type: string;
+  employment_type_display: string;
+  number_of_vacancies: number;
+  work_setup: string;
+  work_setup_display: string;
+  date_needed: string;
+
+  reason_for_hiring: string;
+  other_reason_for_hiring?: string;
+
+  min_budget: number;
+  max_budget: number;
   description: string;
-  status?: string;
-  assignee?: string;
-  progress?: { completed: number; total: number };
-  link?: string;
-  type?: "Internal" | "External";
+  responsibilities: string;
+  qualifications: string;
+  location: string;
+  status: "draft" | "active" | "closed" | "cancelled" | "pending";
+
+  type: "position" | "prf";
+  type_display: "Position" | "PRF";
+  published: boolean;
+  active: boolean;
+  posted_by: User;
+  created_at: string;
+  updated_at: string;
 }
 
-export type JobPosting = BaseJobPosting;
+export type JobPosting = PositionData;
 
 export type TabType =
   | "drafts"

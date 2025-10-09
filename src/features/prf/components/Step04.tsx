@@ -1,13 +1,13 @@
 import React from "react";
 import { Button } from "@/shared/components/ui/button";
-import type { FormData } from "../types/prfTypes";
+import type { PRFData } from "../types/prfTypes";
 import { PreviewInfo } from "./PreviewInfo";
 import formatName from "@/shared/utils/formatName";
 
 interface Step04Props {
   goToPreviousStep: () => void;
   step: number;
-  formData: FormData;
+  formData: PRFData;
   handleSubmit: () => void;
 }
 
@@ -60,7 +60,7 @@ export const Step04: React.FC<Step04Props> = ({
               </div>
               <div>
                 <span className="font-medium">Department Name:</span>{" "}
-                {formData.department_name}
+                {formData.department}
               </div>
               <div>
                 <span className="font-medium">Immediate Supervisor:</span>{" "}
