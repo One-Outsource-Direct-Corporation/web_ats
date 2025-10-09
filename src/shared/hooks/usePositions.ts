@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 
-import type { PositionData } from "../types/positionTypes";
+import type { PositionData } from "../../features/positions/types/positionTypes";
 import type { PRFData } from "@/features/prf/types/prfTypes";
 import type { AxiosError } from "axios";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 
-export function usePositions() {
+export function usePositions(status = "active") {
   const [positions, setPositions] = useState<PositionData[] | PRFData[] | []>(
     []
   );
@@ -18,7 +18,7 @@ export function usePositions() {
       try {
         setLoading(true);
         const response = await axiosPrivate.get<PositionData[] | PRFData[]>(
-          "/api/job/?my_posts=true&status=active"
+          `/api/job/?my_posts=true&status=${status}`
         );
 
         setPositions(response.data);

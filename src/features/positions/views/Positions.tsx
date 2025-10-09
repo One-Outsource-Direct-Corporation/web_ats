@@ -1,10 +1,10 @@
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import FilterBar from "../components/FilterBar";
 import JobListItem from "../components/JobListItem";
-import { usePositions } from "../hooks/usePositions";
+import { usePositions } from "../../../shared/hooks/usePositions";
 
 export default function Positions() {
-  const { positions, loading, error } = usePositions();
+  const { positions, loading, error } = usePositions("active");
 
   // To do: Bring back the tabs functionality
 

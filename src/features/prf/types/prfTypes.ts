@@ -33,6 +33,7 @@ export interface PRFData {
   department: string;
   interview_levels: number;
   immediate_supervisor: string;
+  immediate_supervisor_fullname: string;
   hiring_managers: string[];
   employment_type: string;
   work_setup: string;

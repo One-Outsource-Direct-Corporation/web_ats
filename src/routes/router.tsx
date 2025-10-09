@@ -1,6 +1,5 @@
 import { createBrowserRouter } from "react-router-dom";
 import RootLayout from "@/shared/pages/RootLayout";
-import Requests from "@/shared/pages/requests/Requests.tsx";
 import { applicantsRoutes } from "@/features/applicants/routes/applicantsRoutes.tsx";
 import { jobsRoutes } from "@/features/jobs/routes/jobsRoutes.tsx";
 import { interviewsRoutes } from "@/features/interviews/routes/interviewsRoutes.tsx";
@@ -12,6 +11,7 @@ import ProtectedRoutes from "@/features/auth/components/ProtectedRoutes";
 import Login from "@/features/auth/views/Login";
 import PersistLogin from "@/shared/pages/PersistLogin";
 import { careersRoutes } from "@/features/careers/routes/careersRoute";
+import { requestRoutes } from "@/features/requests/routes/requestRoutes";
 
 export const router = createBrowserRouter([
   {
@@ -38,10 +38,7 @@ export const router = createBrowserRouter([
           ...dashboardRoutes,
           ...positionRoutes,
           ...libraryRoutes,
-          {
-            path: "requests",
-            element: <Requests />,
-          },
+          ...requestRoutes,
           ...jobsRoutes,
           ...applicantsRoutes,
           ...interviewsRoutes,
