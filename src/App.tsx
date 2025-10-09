@@ -1,74 +1,89 @@
-import './App.css'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { Navbar } from "@/components/reusables/Navbar"
-import Login from "@/components/pages/Login"
-import Page from "@/app/DashboardCall"
-import Applicants from '@/components/pages/applicants/Applicants'
-import Positions from '@/components/pages/positions/Positions'
-import Library from '@/components/pages/library/Library'
-import Requests from '@/components/pages/requests/Requests'
+import { RouterProvider } from "react-router-dom";
+import { router } from "@/routes/router";
+import { AuthProvider } from "./features/auth/context/AuthContext";
+import { ToastContainer } from "react-toastify";
+import "@/App.css";
+// import { BrowserRouter, Routes, Route } from 'react-router-dom'
+// import { Navbar } from "@/components/reusables/Navbar"
+// import Login from "@/pages/Login.tsx"
+// import Page from "@/app/DashboardCall"
+// import Applicants from '@/pages/applicants/Applicants'
+// import Positions from '@/pages/positions/Positions'
+// import Library from '@/pages/library/Library'
+// import Requests from '@/pages/requests/Requests'
 
-import JobDetails from '@/components/pages/applicants/Job'
-import LeadDeveloper from '@/components/pages/applicants/JobDetails'
+// import JobDetails from '@/pages/applicants/Job'
+// import LeadDeveloper from '@/pages/applicants/JobDetails'
 
-import ApplicantInformationTab from '@/components/pages/applicants/ApplicantsInformationTab'
+// import ApplicantInformationTab from '@/pages/applicants/ApplicantsInformationTab'
 
-import InterviewEvaluationForm from '@/components/pages/applicants/InterviewEvaluationFormPage'
+// import InterviewEvaluationForm from '@/pages/applicants/InterviewEvaluationFormPage'
 
-import JobStageTemplate from './components/pages/applicants/JobStateTemplate'
-import CreateNewPosition from './components/pages/requests/create-new-position'
-import IEForm2 from '@/components/forms/InterviewEvaluationForm2'
-import CustomStages from '@/components/pages/applicants/CustomStages'
-import ExamForm from '@/components/pages/Exam-Form'
+// import JobStageTemplate from '@/pages/applicants/JobStateTemplate'
+// import CreateNewPosition from '@/pages/requests/create-new-position'
+// import IEForm2 from '@/components/forms/InterviewEvaluationForm2'
+// import CustomStages from '@/pages/applicants/CustomStages'
+// import ExamForm from '@/pages/Exam-Form.tsx'
 
-import ApplicantMainPage from '@/components/pages/applicantview/ApplicantMainPage'
+// import ApplicantMainPage from '@/pages/applicantview/ApplicantMainPage'
 
-import PRF from './components/pages/positions/PRF'
-import PoolApplicants from './components/pages/applicants/PoolApplicants'
-import { FullExamResultPage } from './components/pages/FullExamResultPage'
-
-
+// import PRF from '@/pages/positions/PRF'
+// import PoolApplicants from '@/pages/applicants/PoolApplicants'
+// import { FullExamResultPage } from './pages/FullExamResultPage.tsx'
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/navbartest" element={<Navbar />} />
-      <Route path="/" element={<Login />} />
-
-      {/* Main Tabs */}
-      <Route path="/dashboard/*" element={<Page />} />
-      <Route path="/job/list/applicants/" element={<Applicants />} />
-      <Route path="/positions/*" element={<Positions />} />
-      <Route path="/library/*" element={<Library />} />
-      <Route path="/requests/*" element={<Requests />} />
-
-      {/* Applicants */}
-      <Route path="/job" element={<JobDetails />} />
-      <Route path="/job/:jobtitle" element={<LeadDeveloper />} />
-      <Route path="/ApplicantInformation/" element={<ApplicantInformationTab />} />
-      <Route path="/ieform/*" element={<InterviewEvaluationForm/>} />
-      <Route path="/job/list/applicants/:name/IEForm" element ={<IEForm2/>} />
-      <Route path="/job/list/applicants/:id/IEForm" element={<IEForm2 />} />
-      <Route path="/job/:jobtitle/:jobstage" element={<JobStageTemplate />} />
-      <Route path="/job/list/applicants/:name" element={<ApplicantInformationTab />} />
-      <Route path="/job/stage/:customStage" element={<CustomStages />} />
-      <Route path="/job/:jobtitle/exam-form/:applicantId" element={<ExamForm />} />
-      <Route path="/job/list/applicants/pool"  element={<PoolApplicants/>} />
-      <Route path="/job/:jobtitle/applicant/:applicantId/full-result" element={<FullExamResultPage />} />
-
-      {/* Applicant View */}
-      <Route path="/applicantlandingpage"  element={<ApplicantMainPage/>} />
-
-      {/* Requests */}
-      <Route path="/positions/create-new-position" element={ < CreateNewPosition />} />
-      
-      {/* Positions */}
-      <Route path="/prf"  element={<PRF/>} />
-
-      
-
-      </Routes>
-    </BrowserRouter>
+    <>
+      <ToastContainer />
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </>
   );
 }
+
+{
+  /*<Route path="/navbartest" element={<Navbar />} />*/
+}
+// export default function App() {
+//   return (
+//     <BrowserRouter>
+//       <Routes>
+//       <Route path="/" element={<Login />} />
+//
+//       {/* Main Tabs */}
+//       <Route path="/dashboard/*" element={<Page />} />
+//       <Route path="/job/list/applicants/" element={<Applicants />} />
+//       <Route path="/positions/*" element={<Positions />} />
+//       <Route path="/library/*" element={<Library />} />
+//       <Route path="/requests/*" element={<Requests />} />
+//
+//       {/* Applicants */}
+//       <Route path="/job" element={<JobDetails />} />
+//       <Route path="/job/:jobtitle" element={<LeadDeveloper />} />
+//       <Route path="/ApplicantInformation/" element={<ApplicantInformationTab />} />
+//       <Route path="/ieform/*" element={<InterviewEvaluationForm/>} />
+//       <Route path="/job/list/applicants/:name/IEForm" element ={<IEForm2/>} />
+//       <Route path="/job/list/applicants/:id/IEForm" element={<IEForm2 />} />
+//       <Route path="/job/:jobtitle/:jobstage" element={<JobStageTemplate />} />
+//       <Route path="/job/list/applicants/:name" element={<ApplicantInformationTab />} />
+//       <Route path="/job/stage/:customStage" element={<CustomStages />} />
+//       <Route path="/job/:jobtitle/exam-form/:applicantId" element={<ExamForm />} />
+//       <Route path="/job/list/applicants/pool"  element={<PoolApplicants/>} />
+//       <Route path="/job/:jobtitle/applicant/:applicantId/full-result" element={<FullExamResultPage />} />
+//
+//       {/* Applicant View */}
+//       <Route path="/applicantlandingpage"  element={<ApplicantMainPage/>} />
+//
+//       {/* Requests */}
+//       <Route path="/positions/create-new-position" element={ < CreateNewPosition />} />
+//
+//       {/* Positions */}
+//       <Route path="/prf"  element={<PRF/>} />
+//
+//
+//
+//       </Routes>
+//     </BrowserRouter>
+//   );
+// }

@@ -1,7 +1,3 @@
-
-
-
-
 .logo {
   height: 6em;
   padding: 1.5em;
@@ -36,4 +32,32 @@
 
 .read-the-docs {
   color: #888;
+}
+
+@layer base {
+  .jodit-wysiwyg ul,
+  .jodit-wysiwyg ol {
+    list-style: revert;
+    margin-left: revert;
+    padding-left: revert;
+  }
+  .jodit-wysiwyg ul ul,
+  .jodit-wysiwyg ol ol {
+    list-style-type: revert;
+    margin-left: 1.5em;
+    padding-left: 1.5em;
+  }
+}
+
+.preview-content ul,
+.preview-content ol {
+  list-style: revert;
+  margin-left: revert;
+  padding-left: revert;
+}
+.preview-content ul ul,
+.preview-content ol ol {
+  list-style-type: revert;
+  margin-left: 1.5em;
+  padding-left: 1.5em;
 }

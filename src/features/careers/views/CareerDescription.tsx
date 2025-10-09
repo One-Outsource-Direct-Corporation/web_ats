@@ -1,0 +1,172 @@
+import { useEffect } from "react";
+import { ArrowUp, ArrowLeft } from "lucide-react";
+import { Button } from "@/shared/components/ui/button.tsx";
+import { useNavigate } from "react-router-dom";
+import { useJobDetail } from "../hooks/useJobDetail";
+import { useParams } from "react-router-dom";
+import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
+
+export default function CareerDescription() {
+  const navigate = useNavigate();
+  const params = useParams();
+  const { jobDetail, loading, error } = useJobDetail(params.jobId);
+  console.log("Job Detail from Hook:", jobDetail);
+
+  useEffect(() => {
+    document.title = jobDetail?.job_title
+      ? `${jobDetail.job_title}`
+      : "Career Details";
+  }, [jobDetail?.job_title]);
+
+  if (loading) {
+    return <LoadingComponent />;
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="p-6 text-center">
+          <h2 className="text-2xl font-bold mb-4 text-red-600">Error</h2>
+          <p className="text-gray-700">{error}</p>
+          <Button
+            variant="outline"
+            className="mt-6 bg-transparent"
+            onClick={() => navigate("/")}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Go Back
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm p-6">
+        <div className="max-w-4xl mx-auto">
+          {/* Logo - Made clickable */}
+          <div className="flex justify-center mb-6 cursor-pointer">
+            <img
+              src="/OODC%20logo3.png"
+              alt="OODC Logo"
+              className="h-16"
+              onClick={() => navigate("/")}
+            />
+          </div>
+
+          {/* Job Title with Icon */}
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-2xl font-bold text-gray-900">
+              {jobDetail?.job_title}
+            </h1>
+          </div>
+
+          {/* Department and Role */}
+          <div className="text-gray-600 mb-6 ml-9">{jobDetail?.department}</div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-4 ml-9 flex-wrap">
+            {" "}
+            {/* Added flex-wrap for responsiveness */}
+            <Button
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
+              onClick={() => {
+                if (jobDetail) {
+                  return navigate(`/careers/${jobDetail.id}/apply`);
+                }
+              }}
+            >
+              Apply Now
+            </Button>
+            <Button
+              variant="outline"
+              className="px-6 py-2 bg-transparent"
+              onClick={() => navigate("/")}
+            >
+              View Other Opening
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-4xl mx-auto p-6">
+        {/* Filter Information */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <h3 className="font-bold text-gray-900 mb-2">Category</h3>
+              <p className="text-gray-600">
+                {jobDetail?.experience_level_display}
+              </p>
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900 mb-2">Work Type</h3>
+              <p className="text-gray-600">
+                {jobDetail?.employment_type_display}
+              </p>
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900 mb-2">Work Setup</h3>
+              <p className="text-gray-600">{jobDetail?.work_setup_display}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Job Summary */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-1 h-6 bg-blue-600 rounded-full"></div>
+            <h2 className="text-xl font-bold text-gray-900">Job Description</h2>
+          </div>
+          <div className="text-gray-700 leading-relaxed">
+            <p className="mb-4">{jobDetail?.description}</p>
+          </div>
+        </div>
+
+        {/* Responsibilities */}
+        {jobDetail?.responsibilities && (
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-1 h-6 bg-blue-600 rounded-full"></div>
+              <h2 className="text-xl font-bold text-gray-900">
+                Responsibilities
+              </h2>
+            </div>
+            <p className="text-gray-700 leading-relaxed">
+              {jobDetail.responsibilities}
+            </p>
+          </div>
+        )}
+
+        {/* Qualifications */}
+        {jobDetail?.qualifications && (
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-1 h-6 bg-blue-600 rounded-full"></div>
+              <h2 className="text-xl font-bold text-gray-900">
+                Qualifications
+              </h2>
+            </div>
+            <p className="text-gray-700 leading-relaxed">
+              {jobDetail.qualifications}
+            </p>
+          </div>
+        )}
+
+        {/* Back to Top Button */}
+        <div className="flex justify-end mt-8">
+          <Button
+            variant="outline"
+            className="flex items-center gap-2 bg-transparent"
+          >
+            <ArrowUp className="h-4 w-4" />
+            Back To Top
+          </Button>
+        </div>
+      </main>
+    </div>
+  );
+}
