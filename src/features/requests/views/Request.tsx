@@ -87,7 +87,7 @@ export default function Request() {
                         <>
                           <div className="font-medium">
                             {formatNameBySpace(
-                              (item as PRFData).immediate_supervisor_fullname
+                              (item as PRFData).immediate_supervisor
                             )}
                           </div>
                           <div className="text-gray-500">

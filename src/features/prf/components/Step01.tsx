@@ -8,7 +8,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/shared/components/ui/select";
-import type { PRFData } from "../types/prfTypes";
+import type { PRF } from "../types/prfTypes";
 import { PreviewInfo } from "./PreviewInfo";
 import { useUsersByDepartment } from "../hooks/useUsersByDepartment";
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
@@ -17,8 +17,8 @@ import type { User } from "@/features/auth/types/auth.types";
 interface Step01Props {
   goToNextStep: () => void;
   step: number;
-  formData: PRFData;
-  updateFormData: (updates: Partial<PRFData>) => void;
+  formData: PRF;
+  updateFormData: (updates: Partial<PRF>) => void;
 }
 
 export const Step01: React.FC<Step01Props> = ({

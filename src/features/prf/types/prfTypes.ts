@@ -21,9 +21,7 @@ export interface SoftwareRequired {
   [key: string]: boolean;
 }
 
-export interface PRFData {
-  id: number;
-  unique_id: number;
+export interface PRF {
   job_title: string;
   target_start_date: string;
   number_of_vacancies: string;
@@ -33,7 +31,6 @@ export interface PRFData {
   department: string;
   interview_levels: number;
   immediate_supervisor: string;
-  immediate_supervisor_fullname: string;
   hiring_managers: string[];
   employment_type: string;
   work_setup: string;
@@ -55,9 +52,14 @@ export interface PRFData {
   other_assessment: string;
   hardware_required: HardwareRequired;
   software_required: SoftwareRequired;
-  type: "position" | "prf";
+}
+
+export interface PRFData extends PRF {
+  id: number;
+  unique_id: number;
   type_display: "Position" | "PRF";
   status: "draft" | "active" | "closed" | "cancelled" | "pending";
+  type: "position" | "prf";
   active: boolean;
   published: boolean;
   posted_by: User;

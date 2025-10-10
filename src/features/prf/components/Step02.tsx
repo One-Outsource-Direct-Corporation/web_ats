@@ -8,7 +8,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/shared/components/ui/select";
-import type { PRFData } from "../types/prfTypes";
+import type { PRF } from "../types/prfTypes";
 import { PreviewInfo } from "./PreviewInfo";
 import { RichTextEditor } from "@/shared/components/reusables/RichTextEditor";
 
@@ -16,8 +16,8 @@ interface Step02Props {
   goToNextStep: () => void;
   goToPreviousStep: () => void;
   step: number;
-  formData: PRFData;
-  updateFormData: (updates: Partial<PRFData>) => void;
+  formData: PRF;
+  updateFormData: (updates: Partial<PRF>) => void;
 }
 
 export const Step02: React.FC<Step02Props> = ({

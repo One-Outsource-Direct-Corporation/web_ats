@@ -1,13 +1,13 @@
 import React from "react";
 import { Button } from "@/shared/components/ui/button";
-import type { PRFData } from "../types/prfTypes";
+import type { PRF } from "../types/prfTypes";
 import { PreviewInfo } from "./PreviewInfo";
 import formatName from "@/shared/utils/formatName";
 
 interface Step04Props {
   goToPreviousStep: () => void;
   step: number;
-  formData: PRFData;
+  formData: PRF;
   handleSubmit: () => void;
 }
 

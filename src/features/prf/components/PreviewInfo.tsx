@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import type { PRFData } from "../types/prfTypes";
+import type { PRF } from "../types/prfTypes";
 import formatName from "@/shared/utils/formatName";
 
 interface PreviewInfoProps {
   step: number;
-  formData: PRFData;
+  formData: PRF;
 }
 
 export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {

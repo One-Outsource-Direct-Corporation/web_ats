@@ -1,9 +1,9 @@
 import { useState } from "react";
-import type { FormData } from "../types/prfTypes";
+import type { PRF } from "../types/prfTypes";
 
-export function usePRFForm(initialData: FormData) {
-  const [formData, setFormData] = useState<FormData>(initialData);
-  const updateFormData = (updates: Partial<FormData>) => {
+export function usePRFForm(initialData: PRF) {
+  const [formData, setFormData] = useState<PRF>(initialData);
+  const updateFormData = (updates: Partial<PRF>) => {
     setFormData((prev) => ({ ...prev, ...updates }));
   };
   return { formData, updateFormData };

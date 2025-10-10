@@ -96,7 +96,7 @@ export default function PRF() {
       business_unit: formData.business_unit.toLowerCase().replace(/\s+/g, "_"),
       category: formData.category.toLowerCase().replace(/\s+/g, "_"),
       work_setup: formatForJSON(formData.work_setup),
-      department_name: formatForJSON(formData.department_name),
+      department_name: formatForJSON(formData.department),
       number_of_vacancies: Number(formData.number_of_vacancies),
       interview_levels: Number(formData.interview_levels),
       max_salary: formData.max_salary ? Number(formData.max_salary) : 0,
