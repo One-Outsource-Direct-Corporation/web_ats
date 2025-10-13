@@ -30,7 +30,8 @@ export interface PRF {
   business_unit: string;
   department: string;
   interview_levels: number;
-  immediate_supervisor: string;
+  immediate_supervisor: number | "No Supervisor";
+  immediate_supervisor_display: string;
   hiring_managers: string[];
   employment_type: string;
   work_setup: string;
@@ -56,7 +57,7 @@ export interface PRF {
 
 export interface PRFData extends PRF {
   id: number;
-  unique_id: number;
+  unique_id: string;
   type_display: "Position" | "PRF";
   status: "draft" | "active" | "closed" | "cancelled" | "pending";
   type: "position" | "prf";

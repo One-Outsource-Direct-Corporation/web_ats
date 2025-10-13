@@ -35,7 +35,7 @@ export function filterPostings(
   searchTerm: string
 ): JobPosting[] {
   return postings.filter((posting) =>
-    posting.title.toLowerCase().includes(searchTerm.toLowerCase())
+    posting.job_title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 }
 

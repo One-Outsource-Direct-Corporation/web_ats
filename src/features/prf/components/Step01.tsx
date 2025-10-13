@@ -212,9 +212,9 @@ export const Step01: React.FC<Step01Props> = ({
                 Immediate Supervisor
               </label>
               <Select
-                value={formData.immediate_supervisor}
+                value={String(formData.immediate_supervisor)}
                 onValueChange={(value) =>
-                  updateFormData({ immediate_supervisor: value })
+                  updateFormData({ immediate_supervisor: Number(value) })
                 }
               >
                 <SelectTrigger className="w-full">

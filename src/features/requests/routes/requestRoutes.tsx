@@ -1,4 +1,5 @@
 import Request from "../views/Request";
+import EditRequestItem from "../views/EditRequestItem";
 
 export const requestRoutes = [
   {
@@ -7,6 +8,10 @@ export const requestRoutes = [
       {
         index: true,
         element: <Request />,
+      },
+      {
+        path: "edit/:type/:id",
+        element: <EditRequestItem />,
       },
     ],
   },

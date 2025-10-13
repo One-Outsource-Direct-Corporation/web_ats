@@ -3,6 +3,21 @@ import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import { usePositions } from "@/shared/hooks/usePositions";
 import formatDate from "@/shared/utils/formatDate";
 import formatName, { formatNameBySpace } from "@/shared/utils/formatName";
+import FilterBar from "../components/FilterBar";
+import { Checkbox } from "@/shared/components/ui/checkbox";
+import { useState, useCallback } from "react";
+import { Button } from "@/shared/components/ui/button";
+import { Ellipsis, SquarePen, Trash2 } from "lucide-react";
+import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
+import { toast } from "react-toastify";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/shared/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
 
 function getStatusColor(status: string) {
   switch (status) {
@@ -19,44 +34,171 @@ function getStatusColor(status: string) {
   }
 }
 
+type SelectedItem = {
+  id: number;
+  unique_id: string;
+  type: "prf" | "position";
+};
+
 export default function Request() {
-  const { positions, loading, error } = usePositions("no_active");
+  const { positions, loading, error, refetch } = usePositions("no_active");
+  const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
+  const selectAll =
+    positions.length > 0 && selectedItems.length === positions.length;
+  const axiosPrivate = useAxiosPrivate();
+  const navigate = useNavigate();
+
   console.log(positions);
 
+  // Handle select all checkbox
+  const handleSelectAll = useCallback(
+    (checked: boolean) => {
+      if (checked) {
+        const allItems = positions.map((item) => ({
+          id: item.id,
+          unique_id: item.unique_id,
+          type: item.type,
+        }));
+        setSelectedItems(allItems);
+      } else {
+        setSelectedItems([]);
+      }
+    },
+    [positions]
+  );
+
+  // Handle individual checkbox
+  const handleItemSelect = useCallback(
+    (
+      itemId: number,
+      itemType: "prf" | "position",
+      uniqueId: string,
+      checked: boolean
+    ) => {
+      setSelectedItems((prev) => {
+        if (checked) {
+          return [...prev, { id: itemId, unique_id: uniqueId, type: itemType }];
+        } else {
+          return prev.filter((item) => item.unique_id !== uniqueId);
+        }
+      });
+    },
+    []
+  );
+
+  // Handle delete action
+  const handleDelete = useCallback(async () => {
+    if (selectedItems.length === 0) return;
+
+    // Group items by type
+    const prfIds = selectedItems
+      .filter((item) => item.type === "prf")
+      .map((item) => item.id);
+    const positionIds = selectedItems
+      .filter((item) => item.type === "position")
+      .map((item) => item.id);
+
+    try {
+      console.log(prfIds);
+      console.log(positionIds);
+
+      const deletePromises = [];
+
+      // Delete PRF items
+      if (prfIds.length > 0) {
+        const data = { ids: prfIds };
+        deletePromises.push(
+          axiosPrivate.delete("/api/prf/", {
+            data,
+          })
+        );
+      }
+
+      // Delete Position items
+      if (positionIds.length > 0) {
+        const data = { ids: positionIds };
+        console.log(data);
+        deletePromises.push(
+          axiosPrivate.delete("/api/job/", {
+            data,
+          })
+        );
+      }
+
+      // Wait for all deletions to complete
+      await Promise.all(deletePromises);
+
+      // Clear selections after successful deletion
+      setSelectedItems([]);
+
+      // Refetch the data to get updated list
+      await refetch();
+
+      // Show success message based on what was deleted
+      if (prfIds.length > 0 && positionIds.length > 0) {
+        toast.success("Successfully deleted PRF and Position items.");
+      } else if (prfIds.length > 0) {
+        toast.success("Successfully deleted PRF items.");
+      } else if (positionIds.length > 0) {
+        toast.success("Successfully deleted Position items.");
+      }
+    } catch (error) {
+      console.error("Error deleting items:", error);
+      toast.error("Failed to delete some items. Please try again.");
+    }
+  }, [selectedItems]);
+
   return (
-    <main className="flex flex-col bg-gray-50 min-h-screen">
-      {/* Fixed top filter/search section */}
-      <div className="left-0 right-0 z-20 bg-gray-50 border-b border-gray-200 shadow-sm px-6 pt-4 pb-3">
+    <section className="flex flex-col bg-gray-50">
+      <div className="bg-gray-50 border-b border-gray-200 shadow-sm px-6 pt-4 pb-3">
         <div className="max-w-7xl mx-auto space-y-3">
-          <h1 className="text-3xl font-bold text-gray-800">Request</h1>
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold text-gray-800">Request</h1>
+            {selectedItems.length > 0 && (
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                className="flex items-center gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete ({selectedItems.length})
+              </Button>
+            )}
+          </div>
           <p className="text-lg text-gray-700">
-            Handles hiring requests and approvals.
+            Handles hiring requests and approvals
           </p>
-          {/* <FilterBar /> */}
+          <FilterBar />
         </div>
       </div>
 
       {/* Main content section */}
       {loading && <LoadingComponent />}
       {!loading && (
-        <div className="flex-grow px-6 mt-5 pb-[80px] max-w-7xl mx-auto w-full">
+        <div className="max-w-7xl mx-auto w-full mt-5 px-6">
           <table className="min-w-full bg-white text-sm">
             <thead className="bg-gray-50 text-gray-700 text-left">
               <tr>
-                <th className="px-4 py-3 w-12"></th>
+                <th className="px-4 py-3 w-12">
+                  <Checkbox
+                    checked={selectAll}
+                    onCheckedChange={handleSelectAll}
+                  />
+                </th>
                 <th className="px-4 py-3">Position Title</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Immediate Supervisor</th>
                 <th className="px-4 py-3">Date Requested</th>
-                <th className="px-4 py-3">Approving Officer</th>
-                <th className="px-4 py-3 text-center w-16">Pipeline</th>
+                <th className="px-4 py-3">Type</th>
+                <th className="px-4 py-3 text-center w-32">Pipeline</th>
+                <th className="px-4 py-3 text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
               {error && (
                 <tr className="border-t">
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="text-center text-red-500 px-4 py-3"
                   >
                     Something went wrong. Please try again later.
@@ -66,7 +208,7 @@ export default function Request() {
               {!loading && !error && positions.length === 0 && (
                 <tr className="border-t">
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="text-center text-gray-500 px-4 py-3"
                   >
                     This tab is empty.
@@ -75,69 +217,122 @@ export default function Request() {
               )}
               {!loading && !error && positions.length > 0 && (
                 <>
-                  {positions.map((item) => (
-                    <tr
-                      key={item.unique_id}
-                      className="border-t odd:bg-transparent even:bg-gray-50"
-                    >
-                      <td className="px-4 py-3">
-                        <input
-                          type="checkbox"
-                          className="w-4 h-4 bg-white border-2 border-gray-400 rounded focus:ring-2 focus:ring-blue-500 checked:bg-blue-600 checked:border-blue-600 appearance-none relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-white checked:after:text-xs checked:after:font-bold"
-                        />
-                      </td>
-                      <td className="px-4 py-3 font-medium">
-                        {item.job_title}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`text-xs px-2 py-1 whitespace-nowrap rounded-full font-medium ${getStatusColor(
-                            item.status
-                          )}`}
-                        >
-                          {formatName(item.status)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        {(item as PRFData)?.immediate_supervisor ? (
-                          <>
-                            <div className="font-medium">
-                              {formatNameBySpace(
-                                (item as PRFData).immediate_supervisor
-                              )}
-                            </div>
-                            <div className="text-gray-500">
-                              {formatName(item.department)}
-                            </div>
-                          </>
-                        ) : (
-                          <span className="text-gray-400">—</span>
-                        )}
-                      </td>
+                  {positions.map((item) => {
+                    const itemType = item.type;
+                    const uniqueId = item.unique_id;
+                    const isSelected = selectedItems.some(
+                      (selected) => selected.unique_id === item.unique_id
+                    );
 
-                      <td className="px-4 py-3">
-                        {formatDate(item.created_at)}
-                      </td>
-                      <td className="px-4 py-3">No Approver</td>
-                      <td className="px-4 py-3 text-center">
-                        {item.status === "pending" ? (
-                          <span className="text-gray-400">—</span>
-                        ) : (
-                          // Bring back when approval pipeline is available
-                          // <ApprovalPipelineDropdown
-                          //   pipeline={item.approvalPipeline}
-                          // />
-                          <span className="text-gray-400">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                    return (
+                      <tr
+                        key={item.unique_id}
+                        className="border-t odd:bg-transparent even:bg-gray-50 hover:bg-gray-100"
+                      >
+                        <td className="px-4 py-3">
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={(checked) =>
+                              handleItemSelect(
+                                item.id,
+                                itemType,
+                                uniqueId,
+                                checked as boolean
+                              )
+                            }
+                          />
+                        </td>
+                        <td className="px-4 py-3 font-medium">
+                          {item.job_title}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`text-xs px-2 py-1 whitespace-nowrap rounded-full font-medium ${getStatusColor(
+                              item.status
+                            )}`}
+                          >
+                            {formatName(item.status)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          {(item as PRFData)?.immediate_supervisor ? (
+                            <>
+                              <div className="font-medium">
+                                {formatNameBySpace(
+                                  (item as PRFData).immediate_supervisor
+                                )}
+                              </div>
+                              <div className="text-gray-500">
+                                {formatName(item.department)}
+                              </div>
+                            </>
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </td>
+
+                        <td className="px-4 py-3">
+                          {formatDate(item.created_at)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`text-xs px-2 py-1 whitespace-nowrap rounded-full font-medium ${
+                              item.type === "prf"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-neutral-700 text-neutral-100"
+                            }`}
+                          >
+                            {item.type_display}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {item.status === "pending" ? (
+                            <span className="text-gray-400">—</span>
+                          ) : (
+                            // Bring back when approval pipeline is available
+                            // <ApprovalPipelineDropdown
+                            //   pipeline={item.approvalPipeline}
+                            // />
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 flex justify-center">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Ellipsis
+                                size={32}
+                                className="hover:bg-neutral-100 p-2 rounded-lg cursor-pointer"
+                              />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              className="w-12 text-neutral-600"
+                              align="start"
+                            >
+                              <DropdownMenuGroup>
+                                <DropdownMenuItem
+                                  className="flex items-center gap-2 cursor-pointer"
+                                  onClick={() =>
+                                    navigate(
+                                      `/requests/edit/${item.type}/${item.id}`
+                                    )
+                                  }
+                                >
+                                  <SquarePen className="h-4 w-4" />
+                                  <span>Edit</span>
+                                </DropdownMenuItem>
+                              </DropdownMenuGroup>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </>
               )}
             </tbody>
           </table>
         </div>
       )}
-    </main>
+    </section>
   );
 }

@@ -73,20 +73,19 @@ export default function Positions() {
 
   return (
     <section className="flex flex-col bg-gray-50">
-      {/* Fixed top filter/search section */}
-      <div className="bg-gray-50 border-b border-gray-200 shadow-sm p-6">
+      <div className="bg-gray-50 border-b border-gray-200 shadow-sm px-6 pt-4 pb-3">
         <div className="max-w-7xl mx-auto space-y-3">
           <h1 className="text-3xl font-bold text-gray-800">Positions</h1>
           <p className="text-lg text-gray-700">
-            Manages job openings and related information.
+            Manages job openings and related information
           </p>
           <FilterBar />
         </div>
       </div>
 
       {/* Main content section */}
+      {loading && <LoadingComponent />}
       <div className="max-w-7xl mx-auto w-full mt-5 px-6">
-        {loading && <LoadingComponent />}
         {error && (
           <div className="text-red-600 text-center">
             Error loading positions

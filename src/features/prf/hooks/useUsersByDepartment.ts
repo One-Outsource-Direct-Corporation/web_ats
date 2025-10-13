@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import type { User } from "@/features/auth/types/auth.types";
-// import { fetchUserByDepartment } from "../api/prfApi";
 import type { AxiosError } from "axios";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
-import { useNavigate, useLocation } from "react-router-dom";
 
 export const useUsersByDepartment = () => {
   const { user } = useAuth();
@@ -12,8 +10,6 @@ export const useUsersByDepartment = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const axiosPrivate = useAxiosPrivate();
-  const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     if (!user) return;

@@ -1,5 +1,4 @@
 export const getDepartmentColor = (department: string) => {
-  console.log(department);
   switch (department) {
     case "Marketing":
       return "bg-blue-100 text-blue-700";

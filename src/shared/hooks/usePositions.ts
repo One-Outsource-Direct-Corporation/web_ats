@@ -13,23 +13,24 @@ export function usePositions(status = "active") {
   const [error, setError] = useState<AxiosError | null>(null);
   const axiosPrivate = useAxiosPrivate();
 
-  useEffect(() => {
-    async function fetchPositions() {
-      try {
-        setLoading(true);
-        const response = await axiosPrivate.get<PositionData[] | PRFData[]>(
-          `/api/job/?my_posts=true&status=${status}`
-        );
+  const fetchPositions = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await axiosPrivate.get<PositionData[] | PRFData[]>(
+        `/api/job/?my_posts=true&status=${status}`
+      );
 
-        setPositions(response.data);
-      } catch (err: AxiosError | any) {
-        console.log(err);
-        setError(err.response?.data || "An error occurred");
-      } finally {
-        setLoading(false);
-      }
+      setPositions(response.data);
+    } catch (err: AxiosError | any) {
+      console.log(err);
+      setError(err.response?.data || "An error occurred");
+    } finally {
+      setLoading(false);
     }
+  };
 
+  useEffect(() => {
     fetchPositions();
   }, []);
 
@@ -37,5 +38,6 @@ export function usePositions(status = "active") {
     positions,
     loading,
     error,
+    refetch: fetchPositions,
   };
 }

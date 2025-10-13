@@ -4,7 +4,7 @@ import type { User } from "@/features/auth/types/auth.types";
 
 export interface PositionData {
   id: number;
-  unique_id: number;
+  unique_id: string;
   client: string;
   pipeline: PipelineStep[];
   application_form: ApplicationForm;
