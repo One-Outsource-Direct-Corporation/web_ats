@@ -72,41 +72,39 @@ export default function Positions() {
   // };
 
   return (
-    <>
-      <div className="flex flex-col min-h-screen pt-[100px] bg-gray-50">
-        {/* Fixed top filter/search section */}
-        <div className="fixed top-[64px] left-0 right-0 z-20 bg-gray-50 border-b border-gray-200 shadow-sm px-6 pt-4 pb-3">
-          <div className="max-w-7xl mx-auto space-y-3">
-            <h1 className="text-3xl font-bold text-gray-800">Positions</h1>
-            <p className="text-lg text-gray-700">
-              Manages job openings and related information.
-            </p>
-            <FilterBar />
-          </div>
+    <section className="flex flex-col bg-gray-50">
+      {/* Fixed top filter/search section */}
+      <div className="bg-gray-50 border-b border-gray-200 shadow-sm p-6">
+        <div className="max-w-7xl mx-auto space-y-3">
+          <h1 className="text-3xl font-bold text-gray-800">Positions</h1>
+          <p className="text-lg text-gray-700">
+            Manages job openings and related information.
+          </p>
+          <FilterBar />
         </div>
-
-        {/* Main content section */}
-        <main className="flex-grow px-6 pt-[150px] pb-[80px] max-w-7xl mx-auto w-full">
-          {loading && <LoadingComponent />}
-          {error && (
-            <div className="text-red-600 text-center">
-              Error loading positions
-            </div>
-          )}
-          {!loading && !error && positions.length === 0 && (
-            <div className="text-center text-gray-500 py-10">
-              This tab is empty.
-            </div>
-          )}
-          {!loading && !error && positions.length > 0 && (
-            <div className="space-y-2">
-              {positions.map((position) => (
-                <JobListItem key={position.unique_id} posting={position} />
-              ))}
-            </div>
-          )}
-        </main>
       </div>
-    </>
+
+      {/* Main content section */}
+      <div className="max-w-7xl mx-auto w-full mt-5 px-6">
+        {loading && <LoadingComponent />}
+        {error && (
+          <div className="text-red-600 text-center">
+            Error loading positions
+          </div>
+        )}
+        {!loading && !error && positions.length === 0 && (
+          <div className="text-center text-gray-500 mt-10">
+            This tab is empty.
+          </div>
+        )}
+        {!loading && !error && positions.length > 0 && (
+          <div className="space-y-2">
+            {positions.map((position) => (
+              <JobListItem key={position.unique_id} posting={position} />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }

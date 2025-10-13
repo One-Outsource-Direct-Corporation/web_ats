@@ -89,7 +89,7 @@ export function Navbar() {
   return (
     <>
       {/* Desktop Navigation */}
-      <nav className="hidden md:flex fixed top-0 left-0 right-0 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 items-center px-6 z-50 w-full">
+      <nav className="hidden md:flex fixed top-0 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 items-center px-6 z-50 w-full">
         <div className="flex items-center justify-between w-full">
           {/* Logo + Navigation Links */}
           <div className="flex items-center gap-4">
@@ -204,7 +204,7 @@ export function Navbar() {
       </nav>
 
       {/* Mobile Navigation */}
-      <nav className="md:hidden fixed top-0 left-0 right-0 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center px-6 z-50">
+      <nav className="md:hidden sticky top-0 left-0 right-0 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center px-6 z-50">
         <div className="flex items-center justify-between w-full">
           {/* Mobile Menu Button */}
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>

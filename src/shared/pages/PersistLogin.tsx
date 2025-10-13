@@ -56,7 +56,11 @@ export default function PersistLogin() {
   }
 
   if (isLoading) {
-    return <LoadingComponent message="Auth checking" />;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingComponent message="Auth checking" />
+      </div>
+    );
   }
 
   return <Outlet />;
