@@ -99,9 +99,6 @@ export default function Request() {
       .map((item) => item.id);
 
     try {
-      console.log(prfIds);
-      console.log(positionIds);
-
       const deletePromises = [];
 
       // Delete PRF items
@@ -125,14 +122,7 @@ export default function Request() {
         );
       }
 
-      // Wait for all deletions to complete
       await Promise.all(deletePromises);
-
-      // Clear selections after successful deletion
-      setSelectedItems([]);
-
-      // Refetch the data to get updated list
-      await refetch();
 
       // Show success message based on what was deleted
       if (prfIds.length > 0 && positionIds.length > 0) {
@@ -142,6 +132,9 @@ export default function Request() {
       } else if (positionIds.length > 0) {
         toast.success("Successfully deleted Position items.");
       }
+
+      setSelectedItems([]);
+      await refetch();
     } catch (error) {
       console.error("Error deleting items:", error);
       toast.error("Failed to delete some items. Please try again.");
@@ -259,7 +252,7 @@ export default function Request() {
                             <>
                               <div className="font-medium">
                                 {formatNameBySpace(
-                                  (item as PRFData).immediate_supervisor
+                                  (item as PRFData).immediate_supervisor_display
                                 )}
                               </div>
                               <div className="text-gray-500">

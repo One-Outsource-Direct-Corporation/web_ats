@@ -4,11 +4,19 @@ import { toast } from "react-toastify";
 import { ArrowLeft } from "lucide-react";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import { Button } from "@/shared/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import type { PRFData } from "@/features/prf/types/prfTypes";
 import type { PositionData } from "@/features/positions/types/positionTypes";
 import PRFEditForm from "../components/PRFEditForm";
 import PositionEditForm from "../components/PositionEditForm";
+import type { AxiosError } from "axios";
 
 type EditItem = PRFData | PositionData;
 
@@ -22,7 +30,6 @@ export default function EditRequestItem() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch item data based on type and id
   useEffect(() => {
     if (!type || !id) {
       setError("Invalid parameters");
@@ -112,25 +119,56 @@ export default function EditRequestItem() {
               Edit {type === "prf" ? "PRF" : "Position"}
             </h1>
             <p className="text-gray-600">
-              {item.job_title} • ID: {item.unique_id}
+              {item.job_title} • ID: {item.id}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <span
-            className={`px-3 py-1 rounded-full text-sm font-medium ${
-              item.status === "draft"
-                ? "bg-yellow-100 text-yellow-800"
-                : item.status === "active"
-                ? "bg-green-100 text-green-800"
-                : item.status === "closed"
-                ? "bg-red-100 text-red-800"
-                : "bg-gray-100 text-gray-800"
-            }`}
+          <Select
+            value={item.status}
+            onValueChange={async (
+              value: "draft" | "pending" | "active" | "closed" | "cancelled"
+            ) => {
+              try {
+                const endpoint =
+                  type === "prf" ? `/api/prf/${id}/` : `/api/job/${id}/`;
+                await axiosPrivate.patch(endpoint, { status: value });
+                setItem((prev) => (prev ? { ...prev, status: value } : null));
+                toast.success("Status updated successfully");
+              } catch (err: AxiosError | any) {
+                console.error("Error updating status:", err);
+                toast.error(
+                  err.response?.data?.detail || "Failed to update status"
+                );
+              }
+            }}
           >
-            {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-          </span>
+            <SelectTrigger
+              className={`w-32 rounded-4xl border-0 font-semibold ${
+                item.status === "draft"
+                  ? "bg-yellow-50 text-yellow-700 hover:bg-yellow-10"
+                  : item.status === "pending"
+                  ? "bg-blue-50 text-blue-700 hover:bg-blue-100"
+                  : item.status === "active"
+                  ? "bg-green-50 text-green-700 hover:bg-green-100"
+                  : item.status === "closed"
+                  ? "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                  : item.status === "cancelled"
+                  ? "bg-red-50 text-red-700 hover:bg-red-100"
+                  : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="closed">Closed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

@@ -27,7 +27,7 @@ export default function PRFEditForm({
 }: PRFEditFormProps) {
   const [formData, setFormData] = useState<PRFData>(initialData);
   const [isEdited, setIsEdited] = useState(false);
-  const { users } = useUsersByDepartment();
+  const { users } = useUsersByDepartment(formData.business_unit.toLowerCase());
 
   const handleInputChange = (field: keyof PRFData, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -98,10 +98,13 @@ export default function PRFEditForm({
                 <input
                   type="radio"
                   name="business_unit"
-                  value={unit}
+                  value={unit.toLocaleUpperCase()}
                   checked={formData.business_unit === unit.toLocaleLowerCase()}
                   onChange={(e) =>
-                    handleInputChange("business_unit", e.target.value)
+                    handleInputChange(
+                      "business_unit",
+                      e.target.value.toLocaleLowerCase()
+                    )
                   }
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                 />
@@ -145,7 +148,7 @@ export default function PRFEditForm({
                 // Handle "No Supervisor" case
                 setFormData((prev) => ({
                   ...prev,
-                  immediate_supervisor: 0,
+                  immediate_supervisor: null,
                   immediate_supervisor_display: value,
                 }));
               }

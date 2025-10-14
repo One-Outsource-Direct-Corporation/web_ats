@@ -11,7 +11,7 @@ export default function initialData(user: User | null): PRF {
     business_unit: user ? user.business_unit.toUpperCase() : "",
     department: "",
     interview_levels: 1,
-    immediate_supervisor: "",
+    immediate_supervisor: null,
     hiring_managers: [],
     employment_type: "",
     work_setup: "",

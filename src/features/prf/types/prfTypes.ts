@@ -1,6 +1,3 @@
-import type { User } from "@/features/auth/types/auth.types";
-
-// PRF feature types
 export interface AssessmentTypes {
   technical: boolean;
   language: boolean;
@@ -30,8 +27,7 @@ export interface PRF {
   business_unit: string;
   department: string;
   interview_levels: number;
-  immediate_supervisor: number | "No Supervisor";
-  immediate_supervisor_display: string;
+  immediate_supervisor: string | null;
   hiring_managers: string[];
   employment_type: string;
   work_setup: string;
@@ -55,21 +51,57 @@ export interface PRF {
   software_required: SoftwareRequired;
 }
 
-export interface PRFData extends PRF {
+export interface PRFResponse {
   id: number;
-  unique_id: string;
-  type_display: "Position" | "PRF";
-  status: "draft" | "active" | "closed" | "cancelled" | "pending";
-  type: "position" | "prf";
-  active: boolean;
-  published: boolean;
-  posted_by: User;
-  created_at: string;
-  updated_at: string;
+  job_posting: {
+    id: number;
+    job_title: string;
+    target_start_date: string;
+    reason_for_posting: string;
+    other_reason_for_posting: string;
+    department_name: string;
+    employment_type: string;
+    work_setup: string;
+    working_site: string;
+    min_salary: string;
+    max_salary: string;
+    description: string;
+    responsibilities: string;
+    qualifications: string;
+    status: string;
+    type: string;
+    active: boolean;
+    published: boolean;
+    created_at: string;
+    updated_at: string;
+    posted_by: number;
+  };
+  number_of_vacancies: number;
+  business_unit: string;
+  interview_levels: number;
+  category: string;
+  position: string;
+  work_schedule_from: string;
+  work_schedule_to: string;
+  non_negotiables: string;
+  salary_budget: string;
+  is_salary_range: boolean;
+  assessment_required: boolean;
+  other_assessment: string[];
+  immediate_supervisor: number;
+  hiring_managers: number[];
+  assessment_types: {
+    id: number;
+    name: string;
+  }[];
+  hardware_requirements: {
+    id: number;
+    name: string;
+  }[];
+  software_requirements: {
+    id: number;
+    name: string;
+  }[];
 }
 
-export type FormDataType = PRFData;
-
-export type PRFResponse = FormDataType & {
-  id: number;
-};
+export type FormDataType = PRF;
