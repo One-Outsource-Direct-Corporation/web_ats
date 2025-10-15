@@ -12,13 +12,14 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
-import type { PRFData } from "@/features/prf/types/prfTypes";
+import type { PRFResponse } from "@/features/prf/types/prfTypes";
 import type { PositionData } from "@/features/positions/types/positionTypes";
 import PRFEditForm from "../components/PRFEditForm";
 import PositionEditForm from "../components/PositionEditForm";
 import type { AxiosError } from "axios";
+import { formatBackgroundStatus } from "@/shared/utils/formatBackgroundStatus";
 
-type EditItem = PRFData | PositionData;
+type EditItem = PRFResponse;
 
 export default function EditRequestItem() {
   const { type, id } = useParams<{ type: "prf" | "position"; id: string }>();
@@ -119,22 +120,31 @@ export default function EditRequestItem() {
               Edit {type === "prf" ? "PRF" : "Position"}
             </h1>
             <p className="text-gray-600">
-              {item.job_title} • ID: {item.id}
+              {item.job_posting.job_title} • ID: {item.id}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <Select
-            value={item.status}
+            value={item.job_posting.status}
             onValueChange={async (
               value: "draft" | "pending" | "active" | "closed" | "cancelled"
             ) => {
               try {
                 const endpoint =
                   type === "prf" ? `/api/prf/${id}/` : `/api/job/${id}/`;
-                await axiosPrivate.patch(endpoint, { status: value });
-                setItem((prev) => (prev ? { ...prev, status: value } : null));
+                await axiosPrivate.patch(endpoint, {
+                  job_posting: { status: value },
+                });
+                setItem((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        job_posting: { ...prev.job_posting, status: value },
+                      }
+                    : null
+                );
                 toast.success("Status updated successfully");
               } catch (err: AxiosError | any) {
                 console.error("Error updating status:", err);
@@ -145,19 +155,9 @@ export default function EditRequestItem() {
             }}
           >
             <SelectTrigger
-              className={`w-32 rounded-4xl border-0 font-semibold ${
-                item.status === "draft"
-                  ? "bg-yellow-50 text-yellow-700 hover:bg-yellow-10"
-                  : item.status === "pending"
-                  ? "bg-blue-50 text-blue-700 hover:bg-blue-100"
-                  : item.status === "active"
-                  ? "bg-green-50 text-green-700 hover:bg-green-100"
-                  : item.status === "closed"
-                  ? "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                  : item.status === "cancelled"
-                  ? "bg-red-50 text-red-700 hover:bg-red-100"
-                  : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-              }`}
+              className={`w-32 rounded-4xl border-0 font-semibold ${formatBackgroundStatus(
+                item.job_posting.status
+              )}`}
             >
               <SelectValue />
             </SelectTrigger>
@@ -176,16 +176,17 @@ export default function EditRequestItem() {
       <div className="bg-white rounded-lg shadow-sm border">
         {type === "prf" ? (
           <PRFEditForm
-            initialData={item as PRFData}
+            initialData={item as PRFResponse}
             onSave={handleSave}
             saving={saving}
           />
         ) : (
-          <PositionEditForm
-            initialData={item as PositionData}
-            onSave={handleSave}
-            saving={saving}
-          />
+          // <PositionEditForm
+          //   initialData={item as PositionData}
+          //   onSave={handleSave}
+          //   saving={saving}
+          // />
+          <>Position editing not yet implemented.</>
         )}
       </div>
     </div>

@@ -1,8 +1,7 @@
-import type { PRFData } from "@/features/prf/types/prfTypes";
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import { usePositions } from "@/shared/hooks/usePositions";
 import formatDate from "@/shared/utils/formatDate";
-import formatName, { formatNameBySpace } from "@/shared/utils/formatName";
+import formatName from "@/shared/utils/formatName";
 import FilterBar from "../components/FilterBar";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { useState, useCallback } from "react";
@@ -18,33 +17,21 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
+import { formatBackgroundStatus } from "@/shared/utils/formatBackgroundStatus";
 
-function getStatusColor(status: string) {
-  switch (status) {
-    case "draft":
-      return "bg-green-100 text-green-800";
-    case "closed":
-      return "bg-red-100 text-red-800";
-    case "cancelled":
-      return "bg-gray-100 text-gray-800";
-    case "pending":
-      return "bg-yellow-100 text-yellow-800";
-    default:
-      return "bg-blue-100 text-blue-800";
-  }
+interface SelectedItem {
+  id: number;
 }
 
-type SelectedItem = {
-  id: number;
-  unique_id: string;
-  type: "prf" | "position";
-};
-
 export default function Request() {
-  const { positions, loading, error, refetch } = usePositions("no_active");
+  const { positions, loading, error, refetch } = usePositions({
+    no_active: true,
+  });
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
-  const selectAll =
-    positions.length > 0 && selectedItems.length === positions.length;
+  const selectAll = positions
+    ? positions.results.length > 0 &&
+      selectedItems.length === positions.results.length
+    : false;
   const axiosPrivate = useAxiosPrivate();
   const navigate = useNavigate();
 
@@ -54,11 +41,12 @@ export default function Request() {
   const handleSelectAll = useCallback(
     (checked: boolean) => {
       if (checked) {
-        const allItems = positions.map((item) => ({
-          id: item.id,
-          unique_id: item.unique_id,
-          type: item.type,
-        }));
+        const allItems = positions
+          ? positions.results.map((item) => ({
+              id: item.id,
+              type: item.type,
+            }))
+          : [];
         setSelectedItems(allItems);
       } else {
         setSelectedItems([]);
@@ -68,70 +56,29 @@ export default function Request() {
   );
 
   // Handle individual checkbox
-  const handleItemSelect = useCallback(
-    (
-      itemId: number,
-      itemType: "prf" | "position",
-      uniqueId: string,
-      checked: boolean
-    ) => {
-      setSelectedItems((prev) => {
-        if (checked) {
-          return [...prev, { id: itemId, unique_id: uniqueId, type: itemType }];
-        } else {
-          return prev.filter((item) => item.unique_id !== uniqueId);
-        }
-      });
-    },
-    []
-  );
+  const handleItemSelect = useCallback((itemId: number, checked: boolean) => {
+    setSelectedItems((prev) => {
+      if (checked) {
+        return [...prev, { id: itemId }];
+      } else {
+        return prev.filter((item) => item.id !== itemId);
+      }
+    });
+  }, []);
 
   // Handle delete action
   const handleDelete = useCallback(async () => {
     if (selectedItems.length === 0) return;
-
-    // Group items by type
-    const prfIds = selectedItems
-      .filter((item) => item.type === "prf")
-      .map((item) => item.id);
-    const positionIds = selectedItems
-      .filter((item) => item.type === "position")
-      .map((item) => item.id);
-
     try {
-      const deletePromises = [];
+      const ids = selectedItems.map((item) => item.id);
 
-      // Delete PRF items
-      if (prfIds.length > 0) {
-        const data = { ids: prfIds };
-        deletePromises.push(
-          axiosPrivate.delete("/api/prf/", {
-            data,
-          })
-        );
-      }
+      const data = { ids };
 
-      // Delete Position items
-      if (positionIds.length > 0) {
-        const data = { ids: positionIds };
-        console.log(data);
-        deletePromises.push(
-          axiosPrivate.delete("/api/job/", {
-            data,
-          })
-        );
-      }
+      const response = await axiosPrivate.delete("/api/job/bulk-delete/", {
+        data,
+      });
 
-      await Promise.all(deletePromises);
-
-      // Show success message based on what was deleted
-      if (prfIds.length > 0 && positionIds.length > 0) {
-        toast.success("Successfully deleted PRF and Position items.");
-      } else if (prfIds.length > 0) {
-        toast.success("Successfully deleted PRF items.");
-      } else if (positionIds.length > 0) {
-        toast.success("Successfully deleted Position items.");
-      }
+      console.log(response);
 
       setSelectedItems([]);
       await refetch();
@@ -180,7 +127,6 @@ export default function Request() {
                 </th>
                 <th className="px-4 py-3">Position Title</th>
                 <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Immediate Supervisor</th>
                 <th className="px-4 py-3">Date Requested</th>
                 <th className="px-4 py-3">Type</th>
                 <th className="px-4 py-3 text-center w-32">Pipeline</th>
@@ -198,130 +144,112 @@ export default function Request() {
                   </td>
                 </tr>
               )}
-              {!loading && !error && positions.length === 0 && (
-                <tr className="border-t">
-                  <td
-                    colSpan={8}
-                    className="text-center text-gray-500 px-4 py-3"
-                  >
-                    This tab is empty.
-                  </td>
-                </tr>
-              )}
-              {!loading && !error && positions.length > 0 && (
-                <>
-                  {positions.map((item) => {
-                    const itemType = item.type;
-                    const uniqueId = item.unique_id;
-                    const isSelected = selectedItems.some(
-                      (selected) => selected.unique_id === item.unique_id
-                    );
+              {!loading &&
+                !error &&
+                positions &&
+                positions.results.length === 0 && (
+                  <tr className="border-t">
+                    <td
+                      colSpan={8}
+                      className="text-center text-gray-500 px-4 py-3"
+                    >
+                      This tab is empty.
+                    </td>
+                  </tr>
+                )}
+              {!loading &&
+                !error &&
+                positions &&
+                positions.results.length > 0 && (
+                  <>
+                    {positions.results.map((item) => {
+                      const isSelected = selectedItems.some(
+                        (selected) => selected.id === item.id
+                      );
 
-                    return (
-                      <tr
-                        key={item.unique_id}
-                        className="border-t odd:bg-transparent even:bg-gray-50 hover:bg-gray-100"
-                      >
-                        <td className="px-4 py-3">
-                          <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={(checked) =>
-                              handleItemSelect(
-                                item.id,
-                                itemType,
-                                uniqueId,
-                                checked as boolean
-                              )
-                            }
-                          />
-                        </td>
-                        <td className="px-4 py-3 font-medium">
-                          {item.job_title}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`text-xs px-2 py-1 whitespace-nowrap rounded-full font-medium ${getStatusColor(
-                              item.status
-                            )}`}
-                          >
-                            {formatName(item.status)}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          {(item as PRFData)?.immediate_supervisor ? (
-                            <>
-                              <div className="font-medium">
-                                {formatNameBySpace(
-                                  (item as PRFData).immediate_supervisor_display
-                                )}
-                              </div>
-                              <div className="text-gray-500">
-                                {formatName(item.department)}
-                              </div>
-                            </>
-                          ) : (
-                            <span className="text-gray-400">—</span>
-                          )}
-                        </td>
-
-                        <td className="px-4 py-3">
-                          {formatDate(item.created_at)}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`text-xs px-2 py-1 whitespace-nowrap rounded-full font-medium ${
-                              item.type === "prf"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-neutral-700 text-neutral-100"
-                            }`}
-                          >
-                            {item.type_display}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          {item.status === "pending" ? (
-                            <span className="text-gray-400">—</span>
-                          ) : (
-                            // Bring back when approval pipeline is available
-                            // <ApprovalPipelineDropdown
-                            //   pipeline={item.approvalPipeline}
-                            // />
-                            <span className="text-gray-400">—</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 flex justify-center">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Ellipsis
-                                size={32}
-                                className="hover:bg-neutral-100 p-2 rounded-lg cursor-pointer"
-                              />
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                              className="w-12 text-neutral-600"
-                              align="start"
+                      return (
+                        <tr
+                          key={item.id}
+                          className="border-t odd:bg-transparent even:bg-gray-50 hover:bg-gray-100"
+                        >
+                          <td className="px-4 py-3">
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={(checked) =>
+                                handleItemSelect(item.id, checked as boolean)
+                              }
+                            />
+                          </td>
+                          <td className="px-4 py-3 font-medium">
+                            {item.job_title}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`text-xs px-2 py-1 whitespace-nowrap rounded-full font-medium ${formatBackgroundStatus(
+                                item.status
+                              )}`}
                             >
-                              <DropdownMenuGroup>
-                                <DropdownMenuItem
-                                  className="flex items-center gap-2 cursor-pointer"
-                                  onClick={() =>
-                                    navigate(
-                                      `/requests/edit/${item.type}/${item.id}`
-                                    )
-                                  }
-                                >
-                                  <SquarePen className="h-4 w-4" />
-                                  <span>Edit</span>
-                                </DropdownMenuItem>
-                              </DropdownMenuGroup>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </>
-              )}
+                              {formatName(item.status)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            {formatDate(item.created_at)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`text-xs px-2 py-1 whitespace-nowrap rounded-full font-medium ${
+                                item.type === "prf"
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-neutral-700 text-neutral-100"
+                              }`}
+                            >
+                              {item.type_display}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {item.status === "pending" ? (
+                              <span className="text-gray-400">—</span>
+                            ) : (
+                              // Bring back when approval pipeline is available
+                              // <ApprovalPipelineDropdown
+                              //   pipeline={item.approvalPipeline}
+                              // />
+                              <span className="text-gray-400">—</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 flex justify-center">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Ellipsis
+                                  size={32}
+                                  className="hover:bg-neutral-100 p-2 rounded-lg cursor-pointer"
+                                />
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                className="w-12 text-neutral-600"
+                                align="start"
+                              >
+                                <DropdownMenuGroup>
+                                  <DropdownMenuItem
+                                    className="flex items-center gap-2 cursor-pointer"
+                                    onClick={() =>
+                                      navigate(
+                                        `/requests/edit/${item.type}/${item.id}`
+                                      )
+                                    }
+                                  >
+                                    <SquarePen className="h-4 w-4" />
+                                    <span>Edit</span>
+                                  </DropdownMenuItem>
+                                </DropdownMenuGroup>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </>
+                )}
             </tbody>
           </table>
         </div>

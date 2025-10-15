@@ -72,7 +72,7 @@ export default function PRF() {
       job_posting: {
         job_title: formData.job_title,
         target_start_date: formData.target_start_date,
-        reason_for_posting: formData.reason_for_posting,
+        reason_for_posting: formatForJSON(formData.reason_for_posting),
         other_reason_for_posting:
           formData.reason_for_posting !== "Other"
             ? ""

@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 
-import type { PositionData } from "../../features/positions/types/positionTypes";
-import type { PRFData } from "@/features/prf/types/prfTypes";
 import type { AxiosError } from "axios";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
+import type { JobPostingAPIResponse } from "@/features/jobs/types/jobTypes";
 
-export function usePositions(status = "active") {
-  const [positions, setPositions] = useState<PositionData[] | PRFData[] | []>(
-    []
+export function usePositions({ no_active = false }) {
+  const [positions, setPositions] = useState<JobPostingAPIResponse | null>(
+    null
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<AxiosError | null>(null);
@@ -17,8 +16,8 @@ export function usePositions(status = "active") {
     try {
       setLoading(true);
       setError(null);
-      const response = await axiosPrivate.get<PositionData[] | PRFData[]>(
-        `/api/job/?my_posts=true&status=${status}`
+      const response = await axiosPrivate.get(
+        `/api/job/?my_postings=true&no_active=${no_active}`
       );
 
       setPositions(response.data);

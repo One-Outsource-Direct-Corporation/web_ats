@@ -1,3 +1,5 @@
+import type { JobPostingResponse } from "@/features/jobs/types/jobTypes";
+
 export interface AssessmentTypes {
   technical: boolean;
   language: boolean;
@@ -53,29 +55,7 @@ export interface PRF {
 
 export interface PRFResponse {
   id: number;
-  job_posting: {
-    id: number;
-    job_title: string;
-    target_start_date: string;
-    reason_for_posting: string;
-    other_reason_for_posting: string;
-    department_name: string;
-    employment_type: string;
-    work_setup: string;
-    working_site: string;
-    min_salary: string;
-    max_salary: string;
-    description: string;
-    responsibilities: string;
-    qualifications: string;
-    status: string;
-    type: string;
-    active: boolean;
-    published: boolean;
-    created_at: string;
-    updated_at: string;
-    posted_by: number;
-  };
+  job_posting: JobPostingResponse;
   number_of_vacancies: number;
   business_unit: string;
   interview_levels: number;
@@ -88,7 +68,8 @@ export interface PRFResponse {
   is_salary_range: boolean;
   assessment_required: boolean;
   other_assessment: string[];
-  immediate_supervisor: number;
+  immediate_supervisor: number | null;
+  immediate_supervisor_display: string | null;
   hiring_managers: number[];
   assessment_types: {
     id: number;
