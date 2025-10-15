@@ -225,6 +225,11 @@ export const Step01: React.FC<Step01Props> = ({
                   updateFormData({
                     immediate_supervisor:
                       value === "no-supervisor" ? null : value,
+                    immediate_supervisor_display:
+                      value === "no-supervisor"
+                        ? null
+                        : users.find((usr: User) => usr.id === value)
+                            ?.full_name,
                   })
                 }
               >

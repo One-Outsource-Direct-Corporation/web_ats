@@ -30,6 +30,7 @@ export interface PRF {
   department: string;
   interview_levels: number;
   immediate_supervisor: string | null;
+  immediate_supervisor_display: string | null;
   hiring_managers: string[];
   employment_type: string;
   work_setup: string;

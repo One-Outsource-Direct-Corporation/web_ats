@@ -87,7 +87,7 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
             </p>
             <p>
               <strong>Immediate Supervisor:</strong>{" "}
-              {formData.immediate_supervisor || "Not specified"}
+              {formData.immediate_supervisor_display || "Not specified"}
             </p>
           </div>
           {step >= 2 && (
