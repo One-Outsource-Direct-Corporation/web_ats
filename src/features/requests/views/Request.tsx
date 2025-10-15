@@ -6,7 +6,13 @@ import FilterBar from "../components/FilterBar";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { useState, useCallback } from "react";
 import { Button } from "@/shared/components/ui/button";
-import { Ellipsis, SquarePen, Trash2 } from "lucide-react";
+import {
+  Ellipsis,
+  SquarePen,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import { toast } from "react-toastify";
 import {
@@ -24,10 +30,13 @@ interface SelectedItem {
 }
 
 export default function Request() {
+  const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const { positions, loading, error, refetch } = usePositions({
     no_active: true,
+    page: currentPage,
+    my_postings: true,
   });
-  const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
   const selectAll = positions
     ? positions.results.length > 0 &&
       selectedItems.length === positions.results.length
@@ -88,8 +97,21 @@ export default function Request() {
     }
   }, [selectedItems]);
 
+  // Handle page change
+  const handleNextPage = useCallback(() => {
+    if (positions?.next) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  }, [positions?.next]);
+
+  const handlePrevPage = useCallback(() => {
+    if (positions?.previous) {
+      setCurrentPage((prev) => prev - 1);
+    }
+  }, [positions?.previous]);
+
   return (
-    <section className="flex flex-col bg-gray-50">
+    <section className="flex flex-col">
       <div className="bg-gray-50 border-b border-gray-200 shadow-sm px-6 pt-4 pb-3">
         <div className="max-w-7xl mx-auto space-y-3">
           <div className="flex justify-between items-center">
@@ -137,7 +159,7 @@ export default function Request() {
               {error && (
                 <tr className="border-t">
                   <td
-                    colSpan={8}
+                    colSpan={7}
                     className="text-center text-red-500 px-4 py-3"
                   >
                     Something went wrong. Please try again later.
@@ -150,7 +172,7 @@ export default function Request() {
                 positions.results.length === 0 && (
                   <tr className="border-t">
                     <td
-                      colSpan={8}
+                      colSpan={7}
                       className="text-center text-gray-500 px-4 py-3"
                     >
                       This tab is empty.
@@ -252,6 +274,30 @@ export default function Request() {
                 )}
             </tbody>
           </table>
+          {/* Pagination */}
+          {!loading && !error && positions && positions.results.length > 0 && (
+            <div className="flex justify-center items-center mt-4 space-x-4">
+              <Button
+                variant="ghost"
+                onClick={handlePrevPage}
+                disabled={!positions.previous}
+                className="text-gray-600 hover:bg-gray-900 hover:text-gray-50"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm text-gray-50 rounded-md bg-gray-900 p-2 px-4">
+                {currentPage}
+              </span>
+              <Button
+                variant="ghost"
+                onClick={handleNextPage}
+                disabled={!positions.next}
+                className="text-gray-600 hover:bg-gray-900 hover:text-gray-50"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </section>

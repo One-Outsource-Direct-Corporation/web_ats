@@ -1,16 +1,15 @@
 import { Card } from "@/shared/components/ui/card";
 import { Badge } from "@/shared/components/ui/badge";
-import type { PositionData } from "../types/positionTypes";
+import type { JobPostingResponse } from "@/features/jobs/types/jobTypes";
 import { getDepartmentColor } from "../utils/departmentColor";
-import type { PRFData } from "@/features/prf/types/prfTypes";
 import DOMPurify from "dompurify";
 import formatName from "@/shared/utils/formatName";
 
-interface JobListItemProps {
-  posting: PositionData | PRFData;
-}
-
-export default function JobListItem({ posting }: JobListItemProps) {
+export default function JobListItem({
+  posting,
+}: {
+  posting: JobPostingResponse;
+}) {
   // const handleCheckboxChange = () => {
   //   onSelectionChange(toggleItemSelection(selected, index));
   // };
@@ -68,21 +67,13 @@ export default function JobListItem({ posting }: JobListItemProps) {
               <h3 className="text-base font-semibold text-gray-800">
                 {posting.job_title}
               </h3>
-              {posting.type === "position" && (
-                <Badge
-                  variant="secondary"
-                  // className={`${getDepartmentColor(posting.)} text-xs`}
-                >
-                  {(posting as PositionData).client}
-                </Badge>
-              )}
 
               <Badge
                 className={`${getDepartmentColor(
-                  formatName(posting.department)
+                  formatName(posting.department_name)
                 )} text-xs`}
               >
-                {formatName(posting.department)}
+                {formatName(posting.department_name)}
               </Badge>
               <Badge variant="default" className="text-xs">
                 {posting.type_display}

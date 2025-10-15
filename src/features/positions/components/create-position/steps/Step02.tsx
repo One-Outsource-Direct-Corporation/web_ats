@@ -19,8 +19,10 @@ export default function Step02({
   return (
     <Card className="p-6">
       <div className="space-y-2 ">
-        {error?.description && (
-          <p className="text-sm text-red-500">{error.description[0]}</p>
+        {error?.job_posting?.description && (
+          <p className="text-sm text-red-500">
+            {error.job_posting.description[0]}
+          </p>
         )}
         <RichTextEditor
           title="Job Description"
@@ -31,8 +33,10 @@ export default function Step02({
       </div>
 
       <div className="space-y-2 ">
-        {error?.responsibilities && (
-          <p className="text-sm text-red-500">{error.responsibilities[0]}</p>
+        {error?.job_posting?.responsibilities && (
+          <p className="text-sm text-red-500">
+            {error.job_posting.responsibilities[0]}
+          </p>
         )}
         <RichTextEditor
           title="Responsibilities"
@@ -43,8 +47,10 @@ export default function Step02({
       </div>
 
       <div className="space-y-2 ">
-        {error?.qualifications && (
-          <p className="text-sm text-red-500">{error.qualifications[0]}</p>
+        {error?.job_posting?.qualifications && (
+          <p className="text-sm text-red-500">
+            {error.job_posting.qualifications[0]}
+          </p>
         )}
         <RichTextEditor
           title="Qualifications"

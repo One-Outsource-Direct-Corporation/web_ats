@@ -2,16 +2,20 @@ import { useEffect } from "react";
 import { ArrowUp, ArrowLeft } from "lucide-react";
 import { Button } from "@/shared/components/ui/button.tsx";
 import { useNavigate } from "react-router-dom";
-import { useJobDetail } from "../hooks/useJobDetail";
 import { useParams } from "react-router-dom";
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import DOMPurify from "dompurify";
 import formatName from "@/shared/utils/formatName";
+import { usePositionDetail } from "@/shared/hooks/usePositions";
 
 export default function CareerDescription() {
   const navigate = useNavigate();
   const params = useParams();
-  const { jobDetail, loading, error } = useJobDetail(params.jobId);
+  const {
+    position: jobDetail,
+    loading,
+    error,
+  } = usePositionDetail(Number(params.jobId));
   console.log("Job Detail from Hook:", jobDetail);
 
   useEffect(() => {
@@ -66,9 +70,9 @@ export default function CareerDescription() {
           </div>
 
           {/* Department and Role */}
-          {jobDetail?.department && (
+          {jobDetail?.department_name && (
             <div className="text-gray-600 mb-6 ml-9">
-              {formatName(jobDetail.department)} • {jobDetail.client}
+              {formatName(jobDetail.department_name)}
             </div>
           )}
 
@@ -103,20 +107,17 @@ export default function CareerDescription() {
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex justify-between flex-wrap gap-6">
             <div className="flex flex-col items-center">
-              <h3 className="font-bold text-gray-900 mb-2">Category</h3>
-              <p className="text-gray-600">
-                {jobDetail?.experience_level_display}
-              </p>
-            </div>
-            <div className="flex flex-col items-center">
               <h3 className="font-bold text-gray-900 mb-2">Work Type</h3>
               <p className="text-gray-600">
-                {jobDetail?.employment_type_display}
+                {jobDetail?.employment_type &&
+                  formatName(jobDetail.employment_type)}
               </p>
             </div>
             <div className="flex flex-col items-center">
               <h3 className="font-bold text-gray-900 mb-2">Work Setup</h3>
-              <p className="text-gray-600">{jobDetail?.work_setup_display}</p>
+              <p className="text-gray-600">
+                {jobDetail?.work_setup && formatName(jobDetail.work_setup)}
+              </p>
             </div>
           </div>
         </div>

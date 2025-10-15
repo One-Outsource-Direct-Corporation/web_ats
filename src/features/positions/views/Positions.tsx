@@ -2,9 +2,17 @@ import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import FilterBar from "../components/FilterBar";
 import JobListItem from "../components/JobListItem";
 import { usePositions } from "../../../shared/hooks/usePositions";
+import { Button } from "@/shared/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useCallback, useState } from "react";
 
 export default function Positions() {
-  const { positions, loading, error } = usePositions("active");
+  const [currentPage, setCurrentPage] = useState(1);
+  const { positions, loading, error } = usePositions({
+    status: "active",
+    page: currentPage,
+    my_postings: true,
+  });
 
   // To do: Bring back the tabs functionality
 
@@ -71,8 +79,21 @@ export default function Positions() {
   //   }
   // };
 
+  // Handle page change
+  const handleNextPage = useCallback(() => {
+    if (positions?.next) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  }, [positions?.next]);
+
+  const handlePrevPage = useCallback(() => {
+    if (positions?.previous) {
+      setCurrentPage((prev) => prev - 1);
+    }
+  }, [positions?.previous]);
+
   return (
-    <section className="flex flex-col bg-gray-50">
+    <section className="flex flex-col">
       <div className="bg-gray-50 border-b border-gray-200 shadow-sm px-6 pt-4 pb-3">
         <div className="max-w-7xl mx-auto space-y-3">
           <h1 className="text-3xl font-bold text-gray-800">Positions</h1>
@@ -91,16 +112,40 @@ export default function Positions() {
             Error loading positions
           </div>
         )}
-        {!loading && !error && positions.length === 0 && (
+        {!loading && !error && positions && positions.results.length === 0 && (
           <div className="text-center text-gray-500 mt-10">
             This tab is empty.
           </div>
         )}
-        {!loading && !error && positions.length > 0 && (
+        {!loading && !error && positions && positions.results.length > 0 && (
           <div className="space-y-2">
-            {positions.map((position) => (
-              <JobListItem key={position.unique_id} posting={position} />
+            {positions.results.map((position) => (
+              <JobListItem key={position.id} posting={position} />
             ))}
+          </div>
+        )}
+        {/* Pagination */}
+        {!loading && !error && positions && positions.results.length > 0 && (
+          <div className="flex justify-center items-center mt-4 space-x-4">
+            <Button
+              variant="ghost"
+              onClick={handlePrevPage}
+              disabled={!positions.previous}
+              className="text-gray-600 hover:bg-gray-900 hover:text-gray-50"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm text-gray-50 rounded-md bg-gray-900 p-2 px-4">
+              {currentPage}
+            </span>
+            <Button
+              variant="ghost"
+              onClick={handleNextPage}
+              disabled={!positions.next}
+              className="text-gray-600 hover:bg-gray-900 hover:text-gray-50"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
         )}
       </div>

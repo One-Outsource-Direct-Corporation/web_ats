@@ -122,6 +122,11 @@ export default function Step04({
       </h3>
 
       <div className="flex flex-col gap-6">
+        {errors?.pipeline && typeof errors.pipeline[0] === "string" && (
+          <div className="text-red-600 text-sm">
+            <p>Add Pipeline Steps</p>
+          </div>
+        )}
         {pipelineStages.map((stage) => (
           <div key={stage.id} className="border border-gray-300 rounded-lg p-4">
             <h4 className="text-sm font-semibold text-gray-700 mb-4 text-center">
@@ -136,19 +141,20 @@ export default function Step04({
                       key={step.id || step.pipeline_identifier}
                       className="p-3 border border-gray-200 rounded-md bg-gray-50"
                     >
-                      {errors?.pipeline && errors.pipeline[index] && (
-                        <div className="text-red-600 text-sm">
-                          {Object.entries(errors.pipeline[index]).map(
-                            ([field, messages]) => (
-                              <p key={field + index}>
-                                {Array.isArray(messages)
-                                  ? messages.join(", ")
-                                  : String(messages)}
-                              </p>
-                            )
-                          )}
-                        </div>
-                      )}
+                      {errors?.pipeline &&
+                        errors.pipeline[index]?.process_title && (
+                          <div className="text-red-600 text-sm">
+                            {Object.entries(errors.pipeline[index]).map(
+                              ([field, messages]) => (
+                                <p key={field + index}>
+                                  {Array.isArray(messages)
+                                    ? messages.join(", ")
+                                    : String(messages)}
+                                </p>
+                              )
+                            )}
+                          </div>
+                        )}
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">
                           {step.process_title}

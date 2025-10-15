@@ -1,15 +1,11 @@
 import { Button } from "@/shared/components/ui/button";
-import type { JobData } from "../types/job";
 import { useNavigate } from "react-router-dom";
 import { calculateDaysAgo } from "../utils/filterJobs";
 import DOMPurify from "dompurify";
 import formatName from "@/shared/utils/formatName";
+import type { JobPostingResponse } from "@/features/jobs/types/jobTypes";
 
-interface JobCardProps {
-  job: JobData;
-}
-
-export const JobCard: React.FC<JobCardProps> = ({ job }) => {
+export const JobCard = ({ job }: { job: JobPostingResponse }) => {
   //   const IconComponent = job.icon;
   const navigate = useNavigate();
 
@@ -23,9 +19,9 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
           </h3>
         </div>
 
-        {job.department && job.client && (
+        {job.department_name && (
           <div className="text-sm text-gray-600 mb-3">
-            {formatName(job.department)} • {job.client}
+            {formatName(job.department_name)}
           </div>
         )}
 
@@ -40,20 +36,15 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
 
       <div>
         <div className="flex flex-wrap gap-2 mb-4">
-          {job.work_setup_display && (
+          {job.work_setup && (
             <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
-              {job.work_setup_display}
+              {formatName(job.work_setup)}
             </span>
           )}
 
-          {job.employment_type_display && (
+          {job.employment_type && (
             <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
-              {job.employment_type_display}
-            </span>
-          )}
-          {job.experience_level_display && (
-            <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
-              {job.experience_level_display}
+              {formatName(job.employment_type)}
             </span>
           )}
         </div>

@@ -15,13 +15,14 @@ export const useFormData = () => {
     experience_level: "",
     headcount: 0,
     target_start_date: null,
-    reason_for_hiring: "",
-    other_reason_for_hiring: "",
+    reason_for_posting: "",
+    other_reason_for_posting: "",
     min_budget: 0,
     max_budget: 0,
     description: "",
     responsibilities: "",
     qualifications: "",
+    working_site: "",
     application_form: {
       name: "optional",
       birth_date: "optional",
@@ -48,7 +49,7 @@ export const useFormData = () => {
     pipeline: [],
   });
 
-  const handleInputChange = useCallback((field: string, value: string) => {
+  const handleInputChange = useCallback((field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   }, []);
 
@@ -119,13 +120,14 @@ export const useFormData = () => {
       experience_level: "entry_level",
       headcount: 0,
       target_start_date: null,
-      reason_for_hiring: "",
-      other_reason_for_hiring: "",
+      reason_for_posting: "",
+      other_reason_for_posting: "",
       min_budget: 0,
       max_budget: 0,
       description: "",
       responsibilities: "",
       qualifications: "",
+      working_site: "",
       application_form: {
         name: "optional",
         birth_date: "optional",

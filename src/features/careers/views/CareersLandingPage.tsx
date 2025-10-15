@@ -5,9 +5,10 @@ import { SearchFilters } from "../components/SearchFilters";
 import { JobList } from "../components/JobList";
 import { CareersFooter } from "../components/CareersFooter";
 import { useJobFilters } from "../hooks/useJobFilters";
-import { useJobListings } from "../hooks/useJobListings";
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
-import { useEffect } from "react";
+import { usePositions } from "@/shared/hooks/usePositions";
+
+document.title = "Careers";
 
 export default function CareersLandingPage() {
   const navigation = useAppNavigation();
@@ -24,16 +25,12 @@ export default function CareersLandingPage() {
     handleClearFilters,
   } = useJobFilters();
 
-  useEffect(() => {
-    document.title = "Careers";
-  }, []);
-
   const handleTrackApplication = () => {
     navigation.goToTracker();
   };
 
-  const { jobListings, loading, error } = useJobListings();
-  console.log("Fetched Job Listings:", jobListings);
+  const { positions, loading, error } = usePositions({ status: "active" });
+  console.log("Fetched Job Listings:", positions);
 
   if (loading) {
     return <LoadingComponent />;
@@ -73,7 +70,11 @@ export default function CareersLandingPage() {
           />
 
           {/* Job Cards */}
-          <JobList jobs={jobListings} />
+          <JobList
+            jobs={
+              positions || { count: 0, next: null, previous: null, results: [] }
+            }
+          />
         </div>
 
         {/* Footer */}

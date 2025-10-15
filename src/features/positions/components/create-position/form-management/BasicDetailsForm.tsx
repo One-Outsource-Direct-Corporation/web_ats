@@ -29,7 +29,7 @@ import useClient from "@/features/positions/hooks/create-position/useClient";
 
 interface BasicDetailsFormProps {
   formData: CreatePositionFormData;
-  onInputChange: (field: string, value: string) => void;
+  onInputChange: (field: string, value: any) => void;
   errorFields: any;
 }
 
@@ -42,6 +42,7 @@ export const BasicDetailsForm = ({
   errorFields,
 }: BasicDetailsFormProps) => {
   const { clients, loading, error } = useClient();
+  console.log(errorFields);
 
   return (
     <div>
@@ -82,8 +83,8 @@ export const BasicDetailsForm = ({
                 onChange={(e) => onInputChange("job_title", e.target.value)}
                 placeholder="Enter job title"
               />
-              {errorFields?.job_title && (
-                <FieldError>{errorFields.job_title[0]}</FieldError>
+              {errorFields?.job_posting?.job_title && (
+                <FieldError>{errorFields.job_posting.job_title[0]}</FieldError>
               )}
             </Field>
             <Field>
@@ -101,8 +102,10 @@ export const BasicDetailsForm = ({
                   <SelectItem value="hr">Human Resources</SelectItem>
                 </SelectContent>
               </Select>
-              {errorFields?.department && (
-                <FieldError>{errorFields.department[0]}</FieldError>
+              {errorFields?.job_posting?.department_name && (
+                <FieldError>
+                  {errorFields.job_posting.department_name[0]}
+                </FieldError>
               )}
             </Field>
             <Field>
@@ -123,8 +126,10 @@ export const BasicDetailsForm = ({
                   <SelectItem value="temporary">Temporary</SelectItem>
                 </SelectContent>
               </Select>
-              {errorFields?.employment_type && (
-                <FieldError>{errorFields.employment_type[0]}</FieldError>
+              {errorFields?.job_posting?.employment_type && (
+                <FieldError>
+                  {errorFields.job_posting.employment_type[0]}
+                </FieldError>
               )}
             </Field>
             <Field>
@@ -141,20 +146,22 @@ export const BasicDetailsForm = ({
                   <SelectItem value="hybrid">Hybrid</SelectItem>
                 </SelectContent>
               </Select>
-              {errorFields?.work_setup && (
-                <FieldError>{errorFields.work_setup[0]}</FieldError>
+              {errorFields?.job_posting?.work_setup && (
+                <FieldError>{errorFields.job_posting.work_setup[0]}</FieldError>
               )}
             </Field>
             <Field>
-              <FieldLabel>Location *</FieldLabel>
+              <FieldLabel>Working Site *</FieldLabel>
               <Input
                 type="text"
-                value={formData.location}
-                onChange={(e) => onInputChange("location", e.target.value)}
-                placeholder="Enter location"
+                value={formData.working_site}
+                onChange={(e) => onInputChange("working_site", e.target.value)}
+                placeholder="Enter working site"
               />
-              {errorFields?.location && (
-                <FieldError>{errorFields.location[0]}</FieldError>
+              {errorFields?.job_posting?.working_site && (
+                <FieldError>
+                  {errorFields.job_posting.working_site[0]}
+                </FieldError>
               )}
             </Field>
           </FieldGroup>
@@ -228,16 +235,7 @@ export const BasicDetailsForm = ({
                     // data-empty={!date}
                     className="w-[280px] justify-start text-left font-normal"
                   >
-                    {formData.target_start_date
-                      ? new Date(formData.target_start_date).toLocaleDateString(
-                          "en-PH",
-                          {
-                            year: "numeric",
-                            month: "long",
-                            day: "2-digit",
-                          }
-                        )
-                      : "Pick a date"}
+                    {formData.target_start_date || "Pick a date"}
                     <CalendarIcon />
                   </Button>
                 </PopoverTrigger>
@@ -252,21 +250,23 @@ export const BasicDetailsForm = ({
                     onSelect={(date) =>
                       onInputChange(
                         "target_start_date",
-                        date ? date.toLocaleDateString("en-PH") : ""
+                        date ? date.toISOString().split("T")[0] : null
                       )
                     }
                   />
                 </PopoverContent>
               </Popover>
-              {errorFields?.target_start_date && (
-                <FieldError>{errorFields.target_start_date[0]}</FieldError>
+              {errorFields?.job_posting?.target_start_date && (
+                <FieldError>
+                  {errorFields.job_posting.target_start_date[0]}
+                </FieldError>
               )}
             </Field>
             <Field>
               <FieldLabel>Reason for Hire *</FieldLabel>
               <Select
                 onValueChange={(value) =>
-                  onInputChange("reason_for_hiring", value)
+                  onInputChange("reason_for_posting", value)
                 }
               >
                 <SelectTrigger className="w-full">
@@ -278,18 +278,20 @@ export const BasicDetailsForm = ({
                   <SelectItem value="others">Others, Please Specify</SelectItem>
                 </SelectContent>
               </Select>
-              {errorFields?.reason_for_hiring && (
-                <FieldError>{errorFields.reason_for_hiring[0]}</FieldError>
+              {errorFields?.job_posting?.reason_for_posting && (
+                <FieldError>
+                  {errorFields.job_posting.reason_for_posting[0]}
+                </FieldError>
               )}
             </Field>
-            {formData.reason_for_hiring === "others" && (
+            {formData.reason_for_posting === "others" && (
               <Field>
                 <FieldLabel>Please Specify *</FieldLabel>
                 <Input
                   type="text"
-                  value={formData.other_reason_for_hiring}
+                  value={formData.other_reason_for_posting}
                   onChange={(e) =>
-                    onInputChange("other_reason_for_hiring", e.target.value)
+                    onInputChange("other_reason_for_posting", e.target.value)
                   }
                   placeholder="Enter reason for hire"
                 />

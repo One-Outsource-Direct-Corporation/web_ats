@@ -244,18 +244,18 @@ export interface CreatePositionFormData {
   employment_type: string;
   headcount: number;
   work_setup: string;
-  target_start_date: Date | null;
-  reason_for_hiring: string;
-  other_reason_for_hiring: string;
+  target_start_date: string | null;
+  reason_for_posting: string;
+  other_reason_for_posting: string;
   min_budget: number;
   max_budget: number;
   description: string;
   responsibilities: string;
   qualifications: string;
-  location?: string;
+  working_site: string;
   posted_by?: string; // User ID, will be handled in backend
   application_form: FormFields;
-  pipeline: PipelineStep[];
+  pipeline: PipelineStep[] | [];
 }
 
 // TYPES

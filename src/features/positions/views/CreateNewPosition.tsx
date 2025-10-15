@@ -23,6 +23,7 @@ import Step04 from "../components/create-position/steps/Step04";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import type { AxiosError } from "axios";
 import { toast } from "react-toastify";
+import { formatForJSON } from "@/shared/utils/formatName";
 
 export default function CreateNewPosition() {
   useEffect(() => {
@@ -56,19 +57,20 @@ export default function CreateNewPosition() {
 
   const fieldToStep: { [key: string]: number } = {
     // Step01 fields
-    client: 1,
     job_title: 1,
     department: 1,
     employment_type: 1,
-    education_level: 1,
+    target_start_date: 1,
     work_setup: 1,
-    experience_level: 1,
+    working_site: 1,
     headcount: 1,
-    date_needed: 1,
     reason_for_hiring: 1,
     other_reason_for_hiring: 1,
     min_budget: 1,
     max_budget: 1,
+    client: 1,
+    education_level: 1,
+    experience_level: 1,
     // Step02 fields
     description: 2,
     responsibilities: 2,
@@ -86,23 +88,39 @@ export default function CreateNewPosition() {
       modalHooks.setShowNonNegotiableModal(true);
     } else if (currentStep === 5) {
       // To do: bring back the Pool Applicants Here
-      // Prepare a copy of formData for submission with proper types
-      const submissionData = {
+
+      const data = {
         ...formData,
-        target_start_date:
-          formData.target_start_date &&
-          new Date(formData.target_start_date).toISOString().split("T")[0],
-        headcount: Number(formData.headcount),
-        min_budget: Number(formData.min_budget),
-        max_budget: Number(formData.max_budget),
-        description: DOMPurify.sanitize(formData.description),
-        responsibilities: DOMPurify.sanitize(formData.responsibilities),
-        qualifications: DOMPurify.sanitize(formData.qualifications),
+        job_posting: {
+          job_title: formData.job_title,
+          target_start_date: formData.target_start_date,
+          reason_for_posting: formatForJSON(formData.reason_for_posting),
+          other_reason_for_posting:
+            formData.reason_for_posting !== "others"
+              ? ""
+              : formatForJSON(formData.other_reason_for_posting),
+          department_name: formatForJSON(formData.department),
+          employment_type: formData.employment_type,
+          work_setup: formatForJSON(formData.work_setup),
+          working_site: formData.working_site,
+          min_salary: Number(formData.min_budget) || 0,
+          max_salary: Number(formData.max_budget) || 0,
+          description: DOMPurify.sanitize(formData.description),
+          responsibilities: DOMPurify.sanitize(formData.responsibilities),
+          qualifications: DOMPurify.sanitize(formData.qualifications),
+        },
+        application_form: {
+          ...formData.application_form,
+        },
+        pipeline: [...formData.pipeline],
+        client: formData.client,
+        education_level: formData.education_level,
+        experience_level: formData.experience_level,
       };
 
-      console.log("Final form data to submit:", submissionData);
+      console.log("Final form data to submit:", data);
       try {
-        const response = await axiosPrivate.post("/api/job/", submissionData);
+        const response = await axiosPrivate.post("/api/position/", data);
         console.log("Response from server:", response);
         if (response.status === 201) {
           toast.success(
@@ -121,10 +139,27 @@ export default function CreateNewPosition() {
         const errorData = err.response?.data || { detail: "An error occurred" };
         setError(errorData);
 
+        console.log(err);
+
         const newStepErrors: { [key: number]: any } = {};
         Object.keys(errorData).forEach((field) => {
-          if (fieldToStep[field]) {
-            newStepErrors[fieldToStep[field]] = { [field]: errorData[field] };
+          if (field === "job_posting") {
+            Object.keys(errorData[field]).forEach((subField) => {
+              if (fieldToStep[subField]) {
+                if (!newStepErrors[fieldToStep[subField]]) {
+                  newStepErrors[fieldToStep[subField]] = {};
+                }
+                newStepErrors[fieldToStep[subField]][subField] =
+                  errorData[field][subField];
+              }
+            });
+          } else {
+            if (fieldToStep[field]) {
+              if (!newStepErrors[fieldToStep[field]]) {
+                newStepErrors[fieldToStep[field]] = {};
+              }
+              newStepErrors[fieldToStep[field]][field] = errorData[field];
+            }
           }
         });
         setStepErrors(newStepErrors);

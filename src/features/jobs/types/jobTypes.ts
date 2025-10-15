@@ -33,8 +33,8 @@ export interface JobPostingResponse {
   responsibilities: string;
   qualifications: string;
   status: string;
-  type: "prf" | "position";
-  type_display: "PRF" | "Position";
+  type: "prf" | "client";
+  type_display: "PRF" | "Client";
   active: boolean;
   published: boolean;
   created_at: string;

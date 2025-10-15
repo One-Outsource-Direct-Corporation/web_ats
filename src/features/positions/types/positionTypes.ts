@@ -1,6 +1,7 @@
 import type { ApplicationForm } from "@/features/careers/types/job";
 import type { PipelineStep } from "./createPosition";
 import type { User } from "@/features/auth/types/auth.types";
+import type { JobPostingResponse } from "@/features/jobs/types/jobTypes";
 
 export interface PositionData {
   id: number;
@@ -20,8 +21,8 @@ export interface PositionData {
   work_setup_display: string;
   date_needed: string;
 
-  reason_for_hiring: string;
-  other_reason_for_hiring?: string;
+  reason_for_posting: string;
+  other_reason_for_posting?: string;
 
   min_budget: number;
   max_budget: number;
@@ -112,4 +113,56 @@ export interface PositionsActions {
       | "published"
   ) => void;
   handleTabChange: (value: string) => void;
+}
+
+export interface PipelineStepResponse {
+  id: number;
+  position: number;
+  process_type_display: string;
+  process_type: string;
+  process_title: string;
+  description: string;
+  order: number;
+  stage: number;
+}
+
+export interface PositionResponse {
+  id: number;
+  job_posting: JobPostingResponse;
+  client: string;
+  application_form: {
+    id: number;
+    position: number;
+    name: string;
+    birth_date: string;
+    gender: string;
+    primary_contact_number: string;
+    secondary_contact_number: string;
+    email: string;
+    linkedin_profile: string;
+    address: string;
+    expected_salary: string;
+    willing_to_work_onsite: string;
+    photo_2x2: string;
+    upload_med_cert: string;
+    preferred_interview_schedule: string;
+    education_attained: string;
+    year_graduated: string;
+    university: string;
+    course: string;
+    work_experience: string;
+    how_did_you_hear_about_us: string;
+    agreement: string;
+    signature: string;
+  };
+  pipeline: PipelineStepResponse[];
+  education_level: string;
+  experience_level: string;
+}
+
+export interface PositionAPIResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: JobPostingResponse[];
 }
