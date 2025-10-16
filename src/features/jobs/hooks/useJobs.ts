@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { Job } from "@/features/jobs/types/Job";
+import type { Job } from "@/features/jobs/types/jobTypes";
 import { getJobs } from "../services/jobService";
 
 export function useJobs() {

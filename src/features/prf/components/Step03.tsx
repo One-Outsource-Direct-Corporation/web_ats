@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/shared/components/ui/button";
-import type { FormData } from "../types/prfTypes";
+import type { PRF } from "../types/prfTypes";
 import { PreviewInfo } from "./PreviewInfo";
 import formatName from "@/shared/utils/formatName";
 
@@ -8,8 +8,8 @@ interface Step03Props {
   goToNextStep: () => void;
   goToPreviousStep: () => void;
   step: number;
-  formData: FormData;
-  updateFormData: (updates: Partial<FormData>) => void;
+  formData: PRF;
+  updateFormData: (updates: Partial<PRF>) => void;
 }
 
 export const Step03: React.FC<Step03Props> = ({
@@ -19,13 +19,7 @@ export const Step03: React.FC<Step03Props> = ({
   formData,
   updateFormData,
 }) => {
-  // Handlers for toggles and input changes
-  const handleAssessmentRequiredChange = (value: string) => {
-    updateFormData({ assessment_required: value === "true" });
-  };
-  const handleAssessmentTypeToggle = (
-    type: keyof FormData["assessment_types"]
-  ) => {
+  const handleAssessmentTypeToggle = (type: keyof PRF["assessment_types"]) => {
     updateFormData({
       assessment_types: {
         ...formData.assessment_types,
@@ -38,7 +32,7 @@ export const Step03: React.FC<Step03Props> = ({
   ) => {
     updateFormData({ other_assessment: e.target.value });
   };
-  const handleHardwareToggle = (type: keyof FormData["hardware_required"]) => {
+  const handleHardwareToggle = (type: keyof PRF["hardware_required"]) => {
     updateFormData({
       hardware_required: {
         ...formData.hardware_required,
@@ -91,12 +85,12 @@ export const Step03: React.FC<Step03Props> = ({
                     type="checkbox"
                     checked={
                       formData.assessment_types[
-                        type as keyof FormData["assessment_types"]
+                        type as keyof PRF["assessment_types"]
                       ]
                     }
                     onChange={() =>
                       handleAssessmentTypeToggle(
-                        type as keyof FormData["assessment_types"]
+                        type as keyof PRF["assessment_types"]
                       )
                     }
                   />
@@ -134,12 +128,12 @@ export const Step03: React.FC<Step03Props> = ({
                     type="checkbox"
                     checked={
                       formData.hardware_required[
-                        type as keyof FormData["hardware_required"]
+                        type as keyof PRF["hardware_required"]
                       ]
                     }
                     onChange={() =>
                       handleHardwareToggle(
-                        type as keyof FormData["hardware_required"]
+                        type as keyof PRF["hardware_required"]
                       )
                     }
                   />

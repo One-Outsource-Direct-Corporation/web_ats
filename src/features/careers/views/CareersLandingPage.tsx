@@ -5,8 +5,8 @@ import { SearchFilters } from "../components/SearchFilters";
 import { JobList } from "../components/JobList";
 import { CareersFooter } from "../components/CareersFooter";
 import { useJobFilters } from "../hooks/useJobFilters";
-import { useJobListings } from "../hooks/useJobListings";
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
+import { usePositions } from "@/shared/hooks/usePositions";
 import { useEffect } from "react";
 
 export default function CareersLandingPage() {
@@ -32,8 +32,11 @@ export default function CareersLandingPage() {
     navigation.goToTracker();
   };
 
-  const { jobListings, loading, error } = useJobListings();
-  console.log("Fetched Job Listings:", jobListings);
+  const { positions, loading, error } = usePositions({
+    status: "active",
+    non_admin: true,
+  });
+  console.log("Fetched Job Listings:", positions);
 
   if (loading) {
     return <LoadingComponent />;
@@ -73,7 +76,11 @@ export default function CareersLandingPage() {
           />
 
           {/* Job Cards */}
-          <JobList jobs={jobListings} />
+          <JobList
+            jobs={
+              positions || { count: 0, next: null, previous: null, results: [] }
+            }
+          />
         </div>
 
         {/* Footer */}

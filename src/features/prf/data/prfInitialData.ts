@@ -1,6 +1,7 @@
 import type { User } from "@/features/auth/types/auth.types";
+import type { PRF } from "../types/prfTypes";
 
-export default function initialData(user: User | null) {
+export default function initialData(user: User | null): PRF {
   return {
     job_title: "",
     target_start_date: "",
@@ -8,18 +9,18 @@ export default function initialData(user: User | null) {
     reason_for_posting: "",
     other_reason_for_posting: "",
     business_unit: user ? user.business_unit.toUpperCase() : "",
-    department_name: "",
+    department: "",
     interview_levels: 1,
-    immediate_supervisor: "",
+    immediate_supervisor: null,
     hiring_managers: [],
-    contract_type: "",
-    work_arrangement: "",
+    employment_type: "",
+    work_setup: "",
     category: "",
     position: "",
     working_site: "",
     work_schedule_from: "",
     work_schedule_to: "",
-    job_description: "",
+    description: "",
     responsibilities: "",
     qualifications: "",
     non_negotiables: "",

@@ -8,7 +8,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/shared/components/ui/select";
-import type { FormData } from "../types/prfTypes";
+import type { PRF } from "../types/prfTypes";
 import { PreviewInfo } from "./PreviewInfo";
 import { useUsersByDepartment } from "../hooks/useUsersByDepartment";
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
@@ -17,8 +17,8 @@ import type { User } from "@/features/auth/types/auth.types";
 interface Step01Props {
   goToNextStep: () => void;
   step: number;
-  formData: FormData;
-  updateFormData: (updates: Partial<FormData>) => void;
+  formData: PRF;
+  updateFormData: (updates: Partial<PRF>) => void;
 }
 
 export const Step01: React.FC<Step01Props> = ({
@@ -27,7 +27,9 @@ export const Step01: React.FC<Step01Props> = ({
   formData,
   updateFormData,
 }) => {
-  const { users, loading } = useUsersByDepartment();
+  const { users, loading } = useUsersByDepartment(
+    formData.business_unit.toLowerCase()
+  );
   const handleInterviewLevelChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -56,6 +58,8 @@ export const Step01: React.FC<Step01Props> = ({
   };
 
   if (loading) return <LoadingComponent />;
+
+  console.log(formData);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
@@ -147,7 +151,7 @@ export const Step01: React.FC<Step01Props> = ({
                   type="radio"
                   name="businessUnit"
                   value="OODC"
-                  checked={formData.business_unit === "OODC"}
+                  checked={formData.business_unit.toUpperCase() === "OODC"}
                   onChange={(e) =>
                     updateFormData({ business_unit: e.target.value })
                   }
@@ -157,7 +161,7 @@ export const Step01: React.FC<Step01Props> = ({
                   type="radio"
                   name="businessUnit"
                   value="OORS"
-                  checked={formData.business_unit === "OORS"}
+                  checked={formData.business_unit.toUpperCase() === "OORS"}
                   onChange={(e) =>
                     updateFormData({ business_unit: e.target.value })
                   }
@@ -170,10 +174,8 @@ export const Step01: React.FC<Step01Props> = ({
                 Department Name
               </label>
               <Select
-                value={formData.department_name}
-                onValueChange={(value) =>
-                  updateFormData({ department_name: value })
-                }
+                value={formData.department}
+                onValueChange={(value) => updateFormData({ department: value })}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Ex: Information Technology" />
@@ -214,19 +216,53 @@ export const Step01: React.FC<Step01Props> = ({
                 Immediate Supervisor
               </label>
               <Select
-                value={formData.immediate_supervisor}
+                value={
+                  formData.immediate_supervisor === null
+                    ? "no-supervisor"
+                    : formData.immediate_supervisor
+                }
                 onValueChange={(value) =>
-                  updateFormData({ immediate_supervisor: value })
+                  updateFormData({
+                    immediate_supervisor:
+                      value === "no-supervisor" ? null : value,
+                    immediate_supervisor_display:
+                      value === "no-supervisor"
+                        ? null
+                        : users.find((usr: User) => usr.id === value)
+                            ?.full_name,
+                  })
                 }
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Ex: Ms. Hailey Adams" />
                 </SelectTrigger>
                 <SelectContent>
+                  {/* Always show the currently selected supervisor first, if any */}
+                  {formData.immediate_supervisor &&
+                    (() => {
+                      const selectedUser = users.find(
+                        (usr: User) =>
+                          usr.id === String(formData.immediate_supervisor)
+                      );
+                      return selectedUser ? (
+                        <SelectItem
+                          key={selectedUser.id}
+                          value={selectedUser.id}
+                        >
+                          {selectedUser.first_name} {selectedUser.last_name}
+                        </SelectItem>
+                      ) : null;
+                    })()}
+
+                  {/* Then show all supervisors from current business unit */}
                   {users.length > 0 &&
                   users.some((usr: User) => usr.role === "supervisor") ? (
                     users
-                      .filter((usr: User) => usr.role === "supervisor")
+                      .filter(
+                        (usr: User) =>
+                          usr.role === "supervisor" &&
+                          usr.id !== String(formData.immediate_supervisor)
+                      )
                       .map((usr: User) => (
                         <SelectItem key={usr.id} value={usr.id}>
                           {usr.first_name} {usr.last_name}
@@ -234,7 +270,7 @@ export const Step01: React.FC<Step01Props> = ({
                       ))
                   ) : (
                     <>
-                      <SelectItem value="No Supervisor">
+                      <SelectItem value="no-supervisor">
                         No Supervisor
                       </SelectItem>
                     </>

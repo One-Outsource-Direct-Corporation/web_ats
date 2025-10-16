@@ -34,24 +34,18 @@ export interface Assessment {
   timeLimit?: string;
 }
 
-export interface PipelineStep {
-  id: number;
-  name: string;
-  type: string;
-  icon: any;
-  description?: string;
-  redactedInfo?: boolean;
-  assessments?: Assessment[];
-  teamMembers?: TeamMember[];
-  templateType?: string;
-  reminderTime?: string;
-}
-
-export interface PipelineStage {
-  id: number;
-  name: string;
-  steps: PipelineStep[];
-}
+// export interface PipelineStep {
+//   id: number;
+//   name: string;
+//   type: string;
+//   icon: any;
+//   description?: string;
+//   redactedInfo?: boolean;
+//   assessments?: Assessment[];
+//   teamMembers?: TeamMember[];
+//   templateType?: string;
+//   reminderTime?: string;
+// }
 
 // Question and Assessment Types
 export interface Question {
@@ -100,41 +94,18 @@ export interface StagePopupData {
 // Form Field Status Types
 export type FormFieldStatus = "required" | "optional" | "disabled";
 
-export interface FormFieldItem {
-  field: string;
-  status: FormFieldStatus;
-  nonNegotiable: boolean;
-}
+// export interface FormFieldItem {
+//   field: string;
+//   status: FormFieldStatus;
+//   nonNegotiable: boolean;
+// }
 
-export interface FormFieldStatuses {
-  personal: FormFieldItem[];
-  job: FormFieldItem[];
-  education: FormFieldItem[];
-  acknowledgement: FormFieldItem[];
-}
-
-// Main Form Data Type
-export interface CreatePositionFormData {
-  client: number | null;
-  job_title: string;
-  education_level: string;
-  department: string;
-  experience_level: string;
-  employment_type: string;
-  headcount: string;
-  work_setup: string;
-  date_needed: Date | null;
-  reason_for_hiring: string;
-  other_reason_for_hiring: string;
-  min_budget: string;
-  max_budget: string;
-  description: string;
-  responsibilities: string;
-  qualifications: string;
-  location?: string;
-  posted_by?: string; // User ID, will be handled in backend
-  application_form: FormFields;
-}
+// export interface FormFieldStatuses {
+//   personal: FormFieldItem[];
+//   job: FormFieldItem[];
+//   education: FormFieldItem[];
+//   acknowledgement: FormFieldItem[];
+// }
 
 export interface FormFields {
   name: FormFieldStatus;
@@ -179,11 +150,11 @@ export interface AssessmentSettings {
 }
 
 // Time Picker Values
-export interface TimePickerValues {
-  hours: string;
-  minutes: string;
-  seconds: string;
-}
+// export interface TimePickerValues {
+//   hours: string;
+//   minutes: string;
+//   seconds: string;
+// }
 
 // Assessment Form Types
 export interface AssessmentForm {
@@ -200,9 +171,6 @@ export interface StepConfig {
   active: boolean;
 }
 
-// Alternative interface names for compatibility
-export type FormData = CreatePositionFormData;
-
 // Non-negotiable Field Types
 export interface NonNegotiableField {
   category: string;
@@ -210,3 +178,85 @@ export interface NonNegotiableField {
   type: "text" | "select" | "radio" | "checkbox" | "file" | "date" | "number";
   options?: string[];
 }
+
+// -- Refactored Types --
+
+// Application Form
+export type ApplicationFormType = "required" | "optional" | "disabled";
+
+export interface ApplicationForm {
+  name: ApplicationFormType;
+  birth_date: ApplicationFormType;
+  gender: ApplicationFormType;
+  primary_contact_number: ApplicationFormType;
+  secondary_contact_number: ApplicationFormType;
+  email: ApplicationFormType;
+  linkedin_profile: ApplicationFormType;
+  address: ApplicationFormType;
+  expected_salary: ApplicationFormType;
+  willing_to_work_onsite: ApplicationFormType;
+  photo_2x2: ApplicationFormType;
+  upload_med_cert: ApplicationFormType;
+  preferred_interview_schedule: ApplicationFormType;
+  education_attained: ApplicationFormType;
+  year_graduated: ApplicationFormType;
+  university: ApplicationFormType;
+  course: ApplicationFormType;
+  work_experience: ApplicationFormType;
+  how_did_you_hear_about_us: ApplicationFormType;
+  agreement: ApplicationFormType;
+  signature: ApplicationFormType;
+}
+
+// Pipeline
+export interface PipelineStep {
+  id?: number;
+  pipeline_identifier?: number; // Only for React to identify steps uniquely
+  process_type: string;
+  process_title: string;
+  description: string;
+  order: number;
+  stage: number;
+  // To do: Add other fields like assessments, redactedInfo, etc
+}
+
+export interface PipelineStage {
+  id: number;
+  name: string;
+}
+
+// Client
+export interface Client {
+  id: string;
+  name: string;
+  email: string;
+  contact_number: string;
+  posted_by: string;
+}
+
+// Form Data
+export interface CreatePositionFormData {
+  client: number | null;
+  job_title: string;
+  education_level: string;
+  department: string;
+  experience_level: string;
+  employment_type: string;
+  headcount: number;
+  work_setup: string;
+  target_start_date: string | null;
+  reason_for_posting: string;
+  other_reason_for_posting: string;
+  min_budget: number;
+  max_budget: number;
+  description: string;
+  responsibilities: string;
+  qualifications: string;
+  working_site: string;
+  posted_by?: string; // User ID, will be handled in backend
+  application_form: FormFields;
+  pipeline: PipelineStep[] | [];
+}
+
+// TYPES
+export type FormData = CreatePositionFormData;

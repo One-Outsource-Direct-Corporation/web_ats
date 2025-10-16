@@ -1,5 +1,5 @@
 import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
-import type { TabType, PublishedSubTabType } from "../types/jobTypes";
+import type { TabType, PublishedSubTabType } from "../types/positionTypes";
 
 interface PositionsTabsProps {
   currentTab: TabType;

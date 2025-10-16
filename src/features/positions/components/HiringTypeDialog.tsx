@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/shared/components/ui/dialog";
@@ -35,6 +36,9 @@ export default function HiringTypeDialog({
           <DialogTitle className="text-blue-700 text-sm font-semibold">
             SELECT TYPE OF HIRING
           </DialogTitle>
+          <DialogDescription>
+            Choose between Internal Hiring or Client
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex justify-center gap-12 mt-6">

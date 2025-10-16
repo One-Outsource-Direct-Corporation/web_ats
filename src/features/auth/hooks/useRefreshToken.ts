@@ -30,10 +30,7 @@ const useRefreshToken = () => {
 
       if (
         err.response?.status === 401 &&
-        (err.response?.data?.error === "Invalid or expired refresh token" ||
-          err.response?.data?.error === "No refresh token provided" ||
-          err.response?.data?.detail ===
-            "Authentication credentials were not provided.")
+        (err.response?.data?.error || err.response?.data?.detail)
       ) {
         toast.error("Session expired. Please log in again.", {
           autoClose: false,

@@ -5,7 +5,7 @@ export default function RootLayout() {
   return (
     <>
       <Navbar />
-      <main>
+      <main className="min-h-screen pt-16">
         <Outlet />
       </main>
     </>

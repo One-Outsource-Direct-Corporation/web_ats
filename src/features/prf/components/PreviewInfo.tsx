@@ -1,15 +1,15 @@
 import React, { useState } from "react";
-import type { FormData } from "../types/prfTypes";
+import type { PRF } from "../types/prfTypes";
+import formatName from "@/shared/utils/formatName";
 
 interface PreviewInfoProps {
   step: number;
-  formData: FormData;
+  formData: PRF;
 }
 
 export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
   const [showMore, setShowMore] = useState(false);
 
-  // Get selected assessment types
   const selectedAssessments = Object.entries(formData.assessment_types)
     .filter(([, selected]) => selected)
     .map(([type]) => {
@@ -47,7 +47,6 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
     <div className="border rounded-md p-4 bg-white text-sm h-fit sticky top-28 space-y-4">
       {step !== 4 && (
         <>
-          {/* POSITION INFORMATION */}
           <div className="space-y-2">
             <h2 className="text-[#0056D2] font-bold text-sm border-l-4 border-[#0056D2] pl-2 uppercase">
               POSITION INFORMATION
@@ -71,7 +70,6 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
                 : formData.reason_for_posting || "Not specified"}
             </p>
           </div>
-          {/* DEPARTMENT INFORMATION */}
           <div className="space-y-2">
             <h2 className="text-[#0056D2] font-bold text-sm border-l-4 border-[#0056D2] pl-2 uppercase">
               DEPARTMENT INFORMATION
@@ -85,27 +83,29 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
             </p>
             <p>
               <strong>Department Name:</strong>{" "}
-              {formData.department_name || "Not specified"}
+              {formData.department || "Not specified"}
             </p>
             <p>
               <strong>Immediate Supervisor:</strong>{" "}
-              {formData.immediate_supervisor || "Not specified"}
+              {formData.immediate_supervisor_display || "Not specified"}
             </p>
           </div>
           {step >= 2 && (
             <>
-              {/* JOB DETAILS */}
               <div className="space-y-2">
                 <h2 className="text-[#0056D2] font-bold text-sm border-l-4 border-[#0056D2] pl-2 uppercase">
                   JOB DETAILS
                 </h2>
                 <p>
-                  <strong>Contract Type:</strong>{" "}
-                  {formData.contract_type || "Not specified"}
+                  <strong>Employment Type:</strong>{" "}
+                  {(formData.employment_type &&
+                    formatName(formData.employment_type)) ||
+                    "Not specified"}
                 </p>
                 <p>
-                  <strong>Work Arrangement:</strong>{" "}
-                  {formData.work_arrangement || "Not specified"}
+                  <strong>Work Setup:</strong>{" "}
+                  {(formData.work_setup && formatName(formData.work_setup)) ||
+                    "Not specified"}
                 </p>
                 <p>
                   <strong>Category:</strong>{" "}
@@ -123,19 +123,17 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
                   <strong>Working Schedule:</strong> {displayWorkSchedule}
                 </p>
               </div>
-              {/* JOB DESCRIPTION */}
               <div className="space-y-2">
                 <h2 className="text-[#0056D2] font-bold text-sm border-l-4 border-[#0056D2] pl-2 uppercase">
                   JOB DESCRIPTION
                 </h2>
                 <p>
-                  {formData.job_description ||
+                  {formData.description ||
                     "Job description not provided yet..."}
                 </p>
               </div>
               {showMore && (
                 <>
-                  {/* KEY RESPONSIBILITIES */}
                   <div className="space-y-2">
                     <h3 className="font-semibold text-sm">
                       Key Responsibilities:
@@ -145,7 +143,6 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
                         "Responsibilities not specified yet..."}
                     </p>
                   </div>
-                  {/* QUALIFICATIONS */}
                   <div className="space-y-2">
                     <h3 className="font-semibold text-sm">Qualifications:</h3>
                     <p className="text-sm">
@@ -153,7 +150,6 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
                         "Qualifications not specified yet..."}
                     </p>
                   </div>
-                  {/* NON-NEGOTIABLES */}
                   <div className="space-y-2">
                     <h3 className="font-semibold text-sm">Non-Negotiables:</h3>
                     <p className="text-sm">
@@ -161,7 +157,6 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
                         "Non-negotiables not specified yet..."}
                     </p>
                   </div>
-                  {/* ASSESSMENTS */}
                   {step === 3 && (
                     <div className="space-y-2">
                       <h2 className="text-[#0056D2] font-bold text-sm border-l-4 border-[#0056D2] pl-2 uppercase">
@@ -183,7 +178,6 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
                       )}
                     </div>
                   )}
-                  {/* SALARY BUDGET */}
                   <div className="space-y-2">
                     <h2 className="text-[#0056D2] font-bold text-sm border-l-4 border-[#0056D2] pl-2 uppercase">
                       SALARY BUDGET
@@ -192,7 +186,6 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
                       {displaySalary}
                     </p>
                   </div>
-                  {/* ASSET REQUEST */}
                   <div className="space-y-2">
                     <h2 className="text-[#0056D2] font-bold text-sm border-l-4 border-[#0056D2] pl-2 uppercase">
                       ASSET REQUEST
@@ -230,7 +223,6 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
                   </div>
                 </>
               )}
-              {/* SHOW MORE TOGGLE */}
               <div
                 className="text-[#0056D2] text-sm mt-2 cursor-pointer"
                 onClick={() => setShowMore(!showMore)}
@@ -246,7 +238,6 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
           <h2 className="text-[#0056D2] font-bold text-sm border-l-4 border-[#0056D2] pl-2 uppercase">
             APPROVAL
           </h2>
-          {/* STEP BLOCK */}
           {[1, 2, 3].map((stepNumber, i) => {
             const titles = [
               {

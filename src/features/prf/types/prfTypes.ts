@@ -1,4 +1,5 @@
-// PRF feature types
+import type { JobPostingResponse } from "@/features/jobs/types/jobTypes";
+
 export interface AssessmentTypes {
   technical: boolean;
   language: boolean;
@@ -19,25 +20,26 @@ export interface SoftwareRequired {
   [key: string]: boolean;
 }
 
-export interface FormData {
+export interface PRF {
   job_title: string;
   target_start_date: string;
   number_of_vacancies: string;
   reason_for_posting: string;
   other_reason_for_posting: string;
   business_unit: string;
-  department_name: string;
+  department: string;
   interview_levels: number;
-  immediate_supervisor: string;
+  immediate_supervisor: string | null;
+  immediate_supervisor_display: string | null;
   hiring_managers: string[];
-  contract_type: string;
-  work_arrangement: string;
+  employment_type: string;
+  work_setup: string;
   category: string;
   position: string;
   working_site: string;
   work_schedule_from: string;
   work_schedule_to: string;
-  job_description: string;
+  description: string;
   responsibilities: string;
   qualifications: string;
   non_negotiables: string;
@@ -52,8 +54,36 @@ export interface FormData {
   software_required: SoftwareRequired;
 }
 
-export type FormDataType = FormData;
-
-export type PRFResponse = FormDataType & {
+export interface PRFResponse {
   id: number;
-};
+  // job_posting: JobPostingResponse;
+  number_of_vacancies: number;
+  business_unit: string;
+  interview_levels: number;
+  category: string;
+  position: string;
+  work_schedule_from: string;
+  work_schedule_to: string;
+  non_negotiables: string;
+  salary_budget: string;
+  is_salary_range: boolean;
+  assessment_required: boolean;
+  other_assessment: string[];
+  immediate_supervisor: number | null;
+  immediate_supervisor_display: string | null;
+  hiring_managers: number[];
+  assessment_types: {
+    id: number;
+    name: string;
+  }[];
+  hardware_requirements: {
+    id: number;
+    name: string;
+  }[];
+  software_requirements: {
+    id: number;
+    name: string;
+  }[];
+}
+
+export type FormDataType = PRF;

@@ -1,8 +1,32 @@
 import { useState } from "react";
+import type { StepProps } from "../../types/createPosition";
 
 export const useStepNavigation = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+
+  const steps: StepProps[] = [
+    { number: 1, title: "Details", active: currentStep === 1 },
+    { number: 2, title: "Description", active: currentStep === 2 },
+    { number: 3, title: "Application Form", active: currentStep === 3 },
+    { number: 4, title: "Pipeline", active: currentStep === 4 },
+    { number: 5, title: "Assessment", active: currentStep === 5 },
+  ];
+
+  const getStepTitle = () => {
+    switch (currentStep) {
+      case 1:
+        return steps[0].title;
+      case 2:
+        return steps[1].title;
+      case 3:
+        return steps[2].title;
+      case 4:
+        return steps[3].title;
+      case 5:
+        return steps[4].title;
+    }
+  };
 
   const handleNext = () => {
     if (!completedSteps.includes(currentStep)) {
@@ -25,39 +49,18 @@ export const useStepNavigation = () => {
     }
   };
 
-  const goToStep = (stepNumber: number) => {
-    setCurrentStep(stepNumber);
-  };
-
-  const getStepTitle = () => {
-    switch (currentStep) {
-      case 1:
-        return "Position Details";
-      case 2:
-        return "Position Description";
-      case 3:
-        return "Application Form";
-      case 4:
-        return "Position Pipeline";
-      case 5:
-        return "Assessment";
-      default:
-        return "Create New Position";
-    }
-  };
-
   const resetSteps = () => {
     setCurrentStep(1);
     setCompletedSteps([]);
   };
 
   return {
+    steps,
     currentStep,
     completedSteps,
     handleNext,
     handleBack,
     handleStepClick,
-    goToStep,
     getStepTitle,
     resetSteps,
   };

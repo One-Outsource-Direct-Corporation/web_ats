@@ -2,8 +2,16 @@ import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
 import type { JobDetailsFormData } from "../../types/applicationForm";
-import { Upload } from "lucide-react";
+import { ChevronDownIcon, Upload } from "lucide-react";
 import type { ApplicationForm } from "../../types/job";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/shared/components/ui/popover";
+import { Calendar } from "@/shared/components/ui/calendar";
+import { Button } from "@/shared/components/ui/button";
+import { useState } from "react";
 
 interface JobDetailsSectionProps {
   data: JobDetailsFormData;
@@ -18,6 +26,7 @@ export const JobDetailsSection: React.FC<JobDetailsSectionProps> = ({
   applicationForm,
   errors = {},
 }) => {
+  const [open, setOpen] = useState(false);
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <h2 className="text-xl font-bold text-gray-900 mb-4">Job Details</h2>
@@ -152,23 +161,66 @@ export const JobDetailsSection: React.FC<JobDetailsSectionProps> = ({
         )}
 
         {/* Interview Schedule */}
+
         {applicationForm?.preferred_interview_schedule !== "disabled" && (
           <div className="space-y-2">
-            <Label htmlFor="interviewSchedule">
+            <Label className="text-sm font-medium text-gray-700 mb-2 block">
               Preferred Interview Schedule
             </Label>
-            <Input
-              id="interviewSchedule"
-              type="datetime-local"
-              value={data.interviewSchedule}
-              onChange={(e) => onChange("interviewSchedule", e.target.value)}
-              required={
-                applicationForm.preferred_interview_schedule === "required"
-              }
-            />
-            {errors.interviewSchedule && (
-              <p className="text-sm text-red-600">{errors.interviewSchedule}</p>
-            )}
+            <div className="flex gap-2">
+              {" "}
+              <div className="space-y-2">
+                <Label htmlFor="date-picker" className="px-1">
+                  Date
+                </Label>
+                <Popover open={open} onOpenChange={setOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      id="date-picker"
+                      className="w-32 justify-between font-normal"
+                    >
+                      {data.interviewSchedule
+                        ? new Date(data.interviewSchedule).toLocaleDateString()
+                        : "Select date"}
+                      <ChevronDownIcon />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-auto overflow-hidden p-0"
+                    align="start"
+                  >
+                    <Calendar
+                      mode="single"
+                      selected={
+                        data.interviewSchedule
+                          ? new Date(data.interviewSchedule)
+                          : undefined
+                      }
+                      captionLayout="dropdown"
+                      onSelect={(date) => {
+                        if (date) {
+                          onChange("interviewSchedule", date.toISOString());
+                          setOpen(false);
+                        }
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="time-picker" className="px-1">
+                  Time
+                </Label>
+                <Input
+                  type="time"
+                  id="time-picker"
+                  step="1"
+                  defaultValue="10:30:00"
+                  className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                />
+              </div>
+            </div>
           </div>
         )}
       </div>

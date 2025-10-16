@@ -1,22 +1,15 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "@/features/auth/hooks/useAuth";
 import type { User } from "@/features/auth/types/auth.types";
-// import { fetchUserByDepartment } from "../api/prfApi";
 import type { AxiosError } from "axios";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
-import { useNavigate, useLocation } from "react-router-dom";
 
-export const useUsersByDepartment = () => {
-  const { user } = useAuth();
+export const useUsersByDepartment = (business_unit: string) => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const axiosPrivate = useAxiosPrivate();
-  const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
-    if (!user) return;
     let isMounted = true;
     const controller = new AbortController();
 
@@ -25,12 +18,12 @@ export const useUsersByDepartment = () => {
       setError(null);
       try {
         const response = await axiosPrivate.get(
-          `/api/user/${user.business_unit ? user.business_unit + "/" : ""}`,
+          `/api/user/${business_unit ? business_unit + "/" : ""}`,
           { signal: controller.signal }
         );
         console.log(response);
         isMounted && setUsers(response.data);
-      } catch (error: AxiosError | any) {
+      } catch (error: any) {
         if (error.code === "ERR_CANCELED") return; // Ignore abort errors
         setError(error.response?.data?.detail || "Failed to fetch users");
       } finally {
@@ -44,7 +37,7 @@ export const useUsersByDepartment = () => {
       isMounted = false;
       controller.abort();
     };
-  }, [user?.department]);
+  }, [business_unit]);
 
   return { users, loading, error };
 };

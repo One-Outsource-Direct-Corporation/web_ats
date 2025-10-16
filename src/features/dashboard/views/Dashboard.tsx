@@ -10,9 +10,7 @@ export default function Dashboard() {
     document.title = "Dashboard";
   }, []);
 
-  // Helper function to generate pastel colors with opacity
   const getPastelColor = (color: string, opacity: number = 0.3) => {
-    // Define base colors
     const colorMap: Record<string, string> = {
       "bg-blue-500": "rgba(59, 130, 246", // Blue
       "bg-green-500": "rgba(34, 197, 94", // Green
@@ -20,7 +18,6 @@ export default function Dashboard() {
       "bg-purple-500": "rgba(139, 92, 246", // Purple
     };
 
-    // If the color is in our map, return it with the opacity appended
     if (colorMap[color]) {
       return `${colorMap[color]}, ${opacity})`;
     }
@@ -28,7 +25,6 @@ export default function Dashboard() {
     return color; // If not found, return the color as is
   };
 
-  // Helper function to generate border color based on the bg color
   const getBorderColor = (color: string) => {
     const colorMap: Record<string, string> = {
       "bg-blue-500": "#1D4ED8", // Blue border
@@ -37,7 +33,7 @@ export default function Dashboard() {
       "bg-purple-500": "#7C3AED", // Purple border
     };
 
-    return colorMap[color] || color; // Return the mapped color or the original color
+    return colorMap[color] || color;
   };
 
   const getStatusColor = (status: StatusType) => {
@@ -55,7 +51,7 @@ export default function Dashboard() {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50 p-6 pt-[100px]">
+      <div className="relative bg-gray-50 p-6">
         <div className="mx-auto max-w-7xl space-y-6">
           <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

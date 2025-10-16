@@ -3,7 +3,7 @@ import type {
   PublishedSubTabType,
   PositionsData,
   JobPosting,
-} from "../types/jobTypes";
+} from "../types/positionTypes";
 
 /**
  * Get the formatted tab title for display
@@ -35,7 +35,7 @@ export function filterPostings(
   searchTerm: string
 ): JobPosting[] {
   return postings.filter((posting) =>
-    posting.title.toLowerCase().includes(searchTerm.toLowerCase())
+    posting.job_title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 }
 

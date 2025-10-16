@@ -8,7 +8,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/shared/components/ui/select";
-import type { FormData } from "../types/prfTypes";
+import type { PRF } from "../types/prfTypes";
 import { PreviewInfo } from "./PreviewInfo";
 import { RichTextEditor } from "@/shared/components/reusables/RichTextEditor";
 
@@ -16,8 +16,8 @@ interface Step02Props {
   goToNextStep: () => void;
   goToPreviousStep: () => void;
   step: number;
-  formData: FormData;
-  updateFormData: (updates: Partial<FormData>) => void;
+  formData: PRF;
+  updateFormData: (updates: Partial<PRF>) => void;
 }
 
 export const Step02: React.FC<Step02Props> = ({
@@ -46,26 +46,25 @@ export const Step02: React.FC<Step02Props> = ({
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Select
-              value={formData.contract_type}
+              value={formData.employment_type}
               onValueChange={(value) =>
-                updateFormData({ contract_type: value })
+                updateFormData({ employment_type: value })
               }
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Contract Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Regular">Regular</SelectItem>
-                <SelectItem value="Probationary">Probationary</SelectItem>
-                <SelectItem value="Project-based">Project-based</SelectItem>
-                <SelectItem value="Internship">Internship</SelectItem>
+                <SelectItem value="full_time">Full Time</SelectItem>
+                <SelectItem value="part_time">Part Time</SelectItem>
+                <SelectItem value="contract">Contract</SelectItem>
+                <SelectItem value="internship">Internship</SelectItem>
+                <SelectItem value="temporary">Temporary</SelectItem>
               </SelectContent>
             </Select>
             <Select
-              value={formData.work_arrangement}
-              onValueChange={(value) =>
-                updateFormData({ work_arrangement: value })
-              }
+              value={formData.work_setup}
+              onValueChange={(value) => updateFormData({ work_setup: value })}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Work Arrangement" />
@@ -140,8 +139,8 @@ export const Step02: React.FC<Step02Props> = ({
           <div>
             <RichTextEditor
               title="Description"
-              value={formData.job_description}
-              onChange={(value) => updateFormData({ job_description: value })}
+              value={formData.description}
+              onChange={(value) => updateFormData({ description: value })}
               placeholder="Enter job description"
             />
           </div>

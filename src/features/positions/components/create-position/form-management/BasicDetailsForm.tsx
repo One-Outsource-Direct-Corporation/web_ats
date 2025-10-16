@@ -6,6 +6,7 @@ import {
   FieldLabel,
   FieldLegend,
   FieldDescription,
+  FieldError,
 } from "@/shared/components/ui/field";
 import { Input } from "@/shared/components/ui/input";
 
@@ -24,16 +25,25 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { CalendarIcon } from "lucide-react";
 import { Calendar } from "@/shared/components/ui/calendar";
+import useClient from "@/features/positions/hooks/create-position/useClient";
 
 interface BasicDetailsFormProps {
   formData: CreatePositionFormData;
-  onInputChange: (field: string, value: string) => void;
+  onInputChange: (field: string, value: any) => void;
+  errorFields: any;
 }
+
+// To do: Optimize the function on onChange, it is laggy
+// Lagged only if dev tools are open, primary issue is the Select component from ShadCN
 
 export const BasicDetailsForm = ({
   formData,
   onInputChange,
+  errorFields,
 }: BasicDetailsFormProps) => {
+  const { clients, loading, error } = useClient();
+  console.log(errorFields);
+
   return (
     <div>
       {/* Basic Details */}
@@ -47,11 +57,23 @@ export const BasicDetailsForm = ({
                   <SelectValue placeholder="Select Client" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
-                  <SelectItem value="system">System</SelectItem>
+                  {loading && (
+                    <SelectItem value="loading">Loading...</SelectItem>
+                  )}
+                  {error && (
+                    <SelectItem value="error">Something went wrong!</SelectItem>
+                  )}
+                  {clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              {errorFields?.client && (
+                <FieldError>{errorFields.client[0]}</FieldError>
+              )}
+              <FieldError></FieldError>
             </Field>
             <Field>
               <FieldLabel>Job Title *</FieldLabel>
@@ -61,6 +83,9 @@ export const BasicDetailsForm = ({
                 onChange={(e) => onInputChange("job_title", e.target.value)}
                 placeholder="Enter job title"
               />
+              {errorFields?.job_posting?.job_title && (
+                <FieldError>{errorFields.job_posting.job_title[0]}</FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Department *</FieldLabel>
@@ -77,6 +102,11 @@ export const BasicDetailsForm = ({
                   <SelectItem value="hr">Human Resources</SelectItem>
                 </SelectContent>
               </Select>
+              {errorFields?.job_posting?.department_name && (
+                <FieldError>
+                  {errorFields.job_posting.department_name[0]}
+                </FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Employment Type *</FieldLabel>
@@ -89,12 +119,18 @@ export const BasicDetailsForm = ({
                   <SelectValue placeholder="Select Employment Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="full-time">Full-Time</SelectItem>
-                  <SelectItem value="part-time">Part-Time</SelectItem>
+                  <SelectItem value="full_time">Full-Time</SelectItem>
+                  <SelectItem value="part_time">Part-Time</SelectItem>
                   <SelectItem value="contract">Contract</SelectItem>
                   <SelectItem value="internship">Internship</SelectItem>
+                  <SelectItem value="temporary">Temporary</SelectItem>
                 </SelectContent>
               </Select>
+              {errorFields?.job_posting?.employment_type && (
+                <FieldError>
+                  {errorFields.job_posting.employment_type[0]}
+                </FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Work Setup *</FieldLabel>
@@ -110,6 +146,23 @@ export const BasicDetailsForm = ({
                   <SelectItem value="hybrid">Hybrid</SelectItem>
                 </SelectContent>
               </Select>
+              {errorFields?.job_posting?.work_setup && (
+                <FieldError>{errorFields.job_posting.work_setup[0]}</FieldError>
+              )}
+            </Field>
+            <Field>
+              <FieldLabel>Working Site *</FieldLabel>
+              <Input
+                type="text"
+                value={formData.working_site}
+                onChange={(e) => onInputChange("working_site", e.target.value)}
+                placeholder="Enter working site"
+              />
+              {errorFields?.job_posting?.working_site && (
+                <FieldError>
+                  {errorFields.job_posting.working_site[0]}
+                </FieldError>
+              )}
             </Field>
           </FieldGroup>
         </FieldSet>
@@ -128,16 +181,15 @@ export const BasicDetailsForm = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="high_school">High School</SelectItem>
-                  <SelectItem value="associate_degree">
-                    Associate's Degree
-                  </SelectItem>
-                  <SelectItem value="bachelor_degree">
-                    Bachelor's Degree
-                  </SelectItem>
-                  <SelectItem value="master_degree">Master's Degree</SelectItem>
-                  <SelectItem value="phd">PhD</SelectItem>
+                  <SelectItem value="associate">Associate's Degree</SelectItem>
+                  <SelectItem value="bachelor">Bachelor's Degree</SelectItem>
+                  <SelectItem value="master">Master's Degree</SelectItem>
+                  <SelectItem value="doctorate">Doctorate</SelectItem>
                 </SelectContent>
               </Select>
+              {errorFields?.education_level && (
+                <FieldError>{errorFields.education_level[0]}</FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Experience Level *</FieldLabel>
@@ -150,12 +202,17 @@ export const BasicDetailsForm = ({
                   <SelectValue placeholder="Select Experience Level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="entry_level">Entry Level</SelectItem>
-                  <SelectItem value="mid_level">Mid Level</SelectItem>
-                  <SelectItem value="senior_level">Senior Level</SelectItem>
+                  <SelectItem value="entry">Entry Level</SelectItem>
+                  <SelectItem value="junior">Junior</SelectItem>
+                  <SelectItem value="mid">Mid Level</SelectItem>
+                  <SelectItem value="senior">Senior</SelectItem>
+                  <SelectItem value="lead">Lead</SelectItem>
                   <SelectItem value="executive">Executive</SelectItem>
                 </SelectContent>
               </Select>
+              {errorFields?.experience_level && (
+                <FieldError>{errorFields.experience_level[0]}</FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Headcounts Needed *</FieldLabel>
@@ -165,6 +222,9 @@ export const BasicDetailsForm = ({
                 onChange={(e) => onInputChange("headcount", e.target.value)}
                 placeholder="Enter number of positions"
               />
+              {errorFields?.headcount && (
+                <FieldError>{errorFields.headcount[0]}</FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Date Needed *</FieldLabel>
@@ -173,18 +233,9 @@ export const BasicDetailsForm = ({
                   <Button
                     variant="outline"
                     // data-empty={!date}
-                    className="data-[empty=true]:text-muted-foreground w-[280px] justify-start text-left font-normal"
+                    className="w-[280px] justify-start text-left font-normal"
                   >
-                    {formData.date_needed
-                      ? new Date(formData.date_needed).toLocaleDateString(
-                          "en-PH",
-                          {
-                            year: "numeric",
-                            month: "long",
-                            day: "2-digit",
-                          }
-                        )
-                      : "Pick a date"}
+                    {formData.target_start_date || "Pick a date"}
                     <CalendarIcon />
                   </Button>
                 </PopoverTrigger>
@@ -192,25 +243,30 @@ export const BasicDetailsForm = ({
                   <Calendar
                     mode="single"
                     selected={
-                      formData.date_needed
-                        ? new Date(formData.date_needed)
+                      formData.target_start_date
+                        ? new Date(formData.target_start_date)
                         : new Date()
                     }
                     onSelect={(date) =>
                       onInputChange(
-                        "date_needed",
-                        date ? date.toLocaleDateString("en-PH") : ""
+                        "target_start_date",
+                        date ? date.toISOString().split("T")[0] : null
                       )
                     }
                   />
                 </PopoverContent>
               </Popover>
+              {errorFields?.job_posting?.target_start_date && (
+                <FieldError>
+                  {errorFields.job_posting.target_start_date[0]}
+                </FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Reason for Hire *</FieldLabel>
               <Select
                 onValueChange={(value) =>
-                  onInputChange("reason_for_hiring", value)
+                  onInputChange("reason_for_posting", value)
                 }
               >
                 <SelectTrigger className="w-full">
@@ -222,15 +278,20 @@ export const BasicDetailsForm = ({
                   <SelectItem value="others">Others, Please Specify</SelectItem>
                 </SelectContent>
               </Select>
+              {errorFields?.job_posting?.reason_for_posting && (
+                <FieldError>
+                  {errorFields.job_posting.reason_for_posting[0]}
+                </FieldError>
+              )}
             </Field>
-            {formData.reason_for_hiring === "others" && (
+            {formData.reason_for_posting === "others" && (
               <Field>
                 <FieldLabel>Please Specify *</FieldLabel>
                 <Input
                   type="text"
-                  value={formData.other_reason_for_hiring}
+                  value={formData.other_reason_for_posting}
                   onChange={(e) =>
-                    onInputChange("other_reason_for_hiring", e.target.value)
+                    onInputChange("other_reason_for_posting", e.target.value)
                   }
                   placeholder="Enter reason for hire"
                 />

@@ -15,6 +15,7 @@ export const getDepartmentColor = (department: string) => {
     case "Finance":
       return "bg-yellow-100 text-yellow-700";
     case "Human Resources":
+    case "Hr":
       return "bg-indigo-100 text-indigo-700";
     case "Operations":
       return "bg-gray-100 text-gray-700";

@@ -8,6 +8,7 @@
 
 export interface User {
   id: string;
+  full_name: string;
   email: string;
   first_name: string;
   middle_name: string;

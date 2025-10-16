@@ -1,13 +1,13 @@
 import React from "react";
 import { Button } from "@/shared/components/ui/button";
-import type { FormData } from "../types/prfTypes";
+import type { PRF } from "../types/prfTypes";
 import { PreviewInfo } from "./PreviewInfo";
 import formatName from "@/shared/utils/formatName";
 
 interface Step04Props {
   goToPreviousStep: () => void;
   step: number;
-  formData: FormData;
+  formData: PRF;
   handleSubmit: () => void;
 }
 
@@ -60,7 +60,7 @@ export const Step04: React.FC<Step04Props> = ({
               </div>
               <div>
                 <span className="font-medium">Department Name:</span>{" "}
-                {formData.department_name}
+                {formData.department}
               </div>
               <div>
                 <span className="font-medium">Immediate Supervisor:</span>{" "}
@@ -77,12 +77,12 @@ export const Step04: React.FC<Step04Props> = ({
             <h3 className="font-semibold text-md mb-2">Job Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <span className="font-medium">Contract Type:</span>{" "}
-                {formData.contract_type}
+                <span className="font-medium">Employment Type:</span>{" "}
+                {formData.employment_type}
               </div>
               <div>
-                <span className="font-medium">Work Arrangement:</span>{" "}
-                {formData.work_arrangement}
+                <span className="font-medium">Work Setup:</span>{" "}
+                {formData.work_setup}
               </div>
               <div>
                 <span className="font-medium">Category:</span>{" "}
@@ -108,7 +108,7 @@ export const Step04: React.FC<Step04Props> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <span className="font-medium">Description:</span>{" "}
-                {formData.job_description}
+                {formData.description}
               </div>
               <div>
                 <span className="font-medium">Responsibilities:</span>{" "}

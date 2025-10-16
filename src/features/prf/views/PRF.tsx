@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePRFForm } from "../hooks/usePRFForm";
 import { Step01 } from "../components/Step01";
@@ -16,8 +15,11 @@ import { formatForJSON } from "@/shared/utils/formatName";
 import initialData from "../data/prfInitialData";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import type { FormDataType } from "../types/prfTypes";
-import type { AxiosResponse } from "axios";
+import type { AxiosError, AxiosResponse } from "axios";
 import { toast } from "react-toastify";
+import { useState } from "react";
+
+document.title = "Personnel Requisition Form";
 
 export default function PRF() {
   const navigate = useNavigate();
@@ -29,10 +31,6 @@ export default function PRF() {
   const { user } = useAuth();
   const { formData, updateFormData } = usePRFForm(initialData(user));
   const axiosPrivate = useAxiosPrivate();
-
-  useEffect(() => {
-    document.title = "Personnel Requisition Form";
-  }, []);
 
   const goToNextStep = () => {
     setStep((prev) => {
@@ -71,45 +69,79 @@ export default function PRF() {
     }, 1500);
 
     const data = {
-      ...formData,
-      reason_for_posting: formatForJSON(formData.reason_for_posting),
-      other_reason_for_posting:
-        formData.reason_for_posting !== "Other"
-          ? ""
-          : formatForJSON(formData.reason_for_posting),
+      job_posting: {
+        job_title: formData.job_title,
+        target_start_date: formData.target_start_date,
+        reason_for_posting: formatForJSON(formData.reason_for_posting),
+        other_reason_for_posting:
+          formData.reason_for_posting !== "Other"
+            ? ""
+            : formatForJSON(formData.reason_for_posting),
+        department_name: formatForJSON(formData.department),
+        employment_type: formData.employment_type,
+        work_setup: formatForJSON(formData.work_setup),
+        working_site: formData.working_site,
+        min_salary: Number(formData.min_salary) || 0,
+        max_salary: Number(formData.max_salary) || 0,
+        description: formData.description,
+        responsibilities: formData.responsibilities,
+        qualifications: formData.qualifications,
+      },
+      number_of_vacancies: Number(formData.number_of_vacancies),
+      business_unit: formData.business_unit.toLowerCase(),
+      interview_levels: Number(formData.interview_levels),
+      immediate_supervisor: formData.immediate_supervisor,
+      hiring_managers:
+        formData.interview_levels < 0 ||
+        formData.hiring_managers.some(
+          (hm: string) => hm === "no-hiring-manager"
+        )
+          ? []
+          : formData.hiring_managers,
+      category: formData.category,
+      position: formData.position,
+      work_schedule_from: formData.work_schedule_from,
+      work_schedule_to: formData.work_schedule_to,
+      salary_budget: Number(formData.salary_budget),
+      is_salary_range: formData.is_salary_range,
+      assessment_required: formData.assessment_required,
       other_assessment: formData.other_assessment
         ? formData.other_assessment
             .split(",")
-            .map((item) => formatForJSON(item))
+            .map((item: string) => formatForJSON(item))
         : [],
-      immediate_supervisor:
-        formData.immediate_supervisor === "No Supervisor"
-          ? formatForJSON(formData.immediate_supervisor)
-          : formData.immediate_supervisor,
-      hiring_managers:
-        formData.interview_levels < 0 ||
-        formData.hiring_managers.some((hm) => hm === "no-hiring-manager")
-          ? []
-          : formData.hiring_managers,
-      business_unit: formData.business_unit.toLowerCase().replace(/\s+/g, "_"),
-      category: formData.category.toLowerCase().replace(/\s+/g, "_"),
-      work_arrangement: formatForJSON(formData.work_arrangement),
-      department_name: formatForJSON(formData.department_name),
-      number_of_vacancies: Number(formData.number_of_vacancies),
-      interview_levels: Number(formData.interview_levels),
-      max_salary: formData.max_salary ? Number(formData.max_salary) : 0,
-      min_salary: formData.min_salary ? Number(formData.min_salary) : 0,
-      salary_budget: Number(formData.salary_budget),
+      assessment_types: Object.keys(formData.assessment_types).filter(
+        (key) =>
+          formData.assessment_types[
+            key as keyof typeof formData.assessment_types
+          ]
+      ),
+      hardware_requirements: Object.keys(formData.hardware_required).filter(
+        (key) =>
+          formData.hardware_required[
+            key as keyof typeof formData.hardware_required
+          ]
+      ),
+      software_requirements: Object.keys(formData.software_required).filter(
+        (key) =>
+          formData.software_required[
+            key as keyof typeof formData.software_required
+          ]
+      ),
     };
 
-    console.log("Submitted Data:", data);
-    const response = await axiosPrivate.post<AxiosResponse<FormDataType>>(
-      "/api/prf/",
-      data
-    );
+    try {
+      const response = await axiosPrivate.post<AxiosResponse<FormDataType>>(
+        "/api/prf/",
+        data
+      );
 
-    if (response.status === 201) {
-      toast.success("PRF submitted successfully!");
+      if (response.status === 201) {
+        toast.success("PRF submitted successfully!");
+      }
+    } catch (err: AxiosError | any) {
+      toast.error("Failed to submit PRF. Please try again.");
+      console.error("Error submitting PRF:", err);
     }
   };
 

@@ -85,8 +85,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     [disabled, placeholder, height]
   );
 
-  console.log(disabled);
-
   return (
     <div className={className}>
       {title && (

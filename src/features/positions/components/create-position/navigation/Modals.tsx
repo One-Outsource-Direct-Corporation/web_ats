@@ -128,6 +128,17 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
                     }}
                   />
                 </div>
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-800 mb-2">
+                    Qualifications
+                  </h4>
+                  <div
+                    className="prose prose-sm max-w-none preview-content"
+                    dangerouslySetInnerHTML={{
+                      __html: formData.qualifications || "",
+                    }}
+                  />
+                </div>
               </>
             )}
 
