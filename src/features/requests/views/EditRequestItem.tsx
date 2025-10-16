@@ -18,8 +18,13 @@ import PRFEditForm from "../components/PRFEditForm";
 import PositionEditForm from "../components/PositionEditForm";
 import type { AxiosError } from "axios";
 import { formatBackgroundStatus } from "@/shared/utils/formatBackgroundStatus";
+import type {
+  JobPostingResponsePosition,
+  JobPostingResponsePRF,
+} from "@/features/jobs/types/jobTypes";
+import { formatForJSON } from "@/shared/utils/formatName";
 
-type EditItem = PRFResponse;
+type EditItem = JobPostingResponsePRF | JobPostingResponsePosition;
 
 export default function EditRequestItem() {
   const { type, id } = useParams<{ type: "prf" | "position"; id: string }>();
@@ -43,8 +48,8 @@ export default function EditRequestItem() {
         setLoading(true);
         setError(null);
 
-        const endpoint = type === "prf" ? `/api/prf/${id}/` : `/api/job/${id}/`;
-        const response = await axiosPrivate.get<EditItem>(endpoint);
+        // const endpoint = type === "prf" ? `/api/prf/${id}/` : `/api/job/${id}/`;
+        const response = await axiosPrivate.get<EditItem>(`/api/job/${id}/`);
 
         console.log(response.data);
 
@@ -69,6 +74,9 @@ export default function EditRequestItem() {
       setSaving(true);
 
       const endpoint = type === "prf" ? `/api/prf/${id}/` : `/api/job/${id}/`;
+      console.log(formData);
+
+      return;
       await axiosPrivate.patch<EditItem>(endpoint, formData);
 
       toast.success(
@@ -120,14 +128,14 @@ export default function EditRequestItem() {
               Edit {type === "prf" ? "PRF" : "Position"}
             </h1>
             <p className="text-gray-600">
-              {item.job_posting.job_title} • ID: {item.id}
+              {item.job_title} • ID: {item.id}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <Select
-            value={item.job_posting.status}
+            value={item.status}
             onValueChange={async (
               value: "draft" | "pending" | "active" | "closed" | "cancelled"
             ) => {
@@ -141,7 +149,7 @@ export default function EditRequestItem() {
                   prev
                     ? {
                         ...prev,
-                        job_posting: { ...prev.job_posting, status: value },
+                        status: value,
                       }
                     : null
                 );
@@ -156,7 +164,7 @@ export default function EditRequestItem() {
           >
             <SelectTrigger
               className={`w-32 rounded-4xl border-0 font-semibold ${formatBackgroundStatus(
-                item.job_posting.status
+                item.status
               )}`}
             >
               <SelectValue />
@@ -176,7 +184,7 @@ export default function EditRequestItem() {
       <div className="bg-white rounded-lg shadow-sm border">
         {type === "prf" ? (
           <PRFEditForm
-            initialData={item as PRFResponse}
+            initialData={item as JobPostingResponsePRF}
             onSave={handleSave}
             saving={saving}
           />

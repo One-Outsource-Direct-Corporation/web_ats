@@ -7,6 +7,7 @@ import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import DOMPurify from "dompurify";
 import formatName from "@/shared/utils/formatName";
 import { usePositionDetail } from "@/shared/hooks/usePositions";
+import type { JobPostingResponsePosition } from "@/features/jobs/types/jobTypes";
 
 export default function CareerDescription() {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ export default function CareerDescription() {
     position: jobDetail,
     loading,
     error,
-  } = usePositionDetail(Number(params.jobId));
+  } = usePositionDetail({ id: Number(params.jobId), non_admin: true });
   console.log("Job Detail from Hook:", jobDetail);
 
   useEffect(() => {
@@ -72,7 +73,10 @@ export default function CareerDescription() {
           {/* Department and Role */}
           {jobDetail?.department_name && (
             <div className="text-gray-600 mb-6 ml-9">
-              {formatName(jobDetail.department_name)}
+              {formatName(jobDetail.department_name)}{" "}
+              {jobDetail.type === "client" && (
+                <>• {(jobDetail as JobPostingResponsePosition).client}</>
+              )}
             </div>
           )}
 

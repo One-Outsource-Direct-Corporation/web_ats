@@ -56,7 +56,7 @@ export interface PRF {
 
 export interface PRFResponse {
   id: number;
-  job_posting: JobPostingResponse;
+  // job_posting: JobPostingResponse;
   number_of_vacancies: number;
   business_unit: string;
   interview_levels: number;

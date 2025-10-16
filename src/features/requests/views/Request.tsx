@@ -135,8 +135,9 @@ export default function Request() {
       </div>
 
       {/* Main content section */}
-      {loading && <LoadingComponent />}
-      {!loading && (
+      {loading ? (
+        <LoadingComponent />
+      ) : (
         <div className="max-w-7xl mx-auto w-full mt-5 px-6">
           <table className="min-w-full bg-white text-sm">
             <thead className="bg-gray-50 text-gray-700 text-left">
@@ -162,7 +163,7 @@ export default function Request() {
                     colSpan={7}
                     className="text-center text-red-500 px-4 py-3"
                   >
-                    Something went wrong. Please try again later.
+                    {error}
                   </td>
                 </tr>
               )}
@@ -179,125 +180,122 @@ export default function Request() {
                     </td>
                   </tr>
                 )}
-              {!loading &&
-                !error &&
-                positions &&
-                positions.results.length > 0 && (
-                  <>
-                    {positions.results.map((item) => {
-                      const isSelected = selectedItems.some(
-                        (selected) => selected.id === item.id
-                      );
+              {positions && positions.results.length > 0 && (
+                <>
+                  {positions.results.map((item) => {
+                    const isSelected = selectedItems.some(
+                      (selected) => selected.id === item.id
+                    );
 
-                      return (
-                        <tr
-                          key={item.id}
-                          className="border-t odd:bg-transparent even:bg-gray-50 hover:bg-gray-100"
-                        >
-                          <td className="px-4 py-3">
-                            <Checkbox
-                              checked={isSelected}
-                              onCheckedChange={(checked) =>
-                                handleItemSelect(item.id, checked as boolean)
-                              }
-                            />
-                          </td>
-                          <td className="px-4 py-3 font-medium">
-                            {item.job_title}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span
-                              className={`text-xs px-2 py-1 whitespace-nowrap rounded-full font-medium ${formatBackgroundStatus(
-                                item.status
-                              )}`}
+                    return (
+                      <tr
+                        key={item.id}
+                        className="border-t odd:bg-transparent even:bg-gray-50 hover:bg-gray-100"
+                      >
+                        <td className="px-4 py-3">
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={(checked) =>
+                              handleItemSelect(item.id, checked as boolean)
+                            }
+                          />
+                        </td>
+                        <td className="px-4 py-3 font-medium">
+                          {item.job_title}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`text-xs px-2 py-1 whitespace-nowrap rounded-full font-medium ${formatBackgroundStatus(
+                              item.status
+                            )}`}
+                          >
+                            {formatName(item.status)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          {formatDate(item.created_at)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`text-xs px-2 py-1 whitespace-nowrap rounded-full font-medium ${
+                              item.type === "prf"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-neutral-700 text-neutral-100"
+                            }`}
+                          >
+                            {item.type_display}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {item.status === "pending" ? (
+                            <span className="text-gray-400">—</span>
+                          ) : (
+                            // Bring back when approval pipeline is available
+                            // <ApprovalPipelineDropdown
+                            //   pipeline={item.approvalPipeline}
+                            // />
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 flex justify-center">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Ellipsis
+                                size={32}
+                                className="hover:bg-neutral-100 p-2 rounded-lg cursor-pointer"
+                              />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              className="w-12 text-neutral-600"
+                              align="start"
                             >
-                              {formatName(item.status)}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            {formatDate(item.created_at)}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span
-                              className={`text-xs px-2 py-1 whitespace-nowrap rounded-full font-medium ${
-                                item.type === "prf"
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-neutral-700 text-neutral-100"
-                              }`}
-                            >
-                              {item.type_display}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            {item.status === "pending" ? (
-                              <span className="text-gray-400">—</span>
-                            ) : (
-                              // Bring back when approval pipeline is available
-                              // <ApprovalPipelineDropdown
-                              //   pipeline={item.approvalPipeline}
-                              // />
-                              <span className="text-gray-400">—</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 flex justify-center">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Ellipsis
-                                  size={32}
-                                  className="hover:bg-neutral-100 p-2 rounded-lg cursor-pointer"
-                                />
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent
-                                className="w-12 text-neutral-600"
-                                align="start"
-                              >
-                                <DropdownMenuGroup>
-                                  <DropdownMenuItem
-                                    className="flex items-center gap-2 cursor-pointer"
-                                    onClick={() =>
-                                      navigate(
-                                        `/requests/edit/${item.type}/${item.id}`
-                                      )
-                                    }
-                                  >
-                                    <SquarePen className="h-4 w-4" />
-                                    <span>Edit</span>
-                                  </DropdownMenuItem>
-                                </DropdownMenuGroup>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </>
-                )}
+                              <DropdownMenuGroup>
+                                <DropdownMenuItem
+                                  className="flex items-center gap-2 cursor-pointer"
+                                  onClick={() =>
+                                    navigate(
+                                      `/requests/edit/${item.type}/${item.id}`
+                                    )
+                                  }
+                                >
+                                  <SquarePen className="h-4 w-4" />
+                                  <span>Edit</span>
+                                </DropdownMenuItem>
+                              </DropdownMenuGroup>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </>
+              )}
             </tbody>
           </table>
           {/* Pagination */}
-          {!loading && !error && positions && positions.results.length > 0 && (
-            <div className="flex justify-center items-center mt-4 space-x-4">
-              <Button
-                variant="ghost"
-                onClick={handlePrevPage}
-                disabled={!positions.previous}
-                className="text-gray-600 hover:bg-gray-900 hover:text-gray-50"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-sm text-gray-50 rounded-md bg-gray-900 p-2 px-4">
-                {currentPage}
-              </span>
-              <Button
-                variant="ghost"
-                onClick={handleNextPage}
-                disabled={!positions.next}
-                className="text-gray-600 hover:bg-gray-900 hover:text-gray-50"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
+        </div>
+      )}
+      {positions && positions.results.length > 0 && (
+        <div className="flex justify-center items-center mt-4 space-x-4">
+          <Button
+            variant="ghost"
+            onClick={handlePrevPage}
+            disabled={!positions.previous}
+            className="text-gray-600 hover:bg-gray-900 hover:text-gray-50"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm text-gray-50 rounded-md bg-gray-900 p-2 px-4">
+            {currentPage}
+          </span>
+          <Button
+            variant="ghost"
+            onClick={handleNextPage}
+            disabled={!positions.next}
+            className="text-gray-600 hover:bg-gray-900 hover:text-gray-50"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       )}
     </section>

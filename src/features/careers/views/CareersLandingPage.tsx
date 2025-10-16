@@ -7,8 +7,7 @@ import { CareersFooter } from "../components/CareersFooter";
 import { useJobFilters } from "../hooks/useJobFilters";
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import { usePositions } from "@/shared/hooks/usePositions";
-
-document.title = "Careers";
+import { useEffect } from "react";
 
 export default function CareersLandingPage() {
   const navigation = useAppNavigation();
@@ -25,11 +24,18 @@ export default function CareersLandingPage() {
     handleClearFilters,
   } = useJobFilters();
 
+  useEffect(() => {
+    document.title = "Careers";
+  }, []);
+
   const handleTrackApplication = () => {
     navigation.goToTracker();
   };
 
-  const { positions, loading, error } = usePositions({ status: "active" });
+  const { positions, loading, error } = usePositions({
+    status: "active",
+    non_admin: true,
+  });
   console.log("Fetched Job Listings:", positions);
 
   if (loading) {

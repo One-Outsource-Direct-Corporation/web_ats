@@ -1,3 +1,6 @@
+import type { PositionResponse } from "@/features/positions/types/positionTypes";
+import type { PRFResponse } from "@/features/prf/types/prfTypes";
+
 export type Job = {
   id: string;
   title: string;
@@ -14,7 +17,7 @@ export interface JobPostingAPIResponse {
   count: number;
   next: string | null;
   previous: string | null;
-  results: JobPostingResponse[];
+  results: JobPostingResponse[] | [];
 }
 
 export interface JobPostingResponse {
@@ -41,3 +44,11 @@ export interface JobPostingResponse {
   updated_at: string;
   posted_by: number;
 }
+
+export interface JobPostingResponsePRF
+  extends JobPostingResponse,
+    PRFResponse {}
+
+export interface JobPostingResponsePosition
+  extends JobPostingResponse,
+    PositionResponse {}

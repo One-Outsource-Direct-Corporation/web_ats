@@ -14,10 +14,11 @@ import type { PRFResponse } from "@/features/prf/types/prfTypes";
 import { RichTextEditor } from "@/shared/components/reusables/RichTextEditor";
 import { useUsersByDepartment } from "@/features/prf/hooks/useUsersByDepartment";
 import type { User } from "@/features/auth/types/auth.types";
-import formatName from "@/shared/utils/formatName";
+import formatName, { formatForJSON } from "@/shared/utils/formatName";
+import type { JobPostingResponsePRF } from "@/features/jobs/types/jobTypes";
 interface PRFEditFormProps {
-  initialData: PRFResponse;
-  onSave: (data: PRFResponse) => Promise<void>;
+  initialData: JobPostingResponsePRF;
+  onSave: (data: JobPostingResponsePRF) => Promise<void>;
   saving: boolean;
 }
 
@@ -26,17 +27,81 @@ export default function PRFEditForm({
   onSave,
   saving,
 }: PRFEditFormProps) {
-  const [formData, setFormData] = useState<PRFResponse>(initialData);
+  const [formData, setFormData] = useState(initialData);
   const [isEdited, setIsEdited] = useState(false);
   const { users } = useUsersByDepartment(formData.business_unit.toLowerCase());
 
   const handleInputChange = (
-    field: keyof PRFResponse,
+    field: keyof JobPostingResponsePRF,
     value: string | number
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setIsEdited(true);
   };
+
+  function handleSubmit2() {
+    const data = {
+      job_posting: {
+        job_title: formData.job_title,
+        target_start_date: formData.target_start_date,
+        reason_for_posting: formatForJSON(formData.reason_for_posting),
+        other_reason_for_posting:
+          formData.reason_for_posting !== "Other"
+            ? ""
+            : formatForJSON(formData.reason_for_posting),
+        department_name: formatForJSON(formData.department_name),
+        employment_type: formData.employment_type,
+        work_setup: formatForJSON(formData.work_setup),
+        working_site: formData.working_site,
+        min_salary: Number(formData.min_salary) || 0,
+        max_salary: Number(formData.max_salary) || 0,
+        description: formData.description,
+        responsibilities: formData.responsibilities,
+        qualifications: formData.qualifications,
+      },
+      number_of_vacancies: Number(formData.number_of_vacancies),
+      business_unit: formData.business_unit.toLowerCase(),
+      interview_levels: Number(formData.interview_levels),
+      immediate_supervisor: formData.immediate_supervisor,
+      hiring_managers:
+        formData.interview_levels < 0 ||
+        formData.hiring_managers.some(
+          (hm: string) => hm === "no-hiring-manager"
+        )
+          ? []
+          : formData.hiring_managers,
+      category: formData.category,
+      position: formData.position,
+      work_schedule_from: formData.work_schedule_from,
+      work_schedule_to: formData.work_schedule_to,
+      salary_budget: Number(formData.salary_budget),
+      is_salary_range: formData.is_salary_range,
+      assessment_required: formData.assessment_required,
+      other_assessment: formData.other_assessment
+        ? formData.other_assessment
+            .split(",")
+            .map((item: string) => formatForJSON(item))
+        : [],
+      assessment_types: Object.keys(formData.assessment_types).filter(
+        (key) =>
+          formData.assessment_types[
+            key as keyof typeof formData.assessment_types
+          ]
+      ),
+      hardware_requirements: Object.keys(formData.hardware_required).filter(
+        (key) =>
+          formData.hardware_required[
+            key as keyof typeof formData.hardware_required
+          ]
+      ),
+      software_requirements: Object.keys(formData.software_required).filter(
+        (key) =>
+          formData.software_required[
+            key as keyof typeof formData.software_required
+          ]
+      ),
+    };
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,15 +116,12 @@ export default function PRFEditForm({
           <FieldLabel htmlFor="job_title">Job Title *</FieldLabel>
           <Input
             id="job_title"
-            value={formData.job_posting.job_title}
+            value={formData.job_title}
             placeholder="Enter job title"
             onChange={(e) => {
               setFormData((prev) => ({
                 ...prev,
-                job_posting: {
-                  ...prev.job_posting,
-                  job_title: e.target.value,
-                },
+                job_title: e.target.value,
               }));
               setIsEdited(true);
             }}
@@ -74,14 +136,11 @@ export default function PRFEditForm({
           <Input
             id="target_start_date"
             type="date"
-            value={formData.job_posting.target_start_date}
+            value={formData.target_start_date}
             onChange={(e) => {
               setFormData((prev) => ({
                 ...prev,
-                job_posting: {
-                  ...prev.job_posting,
-                  target_start_date: e.target.value,
-                },
+                target_start_date: e.target.value,
               }));
               setIsEdited(true);
             }}
@@ -139,15 +198,12 @@ export default function PRFEditForm({
           <FieldLabel htmlFor="department">Department *</FieldLabel>
           <Input
             id="department"
-            value={formatName(formData.job_posting.department_name)}
+            value={formatName(formData.department_name)}
             placeholder="Enter department"
             onChange={(e) => {
               setFormData((prev) => ({
                 ...prev,
-                job_posting: {
-                  ...prev.job_posting,
-                  department_name: e.target.value,
-                },
+                department_name: e.target.value,
               }));
               setIsEdited(true);
             }}
@@ -214,14 +270,11 @@ export default function PRFEditForm({
         <Field>
           <FieldLabel htmlFor="employment_type">Employment Type *</FieldLabel>
           <Select
-            value={formData.job_posting.employment_type}
+            value={formData.employment_type}
             onValueChange={(value) => {
               setFormData((prev) => ({
                 ...prev,
-                job_posting: {
-                  ...prev.job_posting,
-                  employment_type: value,
-                },
+                employment_type: value,
               }));
               setIsEdited(true);
             }}
@@ -243,14 +296,11 @@ export default function PRFEditForm({
         <Field>
           <FieldLabel htmlFor="work_setup">Work Setup *</FieldLabel>
           <Select
-            value={formData.job_posting.work_setup}
+            value={formData.work_setup}
             onValueChange={(value) => {
               setFormData((prev) => ({
                 ...prev,
-                job_posting: {
-                  ...prev.job_posting,
-                  work_setup: value,
-                },
+                work_setup: value,
               }));
               setIsEdited(true);
             }}
@@ -283,14 +333,11 @@ export default function PRFEditForm({
             Reason for Posting *
           </FieldLabel>
           <Select
-            value={formData.job_posting.reason_for_posting}
+            value={formData.reason_for_posting}
             onValueChange={(value) => {
               setFormData((prev) => ({
                 ...prev,
-                job_posting: {
-                  ...prev.job_posting,
-                  reason_for_posting: value,
-                },
+                reason_for_posting: value,
               }));
               setIsEdited(true);
             }}
@@ -312,14 +359,11 @@ export default function PRFEditForm({
       <Field>
         <RichTextEditor
           title="Job Description *"
-          value={formData.job_posting.description}
+          value={formData.description}
           onChange={(content) => {
             setFormData((prev) => ({
               ...prev,
-              job_posting: {
-                ...prev.job_posting,
-                description: content,
-              },
+              description: content,
             }));
             setIsEdited(true);
           }}
@@ -330,14 +374,11 @@ export default function PRFEditForm({
       <Field>
         <RichTextEditor
           title="Key Responsibilities *"
-          value={formData.job_posting.responsibilities}
+          value={formData.responsibilities}
           onChange={(content) => {
             setFormData((prev) => ({
               ...prev,
-              job_posting: {
-                ...prev.job_posting,
-                responsibilities: content,
-              },
+              responsibilities: content,
             }));
             setIsEdited(true);
           }}
@@ -348,14 +389,11 @@ export default function PRFEditForm({
       <Field>
         <RichTextEditor
           title="Required Qualifications *"
-          value={formData.job_posting.qualifications}
+          value={formData.qualifications}
           onChange={(content) => {
             setFormData((prev) => ({
               ...prev,
-              job_posting: {
-                ...prev.job_posting,
-                qualifications: content,
-              },
+              qualifications: content,
             }));
             setIsEdited(true);
           }}

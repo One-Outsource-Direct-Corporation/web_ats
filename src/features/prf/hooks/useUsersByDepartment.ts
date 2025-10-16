@@ -23,7 +23,7 @@ export const useUsersByDepartment = (business_unit: string) => {
         );
         console.log(response);
         isMounted && setUsers(response.data);
-      } catch (error: AxiosError | any) {
+      } catch (error: any) {
         if (error.code === "ERR_CANCELED") return; // Ignore abort errors
         setError(error.response?.data?.detail || "Failed to fetch users");
       } finally {

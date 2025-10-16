@@ -128,7 +128,7 @@ export interface PipelineStepResponse {
 
 export interface PositionResponse {
   id: number;
-  job_posting: JobPostingResponse;
+  // job_posting: JobPostingResponse;
   client: string;
   application_form: {
     id: number;
