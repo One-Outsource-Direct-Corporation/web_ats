@@ -83,7 +83,7 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
             </p>
             <p>
               <strong>Department Name:</strong>{" "}
-              {formData.department || "Not specified"}
+              {formData.department_display || "Not specified"}
             </p>
             <p>
               <strong>Immediate Supervisor:</strong>{" "}

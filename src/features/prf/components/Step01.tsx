@@ -13,6 +13,7 @@ import { PreviewInfo } from "./PreviewInfo";
 import { useUsersByDepartment } from "../hooks/useUsersByDepartment";
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import type { User } from "@/features/auth/types/auth.types";
+import { formatDepartmentName } from "@/shared/utils/formatDepartmentName";
 
 interface Step01Props {
   goToNextStep: () => void;
@@ -27,9 +28,11 @@ export const Step01: React.FC<Step01Props> = ({
   formData,
   updateFormData,
 }) => {
-  const { users, loading } = useUsersByDepartment(
-    formData.business_unit.toLowerCase()
-  );
+  const { users, loading } = useUsersByDepartment({
+    business_unit: formData.business_unit.toLowerCase(),
+    department_name: formData.department.toLowerCase(),
+    include: "hiring_manager",
+  });
   const handleInterviewLevelChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -153,7 +156,12 @@ export const Step01: React.FC<Step01Props> = ({
                   value="OODC"
                   checked={formData.business_unit.toUpperCase() === "OODC"}
                   onChange={(e) =>
-                    updateFormData({ business_unit: e.target.value })
+                    updateFormData({
+                      business_unit: e.target.value,
+                      department: "",
+                      immediate_supervisor: null,
+                      immediate_supervisor_display: null,
+                    })
                   }
                 />{" "}
                 OODC
@@ -163,7 +171,12 @@ export const Step01: React.FC<Step01Props> = ({
                   value="OORS"
                   checked={formData.business_unit.toUpperCase() === "OORS"}
                   onChange={(e) =>
-                    updateFormData({ business_unit: e.target.value })
+                    updateFormData({
+                      business_unit: e.target.value,
+                      department: "",
+                      immediate_supervisor: null,
+                      immediate_supervisor_display: null,
+                    })
                   }
                 />{" "}
                 OORS
@@ -175,24 +188,49 @@ export const Step01: React.FC<Step01Props> = ({
               </label>
               <Select
                 value={formData.department}
-                onValueChange={(value) => updateFormData({ department: value })}
+                onValueChange={(value) =>
+                  updateFormData({
+                    department: value,
+                    department_display: formatDepartmentName(value),
+                    immediate_supervisor: null,
+                    immediate_supervisor_display: null,
+                  })
+                }
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Ex: Information Technology" />
+                  <SelectValue placeholder="Select Department" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Information Technology">
-                    Information Technology
-                  </SelectItem>
-                  <SelectItem value="Human Resources">
-                    Human Resources
-                  </SelectItem>
-                  <SelectItem value="Continuous Improvement">
-                    Continuous Improvement
-                  </SelectItem>
-                  <SelectItem value="Sales">Sales</SelectItem>
-                  <SelectItem value="Finance">Finance</SelectItem>
-                  <SelectItem value="Operations">Operations</SelectItem>
+                  {formData.business_unit.toUpperCase() === "OORS" ? (
+                    <SelectItem value="sales">Sales Department</SelectItem>
+                  ) : (
+                    <>
+                      <SelectItem value="sales-and-marketing">
+                        Sales and Marketing Department
+                      </SelectItem>
+                      <SelectItem value="finance">
+                        Finance Department
+                      </SelectItem>
+                      <SelectItem value="hr">
+                        Human Resources Department
+                      </SelectItem>
+                      <SelectItem value="ci">
+                        Continuous Improvement Department
+                      </SelectItem>
+                      <SelectItem value="operations-isla">
+                        Operations - ISLA Department
+                      </SelectItem>
+                      <SelectItem value="operations-shell">
+                        Operations - Shell Department
+                      </SelectItem>
+                      <SelectItem value="operations-prime">
+                        Operations - Prime Department
+                      </SelectItem>
+                      <SelectItem value="operations-rpo">
+                        Operations - RPO Department
+                      </SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -255,26 +293,21 @@ export const Step01: React.FC<Step01Props> = ({
                     })()}
 
                   {/* Then show all supervisors from current business unit */}
+                  <SelectItem value="no-supervisor">No Supervisor</SelectItem>
                   {users.length > 0 &&
-                  users.some((usr: User) => usr.role === "supervisor") ? (
-                    users
-                      .filter(
-                        (usr: User) =>
-                          usr.role === "supervisor" &&
-                          usr.id !== String(formData.immediate_supervisor)
-                      )
-                      .map((usr: User) => (
-                        <SelectItem key={usr.id} value={usr.id}>
-                          {usr.first_name} {usr.last_name}
-                        </SelectItem>
-                      ))
-                  ) : (
-                    <>
-                      <SelectItem value="no-supervisor">
-                        No Supervisor
-                      </SelectItem>
-                    </>
-                  )}
+                  users.some((usr: User) => usr.role === "supervisor")
+                    ? users
+                        .filter(
+                          (usr: User) =>
+                            usr.role === "supervisor" &&
+                            usr.id !== String(formData.immediate_supervisor)
+                        )
+                        .map((usr: User) => (
+                          <SelectItem key={usr.id} value={usr.id}>
+                            {usr.first_name} {usr.last_name}
+                          </SelectItem>
+                        ))
+                    : null}
                 </SelectContent>
               </Select>
             </div>

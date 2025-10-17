@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, LoaderCircle } from "lucide-react";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -23,79 +23,23 @@ import type {
   JobPostingResponsePRF,
 } from "@/features/jobs/types/jobTypes";
 import { formatForJSON } from "@/shared/utils/formatName";
-
-type EditItem = JobPostingResponsePRF | JobPostingResponsePosition;
+import { usePositionDetail } from "@/shared/hooks/usePositions";
 
 export default function EditRequestItem() {
   const { type, id } = useParams<{ type: "prf" | "position"; id: string }>();
   const navigate = useNavigate();
   const axiosPrivate = useAxiosPrivate();
 
-  const [item, setItem] = useState<EditItem | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { position, loading, error, refetch } = usePositionDetail({
+    id: id ? Number(id) : undefined,
+    non_admin: false,
+  });
 
-  useEffect(() => {
-    if (!type || !id) {
-      setError("Invalid parameters");
-      setLoading(false);
-      return;
-    }
-
-    const fetchItem = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // const endpoint = type === "prf" ? `/api/prf/${id}/` : `/api/job/${id}/`;
-        const response = await axiosPrivate.get<EditItem>(`/api/job/${id}/`);
-
-        console.log(response.data);
-
-        setItem(response.data);
-      } catch (err: any) {
-        console.error("Error fetching item:", err);
-        setError("Failed to load item. Please try again.");
-        toast.error("Failed to load item");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchItem();
-  }, [type, id, axiosPrivate]);
-
-  // Handle form submission
-  const handleSave = async (formData: EditItem) => {
-    if (!type || !id) return;
-
-    try {
-      setSaving(true);
-
-      const endpoint = type === "prf" ? `/api/prf/${id}/` : `/api/job/${id}/`;
-      console.log(formData);
-
-      return;
-      await axiosPrivate.patch<EditItem>(endpoint, formData);
-
-      toast.success(
-        `${type === "prf" ? "PRF" : "Position"} updated successfully`
-      );
-      navigate("/requests");
-    } catch (err: any) {
-      console.error("Error saving item:", err);
-      toast.error("Failed to save changes. Please try again.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (loading) {
-    return <LoadingComponent />;
+  if (!position || loading) {
+    return <LoadingComponent message="Loading Data" />;
   }
 
-  if (error || !item || !type) {
+  if (error || !type) {
     return (
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="text-center">
@@ -128,14 +72,14 @@ export default function EditRequestItem() {
               Edit {type === "prf" ? "PRF" : "Position"}
             </h1>
             <p className="text-gray-600">
-              {item.job_title} • ID: {item.id}
+              {position.job_title} • ID: {position.id}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <Select
-            value={item.status}
+            value={status}
             onValueChange={async (
               value: "draft" | "pending" | "active" | "closed" | "cancelled"
             ) => {
@@ -145,14 +89,7 @@ export default function EditRequestItem() {
                 await axiosPrivate.patch(endpoint, {
                   job_posting: { status: value },
                 });
-                setItem((prev) =>
-                  prev
-                    ? {
-                        ...prev,
-                        status: value,
-                      }
-                    : null
-                );
+                refetch(); // Refetch to update the position data if needed
                 toast.success("Status updated successfully");
               } catch (err: AxiosError | any) {
                 console.error("Error updating status:", err);
@@ -164,7 +101,7 @@ export default function EditRequestItem() {
           >
             <SelectTrigger
               className={`w-32 rounded-4xl border-0 font-semibold ${formatBackgroundStatus(
-                item.status
+                status
               )}`}
             >
               <SelectValue />
@@ -183,14 +120,10 @@ export default function EditRequestItem() {
       {/* Form Content */}
       <div className="bg-white rounded-lg shadow-sm border">
         {type === "prf" ? (
-          <PRFEditForm
-            initialData={item as JobPostingResponsePRF}
-            onSave={handleSave}
-            saving={saving}
-          />
+          <PRFEditForm initialData={position as JobPostingResponsePRF} />
         ) : (
           // <PositionEditForm
-          //   initialData={item as PositionData}
+          //   initialData={position as PositionData}
           //   onSave={handleSave}
           //   saving={saving}
           // />

@@ -1,43 +1,55 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { User } from "@/features/auth/types/auth.types";
-import type { AxiosError } from "axios";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 
-export const useUsersByDepartment = (business_unit: string) => {
+export const useUsersByDepartment = ({
+  business_unit,
+  department_name,
+  email,
+  include,
+}: {
+  business_unit: string;
+  department_name: string;
+  email?: string;
+  include?: string;
+}) => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const axiosPrivate = useAxiosPrivate();
+  const controllerRef = useRef<AbortController | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
-    const controller = new AbortController();
+  const fetchUsers = async () => {
+    if (controllerRef.current) {
+      controllerRef.current.abort();
+    }
+    controllerRef.current = new AbortController();
 
-    const fetchUsers = async () => {
+    try {
       setLoading(true);
       setError(null);
-      try {
-        const response = await axiosPrivate.get(
-          `/api/user/${business_unit ? business_unit + "/" : ""}`,
-          { signal: controller.signal }
-        );
-        console.log(response);
-        isMounted && setUsers(response.data);
-      } catch (error: any) {
-        if (error.code === "ERR_CANCELED") return; // Ignore abort errors
-        setError(error.response?.data?.detail || "Failed to fetch users");
-      } finally {
-        setLoading(false);
-      }
-    };
+      const response = await axiosPrivate.get(
+        `/api/user/?${business_unit ? `business_unit=${business_unit}&` : ""}${
+          department_name ? `department=${department_name}&` : ""
+        }${email ? `email=${email}&` : ""}${
+          include ? `include_role=${include}` : ""
+        }`,
+        {
+          signal: controllerRef.current.signal,
+        }
+      );
+      setUsers(response.data);
+    } catch (error: any) {
+      if (error.code === "ERR_CANCELED") return; // Ignore abort errors
+      setError(error.response?.data?.detail || "Failed to fetch users");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchUsers();
+  }, [business_unit, department_name, email]);
 
-    return () => {
-      isMounted = false;
-      controller.abort();
-    };
-  }, [business_unit]);
-
-  return { users, loading, error };
+  return { users, loading, error, refetch: fetchUsers };
 };

@@ -81,9 +81,13 @@ export function usePositionDetail({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<AxiosError | any>(null);
   const axiosPrivate = useAxiosPrivate();
-  // const controller = new AbortController();
+  const controllerRef = useRef<AbortController | null>(null);
 
   const fetchPositionDetail = async () => {
+    if (controllerRef.current) {
+      controllerRef.current.abort();
+    }
+    controllerRef.current = new AbortController();
     try {
       setLoading(true);
       setError(null);
@@ -92,19 +96,20 @@ export function usePositionDetail({
       >;
 
       if (non_admin) {
-        response = await axiosPrivate.get(`/api/job/${id}/`, {
-          // signal: controller.signal,
+        response = await defaultAxios.get(`/api/job/${id}/`, {
+          signal: controllerRef.current.signal,
         });
       } else {
-        response = await defaultAxios.get(`/api/job/${id}/`, {
-          // signal: controller.signal,
+        response = await axiosPrivate.get(`/api/job/${id}/`, {
+          signal: controllerRef.current.signal,
         });
       }
 
       console.log(response.data);
       setPosition(response.data);
     } catch (err: AxiosError | any) {
-      console.log(err);
+      console.error(err);
+      if (err.code === "ERR_CANCELED") return;
       setError(
         err.response?.data?.error ||
           err.response?.data?.detail ||
@@ -117,10 +122,6 @@ export function usePositionDetail({
 
   useEffect(() => {
     fetchPositionDetail();
-
-    return () => {
-      // controller.abort();
-    };
   }, [id]);
 
   return {

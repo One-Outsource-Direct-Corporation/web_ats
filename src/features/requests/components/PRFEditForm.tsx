@@ -10,23 +10,17 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import { Field, FieldLabel, FieldGroup } from "@/shared/components/ui/field";
-import type { PRFResponse } from "@/features/prf/types/prfTypes";
 import { RichTextEditor } from "@/shared/components/reusables/RichTextEditor";
 import { useUsersByDepartment } from "@/features/prf/hooks/useUsersByDepartment";
 import type { User } from "@/features/auth/types/auth.types";
-import formatName, { formatForJSON } from "@/shared/utils/formatName";
+import formatName from "@/shared/utils/formatName";
 import type { JobPostingResponsePRF } from "@/features/jobs/types/jobTypes";
 interface PRFEditFormProps {
   initialData: JobPostingResponsePRF;
-  onSave: (data: JobPostingResponsePRF) => Promise<void>;
-  saving: boolean;
 }
 
-export default function PRFEditForm({
-  initialData,
-  onSave,
-  saving,
-}: PRFEditFormProps) {
+export default function PRFEditForm({ initialData }: PRFEditFormProps) {
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState(initialData);
   const [isEdited, setIsEdited] = useState(false);
   const { users } = useUsersByDepartment(formData.business_unit.toLowerCase());
@@ -39,73 +33,73 @@ export default function PRFEditForm({
     setIsEdited(true);
   };
 
-  function handleSubmit2() {
-    const data = {
-      job_posting: {
-        job_title: formData.job_title,
-        target_start_date: formData.target_start_date,
-        reason_for_posting: formatForJSON(formData.reason_for_posting),
-        other_reason_for_posting:
-          formData.reason_for_posting !== "Other"
-            ? ""
-            : formatForJSON(formData.reason_for_posting),
-        department_name: formatForJSON(formData.department_name),
-        employment_type: formData.employment_type,
-        work_setup: formatForJSON(formData.work_setup),
-        working_site: formData.working_site,
-        min_salary: Number(formData.min_salary) || 0,
-        max_salary: Number(formData.max_salary) || 0,
-        description: formData.description,
-        responsibilities: formData.responsibilities,
-        qualifications: formData.qualifications,
-      },
-      number_of_vacancies: Number(formData.number_of_vacancies),
-      business_unit: formData.business_unit.toLowerCase(),
-      interview_levels: Number(formData.interview_levels),
-      immediate_supervisor: formData.immediate_supervisor,
-      hiring_managers:
-        formData.interview_levels < 0 ||
-        formData.hiring_managers.some(
-          (hm: string) => hm === "no-hiring-manager"
-        )
-          ? []
-          : formData.hiring_managers,
-      category: formData.category,
-      position: formData.position,
-      work_schedule_from: formData.work_schedule_from,
-      work_schedule_to: formData.work_schedule_to,
-      salary_budget: Number(formData.salary_budget),
-      is_salary_range: formData.is_salary_range,
-      assessment_required: formData.assessment_required,
-      other_assessment: formData.other_assessment
-        ? formData.other_assessment
-            .split(",")
-            .map((item: string) => formatForJSON(item))
-        : [],
-      assessment_types: Object.keys(formData.assessment_types).filter(
-        (key) =>
-          formData.assessment_types[
-            key as keyof typeof formData.assessment_types
-          ]
-      ),
-      hardware_requirements: Object.keys(formData.hardware_required).filter(
-        (key) =>
-          formData.hardware_required[
-            key as keyof typeof formData.hardware_required
-          ]
-      ),
-      software_requirements: Object.keys(formData.software_required).filter(
-        (key) =>
-          formData.software_required[
-            key as keyof typeof formData.software_required
-          ]
-      ),
-    };
-  }
+  // function handleSubmit2() {
+  //   const data = {
+  //     job_posting: {
+  //       job_title: formData.job_title,
+  //       target_start_date: formData.target_start_date,
+  //       reason_for_posting: formatForJSON(formData.reason_for_posting),
+  //       other_reason_for_posting:
+  //         formData.reason_for_posting !== "Other"
+  //           ? ""
+  //           : formatForJSON(formData.reason_for_posting),
+  //       department_name: formatForJSON(formData.department_name),
+  //       employment_type: formData.employment_type,
+  //       work_setup: formatForJSON(formData.work_setup),
+  //       working_site: formData.working_site,
+  //       min_salary: Number(formData.min_salary) || 0,
+  //       max_salary: Number(formData.max_salary) || 0,
+  //       description: formData.description,
+  //       responsibilities: formData.responsibilities,
+  //       qualifications: formData.qualifications,
+  //     },
+  //     number_of_vacancies: Number(formData.number_of_vacancies),
+  //     business_unit: formData.business_unit.toLowerCase(),
+  //     interview_levels: Number(formData.interview_levels),
+  //     immediate_supervisor: formData.immediate_supervisor,
+  //     hiring_managers:
+  //       formData.interview_levels < 0 ||
+  //       formData.hiring_managers.some(
+  //         (hm: string) => hm === "no-hiring-manager"
+  //       )
+  //         ? []
+  //         : formData.hiring_managers,
+  //     category: formData.category,
+  //     position: formData.position,
+  //     work_schedule_from: formData.work_schedule_from,
+  //     work_schedule_to: formData.work_schedule_to,
+  //     salary_budget: Number(formData.salary_budget),
+  //     is_salary_range: formData.is_salary_range,
+  //     assessment_required: formData.assessment_required,
+  //     other_assessment: formData.other_assessment
+  //       ? formData.other_assessment
+  //           .split(",")
+  //           .map((item: string) => formatForJSON(item))
+  //       : [],
+  //     assessment_types: Object.keys(formData.assessment_types).filter(
+  //       (key) =>
+  //         formData.assessment_types[
+  //           key as keyof typeof formData.assessment_types
+  //         ]
+  //     ),
+  //     hardware_requirements: Object.keys(formData.hardware_required).filter(
+  //       (key) =>
+  //         formData.hardware_required[
+  //           key as keyof typeof formData.hardware_required
+  //         ]
+  //     ),
+  //     software_requirements: Object.keys(formData.software_required).filter(
+  //       (key) =>
+  //         formData.software_required[
+  //           key as keyof typeof formData.software_required
+  //         ]
+  //     ),
+  //   };
+  // }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSave(formData);
+    console.log("Submitted data:", formData);
   };
 
   return (
@@ -404,10 +398,10 @@ export default function PRFEditForm({
       <div className="flex justify-end pt-6 border-t">
         <Button
           type="submit"
-          disabled={saving || !isEdited}
+          disabled={loading || !isEdited}
           className="min-w-32"
         >
-          {saving ? (
+          {loading ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               Saving...

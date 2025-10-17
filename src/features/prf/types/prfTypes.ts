@@ -1,5 +1,3 @@
-import type { JobPostingResponse } from "@/features/jobs/types/jobTypes";
-
 export interface AssessmentTypes {
   technical: boolean;
   language: boolean;
@@ -28,6 +26,7 @@ export interface PRF {
   other_reason_for_posting: string;
   business_unit: string;
   department: string;
+  department_display: string;
   interview_levels: number;
   immediate_supervisor: string | null;
   immediate_supervisor_display: string | null;
