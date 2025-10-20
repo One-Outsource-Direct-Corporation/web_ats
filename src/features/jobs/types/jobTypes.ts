@@ -27,6 +27,7 @@ export interface JobPostingResponse {
   reason_for_posting: string;
   other_reason_for_posting: string;
   department_name: string;
+  department_name_other: string;
   employment_type: string;
   work_setup: string;
   working_site: string;

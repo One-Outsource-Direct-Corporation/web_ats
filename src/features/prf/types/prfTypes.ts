@@ -1,21 +1,18 @@
 export interface AssessmentTypes {
-  technical: boolean;
-  language: boolean;
-  cognitive: boolean;
-  personality: boolean;
-  behavioral: boolean;
-  cultural: boolean;
+  [key: string]: boolean;
 }
 
 export interface HardwareRequired {
-  desktop: boolean;
-  handset: boolean;
-  headset: boolean;
-  laptop: boolean;
+  [key: string]: boolean;
 }
 
 export interface SoftwareRequired {
   [key: string]: boolean;
+}
+
+export interface PRFHiringManagerResponse {
+  id: number;
+  name: string;
 }
 
 export interface PRF {
@@ -83,6 +80,7 @@ export interface PRFResponse {
     id: number;
     name: string;
   }[];
+  hiring_managers_display: PRFHiringManagerResponse[];
 }
 
 export type FormDataType = PRF;

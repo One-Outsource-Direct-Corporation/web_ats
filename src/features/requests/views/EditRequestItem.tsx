@@ -79,7 +79,7 @@ export default function EditRequestItem() {
 
         <div className="flex items-center gap-2">
           <Select
-            value={status}
+            value={position.status}
             onValueChange={async (
               value: "draft" | "pending" | "active" | "closed" | "cancelled"
             ) => {
@@ -101,7 +101,7 @@ export default function EditRequestItem() {
           >
             <SelectTrigger
               className={`w-32 rounded-4xl border-0 font-semibold ${formatBackgroundStatus(
-                status
+                position.status
               )}`}
             >
               <SelectValue />
