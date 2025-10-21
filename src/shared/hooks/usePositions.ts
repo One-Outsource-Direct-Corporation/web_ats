@@ -16,9 +16,20 @@ export function usePositions({
   my_postings = false,
   non_admin = false,
 }) {
-  const [positions, setPositions] = useState<JobPostingAPIResponse | null>(
-    null
-  );
+  const [positions, setPositions] = useState<
+    | JobPostingAPIResponse
+    | {
+        count: number;
+        next: string | null;
+        previous: string | null;
+        results: JobPostingResponsePosition[];
+      }
+  >({
+    count: 0,
+    next: null,
+    previous: null,
+    results: [],
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const axiosPrivate = useAxiosPrivate();
@@ -51,7 +62,12 @@ export function usePositions({
       console.log(err);
       if (err.code === "ERR_CANCELED") return;
       setError(err.response?.data?.detail || "An error occurred");
-      setPositions(null);
+      setPositions({
+        count: 0,
+        next: null,
+        previous: null,
+        results: [],
+      });
       setLoading(false);
     }
   };

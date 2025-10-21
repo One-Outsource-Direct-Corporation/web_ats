@@ -1,7 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { ArrowLeft, LoaderCircle } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -12,17 +11,10 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
-import type { PRFResponse } from "@/features/prf/types/prfTypes";
-import type { PositionData } from "@/features/positions/types/positionTypes";
 import PRFEditForm from "../components/PRFEditForm";
-import PositionEditForm from "../components/PositionEditForm";
 import type { AxiosError } from "axios";
 import { formatBackgroundStatus } from "@/shared/utils/formatBackgroundStatus";
-import type {
-  JobPostingResponsePosition,
-  JobPostingResponsePRF,
-} from "@/features/jobs/types/jobTypes";
-import { formatForJSON } from "@/shared/utils/formatName";
+import type { JobPostingResponsePRF } from "@/features/jobs/types/jobTypes";
 import { usePositionDetail } from "@/shared/hooks/usePositions";
 
 export default function EditRequestItem() {
@@ -89,7 +81,7 @@ export default function EditRequestItem() {
                 await axiosPrivate.patch(endpoint, {
                   job_posting: { status: value },
                 });
-                refetch(); // Refetch to update the position data if needed
+                refetch(); // Refetch to update the position data
                 toast.success("Status updated successfully");
               } catch (err: AxiosError | any) {
                 console.error("Error updating status:", err);

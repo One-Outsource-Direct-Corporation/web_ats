@@ -78,24 +78,36 @@ export default function Request() {
   // Handle delete action
   const handleDelete = useCallback(async () => {
     if (selectedItems.length === 0) return;
+
     try {
       const ids = selectedItems.map((item) => item.id);
-
       const data = { ids };
 
-      const response = await axiosPrivate.delete("/api/job/bulk-delete/", {
+      await axiosPrivate.delete("/api/job/bulk-delete/", {
         data,
       });
 
-      console.log(response);
-
+      toast.success(`Successfully deleted ${ids.length} item(s)`);
       setSelectedItems([]);
-      await refetch();
-    } catch (error) {
+
+      // Check if current page will be empty after deletion
+      const remainingItemsOnCurrentPage = positions.results.filter(
+        (item) => !ids.includes(item.id)
+      );
+
+      if (remainingItemsOnCurrentPage.length === 0 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      } else {
+        await refetch();
+      }
+    } catch (error: any) {
       console.error("Error deleting items:", error);
-      toast.error("Failed to delete some items. Please try again.");
+      toast.error(
+        error?.response?.data?.detail ||
+          "Failed to delete some items. Please try again."
+      );
     }
-  }, [selectedItems]);
+  }, [selectedItems, currentPage, positions.results, axiosPrivate, refetch]);
 
   // Handle page change
   const handleNextPage = useCallback(() => {
