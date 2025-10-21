@@ -1,8 +1,8 @@
 import { useState, useMemo } from "react";
 import type { JobPostingResponsePRF } from "@/features/jobs/types/jobTypes";
-import { EditStep01 } from "./edit/EditStep01";
-import { EditStep02 } from "./edit/EditStep02";
-import { EditStep03 } from "./edit/EditStep03";
+import { EditStep01 } from "./prf-edit/EditStep01";
+import { EditStep02 } from "./prf-edit/EditStep02";
+import { EditStep03 } from "./prf-edit/EditStep03";
 import useSubmitEditForm from "../hooks/useSubmitEditForm";
 
 interface PRFEditFormProps {
@@ -174,7 +174,7 @@ export default function PRFEditForm({ initialData }: PRFEditFormProps) {
   const goToPreviousStep = () => setStep((prev) => Math.max(prev - 1, 1));
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Step Navigation Header */}
       <div className="flex space-x-0 border border-gray-300 rounded-md overflow-hidden mb-8">
         {["Step 01", "Step 02", "Step 03"].map((label, i) => {

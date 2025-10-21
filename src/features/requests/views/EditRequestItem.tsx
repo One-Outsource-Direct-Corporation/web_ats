@@ -14,8 +14,12 @@ import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import PRFEditForm from "../components/PRFEditForm";
 import type { AxiosError } from "axios";
 import { formatBackgroundStatus } from "@/shared/utils/formatBackgroundStatus";
-import type { JobPostingResponsePRF } from "@/features/jobs/types/jobTypes";
+import type {
+  JobPostingResponsePosition,
+  JobPostingResponsePRF,
+} from "@/features/jobs/types/jobTypes";
 import { usePositionDetail } from "@/shared/hooks/usePositions";
+import PositionEditForm from "../components/PositionEditForm";
 
 export default function EditRequestItem() {
   const { type, id } = useParams<{ type: "prf" | "position"; id: string }>();
@@ -50,7 +54,7 @@ export default function EditRequestItem() {
     <div className="max-w-7xl mx-auto px-6 py-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
+        <div className="gap-4">
           <Button
             onClick={() => navigate("/requests")}
             variant="outline"
@@ -59,7 +63,7 @@ export default function EditRequestItem() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
-          <div>
+          <div className="mt-4">
             <h1 className="text-3xl font-bold text-gray-800">
               Edit {type === "prf" ? "PRF" : "Position"}
             </h1>
@@ -77,7 +81,7 @@ export default function EditRequestItem() {
             ) => {
               try {
                 const endpoint =
-                  type === "prf" ? `/api/prf/${id}/` : `/api/job/${id}/`;
+                  type === "prf" ? `/api/prf/${id}/` : `/api/position/${id}/`;
                 await axiosPrivate.patch(endpoint, {
                   job_posting: { status: value },
                 });
@@ -110,16 +114,13 @@ export default function EditRequestItem() {
       </div>
 
       {/* Form Content */}
-      <div className="bg-white rounded-lg shadow-sm border">
+      <div className="bg-white rounded-lg shadow-sm border p-6">
         {type === "prf" ? (
           <PRFEditForm initialData={position as JobPostingResponsePRF} />
         ) : (
-          // <PositionEditForm
-          //   initialData={position as PositionData}
-          //   onSave={handleSave}
-          //   saving={saving}
-          // />
-          <>Position editing not yet implemented.</>
+          <PositionEditForm
+            initialData={position as JobPostingResponsePosition}
+          />
         )}
       </div>
     </div>
