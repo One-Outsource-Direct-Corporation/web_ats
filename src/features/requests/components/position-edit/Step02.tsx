@@ -4,9 +4,11 @@ import { Field, FieldGroup, FieldLabel } from "@/shared/components/ui/field";
 export default function Step02({
   formData,
   setFormData,
+  errors,
 }: {
   formData: JobPostingResponsePosition;
   setFormData: (data: JobPostingResponsePosition) => void;
+  errors?: any;
 }) {
   function handleChange(field: string, value: any) {
     setFormData({
@@ -23,6 +25,9 @@ export default function Step02({
           value={formData.description}
           onChange={(value) => handleChange("description", value)}
         />
+        {errors?.description && (
+          <p className="text-red-600 text-sm mt-1">{errors.description}</p>
+        )}
       </Field>
       <Field>
         <FieldLabel>Responsibilities</FieldLabel>
@@ -30,6 +35,9 @@ export default function Step02({
           value={formData.responsibilities}
           onChange={(value) => handleChange("responsibilities", value)}
         />
+        {errors?.responsibilities && (
+          <p className="text-red-600 text-sm mt-1">{errors.responsibilities}</p>
+        )}
       </Field>
       <Field>
         <FieldLabel>Qualifications</FieldLabel>
@@ -37,6 +45,9 @@ export default function Step02({
           value={formData.qualifications}
           onChange={(value) => handleChange("qualifications", value)}
         />
+        {errors?.qualifications && (
+          <p className="text-red-600 text-sm mt-1">{errors.qualifications}</p>
+        )}
       </Field>
     </FieldGroup>
   );

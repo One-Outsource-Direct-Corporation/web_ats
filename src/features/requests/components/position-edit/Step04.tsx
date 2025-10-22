@@ -1,17 +1,16 @@
 import PipelineConfiguration from "@/shared/components/reusables/PipelineConfiguration";
 import type { PipelineStep } from "@/features/positions/types/createPosition";
-import { useState } from "react";
 import type { JobPostingResponsePosition } from "@/features/jobs/types/jobTypes";
 
 export default function Step04({
   formData,
   setFormData,
+  errors,
 }: {
   formData: JobPostingResponsePosition;
   setFormData: (data: JobPostingResponsePosition) => void;
+  errors?: any;
 }) {
-  const [errors] = useState<any>({});
-
   const handlePipelineStep = (
     pipeline_identifier: number,
     data: PipelineStep

@@ -69,9 +69,6 @@ export default function PipelineConfiguration({
     {}
   );
 
-  console.log(pipelineSteps);
-  console.log(errors?.pipeline);
-
   const handleInputChange = (field: string, value: string) => {
     setStepData((prev) => ({ ...prev, [field]: value }));
   };
@@ -92,7 +89,6 @@ export default function PipelineConfiguration({
   };
 
   const handleEditStep = (pipeline_identifier: number) => {
-    console.log("clickiung");
     // First check for newly added steps (has pipeline_identifier)
     let step = pipelineSteps.find(
       (step) => step.pipeline_identifier === pipeline_identifier
@@ -130,7 +126,6 @@ export default function PipelineConfiguration({
     setOpenDialogs((prev) => ({ ...prev, [stage_id]: false }));
     handleResetStepData();
   };
-
   return (
     <Card className="p-6">
       <h3 className="text-lg font-semibold text-gray-800 mb-6">{title}</h3>

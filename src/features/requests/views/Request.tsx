@@ -158,6 +158,7 @@ export default function Request() {
               <tr>
                 <th className="px-4 py-3 w-12">
                   <Checkbox
+                    className="data-[state=checked]:bg-blue-700 data-[state=checked]:border-blue-700"
                     checked={selectAll}
                     onCheckedChange={handleSelectAll}
                   />
@@ -208,6 +209,7 @@ export default function Request() {
                       >
                         <td className="px-4 py-3">
                           <Checkbox
+                            className="data-[state=checked]:bg-blue-700 data-[state=checked]:border-blue-700"
                             checked={isSelected}
                             onCheckedChange={(checked) =>
                               handleItemSelect(item.id, checked as boolean)

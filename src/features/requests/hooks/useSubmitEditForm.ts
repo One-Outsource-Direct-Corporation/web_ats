@@ -5,6 +5,7 @@ import type { AxiosError } from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import DOMPurify from "dompurify";
 
 export default function useSubmitEditForm({
   formData,
@@ -19,6 +20,15 @@ export default function useSubmitEditForm({
   const handleSubmit = async () => {
     setLoading(true);
     setErrors({});
+
+    const cleanRichText = (html: string) => {
+      const cleaned = DOMPurify.sanitize(html);
+      const stripped = cleaned
+        .replace(/<p><br\s*\/?><\/p>/gi, "")
+        .replace(/<p>\s*<\/p>/gi, "")
+        .replace(/^\s*$/, "");
+      return stripped || "";
+    };
 
     const data = {
       job_posting: {
@@ -36,9 +46,9 @@ export default function useSubmitEditForm({
         number_of_vacancies: Number(formData.number_of_vacancies),
         min_salary: Number(formData.min_salary) || 0,
         max_salary: Number(formData.max_salary) || 0,
-        description: formData.description,
-        responsibilities: formData.responsibilities,
-        qualifications: formData.qualifications,
+        description: cleanRichText(formData.description),
+        responsibilities: cleanRichText(formData.responsibilities),
+        qualifications: cleanRichText(formData.qualifications),
       },
       business_unit: formData.business_unit.toLowerCase(),
       immediate_supervisor: formData.immediate_supervisor,

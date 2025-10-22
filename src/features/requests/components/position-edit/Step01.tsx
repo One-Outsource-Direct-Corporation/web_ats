@@ -27,9 +27,11 @@ import type { JobPostingResponsePosition } from "@/features/jobs/types/jobTypes"
 export default function Step01({
   formData,
   setFormData,
+  errors,
 }: {
   formData: JobPostingResponsePosition;
   setFormData: (data: JobPostingResponsePosition) => void;
+  errors?: any;
 }) {
   const { clients } = useClient();
 
@@ -60,6 +62,9 @@ export default function Step01({
               ))}
             </SelectContent>
           </Select>
+          {errors?.client && (
+            <p className="text-red-600 text-sm mt-1">{errors.client}</p>
+          )}
         </Field>
 
         <Field>
@@ -79,6 +84,11 @@ export default function Step01({
               <SelectItem value="doctorate">Doctorate</SelectItem>
             </SelectContent>
           </Select>
+          {errors?.education_level && (
+            <p className="text-red-600 text-sm mt-1">
+              {errors.education_level}
+            </p>
+          )}
         </Field>
 
         <Field>
@@ -90,6 +100,9 @@ export default function Step01({
             value={formData.job_title}
             onChange={(e) => handleChange("job_title", e.target.value)}
           />
+          {errors?.job_title && (
+            <p className="text-red-600 text-sm mt-1">{errors.job_title}</p>
+          )}
         </Field>
 
         <Field>
@@ -110,6 +123,11 @@ export default function Step01({
               <SelectItem value="executive">Executive</SelectItem>
             </SelectContent>
           </Select>
+          {errors?.experience_level && (
+            <p className="text-red-600 text-sm mt-1">
+              {errors.experience_level}
+            </p>
+          )}
         </Field>
 
         <FieldGroup

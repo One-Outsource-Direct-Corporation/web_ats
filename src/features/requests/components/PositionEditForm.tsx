@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/shared/components/ui/button";
 import type { JobPostingResponsePosition } from "@/features/jobs/types/jobTypes";
 import { StepNavigation } from "@/features/positions/components/create-position/navigation/StepNavigation";
@@ -8,7 +8,7 @@ import Step02 from "./position-edit/Step02";
 import Step03 from "./position-edit/Step03";
 import Step04 from "./position-edit/Step04";
 import Step05 from "./position-edit/Step05";
-import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
+import useSubmitEditFormPosition from "../hooks/useSubmitEditFormPosition";
 
 interface PositionEditFormProps {
   initialData: JobPostingResponsePosition;
@@ -29,35 +29,93 @@ export default function PositionEditForm({
   } = useStepNavigation();
   const [formData, setFormData] = useState(initialData);
   const [stepErrors, setStepErrors] = useState<{ [key: number]: any }>({});
-  const axiosPrivate = useAxiosPrivate();
-  console.log(formData);
+  const { handleSubmit, loading, error } = useSubmitEditFormPosition({
+    formData,
+  });
+
+  // Update step errors when error changes
+  useEffect(() => {
+    if (error) {
+      const errors: { [key: number]: any } = {};
+
+      // Step 1 errors: Basic info (client, education_level, experience_level, job_posting fields)
+      if (
+        error.client ||
+        error.education_level ||
+        error.experience_level ||
+        error.job_posting
+      ) {
+        errors[1] = {
+          client: error.client,
+          education_level: error.education_level,
+          experience_level: error.experience_level,
+          ...error.job_posting,
+        };
+      }
+
+      // Step 2 errors: Rich text fields (description, responsibilities, qualifications)
+      if (
+        error.job_posting?.description ||
+        error.job_posting?.responsibilities ||
+        error.job_posting?.qualifications
+      ) {
+        errors[2] = {
+          description: error.job_posting.description,
+          responsibilities: error.job_posting.responsibilities,
+          qualifications: error.job_posting.qualifications,
+        };
+      }
+
+      // Step 3 errors: Application form
+      if (error.application_form) {
+        errors[3] = error.application_form;
+      }
+
+      // Step 4 errors: Pipeline
+      if (error.pipeline) {
+        errors[4] = error.pipeline;
+      }
+
+      setStepErrors(errors);
+    } else {
+      setStepErrors({});
+    }
+  }, [error]);
 
   const resetForm = () => {};
 
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return <Step01 formData={formData} setFormData={setFormData} />;
+        return (
+          <Step01
+            formData={formData}
+            setFormData={setFormData}
+            errors={stepErrors[1]}
+          />
+        );
       case 2:
-        return <Step02 formData={formData} setFormData={setFormData} />;
+        return (
+          <Step02
+            formData={formData}
+            setFormData={setFormData}
+            errors={stepErrors[2]}
+          />
+        );
       case 3:
         return <Step03 formData={formData} setFormData={setFormData} />;
       case 4:
-        return <Step04 formData={formData} setFormData={setFormData} />;
+        return (
+          <Step04
+            formData={formData}
+            setFormData={setFormData}
+            errors={error}
+          />
+        );
       case 5:
         return <Step05 />;
     }
   };
-
-  async function handlePublish() {
-    console.log("Publishing position:", formData);
-
-    const response = await axiosPrivate.patch(
-      `/api/position/${formData.id}/`,
-      formData
-    );
-    console.log("Position published successfully:", response.data);
-  }
 
   return (
     <>
@@ -83,7 +141,7 @@ export default function PositionEditForm({
         </Button>
         <Button
           className="bg-blue-600 hover:bg-blue-700 text-white"
-          onClick={currentStep === 5 ? handlePublish : handleNext}
+          onClick={currentStep === 5 ? handleSubmit : handleNext}
         >
           {currentStep === 5 ? "Publish Position" : "Next step →"}
         </Button>

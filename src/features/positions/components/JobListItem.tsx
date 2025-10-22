@@ -70,10 +70,18 @@ export default function JobListItem({
 
               <Badge
                 className={`${getDepartmentColor(
-                  formatName(posting.department_name)
+                  formatName(
+                    posting.department_name === "other"
+                      ? posting.department_name_other
+                      : posting.department_name
+                  )
                 )} text-xs`}
               >
-                {formatName(posting.department_name)}
+                {formatName(
+                  posting.department_name === "other"
+                    ? posting.department_name_other
+                    : posting.department_name
+                )}
               </Badge>
               <Badge variant="default" className="text-xs">
                 {posting.type_display}
