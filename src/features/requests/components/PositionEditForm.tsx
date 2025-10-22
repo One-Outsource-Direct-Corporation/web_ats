@@ -24,8 +24,6 @@ export default function PositionEditForm({
     handleNext,
     handleBack,
     handleStepClick,
-    getStepTitle,
-    resetSteps,
   } = useStepNavigation();
   const [formData, setFormData] = useState(initialData);
   const [stepErrors, setStepErrors] = useState<{ [key: number]: any }>({});
@@ -142,8 +140,18 @@ export default function PositionEditForm({
         <Button
           className="bg-blue-600 hover:bg-blue-700 text-white"
           onClick={currentStep === 5 ? handleSubmit : handleNext}
+          disabled={loading}
         >
-          {currentStep === 5 ? "Publish Position" : "Next step →"}
+          {loading ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              {currentStep === 5 ? "Publishing..." : "Loading..."}
+            </>
+          ) : currentStep === 5 ? (
+            "Publish Position"
+          ) : (
+            "Next step →"
+          )}
         </Button>
       </div>
     </>

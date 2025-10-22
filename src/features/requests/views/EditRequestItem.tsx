@@ -115,6 +115,40 @@ export default function EditRequestItem() {
               <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
+          {position.status === "active" && (
+            <Select
+              value={position.published.toString()}
+              onValueChange={async (value: "true" | "false") => {
+                try {
+                  const endpoint =
+                    type === "prf" ? `/api/prf/${id}/` : `/api/position/${id}/`;
+                  const response = await axiosPrivate.patch(endpoint, {
+                    job_posting: {
+                      published: value === "true",
+                      status: position.status,
+                    },
+                  });
+                  console.log(response);
+                  refetch();
+                  toast.success("Published status updated successfully");
+                } catch (err: AxiosError | any) {
+                  console.error("Error updating published status:", err);
+                  toast.error(
+                    err.response?.data?.detail ||
+                      "Failed to update published status"
+                  );
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Published" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="true">Published</SelectItem>
+                <SelectItem value="false">Unpublished</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
 

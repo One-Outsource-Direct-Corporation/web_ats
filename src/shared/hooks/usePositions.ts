@@ -10,10 +10,15 @@ import type {
 } from "@/features/jobs/types/jobTypes";
 
 export function usePositions({
-  no_active = false,
-  page = 1,
-  status = "",
   my_postings = false,
+  page = 1,
+  type = "",
+  status = "",
+  employment_type = "",
+  work_setup = "",
+  order_by = "",
+  published = "false",
+  no_active = false,
   non_admin = false,
 }) {
   const [positions, setPositions] = useState<
@@ -45,15 +50,40 @@ export function usePositions({
       setError(null);
       let response: AxiosResponse<JobPostingAPIResponse>;
       if (non_admin) {
-        response = await defaultAxios.get(
-          `/api/job/?no_active=${no_active}&page=${page}&status=${status}`,
-          { signal: controllerRef.current.signal }
-        );
+        const queryParams = [
+          no_active ? `no_active=${no_active}` : "",
+          page ? `page=${page}` : "",
+          status ? `status=${status}` : "",
+          type ? `type=${type}` : "",
+          employment_type ? `employment_type=${employment_type}` : "",
+          work_setup ? `work_setup=${work_setup}` : "",
+          order_by ? `order_by=${order_by}` : "",
+          published ? `published=${published}` : "",
+        ]
+          .filter(Boolean)
+          .join("&");
+
+        response = await defaultAxios.get(`/api/job/?${queryParams}`, {
+          signal: controllerRef.current.signal,
+        });
       } else {
-        response = await axiosPrivate.get(
-          `/api/job/?my_postings=${my_postings}&no_active=${no_active}&page=${page}&status=${status}`,
-          { signal: controllerRef.current.signal }
-        );
+        const queryParams = [
+          my_postings ? `my_postings=${my_postings}` : "",
+          no_active ? `no_active=${no_active}` : "",
+          page ? `page=${page}` : "",
+          status ? `status=${status}` : "",
+          type ? `type=${type}` : "",
+          employment_type ? `employment_type=${employment_type}` : "",
+          work_setup ? `work_setup=${work_setup}` : "",
+          order_by ? `order_by=${order_by}` : "",
+          published ? `published=${published}` : "",
+        ]
+          .filter(Boolean)
+          .join("&");
+
+        response = await axiosPrivate.get(`/api/job/?${queryParams}`, {
+          signal: controllerRef.current.signal,
+        });
       }
 
       setPositions(response.data);
@@ -74,7 +104,18 @@ export function usePositions({
 
   useEffect(() => {
     fetchPositions();
-  }, [page]);
+  }, [
+    page,
+    type,
+    status,
+    employment_type,
+    work_setup,
+    order_by,
+    my_postings,
+    published,
+    no_active,
+    non_admin,
+  ]);
 
   return {
     positions,

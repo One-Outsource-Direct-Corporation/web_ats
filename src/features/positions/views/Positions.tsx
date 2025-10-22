@@ -8,11 +8,22 @@ import { useCallback, useEffect, useState } from "react";
 
 export default function Positions() {
   const [currentPage, setCurrentPage] = useState(1);
+  const [filters, setFilters] = useState<{
+    type: string;
+    published: string;
+  }>({
+    type: "all",
+    published: "all",
+  });
   const { positions, loading, error } = usePositions({
     status: "active",
     page: currentPage,
     my_postings: true,
+    type: filters.type,
+    published: filters.published,
   });
+
+  console.log(positions);
 
   useEffect(() => {
     document.title = "Positions - OODC ATS";
@@ -104,7 +115,7 @@ export default function Positions() {
           <p className="text-lg text-gray-700">
             Manages job openings and related information
           </p>
-          <FilterBar />
+          <FilterBar filters={filters} setFilters={setFilters} />
         </div>
       </div>
 

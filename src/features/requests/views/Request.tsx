@@ -32,15 +32,28 @@ interface SelectedItem {
 export default function Request() {
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [filters, setFilters] = useState({
+    type: "all",
+    status: "all",
+    employment_type: "all",
+    work_setup: "all",
+    order_by: "asc",
+  });
   const { positions, loading, error, refetch } = usePositions({
-    no_active: true,
-    page: currentPage,
     my_postings: true,
+    page: currentPage,
+    type: filters.type,
+    status: filters.status,
+    employment_type: filters.employment_type,
+    work_setup: filters.work_setup,
+    order_by: filters.order_by,
+    no_active: filters.status === "active" ? false : true,
   });
   const selectAll = positions
     ? positions.results.length > 0 &&
       selectedItems.length === positions.results.length
     : false;
+
   const axiosPrivate = useAxiosPrivate();
   const navigate = useNavigate();
 
@@ -144,7 +157,7 @@ export default function Request() {
           <p className="text-lg text-gray-700">
             Handles hiring requests and approvals
           </p>
-          <FilterBar />
+          <FilterBar filters={filters} setFilters={setFilters} />
         </div>
       </div>
 
@@ -239,7 +252,9 @@ export default function Request() {
                                 : "bg-neutral-700 text-neutral-100"
                             }`}
                           >
-                            {item.type_display}
+                            {item.type_display === "PRF"
+                              ? "Internal"
+                              : "Client"}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-center">

@@ -18,35 +18,55 @@ import {
 import { User, Users2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-function FilterBar() {
+interface FilterBarProps {
+  filters: {
+    type: string;
+    published: string;
+  };
+  setFilters: (filters: { type: string; published: string }) => void;
+}
+
+function FilterBar({ filters, setFilters }: FilterBarProps) {
   const navigate = useNavigate();
 
   return (
     <div className="flex flex-wrap justify-between items-center gap-4">
       <Input placeholder="Search positions..." className="w-64" />
       <div className="flex flex-wrap gap-2 ml-auto">
-        <Select>
+        <Select
+          value={filters.type}
+          onValueChange={(value) =>
+            setFilters({
+              ...filters,
+              type: value,
+            })
+          }
+        >
           <SelectTrigger className="min-w-[160px] bg-gray-100">
-            <SelectValue placeholder="All Offices" />
+            <SelectValue placeholder="All Types" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Offices</SelectItem>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="prf">Internal</SelectItem>
+            <SelectItem value="client">Client</SelectItem>
           </SelectContent>
         </Select>
-        <Select>
+        <Select
+          value={filters.published}
+          onValueChange={(value) =>
+            setFilters({
+              ...filters,
+              published: value,
+            })
+          }
+        >
           <SelectTrigger className="min-w-[160px] bg-gray-100">
-            <SelectValue placeholder="All Departments" />
+            <SelectValue placeholder="All Published" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Departments</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select>
-          <SelectTrigger className="min-w-[160px] bg-gray-100">
-            <SelectValue placeholder="All Employment Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Employment Type</SelectItem>
+            <SelectItem value="all">All Published</SelectItem>
+            <SelectItem value="true">Published</SelectItem>
+            <SelectItem value="false">Unpublished</SelectItem>
           </SelectContent>
         </Select>
         <Dialog>
