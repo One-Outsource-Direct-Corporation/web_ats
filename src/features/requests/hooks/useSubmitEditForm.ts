@@ -33,13 +33,13 @@ export default function useSubmitEditForm({
         employment_type: formData.employment_type,
         work_setup: formatForJSON(formData.work_setup),
         working_site: formData.working_site,
+        number_of_vacancies: Number(formData.number_of_vacancies),
         min_salary: Number(formData.min_salary) || 0,
         max_salary: Number(formData.max_salary) || 0,
         description: formData.description,
         responsibilities: formData.responsibilities,
         qualifications: formData.qualifications,
       },
-      number_of_vacancies: Number(formData.number_of_vacancies),
       business_unit: formData.business_unit.toLowerCase(),
       immediate_supervisor: formData.immediate_supervisor,
       hiring_managers: formData.hiring_managers.filter(
@@ -87,7 +87,6 @@ export default function useSubmitEditForm({
         }
       ),
     };
-
     try {
       const response = await axiosPrivate.patch(
         `/api/prf/${formData.id}/`,

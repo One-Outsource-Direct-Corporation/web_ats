@@ -4,7 +4,7 @@ import formatDate from "@/shared/utils/formatDate";
 import formatName from "@/shared/utils/formatName";
 import FilterBar from "../components/FilterBar";
 import { Checkbox } from "@/shared/components/ui/checkbox";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/shared/components/ui/button";
 import {
   Ellipsis,
@@ -44,7 +44,9 @@ export default function Request() {
   const axiosPrivate = useAxiosPrivate();
   const navigate = useNavigate();
 
-  console.log(positions);
+  useEffect(() => {
+    document.title = "Requests - OODC ATS";
+  }, []);
 
   // Handle select all checkbox
   const handleSelectAll = useCallback(

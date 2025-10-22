@@ -1,4 +1,3 @@
-import { useState } from "react";
 import useClient from "@/features/positions/hooks/create-position/useClient";
 import {
   Field,
@@ -23,17 +22,33 @@ import {
 } from "@/shared/components/ui/popover";
 import { Button } from "@/shared/components/ui/button";
 import { ChevronDownIcon } from "lucide-react";
+import type { JobPostingResponsePosition } from "@/features/jobs/types/jobTypes";
 
-export default function Step01() {
+export default function Step01({
+  formData,
+  setFormData,
+}: {
+  formData: JobPostingResponsePosition;
+  setFormData: (data: JobPostingResponsePosition) => void;
+}) {
   const { clients } = useClient();
-  const [selectedDepartment, setSelectedDepartment] = useState<string>("");
+
+  function handleChange(field: string, value: string | number | null) {
+    setFormData({
+      ...formData,
+      [field]: value,
+    });
+  }
 
   return (
     <FieldGroup className="mt-10">
       <FieldSet className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Field>
           <FieldLabel>Client</FieldLabel>
-          <Select>
+          <Select
+            value={formData.client?.toString()}
+            onValueChange={(value) => handleChange("client", Number(value))}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select Client" />
             </SelectTrigger>
@@ -49,7 +64,10 @@ export default function Step01() {
 
         <Field>
           <FieldLabel>Education Needed</FieldLabel>
-          <Select>
+          <Select
+            value={formData.education_level}
+            onValueChange={(value) => handleChange("education_level", value)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select Education Level" />
             </SelectTrigger>
@@ -65,12 +83,21 @@ export default function Step01() {
 
         <Field>
           <FieldLabel htmlFor="job_title">Job Title</FieldLabel>
-          <Input id="job_title" type="text" placeholder="Enter Job Title" />
+          <Input
+            id="job_title"
+            type="text"
+            placeholder="Enter Job Title"
+            value={formData.job_title}
+            onChange={(e) => handleChange("job_title", e.target.value)}
+          />
         </Field>
 
         <Field>
           <FieldLabel>Experience Level</FieldLabel>
-          <Select>
+          <Select
+            value={formData.experience_level}
+            onValueChange={(value) => handleChange("experience_level", value)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select Experience Level" />
             </SelectTrigger>
@@ -87,15 +114,15 @@ export default function Step01() {
 
         <FieldGroup
           className={`grid grid-cols-1 ${
-            selectedDepartment === "other" ? "md:grid-cols-2" : ""
+            formData.department_name === "other" ? "md:grid-cols-2" : ""
           } gap-6`}
         >
           {" "}
           <Field>
             <FieldLabel>Department</FieldLabel>
             <Select
-              value={selectedDepartment}
-              onValueChange={setSelectedDepartment}
+              value={formData.department_name}
+              onValueChange={(value) => handleChange("department_name", value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select Department" />
@@ -126,7 +153,7 @@ export default function Step01() {
               </SelectContent>
             </Select>
           </Field>
-          {selectedDepartment === "other" && (
+          {formData.department_name === "other" && (
             <Field>
               <FieldLabel htmlFor="other_department">
                 If Other, specify
@@ -135,6 +162,10 @@ export default function Step01() {
                 id="other_department"
                 type="text"
                 placeholder="Specify Department"
+                value={formData.department_name_other || ""}
+                onChange={(e) =>
+                  handleChange("department_name_other", e.target.value)
+                }
               />
             </Field>
           )}
@@ -147,12 +178,19 @@ export default function Step01() {
             type="number"
             min={1}
             placeholder="Enter number of vacancies"
+            value={formData.number_of_vacancies}
+            onChange={(e) =>
+              handleChange("number_of_vacancies", Number(e.target.value))
+            }
           />
         </Field>
 
         <Field>
           <FieldLabel>Employment Type</FieldLabel>
-          <Select>
+          <Select
+            value={formData.employment_type}
+            onValueChange={(value) => handleChange("employment_type", value)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select Employment Type" />
             </SelectTrigger>
@@ -175,7 +213,7 @@ export default function Step01() {
                 id="date"
                 className="w-48 justify-between font-normal"
               >
-                Select date
+                {formData.target_start_date || "Select date"}
                 <ChevronDownIcon />
               </Button>
             </PopoverTrigger>
@@ -183,14 +221,31 @@ export default function Step01() {
               className="w-auto overflow-hidden p-0"
               align="start"
             >
-              <Calendar mode="single" captionLayout="dropdown" />
+              <Calendar
+                mode="single"
+                captionLayout="dropdown"
+                selected={
+                  formData.target_start_date
+                    ? new Date(formData.target_start_date)
+                    : undefined
+                }
+                onSelect={(date) =>
+                  handleChange(
+                    "target_start_date",
+                    date ? date.toISOString().split("T")[0] : null
+                  )
+                }
+              />
             </PopoverContent>
           </Popover>
         </Field>
 
         <Field>
           <FieldLabel>Work Setup</FieldLabel>
-          <Select>
+          <Select
+            value={formData.work_setup}
+            onValueChange={(value) => handleChange("work_setup", value)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select Work Setup" />
             </SelectTrigger>
@@ -202,21 +257,58 @@ export default function Step01() {
           </Select>
         </Field>
 
-        <Field>
-          <FieldLabel>Reason for Hire</FieldLabel>
-          <Select>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Reason for Hire" />
-            </SelectTrigger>
-            <SelectContent></SelectContent>
-          </Select>
-        </Field>
+        <FieldGroup
+          className={`grid grid-cols-1 ${
+            formData.reason_for_posting === "other" ? "md:grid-cols-2" : ""
+          } gap-6`}
+        >
+          {" "}
+          <Field>
+            <FieldLabel>Reason for Hire</FieldLabel>
+            <Select
+              value={formData.reason_for_posting}
+              onValueChange={(value) =>
+                handleChange("reason_for_posting", value)
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select Reason for Hire" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="new_position">New position</SelectItem>
+                <SelectItem value="replacement">Replacement</SelectItem>
+                <SelectItem value="reliver">Reliver</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          {formData.reason_for_posting === "other" && (
+            <Field>
+              <FieldLabel htmlFor="other_reason">If Other, specify</FieldLabel>
+              <Input
+                id="other_reason"
+                type="text"
+                placeholder="Specify Reason"
+                value={formData.other_reason_for_posting || ""}
+                onChange={(e) =>
+                  handleChange("other_reason_for_posting", e.target.value)
+                }
+              />
+            </Field>
+          )}
+        </FieldGroup>
 
         <Field>
           <FieldLabel htmlFor="working_site">Working Site</FieldLabel>
-          <Input type="text" placeholder="Enter a location" />
+          <Input
+            type="text"
+            placeholder="Enter a location"
+            value={formData.working_site}
+            onChange={(e) => handleChange("working_site", e.target.value)}
+          />
         </Field>
       </FieldSet>
+
       <FieldSet>
         <FieldLegend>Budget Range</FieldLegend>
         <FieldSet className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -227,6 +319,10 @@ export default function Step01() {
               type="number"
               min={0}
               placeholder="Enter minimum budget"
+              value={formData.min_salary}
+              onChange={(e) =>
+                handleChange("min_salary", Number(e.target.value))
+              }
             />
           </Field>
           <Field>
@@ -236,6 +332,10 @@ export default function Step01() {
               type="number"
               min={0}
               placeholder="Enter maximum budget"
+              value={formData.max_salary}
+              onChange={(e) =>
+                handleChange("max_salary", Number(e.target.value))
+              }
             />
           </Field>
         </FieldSet>

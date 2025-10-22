@@ -20,6 +20,7 @@ import type {
 } from "@/features/jobs/types/jobTypes";
 import { usePositionDetail } from "@/shared/hooks/usePositions";
 import PositionEditForm from "../components/PositionEditForm";
+import { useEffect } from "react";
 
 export default function EditRequestItem() {
   const { type, id } = useParams<{ type: "prf" | "position"; id: string }>();
@@ -30,6 +31,10 @@ export default function EditRequestItem() {
     id: id ? Number(id) : undefined,
     non_admin: false,
   });
+
+  useEffect(() => {
+    document.title = type === "prf" ? "Edit PRF" : "Edit Position";
+  }, [type]);
 
   if (!position || loading) {
     return <LoadingComponent message="Loading Data" />;

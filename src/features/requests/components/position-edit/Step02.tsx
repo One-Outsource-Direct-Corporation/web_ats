@@ -1,27 +1,42 @@
+import type { JobPostingResponsePosition } from "@/features/jobs/types/jobTypes";
 import { RichTextEditor } from "@/shared/components/reusables/RichTextEditor";
 import { Field, FieldGroup, FieldLabel } from "@/shared/components/ui/field";
-import { useState } from "react";
+export default function Step02({
+  formData,
+  setFormData,
+}: {
+  formData: JobPostingResponsePosition;
+  setFormData: (data: JobPostingResponsePosition) => void;
+}) {
+  function handleChange(field: string, value: any) {
+    setFormData({
+      ...formData,
+      [field]: value,
+    });
+  }
 
-export default function Step02() {
-  const [description, setDescription] = useState("");
-  const [responsibilities, setResponsibilities] = useState("");
-  const [qualifications, setQualifications] = useState("");
   return (
     <FieldGroup className="mt-10">
       <Field>
         <FieldLabel>Description</FieldLabel>
-        <RichTextEditor value={description} onChange={setDescription} />
+        <RichTextEditor
+          value={formData.description}
+          onChange={(value) => handleChange("description", value)}
+        />
       </Field>
       <Field>
         <FieldLabel>Responsibilities</FieldLabel>
         <RichTextEditor
-          value={responsibilities}
-          onChange={setResponsibilities}
+          value={formData.responsibilities}
+          onChange={(value) => handleChange("responsibilities", value)}
         />
       </Field>
       <Field>
         <FieldLabel>Qualifications</FieldLabel>
-        <RichTextEditor value={qualifications} onChange={setQualifications} />
+        <RichTextEditor
+          value={formData.qualifications}
+          onChange={(value) => handleChange("qualifications", value)}
+        />
       </Field>
     </FieldGroup>
   );

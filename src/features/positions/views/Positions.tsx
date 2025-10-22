@@ -4,7 +4,7 @@ import JobListItem from "../components/JobListItem";
 import { usePositions } from "../../../shared/hooks/usePositions";
 import { Button } from "@/shared/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export default function Positions() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -13,6 +13,10 @@ export default function Positions() {
     page: currentPage,
     my_postings: true,
   });
+
+  useEffect(() => {
+    document.title = "Positions - OODC ATS";
+  }, []);
 
   // To do: Bring back the tabs functionality
 

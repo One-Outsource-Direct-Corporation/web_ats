@@ -75,7 +75,9 @@ export default function CareerDescription() {
             <div className="text-gray-600 mb-6 ml-9">
               {formatName(jobDetail.department_name)}{" "}
               {jobDetail.type === "client" && (
-                <>• {(jobDetail as JobPostingResponsePosition).client}</>
+                <>
+                  • {(jobDetail as JobPostingResponsePosition).client_display}
+                </>
               )}
             </div>
           )}

@@ -7,15 +7,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/shared/components/ui/table";
-import { FormFieldRadioButton } from "./FormFieldRadioButton";
-import type {
-  CreatePositionFormData,
-  FormFields,
-} from "@/features/positions/types/createPosition";
+import { FormFieldRadioButton } from "../../../features/positions/components/create-position/form-management/FormFieldRadioButton";
+import type { FormFields } from "@/features/positions/types/createPosition";
 import { memo } from "react";
 
-interface ApplicationFormManagementProps {
-  formData: CreatePositionFormData;
+interface ApplicationFormManagementProps<
+  T extends { application_form: FormFields }
+> {
+  formData: T;
   setFormData: (fieldName: string, status: string) => void;
 }
 
@@ -121,7 +120,10 @@ const FieldRow = memo(
 FieldRow.displayName = "FieldRow";
 
 export const ApplicationFormManagement = memo(
-  ({ formData, setFormData }: ApplicationFormManagementProps) => {
+  <T extends { application_form: FormFields }>({
+    formData,
+    setFormData,
+  }: ApplicationFormManagementProps<T>) => {
     return (
       <div className="space-y-6">
         <div>

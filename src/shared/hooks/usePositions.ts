@@ -121,7 +121,6 @@ export function usePositionDetail({
         });
       }
 
-      console.log(response.data);
       setPosition(response.data);
     } catch (err: AxiosError | any) {
       console.error(err);

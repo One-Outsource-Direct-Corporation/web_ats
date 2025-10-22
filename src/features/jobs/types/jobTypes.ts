@@ -31,6 +31,7 @@ export interface JobPostingResponse {
   employment_type: string;
   work_setup: string;
   working_site: string;
+  number_of_vacancies: number;
   min_salary: string;
   max_salary: string;
   description: string;
