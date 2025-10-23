@@ -15,15 +15,13 @@ export default function Positions() {
     type: "all",
     published: "all",
   });
-  const { positions, loading, error } = usePositions({
+  const { positions, loading, error, refetch } = usePositions({
     status: "active",
     page: currentPage,
     my_postings: true,
     type: filters.type,
     published: filters.published,
   });
-
-  console.log(positions);
 
   useEffect(() => {
     document.title = "Positions - OODC ATS";
@@ -135,7 +133,11 @@ export default function Positions() {
         {!loading && !error && positions && positions.results.length > 0 && (
           <div className="space-y-2">
             {positions.results.map((position) => (
-              <JobListItem key={position.id} posting={position} />
+              <JobListItem
+                key={position.id}
+                posting={position}
+                refetch={refetch}
+              />
             ))}
           </div>
         )}

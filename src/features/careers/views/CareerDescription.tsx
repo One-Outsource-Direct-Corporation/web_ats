@@ -125,6 +125,15 @@ export default function CareerDescription() {
                 {jobDetail?.work_setup && formatName(jobDetail.work_setup)}
               </p>
             </div>
+            <div className="flex flex-col items-center">
+              <h3 className="font-bold text-gray-900 mb-2">Department</h3>
+              <p className="text-gray-600">
+                {jobDetail?.department_name === "others"
+                  ? formatName(jobDetail.department_name_other)
+                  : jobDetail?.department_name &&
+                    formatName(jobDetail.department_name)}
+              </p>
+            </div>
           </div>
         </div>
 

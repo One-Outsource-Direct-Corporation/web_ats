@@ -96,10 +96,28 @@ export const BasicDetailsForm = ({
                   <SelectValue placeholder="Select Department" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="engineering">Engineering</SelectItem>
-                  <SelectItem value="marketing">Marketing</SelectItem>
-                  <SelectItem value="sales">Sales</SelectItem>
-                  <SelectItem value="hr">Human Resources</SelectItem>
+                  <SelectItem value="sales">Sales Department</SelectItem>
+                  <SelectItem value="sales-and-marketing">
+                    Sales and Marketing Department
+                  </SelectItem>
+                  <SelectItem value="finance">Finance Department</SelectItem>
+                  <SelectItem value="hr">Human Resources Department</SelectItem>
+                  <SelectItem value="ci">
+                    Continuous Improvement Department
+                  </SelectItem>
+                  <SelectItem value="operations-isla">
+                    Operations - ISLA Department
+                  </SelectItem>
+                  <SelectItem value="operations-shell">
+                    Operations - Shell Department
+                  </SelectItem>
+                  <SelectItem value="operations-prime">
+                    Operations - Prime Department
+                  </SelectItem>
+                  <SelectItem value="operations-rpo">
+                    Operations - RPO Department
+                  </SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
               {errorFields?.job_posting?.department_name && (
@@ -108,6 +126,20 @@ export const BasicDetailsForm = ({
                 </FieldError>
               )}
             </Field>
+
+            {formData.department === "other" && (
+              <Field>
+                <FieldLabel>Please Specify *</FieldLabel>
+                <Input
+                  type="text"
+                  value={formData.other_department}
+                  onChange={(e) =>
+                    onInputChange("other_department", e.target.value)
+                  }
+                />
+              </Field>
+            )}
+
             <Field>
               <FieldLabel>Employment Type *</FieldLabel>
               <Select

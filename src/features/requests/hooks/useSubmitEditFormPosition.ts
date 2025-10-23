@@ -74,6 +74,8 @@ export default function useSubmitEditFormPosition({
       } else {
         toast.error("Failed to update form. Please try again.");
       }
+    } finally {
+      setLoading(false);
     }
   };
 

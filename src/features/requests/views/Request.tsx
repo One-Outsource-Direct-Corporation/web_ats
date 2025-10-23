@@ -179,6 +179,7 @@ export default function Request() {
                 <th className="px-4 py-3">Position Title</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Date Requested</th>
+                <th className="px-4 py-3">Target Start Date</th>
                 <th className="px-4 py-3">Type</th>
                 <th className="px-4 py-3 text-center w-32">Pipeline</th>
                 <th className="px-4 py-3 text-center">Actions</th>
@@ -243,6 +244,9 @@ export default function Request() {
                         </td>
                         <td className="px-4 py-3">
                           {formatDate(item.created_at)}
+                        </td>
+                        <td className="px-4 py-3">
+                          {formatDate(item.target_start_date)}
                         </td>
                         <td className="px-4 py-3">
                           <span

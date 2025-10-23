@@ -4,66 +4,32 @@ import type { JobPostingResponse } from "@/features/jobs/types/jobTypes";
 import { getDepartmentColor } from "../utils/departmentColor";
 import DOMPurify from "dompurify";
 import formatName from "@/shared/utils/formatName";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
+import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
+import { toast } from "react-toastify";
 
 export default function JobListItem({
   posting,
+  refetch,
 }: {
   posting: JobPostingResponse;
+  refetch: () => void;
 }) {
-  // const handleCheckboxChange = () => {
-  //   onSelectionChange(toggleItemSelection(selected, index));
-  // };
-
-  // const handleEdit = () => {
-  //   if (onEdit) {
-  //     onEdit(posting);
-  //   } else {
-  //     navigate("/positions/create-new-position");
-  //   }
-  // };
-
-  // const renderActionButton = () => {
-  //   if (selected.length > 0) return null;
-
-  //   switch (currentTab) {
-  //     case "drafts":
-  //     case "closed":
-  //       return (
-  //         <Button
-  //           variant="ghost"
-  //           size="sm"
-  //           className="text-blue-600 hover:underline text-sm flex items-center gap-1"
-  //           onClick={handleEdit}
-  //         >
-  //           <Pencil className="w-4 h-4" />
-  //           Edit
-  //         </Button>
-  //       );
-  //     case "published":
-  //       return (
-  //         <div className="flex items-center gap-2 cursor-pointer">
-  //           <ExternalLink className="w-4 h-4 text-gray-500 hover:text-blue-600" />
-  //         </div>
-  //       );
-  //     default:
-  //       return null;
-  //   }
-  // };
-
+  const axiosPrivate = useAxiosPrivate();
+  console.log(posting);
   return (
     <Card className="p-4 shadow-sm hover:shadow-md transition border rounded-md">
-      <div className="flex justify-between items-start">
-        <div className="flex items-start gap-4 sm:gap-6">
-          <div className="pt-1">
-            <input
-              type="checkbox"
-              className="mt-1 w-4 h-4 bg-white border-2 border-gray-400 rounded focus:ring-2 focus:ring-blue-500 checked:bg-blue-600 checked:border-blue-600 appearance-none relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-white checked:after:text-xs checked:after:font-bold"
-              // checked={isItemSelected(selected, index)}
-              // onChange={handleCheckboxChange}
-            />
-          </div>
+      <div className="flex justify-between items-start gap-4">
+        {/* Left section with checkbox and content */}
+        <div className="flex items-start gap-4 sm:gap-6 flex-1 min-w-0">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap mb-2">
               <h3 className="text-base font-semibold text-gray-800">
                 {posting.job_title}
               </h3>
@@ -83,18 +49,18 @@ export default function JobListItem({
                     : posting.department_name
                 )}
               </Badge>
-              <Badge variant="default" className="text-xs">
-                {posting.type_display === "PRF" ? "Internal" : "Client"}
-              </Badge>
+
               <Badge
+                variant="default"
                 className={`text-xs ${
-                  posting.published
-                    ? "bg-green-100 text-green-800 border-green-200"
-                    : "bg-gray-100 text-gray-800 border-gray-200"
+                  posting.type === "prf"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-neutral-700 text-neutral-100"
                 }`}
               >
-                {posting.published ? "Published" : "Unpublished"}
+                {posting.type_display === "PRF" ? "Internal" : "Client"}
               </Badge>
+
               <Badge
                 className={`text-xs ${
                   posting.status === "active"
@@ -108,25 +74,66 @@ export default function JobListItem({
               >
                 {formatName(posting.status)}
               </Badge>
-              {
-                // To do: restore badge for deleted positions
-                /* {currentTab === "deleted" && (
-                <Badge variant="destructive" className="text-xs">
-                  Deleted
-                </Badge>
-              )} */
-              }
             </div>
 
             <div
-              className="text-stone-400 text-sm line-clamp-1 w-[80%]"
+              className="text-stone-400 text-sm line-clamp-1"
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize(posting.description),
               }}
             />
           </div>
         </div>
-        {/* {renderActionButton()} */}
+
+        {/* Right section with publish select */}
+        <div className="flex-shrink-0">
+          <Select
+            value={posting.published.toString()}
+            onValueChange={async (value) => {
+              // TODO: Implement publish/unpublish logic
+              try {
+                const endpoint =
+                  posting.type === "prf"
+                    ? `/api/prf/${posting.id}/`
+                    : `/api/position/${posting.id}/`;
+                const response = await axiosPrivate.patch(endpoint, {
+                  job_posting: {
+                    published: value === "true",
+                    status: posting.status,
+                  },
+                });
+
+                console.log(response);
+
+                if (response.status === 200) {
+                  refetch();
+                  toast.success("Position updated successfully");
+                }
+              } catch (error) {
+                console.log(error);
+                toast.error("Failed to update position");
+              }
+            }}
+          >
+            <SelectTrigger
+              className={`w-[120px] h-8 text-xs ${
+                posting.published
+                  ? "bg-green-100 text-green-800 border border-green-200 hover:bg-green-200"
+                  : "bg-gray-100 text-gray-800 border border-gray-200 hover:bg-gray-200"
+              }`}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="true" className="text-xs">
+                Published
+              </SelectItem>
+              <SelectItem value="false" className="text-xs">
+                Unpublished
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
     </Card>
   );

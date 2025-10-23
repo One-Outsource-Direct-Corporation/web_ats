@@ -71,6 +71,7 @@ export default function CreateNewPosition() {
     client: 1,
     education_level: 1,
     experience_level: 1,
+    department_name: 1,
     // Step02 fields
     description: 2,
     responsibilities: 2,
@@ -100,6 +101,12 @@ export default function CreateNewPosition() {
               ? ""
               : formatForJSON(formData.other_reason_for_posting),
           department_name: formatForJSON(formData.department),
+          department_name_other:
+            formData.department !== "other"
+              ? ""
+              : formatForJSON(formData.other_department),
+          number_of_vacancies: Number(formData.headcount) || 1,
+          headcount: Number(formData.headcount) || 0,
           employment_type: formData.employment_type,
           work_setup: formatForJSON(formData.work_setup),
           working_site: formData.working_site,

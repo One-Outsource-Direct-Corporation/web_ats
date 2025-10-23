@@ -23,6 +23,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { ChevronDownIcon } from "lucide-react";
 import type { JobPostingResponsePosition } from "@/features/jobs/types/jobTypes";
+import { formatNameBySpace } from "@/shared/utils/formatName";
 
 export default function Step01({
   formData,
@@ -277,7 +278,7 @@ export default function Step01({
 
         <FieldGroup
           className={`grid grid-cols-1 ${
-            formData.reason_for_posting === "other" ? "md:grid-cols-2" : ""
+            formData.reason_for_posting === "others" ? "md:grid-cols-2" : ""
           } gap-6`}
         >
           {" "}
@@ -296,7 +297,7 @@ export default function Step01({
                 <SelectItem value="new_position">New position</SelectItem>
                 <SelectItem value="replacement">Replacement</SelectItem>
                 <SelectItem value="reliver">Reliver</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                <SelectItem value="other">Others</SelectItem>
               </SelectContent>
             </Select>
           </Field>

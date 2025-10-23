@@ -50,6 +50,7 @@ export default function useSubmitEditForm({
         responsibilities: cleanRichText(formData.responsibilities),
         qualifications: cleanRichText(formData.qualifications),
       },
+      non_negotiables: cleanRichText(formData.non_negotiables),
       business_unit: formData.business_unit.toLowerCase(),
       immediate_supervisor: formData.immediate_supervisor,
       hiring_managers: formData.hiring_managers.filter(

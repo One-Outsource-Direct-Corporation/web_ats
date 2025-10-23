@@ -87,6 +87,7 @@ export default function PRF() {
         responsibilities: formData.responsibilities,
         qualifications: formData.qualifications,
       },
+      non_negotiables: formData.non_negotiables,
       number_of_vacancies: Number(formData.number_of_vacancies),
       business_unit: formData.business_unit.toLowerCase(),
       interview_levels: Number(formData.interview_levels),

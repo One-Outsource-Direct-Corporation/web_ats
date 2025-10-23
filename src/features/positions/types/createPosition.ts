@@ -240,6 +240,7 @@ export interface CreatePositionFormData {
   job_title: string;
   education_level: string;
   department: string;
+  other_department: string;
   experience_level: string;
   employment_type: string;
   headcount: number;
