@@ -1,49 +1,49 @@
 export interface PersonalFormData {
-  firstName: string;
-  lastName: string;
-  birthday: string;
-  gender: string;
-  primaryContact: string;
-  secondaryContact: string;
-  email: string;
-  linkedinProfile: string;
-  addressLine1: string;
-  city: string;
-  district: string;
-  postalCode: string;
-  country: string;
+  firstName: string | null;
+  lastName: string | null;
+  birthday: string | null;
+  gender: string | null;
+  primaryContact: string | null;
+  secondaryContact: string | null;
+  email: string | null;
+  linkedinProfile: string | null;
+  addressLine1: string | null;
+  city: string | null;
+  district: string | null;
+  postalCode: number | null;
+  country: string | null;
 }
 
 export interface JobDetailsFormData {
-  positionApplyingFor: string;
-  expectedSalary: string;
-  willingToWorkOnsite: string;
+  positionApplyingFor: string | null;
+  expectedSalary: number | null;
+  willingToWorkOnsite: string | null;
   photo: File | null;
   medicalCertificate: File | null;
-  interviewSchedule: string;
+  interviewSchedule: string | null;
 }
 
 export interface WorkExperienceEntry {
-  jobTitle: string;
-  company: string;
-  years: string;
+  jobTitle: string | null;
+  company: string | null;
+  years: number | null;
 }
 
 export interface EducationWorkFormData {
-  highestEducation: string;
-  yearGraduated: string;
-  institution: string;
-  program: string;
-  hasWorkExperience: string;
-  currentJobTitle: string;
-  currentCompany: string;
-  currentYearsExperience: string;
-  workExperience: WorkExperienceEntry[];
+  highestEducation: string | null;
+  yearGraduated: string | null;
+  institution: string | null;
+  program: string | null;
+  hasWorkExperience: string | null;
+  currentJobTitle: string | null;
+  currentCompany: string | null;
+  currentYearsExperience: string | null;
+  workExperience: WorkExperienceEntry[] | null;
 }
 
 export interface AcknowledgementFormData {
-  howDidYouLearn: string;
-  certificationAccepted: boolean;
+  howDidYouLearn: string | null;
+  certificationAccepted: boolean | null;
   signature: string | File | null;
 }
 

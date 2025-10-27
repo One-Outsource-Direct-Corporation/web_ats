@@ -42,8 +42,6 @@ export const BasicDetailsForm = ({
   errorFields,
 }: BasicDetailsFormProps) => {
   const { clients, loading, error } = useClient();
-  console.log(errorFields);
-
   return (
     <div>
       {/* Basic Details */}
@@ -52,7 +50,10 @@ export const BasicDetailsForm = ({
           <FieldGroup>
             <Field>
               <FieldLabel>Client *</FieldLabel>
-              <Select onValueChange={(value) => onInputChange("client", value)}>
+              <Select
+                value={String(formData.client) ?? ""}
+                onValueChange={(value) => onInputChange("client", value)}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select Client" />
                 </SelectTrigger>
@@ -64,7 +65,7 @@ export const BasicDetailsForm = ({
                     <SelectItem value="error">Something went wrong!</SelectItem>
                   )}
                   {clients.map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
+                    <SelectItem key={client.id} value={String(client.id)}>
                       {client.name}
                     </SelectItem>
                   ))}
@@ -90,6 +91,7 @@ export const BasicDetailsForm = ({
             <Field>
               <FieldLabel>Department *</FieldLabel>
               <Select
+                value={formData.department ?? ""}
                 onValueChange={(value) => onInputChange("department", value)}
               >
                 <SelectTrigger className="w-full">
@@ -143,6 +145,7 @@ export const BasicDetailsForm = ({
             <Field>
               <FieldLabel>Employment Type *</FieldLabel>
               <Select
+                value={formData.employment_type ?? ""}
                 onValueChange={(value) =>
                   onInputChange("employment_type", value)
                 }
@@ -167,6 +170,7 @@ export const BasicDetailsForm = ({
             <Field>
               <FieldLabel>Work Setup *</FieldLabel>
               <Select
+                value={formData.work_setup ?? ""}
                 onValueChange={(value) => onInputChange("work_setup", value)}
               >
                 <SelectTrigger className="w-full">
@@ -204,6 +208,7 @@ export const BasicDetailsForm = ({
             <Field>
               <FieldLabel>Education Needed *</FieldLabel>
               <Select
+                value={formData.education_level ?? ""}
                 onValueChange={(value) =>
                   onInputChange("education_level", value)
                 }
@@ -226,6 +231,7 @@ export const BasicDetailsForm = ({
             <Field>
               <FieldLabel>Experience Level *</FieldLabel>
               <Select
+                value={formData.experience_level ?? ""}
                 onValueChange={(value) =>
                   onInputChange("experience_level", value)
                 }
@@ -297,6 +303,7 @@ export const BasicDetailsForm = ({
             <Field>
               <FieldLabel>Reason for Hire *</FieldLabel>
               <Select
+                value={formData.reason_for_posting ?? ""}
                 onValueChange={(value) =>
                   onInputChange("reason_for_posting", value)
                 }

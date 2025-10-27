@@ -153,16 +153,12 @@ export default function PipelineConfiguration({
                       {errors?.pipeline && errors.pipeline[index] && (
                         <div className="text-red-600 text-sm mb-2">
                           {Object.entries(errors.pipeline[index]).map(
-                            ([field, messages]) => {
+                            ([field]) => {
                               let errorMessage = "";
                               if (field === "process_type") {
                                 errorMessage = "Process type is required";
                               } else if (field === "process_title") {
                                 errorMessage = "Process title is required";
-                              } else {
-                                errorMessage = Array.isArray(messages)
-                                  ? messages.join(", ")
-                                  : String(messages);
                               }
                               return (
                                 <p key={field + index} className="mb-1">

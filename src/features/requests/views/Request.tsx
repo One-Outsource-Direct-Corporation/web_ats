@@ -37,7 +37,7 @@ export default function Request() {
     status: "all",
     employment_type: "all",
     work_setup: "all",
-    order_by: "asc",
+    order_by: "desc",
   });
   const { positions, loading, error, refetch } = usePositions({
     my_postings: true,

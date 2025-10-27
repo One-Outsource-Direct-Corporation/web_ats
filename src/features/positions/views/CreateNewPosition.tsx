@@ -84,6 +84,8 @@ export default function CreateNewPosition() {
   const assessmentHooks = useAssessmentManagement();
   const modalHooks = useModalManagement();
 
+  console.log(formData);
+
   const handleNext = async () => {
     if (currentStep === 3) {
       modalHooks.setShowNonNegotiableModal(true);
@@ -91,7 +93,6 @@ export default function CreateNewPosition() {
       // To do: bring back the Pool Applicants Here
 
       const data = {
-        ...formData,
         job_posting: {
           job_title: formData.job_title,
           target_start_date: formData.target_start_date,
@@ -124,8 +125,6 @@ export default function CreateNewPosition() {
         education_level: formData.education_level,
         experience_level: formData.experience_level,
       };
-
-      console.log("Final form data to submit:", data);
       try {
         const response = await axiosPrivate.post("/api/position/", data);
         console.log("Response from server:", response);

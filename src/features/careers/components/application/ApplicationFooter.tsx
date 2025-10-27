@@ -2,22 +2,23 @@ import { Button } from "@/shared/components/ui/button";
 
 interface ApplicationFooterProps {
   currentStage: number;
-  acceptTerms: boolean;
-  certificationAccepted: boolean;
+  // acceptTerms: boolean;
+  // certificationAccepted: boolean;
   onBack: () => void;
   onNext: () => void;
 }
 
 export const ApplicationFooter: React.FC<ApplicationFooterProps> = ({
   currentStage,
-  acceptTerms,
-  certificationAccepted,
+  // acceptTerms,
+  // certificationAccepted,
   onBack,
   onNext,
 }) => {
-  const isNextDisabled =
-    (currentStage === 1 && !acceptTerms) ||
-    (currentStage === 4 && !certificationAccepted);
+  // TODO: Bring back the disabled next button
+  // const isNextDisabled =
+  //   (currentStage === 1 && !acceptTerms) ||
+  //   (currentStage === 4 && !certificationAccepted);
 
   return (
     <div className="fixed bottom-0 left-0 lg:left-80 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-40">
@@ -33,7 +34,7 @@ export const ApplicationFooter: React.FC<ApplicationFooterProps> = ({
         )}
         <Button
           onClick={onNext}
-          disabled={isNextDisabled}
+          // disabled={isNextDisabled}
           className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 ml-auto"
         >
           {currentStage === 4 ? "Submit Application" : "Next"}
