@@ -332,7 +332,7 @@ export default function JobWeeklyView() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 pt-[100px]">
+    <div className="min-h-screen bg-gray-50 p-6">
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="w-full space-y-6">
           {/* Mobile Selection Bar */}

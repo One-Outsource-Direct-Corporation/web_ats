@@ -733,7 +733,7 @@ export default function JobManagement() {
                               variant="default"
                               size="sm"
                               className="w-full px-2 lg:px-3 bg-white text-blue-600 border border-blue-600 hover:bg-blue-600 hover:text-white text-xs lg:text-sm h-9 lg:h-10 leading-tight lg:whitespace-nowrap"
-                              onClick={() => navigate("/ieform/")}
+                              onClick={() => navigate("/interviews")}
                             >
                               Start
                               <br />

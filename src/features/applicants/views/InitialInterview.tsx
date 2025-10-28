@@ -732,7 +732,7 @@ export default function JobManagement() {
                               variant="outline"
                               size="sm"
                               className="w-full px-2 lg:px-3 h-9 lg:h-10 text-xs lg:text-sm text-[#0056d2] border-[#0056d2] bg-white hover:bg-[#0056d2] hover:text-white transition"
-                              onClick={() => navigate("/ieform/")}
+                              onClick={() => navigate("/interviews")}
                             >
                               Start
                               <br />

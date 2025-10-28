@@ -299,7 +299,7 @@ export default function PhoneInterview() {
                         <Button
                           size="sm"
                           className="border-1 w-full px-2 lg:px-3 h-7 lg:h-8 text-xs lg:text-sm text-blue-600 border-blue-600 bg-white hover:bg-blue-600 hover:text-white transition"
-                          onClick={() => navigate("/ieform/")}
+                          onClick={() => navigate("/interviews")}
                         >
                           Start interview
                         </Button>
