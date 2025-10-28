@@ -3,7 +3,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Plus, Trash2, Edit, Eye, Check } from "lucide-react";
-import type { LocationEntry } from "../../../types/createPosition";
+import type { LocationEntry } from "../../../types/create_position.types";
 
 interface LocationManagementProps {
   locations: LocationEntry[];

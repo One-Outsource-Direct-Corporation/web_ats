@@ -1,38 +1,51 @@
-"use client"
-
-import { useState } from "react"
-import { Button } from "@/components/ui/button.tsx"
-import { ArrowLeft, Sparkles, Check, X } from "lucide-react"
-import { useNavigate, useParams } from "react-router-dom"
+import { useState } from "react";
+import { ArrowLeft, Sparkles, Check, X } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import { Button } from "@/shared/components/ui/button";
 
 const getPerformanceColor = (performance: string) => {
   switch (performance.toLowerCase()) {
     case "excellent":
     case "outstanding":
-      return "text-green-600"
+      return "text-green-600";
     case "good":
-      return "text-blue-600"
+      return "text-blue-600";
     case "moderate":
-      return "text-yellow-600"
+      return "text-yellow-600";
     case "poor":
-      return "text-red-600"
+      return "text-red-600";
     default:
-      return "text-gray-600"
+      return "text-gray-600";
   }
-}
+};
 
 const getVerdictInfo = (score: number) => {
-  if (score >= 45) return { level: "Exceptional", description: "Ready for leadership; minimal guidance needed" }
-  if (score >= 40) return { level: "Strong", description: "Hire with slight upskilling in 1-2 areas" }
-  if (score >= 35) return { level: "Moderate", description: "Needs coaching; may lack lead experience" }
-  return { level: "Not Ready", description: "Requires significant upskilling" }
-}
+  if (score >= 45)
+    return {
+      level: "Exceptional",
+      description: "Ready for leadership; minimal guidance needed",
+    };
+  if (score >= 40)
+    return {
+      level: "Strong",
+      description: "Hire with slight upskilling in 1-2 areas",
+    };
+  if (score >= 35)
+    return {
+      level: "Moderate",
+      description: "Needs coaching; may lack lead experience",
+    };
+  return { level: "Not Ready", description: "Requires significant upskilling" };
+};
 
 // Update the ExamForm component to get the applicant ID from the URL params
 export default function ExamForm() {
-  const navigate = useNavigate()
-  const { jobtitle, applicantId } = useParams<{ jobtitle: string; applicantId: string }>()
-  const [showFullExam, setShowFullExam] = useState(false)
+  const navigate = useNavigate();
+  const { jobtitle, applicantId } = useParams<{
+    jobtitle: string;
+    applicantId: string;
+  }>();
+  const [showFullExam, setShowFullExam] = useState(false);
 
   // You can use the applicantId to fetch specific data for this applicant
   // For now, we'll use the mock data, but you can replace this with actual data fetching
@@ -73,7 +86,7 @@ export default function ExamForm() {
           "Good knowledge of best practices and security principles. Missed some advanced debugging techniques and security considerations.",
       },
     ],
-  }
+  };
 
   // Helper function to get applicant name (you can replace this with actual data fetching)
   function getApplicantName(id?: string) {
@@ -86,8 +99,8 @@ export default function ExamForm() {
       "006": "Lisa Wang",
       "007": "Alex Thompson",
       "008": "Maria Garcia",
-    }
-    return applicants[id as keyof typeof applicants] || "Unknown Applicant"
+    };
+    return applicants[id as keyof typeof applicants] || "Unknown Applicant";
   }
 
   function formatJobTitle(slug?: string) {
@@ -103,26 +116,23 @@ export default function ExamForm() {
       socialmediamanager: "Social Media Manager",
       marketingspecialist: "Marketing Specialist",
       seniorsoftwareengineer: "Senior Software Engineer",
-    }
-    return slug ? titleMap[slug.toLowerCase()] || slug.replace(/([a-z])([A-Z])/g, "$1 $2") : "Unknown Job"
+    };
+    return slug
+      ? titleMap[slug.toLowerCase()] || slug.replace(/([a-z])([A-Z])/g, "$1 $2")
+      : "Unknown Job";
   }
 
-  const verdictInfo = getVerdictInfo(mockExamData.totalScore)
+  const verdictInfo = getVerdictInfo(mockExamData.totalScore);
 
   if (showFullExam) {
-    return <FullExamResult onBack={() => setShowFullExam(false)} />
+    return <FullExamResult onBack={() => setShowFullExam(false)} />;
   }
 
   return (
     <div className="min-h-screen bg-gray-100 py-8">
       {/* Logo */}
       <div className="text-center mb-8">
-        <img
-          src="/OODC%20logo2.png"
-          alt="OODC Logo"
-          className="h-32 mx-auto"
-          
-        />
+        <img src="/OODC logo2.png" alt="OODC Logo" className="h-32 mx-auto" />
         <div className="hidden text-2xl font-bold text-gray-800">OODC</div>
       </div>
 
@@ -148,15 +158,18 @@ export default function ExamForm() {
             {/* Left Column - Applicant Details */}
             <div className="space-y-4">
               <h3 className="text-xl font-bold text-gray-800">
-                {mockExamData.jobTitle} {mockExamData.assessmentType} - Evaluation Report
+                {mockExamData.jobTitle} {mockExamData.assessmentType} -
+                Evaluation Report
               </h3>
 
               <div className="space-y-2">
                 <p>
-                  <span className="font-semibold">Candidate Name:</span> {mockExamData.candidateName}
+                  <span className="font-semibold">Candidate Name:</span>{" "}
+                  {mockExamData.candidateName}
                 </p>
                 <p>
-                  <span className="font-semibold">Total Score:</span> {mockExamData.totalScore}/{mockExamData.maxScore}
+                  <span className="font-semibold">Total Score:</span>{" "}
+                  {mockExamData.totalScore}/{mockExamData.maxScore}
                   <span className="ml-2 text-sm">
                     ({mockExamData.percentage}% - {verdictInfo.level})
                   </span>
@@ -175,17 +188,20 @@ export default function ExamForm() {
               <h3 className="font-semibold mb-3">Grading Scale:</h3>
               <div className="space-y-1 text-sm">
                 <p>
-                  <span className="font-medium">45-50:</span> Exceptional (Ready for leadership; minimal guidance
-                  needed)
+                  <span className="font-medium">45-50:</span> Exceptional (Ready
+                  for leadership; minimal guidance needed)
                 </p>
                 <p>
-                  <span className="font-medium">40-44:</span> Strong (Hire with slight upskilling in 1-2 areas)
+                  <span className="font-medium">40-44:</span> Strong (Hire with
+                  slight upskilling in 1-2 areas)
                 </p>
                 <p>
-                  <span className="font-medium">35-39:</span> Moderate (Needs coaching; may lack lead experience)
+                  <span className="font-medium">35-39:</span> Moderate (Needs
+                  coaching; may lack lead experience)
                 </p>
                 <p>
-                  <span className="font-medium">&lt;35:</span> Not Ready (Requires significant upskilling)
+                  <span className="font-medium">&lt;35:</span> Not Ready
+                  (Requires significant upskilling)
                 </p>
               </div>
             </div>
@@ -197,11 +213,21 @@ export default function ExamForm() {
               <table className="w-full border-collapse border border-gray-300">
                 <thead>
                   <tr className="bg-gray-50">
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Section</th>
-                    <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Number of Items</th>
-                    <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Candidate Score</th>
-                    <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Performance</th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Remarks</th>
+                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">
+                      Section
+                    </th>
+                    <th className="border border-gray-300 px-4 py-3 text-center font-semibold">
+                      Number of Items
+                    </th>
+                    <th className="border border-gray-300 px-4 py-3 text-center font-semibold">
+                      Candidate Score
+                    </th>
+                    <th className="border border-gray-300 px-4 py-3 text-center font-semibold">
+                      Performance
+                    </th>
+                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">
+                      Remarks
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -210,19 +236,27 @@ export default function ExamForm() {
                       <td className="border border-gray-300 px-4 py-3">
                         <div>
                           <div className="font-medium">{section.name}</div>
-                          <div className="text-sm text-gray-600">{section.description}</div>
+                          <div className="text-sm text-gray-600">
+                            {section.description}
+                          </div>
                         </div>
                       </td>
-                      <td className="border border-gray-300 px-4 py-3 text-center">{section.maxScore}</td>
+                      <td className="border border-gray-300 px-4 py-3 text-center">
+                        {section.maxScore}
+                      </td>
                       <td className="border border-gray-300 px-4 py-3 text-center font-medium">
                         {section.candidateScore}
                       </td>
                       <td
-                        className={`border border-gray-300 px-4 py-3 text-center font-medium ${getPerformanceColor(section.performance)}`}
+                        className={`border border-gray-300 px-4 py-3 text-center font-medium ${getPerformanceColor(
+                          section.performance
+                        )}`}
                       >
                         {section.performance}
                       </td>
-                      <td className="border border-gray-300 px-4 py-3 text-sm">{section.remarks}</td>
+                      <td className="border border-gray-300 px-4 py-3 text-sm">
+                        {section.remarks}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -235,23 +269,29 @@ export default function ExamForm() {
             <h3 className="font-semibold mb-4">Final Recommendations:</h3>
             <div className="space-y-3 text-sm">
               <p>
-                <span className="font-semibold">Overall Score:</span> {mockExamData.totalScore}/{mockExamData.maxScore}{" "}
-                ({mockExamData.percentage}%)
+                <span className="font-semibold">Overall Score:</span>{" "}
+                {mockExamData.totalScore}/{mockExamData.maxScore} (
+                {mockExamData.percentage}%)
               </p>
               <p>
-                <span className="font-semibold">Recommendation:</span> {mockExamData.verdict} -{" "}
-                {verdictInfo.description}
+                <span className="font-semibold">Recommendation:</span>{" "}
+                {mockExamData.verdict} - {verdictInfo.description}
               </p>
               <p>
-                The candidate demonstrates strong technical capabilities with excellent coding skills and good
-                understanding of fundamental concepts. While there are minor areas for improvement in advanced topics
-                and security practices, the overall performance indicates readiness for the role with minimal onboarding
-                support required.
+                The candidate demonstrates strong technical capabilities with
+                excellent coding skills and good understanding of fundamental
+                concepts. While there are minor areas for improvement in
+                advanced topics and security practices, the overall performance
+                indicates readiness for the role with minimal onboarding support
+                required.
               </p>
             </div>
 
             {/* Ask AI Button */}
-            <Button className="absolute bottom-4 right-4 flex items-center gap-2" size="sm">
+            <Button
+              className="absolute bottom-4 right-4 flex items-center gap-2"
+              size="sm"
+            >
               Ask AI
               <Sparkles className="h-4 w-4" />
             </Button>
@@ -259,7 +299,7 @@ export default function ExamForm() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 // Full Exam Result Component
@@ -275,7 +315,8 @@ export function FullExamResult({ onBack }: { onBack: () => void }) {
     },
     {
       id: 2,
-      question: "Which design pattern is used to create objects without specifying their concrete classes?",
+      question:
+        "Which design pattern is used to create objects without specifying their concrete classes?",
       options: ["Singleton", "Factory", "Observer", "Strategy"],
       correctAnswer: 1,
       userAnswer: 0,
@@ -305,23 +346,40 @@ export function FullExamResult({ onBack }: { onBack: () => void }) {
     {
       id: 5,
       question: "What is the purpose of a foreign key in a database?",
-      options: ["Primary identification", "Data validation", "Referential integrity", "Index optimization"],
+      options: [
+        "Primary identification",
+        "Data validation",
+        "Referential integrity",
+        "Index optimization",
+      ],
       correctAnswer: 2,
       userAnswer: 2,
       points: 2,
     },
     {
       id: 6,
-      question: "Which sorting algorithm has the best average-case time complexity?",
-      options: ["Bubble Sort", "Quick Sort", "Selection Sort", "Insertion Sort"],
+      question:
+        "Which sorting algorithm has the best average-case time complexity?",
+      options: [
+        "Bubble Sort",
+        "Quick Sort",
+        "Selection Sort",
+        "Insertion Sort",
+      ],
       correctAnswer: 1,
       userAnswer: 1,
       points: 2,
     },
     {
       id: 7,
-      question: "What is the main advantage of using microservices architecture?",
-      options: ["Faster development", "Better scalability", "Reduced complexity", "Lower costs"],
+      question:
+        "What is the main advantage of using microservices architecture?",
+      options: [
+        "Faster development",
+        "Better scalability",
+        "Reduced complexity",
+        "Lower costs",
+      ],
       correctAnswer: 1,
       userAnswer: 1,
       points: 2,
@@ -329,7 +387,12 @@ export function FullExamResult({ onBack }: { onBack: () => void }) {
     {
       id: 8,
       question: "Which principle is NOT part of SOLID principles?",
-      options: ["Single Responsibility", "Open/Closed", "Dependency Inversion", "Don't Repeat Yourself"],
+      options: [
+        "Single Responsibility",
+        "Open/Closed",
+        "Dependency Inversion",
+        "Don't Repeat Yourself",
+      ],
       correctAnswer: 3,
       userAnswer: 3,
       points: 2,
@@ -337,7 +400,12 @@ export function FullExamResult({ onBack }: { onBack: () => void }) {
     {
       id: 9,
       question: "What is the purpose of indexing in databases?",
-      options: ["Data backup", "Query optimization", "Data encryption", "Schema validation"],
+      options: [
+        "Data backup",
+        "Query optimization",
+        "Data encryption",
+        "Schema validation",
+      ],
       correctAnswer: 1,
       userAnswer: 0,
       points: 2,
@@ -345,17 +413,23 @@ export function FullExamResult({ onBack }: { onBack: () => void }) {
     {
       id: 10,
       question: "Which data structure is best for implementing a LRU cache?",
-      options: ["Array", "Linked List", "Hash Map + Doubly Linked List", "Binary Tree"],
+      options: [
+        "Array",
+        "Linked List",
+        "Hash Map + Doubly Linked List",
+        "Binary Tree",
+      ],
       correctAnswer: 2,
       userAnswer: 2,
       points: 2,
     },
-  ]
+  ];
 
   const checkboxQuestions = [
     {
       id: 1,
-      question: "Which of the following are best practices for secure coding? (Select all that apply)",
+      question:
+        "Which of the following are best practices for secure coding? (Select all that apply)",
       options: [
         "Input validation",
         "Using hardcoded passwords",
@@ -369,7 +443,8 @@ export function FullExamResult({ onBack }: { onBack: () => void }) {
     },
     {
       id: 2,
-      question: "Which debugging techniques are effective? (Select all that apply)",
+      question:
+        "Which debugging techniques are effective? (Select all that apply)",
       options: [
         "Print statements",
         "Using debugger breakpoints",
@@ -383,7 +458,8 @@ export function FullExamResult({ onBack }: { onBack: () => void }) {
     },
     {
       id: 3,
-      question: "What are characteristics of clean code? (Select all that apply)",
+      question:
+        "What are characteristics of clean code? (Select all that apply)",
       options: [
         "Self-documenting",
         "Complex nested structures",
@@ -397,7 +473,8 @@ export function FullExamResult({ onBack }: { onBack: () => void }) {
     },
     {
       id: 4,
-      question: "Which are common security vulnerabilities? (Select all that apply)",
+      question:
+        "Which are common security vulnerabilities? (Select all that apply)",
       options: [
         "SQL Injection",
         "Cross-Site Scripting (XSS)",
@@ -412,38 +489,46 @@ export function FullExamResult({ onBack }: { onBack: () => void }) {
     {
       id: 5,
       question: "What are benefits of version control? (Select all that apply)",
-      options: ["Track changes", "Collaboration", "Backup and recovery", "Slower development", "Branch management"],
+      options: [
+        "Track changes",
+        "Collaboration",
+        "Backup and recovery",
+        "Slower development",
+        "Branch management",
+      ],
       correctAnswers: [0, 1, 2, 4],
       userAnswers: [0, 1, 2, 4],
       points: 2,
     },
-  ]
+  ];
 
-  const mcqScore = mcqQuestions.reduce((total, q) => total + (q.correctAnswer === q.userAnswer ? q.points : 0), 0)
-  const codingScore = 18 // Mock coding score
+  const mcqScore = mcqQuestions.reduce(
+    (total, q) => total + (q.correctAnswer === q.userAnswer ? q.points : 0),
+    0
+  );
+  const codingScore = 18; // Mock coding score
   const checkboxScore = checkboxQuestions.reduce((total, q) => {
-    const correctCount = q.correctAnswers.filter((ans) => q.userAnswers.includes(ans)).length
-    const incorrectCount = q.userAnswers.filter((ans) => !q.correctAnswers.includes(ans)).length
+    const correctCount = q.correctAnswers.filter((ans) =>
+      q.userAnswers.includes(ans)
+    ).length;
+    const incorrectCount = q.userAnswers.filter(
+      (ans) => !q.correctAnswers.includes(ans)
+    ).length;
 
     if (correctCount === q.correctAnswers.length && incorrectCount === 0) {
-      return total + q.points
+      return total + q.points;
     }
-    return total
-  }, 0)
+    return total;
+  }, 0);
 
-  const totalScore = mcqScore + codingScore + checkboxScore
-  const percentage = Math.round((totalScore / 50) * 100)
+  const totalScore = mcqScore + codingScore + checkboxScore;
+  const percentage = Math.round((totalScore / 50) * 100);
 
   return (
     <div className="min-h-screen bg-gray-100 py-8">
       {/* Logo */}
       <div className="text-center mb-8">
-        <img
-          src="/OODC%20logo2.png"
-          alt="OODC Logo"
-          className="h-32 mx-auto"
-          
-        />
+        <img src="/OODC logo2.png" alt="OODC Logo" className="h-32 mx-auto" />
         <div className="hidden text-2xl font-bold text-gray-800">OODC</div>
       </div>
 
@@ -451,7 +536,12 @@ export function FullExamResult({ onBack }: { onBack: () => void }) {
       <div className="max-w-6xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
         {/* Back Button */}
         <div className="p-6 pb-0">
-          <Button variant="outline" size="sm" className="flex items-center gap-2" onClick={onBack}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+            onClick={onBack}
+          >
             <ArrowLeft className="h-4 w-4" />
             Back
           </Button>
@@ -459,31 +549,36 @@ export function FullExamResult({ onBack }: { onBack: () => void }) {
 
         {/* Grading Scale */}
         {/* Right Column - Grading Scale */}
-<div className="flex justify-end">
-  <div className="bg-gray-50 p-4 rounded-lg space-y-2 w-full max-w-md">
-    <h3 className="font-semibold">Grading Scale:</h3>
-    <p className="text-sm">
-      <span className="font-medium">45-50:</span> Exceptional (Ready for leadership; minimal guidance needed)
-    </p>
-    <p className="text-sm">
-      <span className="font-medium">40-44:</span> Strong (Hire with slight upskilling in 1–2 areas)
-    </p>
-    <p className="text-sm">
-      <span className="font-medium">35-39:</span> Moderate (Needs coaching; may lack lead experience)
-    </p>
-    <p className="text-sm">
-      <span className="font-medium">&lt;35:</span> Not Ready (Requires significant upskilling)
-    </p>
-  </div>
-</div>
-
+        <div className="flex justify-end">
+          <div className="bg-gray-50 p-4 rounded-lg space-y-2 w-full max-w-md">
+            <h3 className="font-semibold">Grading Scale:</h3>
+            <p className="text-sm">
+              <span className="font-medium">45-50:</span> Exceptional (Ready for
+              leadership; minimal guidance needed)
+            </p>
+            <p className="text-sm">
+              <span className="font-medium">40-44:</span> Strong (Hire with
+              slight upskilling in 1–2 areas)
+            </p>
+            <p className="text-sm">
+              <span className="font-medium">35-39:</span> Moderate (Needs
+              coaching; may lack lead experience)
+            </p>
+            <p className="text-sm">
+              <span className="font-medium">&lt;35:</span> Not Ready (Requires
+              significant upskilling)
+            </p>
+          </div>
+        </div>
 
         {/* Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6">
           {/* Left Column - MCQ Section */}
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-bold mb-4">Section 1: Multiple Choice (MCQ) - 20 points</h2>
+              <h2 className="text-lg font-bold mb-4">
+                Section 1: Multiple Choice (MCQ) - 20 points
+              </h2>
 
               <div className="space-y-4">
                 {mcqQuestions.map((question) => (
@@ -493,21 +588,28 @@ export function FullExamResult({ onBack }: { onBack: () => void }) {
                     </p>
                     <div className="space-y-1">
                       {question.options.map((option, optionIndex) => (
-                        <div key={optionIndex} className="flex items-center gap-2">
-                          <span className="w-6">{String.fromCharCode(65 + optionIndex)}.</span>
+                        <div
+                          key={optionIndex}
+                          className="flex items-center gap-2"
+                        >
+                          <span className="w-6">
+                            {String.fromCharCode(65 + optionIndex)}.
+                          </span>
                           <span>{option}</span>
-                          {optionIndex === question.correctAnswer && question.userAnswer === question.correctAnswer && (
-                            <div className="flex items-center gap-1 text-green-600 ml-auto">
-                              <Check className="h-4 w-4" />
-                              <span className="text-sm">(Correct)</span>
-                            </div>
-                          )}
-                          {optionIndex === question.userAnswer && question.userAnswer !== question.correctAnswer && (
-                            <div className="flex items-center gap-1 text-red-600 ml-auto">
-                              <X className="h-4 w-4" />
-                              <span className="text-sm">(Incorrect)</span>
-                            </div>
-                          )}
+                          {optionIndex === question.correctAnswer &&
+                            question.userAnswer === question.correctAnswer && (
+                              <div className="flex items-center gap-1 text-green-600 ml-auto">
+                                <Check className="h-4 w-4" />
+                                <span className="text-sm">(Correct)</span>
+                              </div>
+                            )}
+                          {optionIndex === question.userAnswer &&
+                            question.userAnswer !== question.correctAnswer && (
+                              <div className="flex items-center gap-1 text-red-600 ml-auto">
+                                <X className="h-4 w-4" />
+                                <span className="text-sm">(Incorrect)</span>
+                              </div>
+                            )}
                         </div>
                       ))}
                     </div>
@@ -516,7 +618,9 @@ export function FullExamResult({ onBack }: { onBack: () => void }) {
               </div>
 
               <div className="mt-6 p-4 bg-gray-50 rounded">
-                <p className="font-semibold">Candidate Score in MCQ: {mcqScore}/20</p>
+                <p className="font-semibold">
+                  Candidate Score in MCQ: {mcqScore}/20
+                </p>
                 <p className="text-sm text-gray-600 mt-1">Missed Q2 & Q9</p>
               </div>
             </div>
@@ -526,14 +630,17 @@ export function FullExamResult({ onBack }: { onBack: () => void }) {
           <div className="space-y-8">
             {/* Coding Section */}
             <div>
-              <h2 className="text-lg font-bold mb-4">Section 2: Coding - 20 points</h2>
+              <h2 className="text-lg font-bold mb-4">
+                Section 2: Coding - 20 points
+              </h2>
 
               <div className="space-y-4">
                 <div>
                   <p className="font-medium">Task:</p>
                   <p className="text-sm text-gray-700 mb-4">
-                    Implement a function to find the longest palindromic substring in a given string. Also design a
-                    simple REST API architecture for a user management system.
+                    Implement a function to find the longest palindromic
+                    substring in a given string. Also design a simple REST API
+                    architecture for a user management system.
                   </p>
                 </div>
 
@@ -571,8 +678,8 @@ export function FullExamResult({ onBack }: { onBack: () => void }) {
                 <div className="p-4 bg-gray-50 rounded">
                   <p className="font-semibold">Candidate Score: 18/20</p>
                   <p className="text-sm text-gray-600 mt-1">
-                    Excellent implementation with clean code. Minor deduction (-2) for not handling edge case of empty
-                    string input.
+                    Excellent implementation with clean code. Minor deduction
+                    (-2) for not handling edge case of empty string input.
                   </p>
                 </div>
               </div>
@@ -580,8 +687,12 @@ export function FullExamResult({ onBack }: { onBack: () => void }) {
 
             {/* Checkbox Section */}
             <div>
-              <h2 className="text-lg font-bold mb-4">Section 3: Checkbox - 10 points</h2>
-              <p className="text-sm text-gray-600 mb-4">Select All Correct Answers | 2 points each</p>
+              <h2 className="text-lg font-bold mb-4">
+                Section 3: Checkbox - 10 points
+              </h2>
+              <p className="text-sm text-gray-600 mb-4">
+                Select All Correct Answers | 2 points each
+              </p>
 
               <div className="space-y-4">
                 {checkboxQuestions.map((question) => (
@@ -591,9 +702,14 @@ export function FullExamResult({ onBack }: { onBack: () => void }) {
                     </p>
                     <div className="space-y-1">
                       {question.options.map((option, optionIndex) => (
-                        <div key={optionIndex} className="flex items-center gap-2">
+                        <div
+                          key={optionIndex}
+                          className="flex items-center gap-2"
+                        >
                           <div className="w-4 h-4 border border-gray-300 rounded flex items-center justify-center">
-                            {question.userAnswers.includes(optionIndex) && <Check className="h-3 w-3 text-blue-600" />}
+                            {question.userAnswers.includes(optionIndex) && (
+                              <Check className="h-3 w-3 text-blue-600" />
+                            )}
                           </div>
                           <span className="text-sm">{option}</span>
                           {question.correctAnswers.includes(optionIndex) &&
@@ -604,7 +720,9 @@ export function FullExamResult({ onBack }: { onBack: () => void }) {
                             !question.userAnswers.includes(optionIndex) && (
                               <div className="flex items-center gap-1 text-red-600 ml-auto">
                                 <X className="h-4 w-4" />
-                                <span className="text-xs">(Missed by candidate)</span>
+                                <span className="text-xs">
+                                  (Missed by candidate)
+                                </span>
                               </div>
                             )}
                           {!question.correctAnswers.includes(optionIndex) &&
@@ -622,16 +740,21 @@ export function FullExamResult({ onBack }: { onBack: () => void }) {
               </div>
 
               <div className="mt-6 p-4 bg-gray-50 rounded">
-                <p className="font-semibold">Candidate Score: {checkboxScore}/10</p>
+                <p className="font-semibold">
+                  Candidate Score: {checkboxScore}/10
+                </p>
                 <p className="text-sm text-gray-600 mt-1">
-                  Missed some debugging techniques in Q2 and security vulnerabilities in Q4
+                  Missed some debugging techniques in Q2 and security
+                  vulnerabilities in Q4
                 </p>
               </div>
             </div>
 
             {/* Final Score & Evaluation */}
             <div className="border-t pt-6">
-              <h3 className="text-lg font-bold mb-4">Final Score & Evaluation</h3>
+              <h3 className="text-lg font-bold mb-4">
+                Final Score & Evaluation
+              </h3>
 
               <div className="space-y-2 mb-4">
                 <p>MCQ: {mcqScore}/20</p>
@@ -640,16 +763,23 @@ export function FullExamResult({ onBack }: { onBack: () => void }) {
               </div>
 
               <div className="text-center p-4 bg-red-50 rounded mb-4">
-                <p className="text-2xl font-bold text-red-600">{totalScore}/50</p>
-                <p className="text-lg font-semibold text-red-600">{percentage}%</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {totalScore}/50
+                </p>
+                <p className="text-lg font-semibold text-red-600">
+                  {percentage}%
+                </p>
               </div>
 
               <div className="p-4 bg-gray-50 rounded">
-                <p className="font-semibold text-green-600 mb-2">Verdict: Strong Hire</p>
+                <p className="font-semibold text-green-600 mb-2">
+                  Verdict: Strong Hire
+                </p>
                 <p className="text-sm text-gray-700">
-                  The candidate demonstrates excellent technical skills with strong coding abilities and good
-                  understanding of fundamental concepts. Performance indicates readiness for the role with minimal
-                  additional training required.
+                  The candidate demonstrates excellent technical skills with
+                  strong coding abilities and good understanding of fundamental
+                  concepts. Performance indicates readiness for the role with
+                  minimal additional training required.
                 </p>
               </div>
             </div>
@@ -657,5 +787,5 @@ export function FullExamResult({ onBack }: { onBack: () => void }) {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -2,7 +2,7 @@ import { AddressInfoSection } from "../application/AddressInfoSection";
 import { ContactInfoSection } from "../application/ContactInfoSection";
 import { DataPrivacySection } from "../application/DataPrivacySection";
 import { PersonalInfoSection } from "../application/PersonalInfoSection";
-import type { PersonalFormData } from "../../types/applicationForm";
+import type { PersonalFormData } from "../../types/application_form.types";
 
 interface Step01Props {
   formData: PersonalFormData;

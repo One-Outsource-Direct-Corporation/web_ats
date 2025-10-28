@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { PRF } from "../types/prfTypes";
+import type { PRF } from "../types/prf.types";
 
 export function usePRFForm(initialData: PRF) {
   const [formData, setFormData] = useState<PRF>(initialData);

@@ -6,7 +6,7 @@ import type {
   AcknowledgementFormData,
   ApplicationFormData,
   WorkExperienceEntry,
-} from "../types/applicationForm";
+} from "../types/application_form.types";
 
 const initialPersonalData: PersonalFormData = {
   firstName: null,

@@ -4,7 +4,7 @@ import { Input } from "@/shared/components/ui/input.tsx";
 import { Button } from "@/shared/components/ui/button.tsx";
 import { ArrowLeft, LayoutGrid, List } from "lucide-react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { Navbar } from "@/shared/components/reusables/Navbar.tsx";
+import { formatJobTitle, getStageRoutePath } from "../utils/jobFormatters";
 
 export default function JobDetails() {
   const navigate = useNavigate();
@@ -14,25 +14,6 @@ export default function JobDetails() {
   const [currentJobTitle, setCurrentJobTitle] = useState<string>("");
   const job = useJobByTitle(currentJobTitle);
   const [selectedStage, setSelectedStage] = useState<string>("");
-
-  // Format job title from slug
-  const formatJobTitle = (slug: string) => {
-    const titleMap: { [key: string]: string } = {
-      projectmanager: "Project Manager",
-      socialcontentmanager: "Social Content Manager",
-      senioruiuxdesigner: "Senior UI UX Designer",
-      leaddeveloper: "Lead Developer",
-      customersupport: "Customer Support",
-      qaengineer: "QA Engineer",
-      humanresourcescoordinator: "Human Resources Coordinator",
-      operationsmanager: "Operations Manager",
-      socialmediamanager: "Social Media Manager",
-      marketingspecialist: "Marketing Specialist",
-    };
-    return (
-      titleMap[slug.toLowerCase()] || slug.replace(/([A-Z])/g, " $1").trim()
-    );
-  };
 
   useEffect(() => {
     if (location.state?.jobTitle) {
@@ -46,37 +27,13 @@ export default function JobDetails() {
     setSelectedStage(stageName);
 
     const jobSlug = currentJobTitle.toLowerCase().replace(/\s+/g, "");
-
-    // Define custom slugs for specific final stages
-    const customStageRoutes: { [key: string]: string } = {
-      "For Offer and Finalization": "OfferAndFinalization",
-      Onboarding: "Onboarding",
-      Warm: "Warm",
-      Failed: "Failed",
-    };
-
-    // Check if the stage is a custom final stage
-    const isCustomStage = customStageRoutes.hasOwnProperty(stageName);
-
-    // Get appropriate slug
-    const stageSlug = isCustomStage
-      ? customStageRoutes[stageName]
-      : stageName
-          .toLowerCase()
-          .replace(/\s+/g, "")
-          .replace(/[^a-z0-9]/g, "");
-
-    // Build path conditionally
-    const path = isCustomStage
-      ? `/job/stage/${stageSlug}`
-      : `/job/${jobSlug}/${stageSlug}`;
+    const path = getStageRoutePath(stageName, jobSlug);
 
     // Navigate
     navigate(path, {
       state: {
         jobTitle: currentJobTitle,
         stageName,
-        // jobData,
       },
     });
   };
@@ -108,7 +65,6 @@ export default function JobDetails() {
 
   return (
     <>
-      <Navbar />
       <div className="min-h-screen bg-gray-50 p-6 pt-[100px]">
         <div className="mx-auto max-w-7xl space-y-6">
           <div className="w-full space-y-6">

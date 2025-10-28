@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/shared/components/ui/button";
-import type { CreatePositionFormData } from "@/features/positions/types/createPosition";
+import type { CreatePositionFormData } from "@/features/positions/types/create_position.types";
 
 interface SuccessPageProps {
   formData: CreatePositionFormData;

@@ -1,5 +1,5 @@
 import React from "react";
-import type { FormData } from "../types/prfTypes";
+import type { FormData } from "../types/prf.types";
 
 interface PRFTableProps {
   data: FormData[];

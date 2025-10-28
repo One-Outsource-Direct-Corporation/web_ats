@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { JobFilters } from "../types/job";
+import type { JobFilters } from "../types/job.types";
 
 export const useJobFilters = () => {
   const [searchTerm, setSearchTerm] = useState("");

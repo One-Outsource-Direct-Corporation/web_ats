@@ -8,7 +8,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/shared/components/ui/select";
-import type { PRF } from "../types/prfTypes";
+import type { PRF } from "../types/prf.types";
 import { PreviewInfo } from "./PreviewInfo";
 import { RichTextEditor } from "@/shared/components/reusables/RichTextEditor";
 

@@ -14,7 +14,7 @@ import {
   FieldError,
 } from "@/shared/components/ui/field";
 import { RichTextEditor } from "@/shared/components/reusables/RichTextEditor";
-import type { JobPostingResponsePRF } from "@/features/jobs/types/jobTypes";
+import type { JobPostingResponsePRF } from "@/features/jobs/types/job.types";
 
 interface EditStep02Props {
   goToNextStep: () => void;

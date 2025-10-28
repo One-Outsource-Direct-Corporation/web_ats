@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
-import type { PersonalFormData } from "../../types/applicationForm";
+import type { PersonalFormData } from "../../types/application_form.types";
 import { Field, FieldLabel, FieldSet } from "@/shared/components/ui/field";
 // import type { ApplicationForm } from "../../types/job";
 

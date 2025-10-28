@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Assessment, Question } from "../../types/createPosition";
+import type { Assessment, Question } from "../../types/create_position.types";
 
 export const useAssessmentManagement = () => {
   const [globalAssessments, setGlobalAssessments] = useState<Assessment[]>([]);

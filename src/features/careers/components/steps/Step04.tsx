@@ -1,4 +1,4 @@
-import type { AcknowledgementFormData } from "../../types/applicationForm";
+import type { AcknowledgementFormData } from "../../types/application_form.types";
 import { AcknowledgementSection } from "../application/AcknowledgementSection";
 
 interface Step04Props {

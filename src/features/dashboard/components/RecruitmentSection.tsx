@@ -22,7 +22,7 @@ import { Separator } from "@/shared/components/ui/separator";
 import { FolderSearch, FolderSearch2 } from "lucide-react";
 import { jobData } from "../data/jobData";
 import { ongoingProcesses } from "../data/ongoingProcesses";
-import type { StatusType } from "../types/upcomingEvents.types";
+import type { StatusType } from "../types/upcoming_events.types";
 
 interface RecruitmentSectionProps {
   getStatusColor: (status: StatusType) => string;

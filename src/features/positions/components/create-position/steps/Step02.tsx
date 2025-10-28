@@ -1,4 +1,4 @@
-import type { CreatePositionFormData } from "@/features/positions/types/createPosition";
+import type { CreatePositionFormData } from "@/features/positions/types/create_position.types";
 import { RichTextEditor } from "@/shared/components/reusables/RichTextEditor";
 import { Card } from "@/shared/components/ui/card";
 

@@ -1,6 +1,6 @@
 import { Card } from "@/shared/components/ui/card";
 import { ApplicationFormManagement } from "../../../../../shared/components/reusables/ApplicationFormManagement";
-import type { CreatePositionFormData } from "@/features/positions/types/createPosition";
+import type { CreatePositionFormData } from "@/features/positions/types/create_position.types";
 
 interface Step03Props {
   formData: CreatePositionFormData;

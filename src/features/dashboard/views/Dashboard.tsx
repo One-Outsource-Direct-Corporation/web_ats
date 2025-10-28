@@ -3,7 +3,7 @@ import { metrics } from "../data/metrics";
 import { interviews } from "../data/interviews";
 import { LeftColumn } from "../components/LeftColumn";
 import { RightColumn } from "../components/RightColumn";
-import type { StatusType } from "../types/upcomingEvents.types";
+import type { StatusType } from "../types/upcoming_events.types";
 
 export default function Dashboard() {
   useEffect(() => {

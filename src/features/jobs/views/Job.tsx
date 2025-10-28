@@ -11,7 +11,7 @@ import {
 } from "@/shared/components/ui/select.tsx";
 import { useEffect, useState } from "react";
 import { useJobs } from "@/features/jobs/hooks/useJobs";
-import type { Job } from "@/features/jobs/types/jobTypes";
+import type { Job } from "@/features/jobs/types/job.types";
 
 const statusColor: Record<string, string> = {
   Published: "bg-green-100 text-green-700",

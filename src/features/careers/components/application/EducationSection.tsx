@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
-import type { EducationWorkFormData } from "../../types/applicationForm";
+import type { EducationWorkFormData } from "../../types/application_form.types";
 import { Field, FieldLabel, FieldSet } from "@/shared/components/ui/field";
 
 interface EducationSectionProps {

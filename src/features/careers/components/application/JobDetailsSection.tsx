@@ -1,7 +1,7 @@
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
-import type { JobDetailsFormData } from "../../types/applicationForm";
+import type { JobDetailsFormData } from "../../types/application_form.types";
 import { ChevronDownIcon, Upload } from "lucide-react";
 import {
   Popover,

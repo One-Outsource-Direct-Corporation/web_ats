@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import type {
   CreatePositionFormData,
   PipelineStep,
-} from "../../types/createPosition";
+} from "../../types/create_position.types";
 
 export const useFormData = () => {
   const [formData, setFormData] = useState<CreatePositionFormData>({

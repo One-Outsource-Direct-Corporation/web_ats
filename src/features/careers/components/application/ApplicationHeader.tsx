@@ -1,5 +1,5 @@
 import { Button } from "@/shared/components/ui/button";
-import type { JobData } from "../../types/job";
+import type { JobData } from "../../types/job.types";
 
 interface ApplicationHeaderProps {
   job: JobData;

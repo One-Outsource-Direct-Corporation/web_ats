@@ -7,7 +7,7 @@ import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import DOMPurify from "dompurify";
 import formatName from "@/shared/utils/formatName";
 import { usePositionDetail } from "@/shared/hooks/usePositions";
-import type { JobPostingResponsePosition } from "@/features/jobs/types/jobTypes";
+import type { JobPostingResponsePosition } from "@/features/jobs/types/job.types";
 
 export default function CareerDescription() {
   const navigate = useNavigate();

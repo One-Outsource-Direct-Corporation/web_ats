@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
-import type { AcknowledgementFormData } from "../../types/applicationForm";
+import type { AcknowledgementFormData } from "../../types/application_form.types";
 import { Upload } from "lucide-react";
 import SignatureCanvas from "react-signature-canvas";
 import {

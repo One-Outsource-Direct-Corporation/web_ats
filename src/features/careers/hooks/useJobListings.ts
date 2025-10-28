@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { defaultAxios } from "@/config/axios";
 import type { AxiosError } from "axios";
-import type { JobData } from "../types/job";
+import type { JobData } from "../types/job.types";
 
 export const useJobListings = () => {
   const [jobListings, setJobListings] = useState<JobData[]>([]);

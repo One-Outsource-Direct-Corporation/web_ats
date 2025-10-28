@@ -7,7 +7,7 @@ import type {
   JobPostingAPIResponse,
   JobPostingResponsePosition,
   JobPostingResponsePRF,
-} from "@/features/jobs/types/jobTypes";
+} from "@/features/jobs/types/job.types";
 
 export function usePositions({
   my_postings = false,

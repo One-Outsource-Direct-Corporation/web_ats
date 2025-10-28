@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { Client } from "../../types/createPosition";
+import type { Client } from "../../types/create_position.types";
 import type { AxiosError } from "axios";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 

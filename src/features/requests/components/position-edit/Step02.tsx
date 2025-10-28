@@ -1,4 +1,4 @@
-import type { JobPostingResponsePosition } from "@/features/jobs/types/jobTypes";
+import type { JobPostingResponsePosition } from "@/features/jobs/types/job.types";
 import { RichTextEditor } from "@/shared/components/reusables/RichTextEditor";
 import { Field, FieldGroup, FieldLabel } from "@/shared/components/ui/field";
 export default function Step02({

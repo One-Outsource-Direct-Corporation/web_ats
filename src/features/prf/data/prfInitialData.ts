@@ -1,5 +1,5 @@
 import type { User } from "@/features/auth/types/auth.types";
-import type { PRF } from "../types/prfTypes";
+import type { PRF } from "../types/prf.types";
 
 export default function initialData(user: User | null): PRF {
   return {

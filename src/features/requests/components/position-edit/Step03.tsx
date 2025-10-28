@@ -1,4 +1,4 @@
-import type { JobPostingResponsePosition } from "@/features/jobs/types/jobTypes";
+import type { JobPostingResponsePosition } from "@/features/jobs/types/job.types";
 import { ApplicationFormManagement } from "@/shared/components/reusables/ApplicationFormManagement";
 
 export default function Step03({

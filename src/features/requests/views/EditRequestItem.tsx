@@ -17,7 +17,7 @@ import { formatBackgroundStatus } from "@/shared/utils/formatBackgroundStatus";
 import type {
   JobPostingResponsePosition,
   JobPostingResponsePRF,
-} from "@/features/jobs/types/jobTypes";
+} from "@/features/jobs/types/job.types";
 import { usePositionDetail } from "@/shared/hooks/usePositions";
 import PositionEditForm from "../components/PositionEditForm";
 import { useEffect } from "react";

@@ -1,5 +1,5 @@
 import PipelineConfiguration from "@/shared/components/reusables/PipelineConfiguration";
-import type { PipelineStep } from "@/features/positions/types/createPosition";
+import type { PipelineStep } from "@/features/positions/types/create_position.types";
 
 interface Step04Props {
   pipelineSteps: PipelineStep[];

@@ -3,7 +3,7 @@ import { WorkExperienceSection } from "../application/WorkExperienceSection";
 import type {
   EducationWorkFormData,
   WorkExperienceEntry,
-} from "../../types/applicationForm";
+} from "../../types/application_form.types";
 
 interface Step03Props {
   formData: EducationWorkFormData;

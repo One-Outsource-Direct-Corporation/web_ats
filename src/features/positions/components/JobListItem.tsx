@@ -1,6 +1,6 @@
 import { Card } from "@/shared/components/ui/card";
 import { Badge } from "@/shared/components/ui/badge";
-import type { JobPostingResponse } from "@/features/jobs/types/jobTypes";
+import type { JobPostingResponse } from "@/features/jobs/types/job.types";
 import { getDepartmentColor } from "../utils/departmentColor";
 import DOMPurify from "dompurify";
 import formatName from "@/shared/utils/formatName";

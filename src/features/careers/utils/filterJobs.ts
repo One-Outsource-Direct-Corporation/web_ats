@@ -1,4 +1,4 @@
-import type { JobData, JobFilters } from "../types/job";
+import type { JobData, JobFilters } from "../types/job.types";
 
 export const calculateDaysAgo = (dateString: string): number => {
   const createdDate = new Date(dateString);

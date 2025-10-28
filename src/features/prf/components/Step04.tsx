@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/shared/components/ui/button";
-import type { PRF } from "../types/prfTypes";
+import type { PRF } from "../types/prf.types";
 import { PreviewInfo } from "./PreviewInfo";
 import formatName from "@/shared/utils/formatName";
 

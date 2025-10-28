@@ -1,7 +1,7 @@
-import type { ApplicationForm } from "@/features/careers/types/job";
-import type { FormFields, PipelineStep } from "./createPosition";
+import type { ApplicationForm } from "@/features/careers/types/job.types";
+import type { FormFields, PipelineStep } from "./create_position.types";
 import type { User } from "@/features/auth/types/auth.types";
-import type { JobPostingResponse } from "@/features/jobs/types/jobTypes";
+import type { JobPostingResponse } from "@/features/jobs/types/job.types";
 
 export interface PositionData {
   id: number;

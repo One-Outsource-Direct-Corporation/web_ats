@@ -3,7 +3,7 @@ import { Label } from "@/shared/components/ui/label";
 import { Button } from "@/shared/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
 import { X } from "lucide-react";
-import type { EducationWorkFormData } from "../../types/applicationForm";
+import type { EducationWorkFormData } from "../../types/application_form.types";
 import { Field, FieldLabel, FieldSet } from "@/shared/components/ui/field";
 
 interface WorkExperienceSectionProps {

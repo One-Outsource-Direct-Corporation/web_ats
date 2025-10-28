@@ -1,5 +1,5 @@
 import { JobDetailsSection } from "../application/JobDetailsSection";
-import type { JobDetailsFormData } from "../../types/applicationForm";
+import type { JobDetailsFormData } from "../../types/application_form.types";
 
 interface Step02Props {
   formData: JobDetailsFormData;

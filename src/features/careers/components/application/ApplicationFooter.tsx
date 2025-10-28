@@ -1,5 +1,5 @@
 import { Button } from "@/shared/components/ui/button";
-import type { ApplicationFormData } from "../../types/applicationForm";
+import type { ApplicationFormData } from "../../types/application_form.types";
 
 interface ApplicationFooterProps {
   currentStage: number;

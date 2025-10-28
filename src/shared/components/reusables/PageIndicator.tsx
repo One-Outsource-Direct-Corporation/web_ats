@@ -1,4 +1,4 @@
-import type { JobPostingAPIResponse } from "@/features/jobs/types/jobTypes";
+import type { JobPostingAPIResponse } from "@/features/jobs/types/job.types";
 import { Button } from "../ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 

@@ -15,8 +15,8 @@ import {
 } from "@/shared/components/ui/field";
 import { useUsersByDepartment } from "@/features/prf/hooks/useUsersByDepartment";
 import type { User } from "@/features/auth/types/auth.types";
-import type { JobPostingResponsePRF } from "@/features/jobs/types/jobTypes";
-import type { PRFHiringManagerResponse } from "@/features/prf/types/prfTypes";
+import type { JobPostingResponsePRF } from "@/features/jobs/types/job.types";
+import type { PRFHiringManagerResponse } from "@/features/prf/types/prf.types";
 
 interface EditStep01Props {
   goToNextStep: () => void;

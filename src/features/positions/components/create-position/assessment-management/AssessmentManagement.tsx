@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "@/shared/components/ui/button";
 import { FileText } from "lucide-react";
-import type { Assessment } from "../../../types/createPosition";
+import type { Assessment } from "../../../types/create_position.types";
 
 interface AssessmentManagementProps {
   globalAssessments: Assessment[];

@@ -3,7 +3,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Field, FieldLabel, FieldGroup } from "@/shared/components/ui/field";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Label } from "@/shared/components/ui/label";
-import type { JobPostingResponsePRF } from "@/features/jobs/types/jobTypes";
+import type { JobPostingResponsePRF } from "@/features/jobs/types/job.types";
 import formatName from "@/shared/utils/formatName";
 
 interface EditStep03Props {

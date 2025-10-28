@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { defaultAxios } from "@/config/axios";
-import type { JobData } from "../types/job";
+import type { JobData } from "../types/job.types";
 import type { AxiosError } from "axios";
 
 export const useJobDetail = (jobId: string | undefined) => {

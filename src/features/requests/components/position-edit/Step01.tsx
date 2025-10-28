@@ -22,7 +22,7 @@ import {
 } from "@/shared/components/ui/popover";
 import { Button } from "@/shared/components/ui/button";
 import { ChevronDownIcon } from "lucide-react";
-import type { JobPostingResponsePosition } from "@/features/jobs/types/jobTypes";
+import type { JobPostingResponsePosition } from "@/features/jobs/types/job.types";
 import { formatNameBySpace } from "@/shared/utils/formatName";
 
 export default function Step01({

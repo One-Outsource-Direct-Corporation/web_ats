@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/shared/components/ui/card";
-import type { Metric } from "../types/upcomingEvents.types";
+import type { Metric } from "../types/upcoming_events.types";
 
 interface MetricsSectionProps {
   metrics: Metric[];

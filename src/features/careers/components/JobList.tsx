@@ -1,5 +1,5 @@
 import { JobCard } from "./JobCard";
-import type { JobPostingAPIResponse } from "@/features/jobs/types/jobTypes";
+import type { JobPostingAPIResponse } from "@/features/jobs/types/job.types";
 
 interface JobListProps {
   jobs: JobPostingAPIResponse;

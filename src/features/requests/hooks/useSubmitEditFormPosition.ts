@@ -1,5 +1,5 @@
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
-import type { JobPostingResponsePosition } from "@/features/jobs/types/jobTypes";
+import type { JobPostingResponsePosition } from "@/features/jobs/types/job.types";
 import { formatForJSON } from "@/shared/utils/formatName";
 import type { AxiosError } from "axios";
 import DOMPurify from "dompurify";

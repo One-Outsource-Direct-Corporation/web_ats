@@ -8,7 +8,7 @@ import {
   TableRow,
 } from "@/shared/components/ui/table";
 import { FormFieldRadioButton } from "../../../features/positions/components/create-position/form-management/FormFieldRadioButton";
-import type { FormFields } from "@/features/positions/types/createPosition";
+import type { FormFields } from "@/features/positions/types/create_position.types";
 import { memo } from "react";
 
 interface ApplicationFormManagementProps<

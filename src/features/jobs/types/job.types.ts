@@ -1,5 +1,5 @@
-import type { PositionResponse } from "@/features/positions/types/positionTypes";
-import type { PRFResponse } from "@/features/prf/types/prfTypes";
+import type { PositionResponse } from "@/features/positions/types/position.types";
+import type { PRFResponse } from "@/features/prf/types/prf.types";
 
 export type Job = {
   id: string;

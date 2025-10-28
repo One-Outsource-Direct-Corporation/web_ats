@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "@/shared/components/ui/button";
 import { X, Briefcase } from "lucide-react";
-import type { CreatePositionFormData } from "@/features/positions/types/createPosition";
+import type { CreatePositionFormData } from "@/features/positions/types/create_position.types";
 import formatName from "@/shared/utils/formatName";
 import formatMoney from "@/shared/utils/formatMoney";
 import formatDate from "@/shared/utils/formatDate";

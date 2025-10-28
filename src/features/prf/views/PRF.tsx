@@ -14,7 +14,7 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { formatForJSON } from "@/shared/utils/formatName";
 import initialData from "../data/prfInitialData";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
-import type { FormDataType } from "../types/prfTypes";
+import type { FormDataType } from "../types/prf.types";
 import type { AxiosError, AxiosResponse } from "axios";
 import { toast } from "react-toastify";
 import { useState } from "react";

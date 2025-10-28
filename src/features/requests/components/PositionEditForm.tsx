@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/shared/components/ui/button";
-import type { JobPostingResponsePosition } from "@/features/jobs/types/jobTypes";
+import type { JobPostingResponsePosition } from "@/features/jobs/types/job.types";
 import { StepNavigation } from "@/features/positions/components/create-position/navigation/StepNavigation";
 import { useStepNavigation } from "@/features/positions/hooks/create-position/useStepNavigation";
 import Step01 from "./position-edit/Step01";

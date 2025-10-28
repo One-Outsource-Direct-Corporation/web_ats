@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { StepProps } from "../../types/createPosition";
+import type { StepProps } from "../../types/create_position.types";
 
 export const useStepNavigation = () => {
   const [currentStep, setCurrentStep] = useState(1);

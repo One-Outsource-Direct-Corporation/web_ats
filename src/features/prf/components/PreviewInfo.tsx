@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import type { PRF } from "../types/prfTypes";
+import type { PRF } from "../types/prf.types";
 import formatName from "@/shared/utils/formatName";
 
 interface PreviewInfoProps {

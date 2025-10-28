@@ -5,7 +5,7 @@ import { Plus, Trash2, Edit, Check } from "lucide-react";
 import type {
   BatchEntry,
   LocationEntry,
-} from "@/features/positions/types/createPosition";
+} from "@/features/positions/types/create_position.types";
 
 interface BatchManagementProps {
   batches: BatchEntry[];

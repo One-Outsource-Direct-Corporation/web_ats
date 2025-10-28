@@ -1,4 +1,4 @@
-import type { StepProps } from "../../../types/createPosition";
+import type { StepProps } from "../../../types/create_position.types";
 import { Button } from "@/shared/components/ui/button";
 import { useNavigate } from "react-router-dom";
 

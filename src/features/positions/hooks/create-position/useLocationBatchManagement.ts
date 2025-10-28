@@ -1,5 +1,8 @@
 import { useState } from "react";
-import type { LocationEntry, BatchEntry } from "../../types/createPosition";
+import type {
+  LocationEntry,
+  BatchEntry,
+} from "../../types/create_position.types";
 
 export const useLocationBatchManagement = () => {
   const [locations, setLocations] = useState<LocationEntry[]>([

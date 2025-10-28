@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import type { JobPostingResponsePRF } from "@/features/jobs/types/jobTypes";
+import type { JobPostingResponsePRF } from "@/features/jobs/types/job.types";
 import { EditStep01 } from "./prf-edit/EditStep01";
 import { EditStep02 } from "./prf-edit/EditStep02";
 import { EditStep03 } from "./prf-edit/EditStep03";

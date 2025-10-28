@@ -1,4 +1,4 @@
-import type { CreatePositionFormData } from "../../../types/createPosition";
+import type { CreatePositionFormData } from "../../../types/create_position.types";
 import {
   FieldSet,
   FieldGroup,
