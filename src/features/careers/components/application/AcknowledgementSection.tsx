@@ -40,7 +40,6 @@ export const AcknowledgementSection: React.FC<AcknowledgementSectionProps> = ({
   const handleSaveSignature = () => {
     const dataURL = sigCanvasRef.current?.toDataURL("image/png");
     if (dataURL) {
-      // Convert dataURL to File object
       fetch(dataURL)
         .then((res) => res.blob())
         .then((blob) => {
@@ -53,8 +52,7 @@ export const AcknowledgementSection: React.FC<AcknowledgementSectionProps> = ({
   return (
     <div>
       <FieldSet>
-        {/* How Did You Learn */}
-        <Field className="space-y-2">
+        <Field>
           <FieldLabel htmlFor="howDidYouLearn">
             How did you hear about us?
           </FieldLabel>
@@ -75,7 +73,6 @@ export const AcknowledgementSection: React.FC<AcknowledgementSectionProps> = ({
           </Select>
         </Field>
 
-        {/* Certification */}
         <Field orientation="horizontal">
           <Checkbox
             id="certification"
@@ -83,6 +80,7 @@ export const AcknowledgementSection: React.FC<AcknowledgementSectionProps> = ({
             onCheckedChange={(checked) =>
               onInputChange("certificationAccepted", checked === true)
             }
+            className="data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white dark:data-[state=checked]:border-blue-700 dark:data-[state=checked]:bg-blue-700"
           />
           <FieldLabel
             htmlFor="certification"
@@ -96,9 +94,8 @@ export const AcknowledgementSection: React.FC<AcknowledgementSectionProps> = ({
           </FieldLabel>
         </Field>
 
-        {/* Signature - No Required Yet */}
-        <FieldSet className="space-y-2">
-          <FieldDescription className="text-sm font-medium text-gray-700 mb-3 block">
+        <FieldSet>
+          <FieldDescription className="text-sm font-medium text-gray-700">
             Signature
           </FieldDescription>
 
@@ -120,17 +117,17 @@ export const AcknowledgementSection: React.FC<AcknowledgementSectionProps> = ({
                 <button
                   type="button"
                   onClick={handleClearSignature}
-                  className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                 >
                   Clear
                 </button>
-                <button
+                {/* <button
                   type="button"
                   onClick={handleSaveSignature}
                   className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                 >
                   Save Signature
-                </button>
+                </button> */}
               </div>
               {typeof formData.signature !== "string" && formData.signature && (
                 <p className="text-sm text-green-600 mt-2">✓ Signature saved</p>

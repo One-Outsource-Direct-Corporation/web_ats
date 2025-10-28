@@ -1,28 +1,16 @@
-import { useState } from "react";
 import type { AcknowledgementFormData } from "../../types/applicationForm";
 import { AcknowledgementSection } from "../application/AcknowledgementSection";
 
-export default function Step04() {
-  const [formData, setFormData] = useState<AcknowledgementFormData>({
-    signature: null,
-    howDidYouLearn: null,
-    certificationAccepted: null,
-  });
-
-  function handleAcknowledgementChange(
+interface Step04Props {
+  formData: AcknowledgementFormData;
+  onInputChange: (
     field: keyof AcknowledgementFormData,
     value: string | boolean | File | null
-  ) {
-    setFormData((prevData) => ({
-      ...prevData,
-      [field]: value,
-    }));
-  }
+  ) => void;
+}
 
+export default function Step04({ formData, onInputChange }: Step04Props) {
   return (
-    <AcknowledgementSection
-      formData={formData}
-      onInputChange={handleAcknowledgementChange}
-    />
+    <AcknowledgementSection formData={formData} onInputChange={onInputChange} />
   );
 }

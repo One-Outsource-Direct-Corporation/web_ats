@@ -1,73 +1,54 @@
-import { useState } from "react";
 import { EducationSection } from "../application/EducationSection";
 import { WorkExperienceSection } from "../application/WorkExperienceSection";
-import type { EducationWorkFormData } from "../../types/applicationForm";
+import type {
+  EducationWorkFormData,
+  WorkExperienceEntry,
+} from "../../types/applicationForm";
 
-export default function Step03() {
-  const [formData, setFormData] = useState<EducationWorkFormData>({
-    highestEducation: null,
-    yearGraduated: null,
-    institution: null,
-    program: null,
-    hasWorkExperience: null,
-    currentJobTitle: null,
-    currentCompany: null,
-    currentYearsExperience: null,
-    workExperience: [],
-  });
+interface Step03Props {
+  formData: EducationWorkFormData;
+  onInputChange: (
+    field: string,
+    value: string | number | null | WorkExperienceEntry[]
+  ) => void;
+}
 
-  function handleEducationWorkChange(field: string, value: string) {
-    setFormData((prevData) => ({
-      ...prevData,
-      [field]: value,
-    }));
-  }
-
+export default function Step03({ formData, onInputChange }: Step03Props) {
   function handleAddExperience() {
-    setFormData((prevData) => {
-      if (prevData && prevData.workExperience !== null) {
-        return {
-          ...prevData,
-          workExperience: [
-            ...(prevData.workExperience ?? []),
-            {
-              jobTitle: prevData.currentJobTitle ?? "",
-              company: prevData.currentCompany ?? "",
-              years: Number(prevData.currentYearsExperience ?? 0),
-            },
-          ],
-          currentJobTitle: null,
-          currentCompany: null,
-          currentYearsExperience: null,
-        };
-      }
-      return prevData;
-    });
+    if (formData && formData.workExperience !== null) {
+      const newExperience: WorkExperienceEntry = {
+        jobTitle: formData.currentJobTitle ?? "",
+        company: formData.currentCompany ?? "",
+        years: Number(formData.currentYearsExperience ?? 0),
+      };
+
+      const updatedWorkExperience = [
+        ...(formData.workExperience ?? []),
+        newExperience,
+      ];
+
+      onInputChange("workExperience", updatedWorkExperience);
+      onInputChange("currentJobTitle", null);
+      onInputChange("currentCompany", null);
+      onInputChange("currentYearsExperience", null);
+    }
   }
 
   function handleRemoveExperience(index: number) {
-    setFormData((prevData) => {
-      if (prevData && prevData.workExperience !== null) {
-        return {
-          ...prevData,
-          workExperience: (prevData.workExperience ?? []).filter(
-            (_, i) => i !== index
-          ),
-        };
-      }
-      return prevData;
-    });
+    if (formData && formData.workExperience !== null) {
+      const updatedWorkExperience = (formData.workExperience ?? []).filter(
+        (_, i) => i !== index
+      );
+      onInputChange("workExperience", updatedWorkExperience);
+    }
   }
 
   return (
     <div className="space-y-6">
-      <EducationSection
-        formData={formData}
-        onInputChange={handleEducationWorkChange}
-      />
+      <EducationSection formData={formData} onInputChange={onInputChange} />
       <WorkExperienceSection
         formData={formData}
-        onInputChange={handleEducationWorkChange}
+        onInputChange={onInputChange}
         onAddExperience={handleAddExperience}
         onRemoveExperience={handleRemoveExperience}
       />

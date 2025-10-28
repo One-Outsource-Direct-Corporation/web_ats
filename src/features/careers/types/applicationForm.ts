@@ -23,12 +23,6 @@ export interface JobDetailsFormData {
   interviewSchedule: string | null;
 }
 
-export interface WorkExperienceEntry {
-  jobTitle: string | null;
-  company: string | null;
-  years: number | null;
-}
-
 export interface EducationWorkFormData {
   highestEducation: string | null;
   yearGraduated: string | null;
@@ -41,17 +35,27 @@ export interface EducationWorkFormData {
   workExperience: WorkExperienceEntry[] | null;
 }
 
+export interface WorkExperienceEntry {
+  jobTitle: string | null;
+  company: string | null;
+  years: number | null;
+}
+
 export interface AcknowledgementFormData {
   howDidYouLearn: string | null;
   certificationAccepted: boolean | null;
   signature: string | File | null;
 }
 
+export interface ApplicationFormData {
+  personalInfo: PersonalFormData;
+  jobDetails: JobDetailsFormData;
+  educationWork: EducationWorkFormData;
+  acknowledgement: AcknowledgementFormData;
+}
+
 export interface ApplicationFormState {
-  formData: PersonalFormData;
-  stage2Data: JobDetailsFormData;
-  stage3Data: EducationWorkFormData;
-  stage4Data: AcknowledgementFormData;
+  formData: ApplicationFormData;
   currentStage: number;
   acceptTerms: boolean;
 }

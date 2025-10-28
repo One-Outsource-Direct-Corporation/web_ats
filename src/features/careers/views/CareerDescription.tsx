@@ -97,8 +97,7 @@ export default function CareerDescription() {
               Apply Now
             </Button>
             <Button
-              variant="outline"
-              className="px-6 py-2 bg-transparent"
+              className="px-6 py-2 text-blue-600 border-blue-600 border-1 hover:bg-blue-50 bg-transparent"
               onClick={() => navigate("/")}
             >
               View Other Opening

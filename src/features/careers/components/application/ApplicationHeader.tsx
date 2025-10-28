@@ -17,9 +17,8 @@ export const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({
           <h1 className="text-xl font-bold text-gray-900">{job.job_title}</h1>
         </div>
         <Button
-          variant="outline"
           onClick={onViewJobDescription}
-          className="text-blue-600 border-blue-600 hover:bg-blue-50 bg-transparent"
+          className="text-blue-600 border-1 border-blue-600 hover:bg-blue-50 bg-transparent"
         >
           View Job Description
         </Button>

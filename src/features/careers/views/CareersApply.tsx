@@ -9,15 +9,6 @@ import { useApplicationForm } from "../hooks/useApplicationForm";
 import { ApplicationSidebar } from "../components/application/ApplicationSidebar";
 import { ApplicationHeader } from "../components/application/ApplicationHeader";
 import { ApplicationFooter } from "../components/application/ApplicationFooter";
-import { MobileProgressBar } from "../components/application/MobileProgressBar";
-import { DataPrivacySection } from "../components/application/DataPrivacySection";
-import { PersonalInfoSection } from "../components/application/PersonalInfoSection";
-import { ContactInfoSection } from "../components/application/ContactInfoSection";
-import { AddressInfoSection } from "../components/application/AddressInfoSection";
-import { JobDetailsSection } from "../components/application/JobDetailsSection";
-import { EducationSection } from "../components/application/EducationSection";
-import { WorkExperienceSection } from "../components/application/WorkExperienceSection";
-import { AcknowledgementSection } from "../components/application/AcknowledgementSection";
 import { ApplicationCompleteModal } from "../components/application/ApplicationCompleteModal";
 import Step01 from "../components/steps/Step01";
 import Step02 from "../components/steps/Step02";
@@ -35,24 +26,41 @@ export default function CareersApply() {
 
   const {
     formData,
-    stage2Data,
-    stage3Data,
-    stage4Data,
     currentStage,
     acceptTerms,
     setAcceptTerms,
-    handlePersonalInfoChange,
-    handleJobDetailsChange,
-    handleEducationWorkChange,
-    handleAcknowledgementChange,
-    handleAddWorkExperience,
-    handleRemoveWorkExperience,
-    handleDocumentsUploaded,
+    handleInputPersonalInfo,
+    handleInputJobDetails,
+    handleInputEducationWork,
+    handleInputAcknowledgement,
     goToNextStage,
     goToPreviousStage,
-    saveFormState,
-    clearFormState,
   } = useApplicationForm(jobDetail?.job_title);
+
+  // Wrapper functions to handle type compatibility
+  const handleJobDetailsChange = (
+    field: string,
+    value: string | number | File | null
+  ) => {
+    handleInputJobDetails(field as keyof typeof formData.jobDetails, value);
+  };
+
+  const handleEducationWorkChange = (
+    field: string,
+    value: string | number | null | any
+  ) => {
+    handleInputEducationWork(
+      field as keyof typeof formData.educationWork,
+      value
+    );
+  };
+
+  const handleAcknowledgementChange = (
+    field: keyof typeof formData.acknowledgement,
+    value: string | boolean | File | null
+  ) => {
+    handleInputAcknowledgement(field, value as string | boolean | null);
+  };
 
   // Prevent body scroll when modals are open
   useEffect(() => {
@@ -78,16 +86,7 @@ export default function CareersApply() {
   };
 
   const handleDocumentsUploadComplete = (resumeData: any) => {
-    handleDocumentsUploaded(resumeData);
     setShowUploadModal(false);
-  };
-
-  const handleNext = () => {
-    if (currentStage < 4) goToNextStage();
-  };
-
-  const handleBack = () => {
-    goToPreviousStage();
   };
 
   const handleBackToHome = () => {
@@ -104,10 +103,9 @@ export default function CareersApply() {
 
   const handleBackToJobDescription = useCallback(() => {
     if (jobDetail) {
-      saveFormState();
       navigate(`/careers/${jobDetail.id}`);
     }
-  }, [jobDetail, saveFormState, navigate]);
+  }, [jobDetail, navigate]);
 
   console.log(jobDetail);
 
@@ -161,43 +159,53 @@ export default function CareersApply() {
         </div>
       )}
 
-      {/* Mobile Navigation Bar */}
-      <MobileProgressBar
-        currentStage={currentStage}
-        jobTitle={jobDetail.job_title || ""}
-        onLogoClick={handleLogoClick}
-      />
-
-      {/* Desktop Sidebar */}
       <ApplicationSidebar
         currentStage={currentStage}
         onLogoClick={handleLogoClick}
+        jobTitle={jobDetail.job_title || ""}
       />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-y-auto h-screen pb-20">
-        {/* Desktop Header */}
+      <section className="flex-1 flex flex-col overflow-y-auto h-screen pb-20">
         <ApplicationHeader
           job={jobDetail}
           onViewJobDescription={handleBackToJobDescription}
         />
-
-        {/* Form Content */}
         <div className="flex-1 p-4 lg:p-8">
-          {currentStage === 1 && <Step01 />}
-          {currentStage === 2 && <Step02 />}
-          {currentStage === 3 && <Step03 />}
-          {currentStage === 4 && <Step04 />}
+          {currentStage === 1 && (
+            <Step01
+              formData={formData.personalInfo}
+              onInputChange={handleInputPersonalInfo}
+              acceptTerms={acceptTerms}
+              onAcceptTermsChange={setAcceptTerms}
+            />
+          )}
+          {currentStage === 2 && (
+            <Step02
+              formData={formData.jobDetails}
+              onInputChange={handleJobDetailsChange}
+            />
+          )}
+          {currentStage === 3 && (
+            <Step03
+              formData={formData.educationWork}
+              onInputChange={handleEducationWorkChange}
+            />
+          )}
+          {currentStage === 4 && (
+            <Step04
+              formData={formData.acknowledgement}
+              onInputChange={handleAcknowledgementChange}
+            />
+          )}
         </div>
-      </div>
+      </section>
 
       {/* Fixed Footer for Navigation Buttons */}
       <ApplicationFooter
         currentStage={currentStage}
-        // acceptTerms={acceptTerms}
-        // certificationAccepted={stage4Data.certificationAccepted}
-        onBack={handleBack}
-        onNext={handleNext}
+        formData={formData}
+        onBack={() => currentStage > 1 && goToPreviousStage()}
+        onNext={() => currentStage < 4 && goToNextStage()}
       />
 
       {/* Application Complete Modal */}

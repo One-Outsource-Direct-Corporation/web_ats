@@ -1,220 +1,131 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import type {
   PersonalFormData,
   JobDetailsFormData,
   EducationWorkFormData,
   AcknowledgementFormData,
-  ApplicationFormState,
+  ApplicationFormData,
+  WorkExperienceEntry,
 } from "../types/applicationForm";
 
 const initialPersonalData: PersonalFormData = {
-  firstName: "",
-  lastName: "",
-  birthday: "",
-  gender: "",
-  primaryContact: "",
-  secondaryContact: "",
-  email: "",
-  linkedinProfile: "",
-  addressLine1: "",
-  city: "",
-  district: "",
-  postalCode: "",
-  country: "",
+  firstName: null,
+  lastName: null,
+  birthday: null,
+  gender: null,
+  primaryContact: null,
+  secondaryContact: null,
+  email: null,
+  linkedinProfile: null,
+  addressLine1: null,
+  city: null,
+  district: null,
+  postalCode: null,
+  country: null,
 };
 
 const initialJobDetailsData: JobDetailsFormData = {
-  positionApplyingFor: "",
-  expectedSalary: "",
-  willingToWorkOnsite: "",
+  positionApplyingFor: null,
+  expectedSalary: null,
+  willingToWorkOnsite: null,
   photo: null,
   medicalCertificate: null,
-  interviewSchedule: "",
+  interviewSchedule: null,
 };
 
 const initialEducationWorkData: EducationWorkFormData = {
-  highestEducation: "",
-  yearGraduated: "",
-  institution: "",
-  program: "",
-  hasWorkExperience: "",
-  currentJobTitle: "",
-  currentCompany: "",
-  currentYearsExperience: "",
+  highestEducation: null,
+  yearGraduated: null,
+  institution: null,
+  program: null,
+  hasWorkExperience: null,
+  currentJobTitle: null,
+  currentCompany: null,
+  currentYearsExperience: null,
   workExperience: [],
 };
 
 const initialAcknowledgementData: AcknowledgementFormData = {
-  howDidYouLearn: "",
+  howDidYouLearn: null,
   certificationAccepted: false,
   signature: null,
 };
 
+const data = {
+  personalInfo: initialPersonalData,
+  jobDetails: initialJobDetailsData,
+  educationWork: initialEducationWorkData,
+  acknowledgement: initialAcknowledgementData,
+};
+
+// TODO: Add localStorage data persistence
+
 export const useApplicationForm = (jobTitle?: string) => {
-  const [formData, setFormData] =
-    useState<PersonalFormData>(initialPersonalData);
-  const [stage2Data, setStage2Data] = useState<JobDetailsFormData>(
-    initialJobDetailsData
-  );
-  const [stage3Data, setStage3Data] = useState<EducationWorkFormData>(
-    initialEducationWorkData
-  );
-  const [stage4Data, setStage4Data] = useState<AcknowledgementFormData>(
-    initialAcknowledgementData
-  );
+  const [formData, setFormData] = useState<ApplicationFormData>(data);
   const [currentStage, setCurrentStage] = useState(1);
   const [acceptTerms, setAcceptTerms] = useState(false);
 
-  // Ref to hold the latest form data for saving
-  const formStateRef = useRef<ApplicationFormState>({
-    formData,
-    stage2Data,
-    stage3Data,
-    stage4Data,
-    currentStage,
-    acceptTerms,
-  });
-
-  // Update the ref whenever any state changes
-  useEffect(() => {
-    formStateRef.current = {
-      formData,
-      stage2Data,
-      stage3Data,
-      stage4Data,
-      currentStage,
-      acceptTerms,
-    };
-  }, [formData, stage2Data, stage3Data, stage4Data, currentStage, acceptTerms]);
-
-  // Load persisted form data from localStorage on mount
-  useEffect(() => {
-    try {
-      const persistedData = localStorage.getItem("applicationFormData");
-      if (persistedData) {
-        const parsedData = JSON.parse(persistedData) as ApplicationFormState;
-        setFormData(parsedData.formData || initialPersonalData);
-        setStage2Data(parsedData.stage2Data || initialJobDetailsData);
-        setStage3Data(parsedData.stage3Data || initialEducationWorkData);
-        setStage4Data(parsedData.stage4Data || initialAcknowledgementData);
-        setCurrentStage(parsedData.currentStage || 1);
-        setAcceptTerms(parsedData.acceptTerms || false);
-
-        // Clear after loading to prevent stale data
-        localStorage.removeItem("applicationFormData");
-      }
-    } catch (error) {
-      console.error("Failed to load application form data:", error);
-      localStorage.removeItem("applicationFormData");
-    }
-  }, []);
-
-  // Auto-fill position applying for when job title is provided
-  useEffect(() => {
-    if (jobTitle && !stage2Data.positionApplyingFor) {
-      setStage2Data((prev) => ({
-        ...prev,
-        positionApplyingFor: jobTitle,
-      }));
-    }
-  }, [jobTitle, stage2Data.positionApplyingFor]);
-
-  const handlePersonalInfoChange = (
-    field: keyof PersonalFormData,
-    value: string
-  ) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleJobDetailsChange = (
-    field: string,
-    value: string | File | null
-  ) => {
-    setStage2Data((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleEducationWorkChange = (field: string, value: string) => {
-    setStage3Data((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleAcknowledgementChange = (
-    field: string,
-    value: string | boolean | File | null
-  ) => {
-    setStage4Data((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleAddWorkExperience = () => {
-    if (
-      stage3Data.currentJobTitle &&
-      stage3Data.currentCompany &&
-      stage3Data.currentYearsExperience
-    ) {
-      setStage3Data((prev) => ({
-        ...prev,
-        workExperience: [
-          ...prev.workExperience,
-          {
-            jobTitle: prev.currentJobTitle,
-            company: prev.currentCompany,
-            years: prev.currentYearsExperience,
-          },
-        ],
-        currentJobTitle: "",
-        currentCompany: "",
-        currentYearsExperience: "",
-      }));
-    }
-  };
-
-  const handleRemoveWorkExperience = (index: number) => {
-    setStage3Data((prev) => ({
+  if (jobTitle && !formData.jobDetails.positionApplyingFor) {
+    setFormData((prev) => ({
       ...prev,
-      workExperience: prev.workExperience.filter((_, i) => i !== index),
+      jobDetails: {
+        ...prev.jobDetails,
+        positionApplyingFor: jobTitle,
+      },
     }));
-  };
+  }
 
-  const handleDocumentsUploaded = (resumeData: any) => {
-    if (resumeData) {
-      setFormData({
-        firstName: resumeData.firstName || "",
-        lastName: resumeData.lastName || "",
-        birthday: resumeData.birthday || "",
-        gender: resumeData.gender || "",
-        primaryContact: resumeData.primaryContact || "",
-        secondaryContact: resumeData.secondaryContact || "",
-        email: resumeData.email || "",
-        linkedinProfile: resumeData.linkedinProfile || "",
-        addressLine1: resumeData.addressLine1 || "",
-        city: resumeData.city || "",
-        district: resumeData.district || "",
-        postalCode: resumeData.postalCode || "",
-        country: resumeData.country || "",
-      });
+  function handleInputPersonalInfo(
+    field: keyof PersonalFormData,
+    value: string | number | null
+  ) {
+    setFormData((prev) => ({
+      ...prev,
+      personalInfo: {
+        ...prev.personalInfo,
+        [field]: value,
+      },
+    }));
+  }
 
-      if (resumeData.workExperience) {
-        setStage3Data((prev) => ({
-          ...prev,
-          workExperience: resumeData.workExperience,
-        }));
-      }
-    }
-  };
+  function handleInputJobDetails(
+    field: keyof JobDetailsFormData,
+    value: string | File | number | null
+  ) {
+    setFormData((prev) => ({
+      ...prev,
+      jobDetails: {
+        ...prev.jobDetails,
+        [field]: value,
+      },
+    }));
+  }
 
-  const saveFormState = () => {
-    try {
-      localStorage.setItem(
-        "applicationFormData",
-        JSON.stringify(formStateRef.current)
-      );
-    } catch (error) {
-      console.error("Failed to save application form data:", error);
-    }
-  };
+  function handleInputEducationWork(
+    field: keyof EducationWorkFormData,
+    value: string | number | null | WorkExperienceEntry[]
+  ) {
+    setFormData((prev) => ({
+      ...prev,
+      educationWork: {
+        ...prev.educationWork,
+        [field]: value,
+      },
+    }));
+  }
 
-  const clearFormState = () => {
-    localStorage.removeItem("applicationFormData");
-  };
+  function handleInputAcknowledgement(
+    field: keyof AcknowledgementFormData,
+    value: string | boolean | null
+  ) {
+    setFormData((prev) => ({
+      ...prev,
+      acknowledgement: {
+        ...prev.acknowledgement,
+        [field]: value,
+      },
+    }));
+  }
 
   const goToNextStage = () => {
     if (currentStage < 4) {
@@ -229,32 +140,18 @@ export const useApplicationForm = (jobTitle?: string) => {
   };
 
   return {
-    // State
     formData,
-    stage2Data,
-    stage3Data,
-    stage4Data,
     currentStage,
     acceptTerms,
 
-    // Setters
     setAcceptTerms,
 
-    // Handlers
-    handlePersonalInfoChange,
-    handleJobDetailsChange,
-    handleEducationWorkChange,
-    handleAcknowledgementChange,
-    handleAddWorkExperience,
-    handleRemoveWorkExperience,
-    handleDocumentsUploaded,
+    handleInputPersonalInfo,
+    handleInputJobDetails,
+    handleInputEducationWork,
+    handleInputAcknowledgement,
 
-    // Navigation
     goToNextStage,
     goToPreviousStage,
-
-    // Persistence
-    saveFormState,
-    clearFormState,
   };
 };
