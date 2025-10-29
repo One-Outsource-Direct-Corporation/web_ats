@@ -47,6 +47,12 @@ export const useFormData = () => {
       agreement: "optional",
       signature: "optional",
     },
+    application_form_non_negotiables: {
+      expect_salary: false,
+      willing_to_work_onsite: false,
+      education_attained: false,
+      course: false,
+    },
     pipeline: [],
   });
 
@@ -61,6 +67,19 @@ export const useFormData = () => {
         application_form: {
           ...prev.application_form,
           [fieldName]: status,
+        },
+      }));
+    },
+    []
+  );
+
+  const handleNonNegotiableChange = useCallback(
+    (fieldName: string, value: boolean) => {
+      setFormData((prev) => ({
+        ...prev,
+        application_form_non_negotiables: {
+          ...prev.application_form_non_negotiables,
+          [fieldName]: value,
         },
       }));
     },
@@ -153,6 +172,12 @@ export const useFormData = () => {
         agreement: "optional",
         signature: "optional",
       },
+      application_form_non_negotiables: {
+        expect_salary: false,
+        willing_to_work_onsite: false,
+        education_attained: false,
+        course: false,
+      },
       pipeline: [],
     });
   };
@@ -161,6 +186,7 @@ export const useFormData = () => {
     setFormData,
     handleInputChange,
     handleApplicationFormChange,
+    handleNonNegotiableChange,
     handlePipelineChange,
     handleDeletePipelineChange,
     resetFormData,

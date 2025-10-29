@@ -42,6 +42,7 @@ export const BasicDetailsForm = ({
   errorFields,
 }: BasicDetailsFormProps) => {
   const { clients, loading, error } = useClient();
+  console.log(formData.client);
   return (
     <div>
       {/* Basic Details */}
@@ -51,7 +52,7 @@ export const BasicDetailsForm = ({
             <Field>
               <FieldLabel>Client *</FieldLabel>
               <Select
-                value={String(formData.client) ?? ""}
+                value={formData.client ? String(formData.client) : ""}
                 onValueChange={(value) => onInputChange("client", value)}
               >
                 <SelectTrigger className="w-full">

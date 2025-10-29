@@ -134,6 +134,13 @@ export interface FormFields {
   signature: FormFieldStatus;
 }
 
+export interface FormFieldNonNegotiables {
+  expect_salary: boolean;
+  willing_to_work_onsite: boolean;
+  education_attained: boolean;
+  course: boolean;
+}
+
 // Step Component Props
 export interface StepProps {
   number: number;
@@ -256,6 +263,7 @@ export interface CreatePositionFormData {
   working_site: string;
   posted_by?: string; // User ID, will be handled in backend
   application_form: FormFields;
+  application_form_non_negotiables: FormFieldNonNegotiables;
   pipeline: PipelineStep[] | [];
 }
 
