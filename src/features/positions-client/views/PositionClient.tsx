@@ -33,10 +33,10 @@ interface PositionClientProps {
   handleNonNegotiableChange: (field: string, value: boolean) => void;
   handleNonNegotiableValueChange: (name: string, value: any) => void;
   handlePipelineChange: (
-    pipeline_identifier: number,
+    pipeline_identifier: string | number,
     data: PipelineStep
   ) => void;
-  handleDeletePipelineChange: (pipeline_identifier: number) => void;
+  handleDeletePipelineChange: (pipeline_identifier: string | number) => void;
   resetFormData: () => void;
 }
 
@@ -66,10 +66,7 @@ export default function PositionClient({
     resetSteps,
   } = useStepNavigation();
   const axiosPrivate = useAxiosPrivate();
-  const assessmentHooks = useAssessmentManagement();
   const modalHooks = useModalManagement();
-
-  console.log(formData.non_negotiables);
 
   // TODO: Add The Step Errors
 
@@ -149,6 +146,8 @@ export default function PositionClient({
     stepHandleNext();
   };
 
+  console.log(formData);
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
@@ -175,19 +174,11 @@ export default function PositionClient({
             pipelineDeleteHandler={handleDeletePipelineChange}
           />
         );
-
       case 5:
         return (
           <AssessmentManagement
-            globalAssessments={assessmentHooks.globalAssessments}
-            selectedAssessmentForEdit={
-              assessmentHooks.selectedAssessmentForEdit
-            }
-            onSelectAssessment={(assessment) => {
-              assessmentHooks.setSelectedAssessmentForEdit(assessment);
-              assessmentHooks.setIsEditingAssessment(true);
-            }}
-            onGoToPipeline={() => stepHandleNext()}
+            pipelineSteps={formData.pipeline}
+            goToPipeline={() => handleStepClick(4)}
           />
         );
     }

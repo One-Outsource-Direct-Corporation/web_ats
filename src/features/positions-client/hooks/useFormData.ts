@@ -2,6 +2,8 @@ import { useState, useCallback } from "react";
 import type {
   CreatePositionFormData,
   PipelineStep,
+  PipelineStepInDb,
+  PipelineStepLocal,
 } from "../types/create_position.types";
 
 export const useFormData = () => {
@@ -88,10 +90,12 @@ export const useFormData = () => {
   );
 
   const handlePipelineChange = useCallback(
-    (pipeline_identifier: number, data: PipelineStep) => {
+    (pipeline_identifier: string | number, data: PipelineStep) => {
       setFormData((prev) => {
-        const existingStep = prev.pipeline.filter(
-          (step) => step.pipeline_identifier === pipeline_identifier
+        const existingStep = prev.pipeline.filter((step) =>
+          step.source === "local"
+            ? step.pipeline_identifier === pipeline_identifier
+            : step.id === pipeline_identifier
         );
 
         if (existingStep.length > 0) {
@@ -100,7 +104,10 @@ export const useFormData = () => {
             ...prev,
             pipeline: prev.pipeline.map((step) => {
               if (
-                step.pipeline_identifier === existingStep[0].pipeline_identifier
+                step.source === "local"
+                  ? step.pipeline_identifier ===
+                    (existingStep[0] as PipelineStepLocal).pipeline_identifier
+                  : step.id === (existingStep[0] as PipelineStepInDb).id
               ) {
                 return { ...data };
               }
@@ -119,11 +126,13 @@ export const useFormData = () => {
   );
 
   const handleDeletePipelineChange = useCallback(
-    (pipeline_identifier: number) => {
+    (pipeline_identifier: string | number) => {
       setFormData((prev) => ({
         ...prev,
-        pipeline: prev.pipeline.filter(
-          (step) => step.pipeline_identifier !== pipeline_identifier
+        pipeline: prev.pipeline.filter((step) =>
+          step.source === "local"
+            ? step.pipeline_identifier === pipeline_identifier
+            : step.id === pipeline_identifier
         ),
       }));
     },

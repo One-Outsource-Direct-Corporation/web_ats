@@ -14,39 +14,6 @@ export interface BatchEntry {
   deploymentDate: string;
 }
 
-// Pipeline and Team Management Types
-export interface TeamMember {
-  id: number;
-  name: string;
-  position: string;
-  department: string;
-  process: string;
-}
-
-export interface Assessment {
-  id: number;
-  type: string;
-  title: string;
-  description: string;
-  required: boolean;
-  stage: string;
-  dueDate?: string;
-  timeLimit?: string;
-}
-
-// export interface PipelineStep {
-//   id: number;
-//   name: string;
-//   type: string;
-//   icon: any;
-//   description?: string;
-//   redactedInfo?: boolean;
-//   assessments?: Assessment[];
-//   teamMembers?: TeamMember[];
-//   templateType?: string;
-//   reminderTime?: string;
-// }
-
 // Question and Assessment Types
 export interface Question {
   id: number;
@@ -169,12 +136,6 @@ export interface AssessmentSettings {
 // }
 
 // Assessment Form Types
-export interface AssessmentForm {
-  type: string;
-  title: string;
-  description: string;
-  required: boolean;
-}
 
 // Step Configuration Types
 export interface StepConfig {
@@ -221,21 +182,69 @@ export interface ApplicationForm {
 }
 
 // Pipeline
-export interface PipelineStep {
-  id?: number;
-  pipeline_identifier?: number; // Only for React to identify steps uniquely
+export interface PipelineStage {
+  id: number;
+  name: string;
+}
+
+interface PipelineStepBase {
   process_type: string;
   process_title: string;
   description: string;
   order: number;
   stage: number;
-  // To do: Add other fields like assessments, redactedInfo, etc
+  assessments: Assessment[];
 }
 
-export interface PipelineStage {
+export interface PipelineStepInDb extends PipelineStepBase {
+  id: number;
+  source: "db";
+}
+
+export interface PipelineStepLocal extends PipelineStepBase {
+  pipeline_identifier: string; // Only for React to identify steps uniquely
+  source: "local";
+}
+
+// export interface PipelineStep {
+//   id?: number;
+//   pipeline_identifier?: number; // Only for React to identify steps uniquely
+//   process_type: string;
+//   process_title: string;
+//   description: string;
+//   order: number;
+//   stage: number;
+//   assessments: Assessment[];
+// }
+
+export type PipelineStep = PipelineStepInDb | PipelineStepLocal;
+
+interface AssessmentBase {
+  type: string;
+  title: string;
+  description: string;
+  required: boolean;
+}
+
+export interface TeamMember {
   id: number;
   name: string;
+  position: string;
+  department: string;
+  process: string;
 }
+
+interface AssessmentInDb extends AssessmentBase {
+  id: number;
+  source: "db";
+}
+
+interface AssessmentLocal extends AssessmentBase {
+  localId: string;
+  source: "local";
+}
+
+export type Assessment = AssessmentInDb | AssessmentLocal;
 
 // Client
 export interface Client {

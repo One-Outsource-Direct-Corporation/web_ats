@@ -3,8 +3,11 @@ import type { PipelineStep } from "@/features/positions-client/types/create_posi
 
 interface Step04Props {
   pipelineSteps: PipelineStep[];
-  pipelineHandler: (pipeline_identifier: number, data: PipelineStep) => void;
-  pipelineDeleteHandler: (pipeline_identifier: number) => void;
+  pipelineHandler: (
+    pipeline_identifier: string | number,
+    data: PipelineStep
+  ) => void;
+  pipelineDeleteHandler: (pipeline_identifier: string | number) => void;
   errors?: any;
 }
 

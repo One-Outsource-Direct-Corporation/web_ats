@@ -2,41 +2,21 @@ import { Card } from "@/shared/components/ui/card";
 import type {
   PipelineStage,
   PipelineStep,
+  Assessment,
+  PipelineStepInDb,
+  PipelineStepLocal,
 } from "@/features/positions-client/types/create_position.types";
 import { useState } from "react";
-import { Button } from "@/shared/components/ui/button";
-import { Plus, Edit, Trash2 } from "lucide-react";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/shared/components/ui/dialog";
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-  FieldSet,
-} from "@/shared/components/ui/field";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/components/ui/select";
-import { Input } from "@/shared/components/ui/input";
-import { Checkbox } from "@/shared/components/ui/checkbox";
+import { StageCard } from "./pipeline/StageCard";
+import { AddAssessmentModal } from "./pipeline/AddAssessmentModal";
 
 interface PipelineConfigurationProps {
   pipelineSteps: PipelineStep[];
-  pipelineHandler: (pipeline_identifier: number, data: PipelineStep) => void;
-  pipelineDeleteHandler: (pipeline_identifier: number) => void;
+  pipelineHandler: (
+    pipeline_identifier: string | number,
+    data: PipelineStep
+  ) => void;
+  pipelineDeleteHandler: (pipeline_identifier: string | number) => void;
   errors: any;
   pipelineStages?: PipelineStage[];
   title?: string;
@@ -56,18 +36,35 @@ export default function PipelineConfiguration({
   title = "Pipeline Configuration",
 }: PipelineConfigurationProps) {
   const [pipelineStagesState] = useState<PipelineStage[]>(pipelineStages);
-
+  const [showViewTeamMember, setShowViewTeamMember] = useState(false);
   const [stepData, setStepData] = useState<PipelineStep>({
-    pipeline_identifier: 0,
+    pipeline_identifier: `tmp-${Date.now()}`,
     process_type: "",
     process_title: "",
     description: "",
     order: 0,
     stage: 0,
+    source: "local",
+    assessments: [],
   });
   const [openDialogs, setOpenDialogs] = useState<{ [key: number]: boolean }>(
     {}
   );
+  const [redactedInfo, setRedactedInfo] = useState(false);
+  // Remove global assessments state
+  const [showAddAssessment, setShowAddAssessment] = useState(false);
+  const [selectedTeamMembers, setSelectedTeamMembers] = useState<number[]>([]);
+  const [searchTeamMember, setSearchTeamMember] = useState("");
+  const [templateType, setTemplateType] = useState("");
+  const [reminderTime, setReminderTime] = useState("00:00:00");
+
+  // Assessment form state
+  const [assessmentForm, setAssessmentForm] = useState({
+    type: "",
+    title: "",
+    description: "",
+    required: false,
+  });
 
   const handleInputChange = (field: string, value: string) => {
     setStepData((prev) => ({ ...prev, [field]: value }));
@@ -75,57 +72,145 @@ export default function PipelineConfiguration({
 
   const handleResetStepData = () => {
     setStepData({
-      pipeline_identifier: 0,
+      pipeline_identifier: `tmp-${Date.now()}`,
       process_type: "",
       process_title: "",
       description: "",
       order: 0,
       stage: 0,
+      source: "local",
+      assessments: [],
     });
+
+    // Static for now
+    setRedactedInfo(false);
+    setSelectedTeamMembers([]);
+    setTemplateType("");
+    setReminderTime("00:00:00");
   };
 
   const handleOpenDialog = (stageId: number, isOpen: boolean) => {
     setOpenDialogs((prev) => ({ ...prev, [stageId]: isOpen }));
+    if (!isOpen) {
+      handleResetStepData();
+    }
   };
 
-  const handleEditStep = (pipeline_identifier: number) => {
-    // First check for newly added steps (has pipeline_identifier)
-    let step = pipelineSteps.find(
-      (step) => step.pipeline_identifier === pipeline_identifier
-    );
+  // Assessment handlers
+  const handleAddAssessment = () => {
+    if (assessmentForm.type && assessmentForm.title) {
+      const newAssessment: Assessment = {
+        localId: `tmp-${Date.now()}`,
+        source: "local",
+        ...assessmentForm,
+      };
+      setStepData((prev) => ({
+        ...prev,
+        assessments: [...(prev.assessments || []), newAssessment],
+      }));
+      setAssessmentForm({
+        type: "",
+        title: "",
+        description: "",
+        required: false,
+      });
+      setShowAddAssessment(false);
+    }
+  };
 
-    // If not found, check for existing DB records (has id)
-    if (!step) {
+  const handleDeleteAssessment = (id: number) => {
+    setStepData((prev) => ({
+      ...prev,
+      assessments: (prev.assessments || []).filter((a) => {
+        if (a.source === "db") {
+          return a.id !== id;
+        } else {
+          return a.localId !== String(id);
+        }
+      }),
+    }));
+  };
+
+  // Team member handlers
+  const handleToggleTeamMember = (memberId: number) => {
+    setSelectedTeamMembers((prev) =>
+      prev.includes(memberId)
+        ? prev.filter((id) => id !== memberId)
+        : [...prev, memberId]
+    );
+  };
+
+  const handleEditStep = (pipeline_identifier: string | number) => {
+    let step: PipelineStepLocal | PipelineStepInDb | undefined;
+
+    if (typeof pipeline_identifier === "string") {
+      // Only local steps use string pipeline_identifier
       step = pipelineSteps.find(
-        (step) => (step as any).id === pipeline_identifier
+        (step): step is PipelineStepLocal =>
+          step.source === "local" &&
+          step.pipeline_identifier === pipeline_identifier
+      );
+    } else {
+      // DB steps use number id
+      step = pipelineSteps.find(
+        (step): step is PipelineStepInDb =>
+          step.source === "db" && step.id === pipeline_identifier
       );
     }
 
     if (step) {
       setOpenDialogs((prev) => ({ ...prev, [step.stage]: true }));
-      setStepData({
-        ...step,
-        pipeline_identifier: step.pipeline_identifier || (step as any).id || 0,
-      });
+      if (step.source === "local") {
+        setStepData({
+          ...step,
+          pipeline_identifier: step.pipeline_identifier,
+          assessments: step.assessments || [],
+        });
+      } else {
+        // For db steps, do not set pipeline_identifier
+        const { pipeline_identifier, ...rest } = step as PipelineStepInDb & {
+          pipeline_identifier?: string;
+        };
+        setStepData({
+          ...rest,
+          assessments: step.assessments || [],
+        });
+      }
+      setSelectedTeamMembers((step as any).teamMembers || []);
+      setRedactedInfo((step as any).redactedInfo || false);
+      setTemplateType((step as any).templateType || "");
+      setReminderTime((step as any).reminderTime || "00:00:00");
     }
   };
 
-  const handleSaveStep = async (stage_id: number, data: PipelineStep) => {
-    data.stage = stage_id;
-
-    if (!data.pipeline_identifier) {
-      data.pipeline_identifier = Math.floor(Math.random() * 1000000); // Temporary ID generation
-      data.order =
-        pipelineSteps.filter((step) => step.stage === stage_id).length + 1;
+  const handleSaveStep = async (stage_id: number) => {
+    if (stepData.source === "local") {
+      const data: PipelineStepLocal = {
+        ...stepData,
+        stage: stage_id,
+        assessments: stepData.assessments,
+        source: "local",
+      };
+      if (!data.pipeline_identifier) {
+        data.pipeline_identifier = `tmp-${Date.now()}`;
+        data.order =
+          pipelineSteps.filter((step) => step.stage === stage_id).length + 1;
+      }
+      pipelineHandler(data.pipeline_identifier, data);
     } else {
-      // For update, keep existing order and ID
-      data.order = data.order; // Preserve existing order
+      const dbStep = stepData as PipelineStepInDb;
+      const data: PipelineStepInDb = {
+        ...dbStep,
+        stage: stage_id,
+        assessments: stepData.assessments,
+        source: "db",
+      };
+      pipelineHandler(data.id, data);
     }
-
-    pipelineHandler(data.pipeline_identifier, data);
     setOpenDialogs((prev) => ({ ...prev, [stage_id]: false }));
     handleResetStepData();
   };
+
   return (
     <Card className="p-6">
       <h3 className="text-lg font-semibold text-gray-800 mb-6">{title}</h3>
@@ -136,179 +221,62 @@ export default function PipelineConfiguration({
             <p>Add Pipeline Steps</p>
           </div>
         )}
-        {pipelineStagesState.map((stage) => (
-          <div key={stage.id} className="border border-gray-300 rounded-lg p-4">
-            <h4 className="text-sm font-semibold text-gray-700 mb-4 text-center">
-              {stage.name}
-            </h4>
+        {pipelineStagesState.map((stage) => {
+          const stageSteps = pipelineSteps.filter(
+            (step) => step.stage === stage.id
+          );
 
-            <div className="space-y-3 mb-4">
-              {pipelineSteps.map(
-                (step, index) =>
-                  step.stage === stage.id && (
-                    <div
-                      key={step.id || step.pipeline_identifier}
-                      className="p-3 border border-gray-200 rounded-md bg-gray-50"
-                    >
-                      {errors?.pipeline && errors.pipeline[index] && (
-                        <div className="text-red-600 text-sm mb-2">
-                          {Object.entries(errors.pipeline[index]).map(
-                            ([field]) => {
-                              let errorMessage = "";
-                              if (field === "process_type") {
-                                errorMessage = "Process type is required";
-                              } else if (field === "process_title") {
-                                errorMessage = "Process title is required";
-                              }
-                              return (
-                                <p key={field + index} className="mb-1">
-                                  {errorMessage}
-                                </p>
-                              );
-                            }
-                          )}
-                        </div>
-                      )}
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">
-                          {step.process_title}
-                        </span>
-                        <div className="space-x-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() =>
-                              handleEditStep(
-                                step.pipeline_identifier || step.id || 0
-                              )
-                            }
-                          >
-                            <Edit />
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            onClick={() =>
-                              pipelineDeleteHandler(
-                                step.pipeline_identifier || step.id || 0
-                              )
-                            }
-                          >
-                            <Trash2 />
-                          </Button>
-                        </div>
-                      </div>
-
-                      {step.description && (
-                        <p className="text-xs text-gray-600 mt-2">
-                          {step.description}
-                        </p>
-                      )}
-                    </div>
-                  )
-              )}
-            </div>
-
-            <Dialog
-              open={openDialogs[stage.id] || false}
-              onOpenChange={(isOpen) => handleOpenDialog(stage.id, isOpen)}
-            >
-              <DialogTrigger className="w-full text-blue-600 border-blue-600 border rounded-lg flex items-center justify-center py-2">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Step
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create Pipeline Step</DialogTitle>
-                  <DialogDescription>
-                    Add Pipeline Step to {stage.name}
-                  </DialogDescription>
-                  <div className="py-4">
-                    <FieldSet>
-                      <Field>
-                        <FieldLabel>Process Type *</FieldLabel>
-                        <Select
-                          onValueChange={(value) =>
-                            handleInputChange("process_type", value)
-                          }
-                          value={stepData.process_type}
-                        >
-                          <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Select Process Type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectGroup>
-                              <SelectItem value="resume_screening">
-                                Resume Screening
-                              </SelectItem>
-                              <SelectItem value="phone_interview">
-                                Phone Interview
-                              </SelectItem>
-                              <SelectItem value="initial_interview">
-                                Initial Interview
-                              </SelectItem>
-                              <SelectItem value="assessments">
-                                Assessments
-                              </SelectItem>
-                              <SelectItem value="final_interview">
-                                Final Interview
-                              </SelectItem>
-                              <SelectItem value="offer">Offer</SelectItem>
-                              <SelectItem value="onboarding">
-                                Onboarding
-                              </SelectItem>
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                      </Field>
-                      <Field>
-                        <FieldLabel>Process Title *</FieldLabel>
-                        <Input
-                          placeholder="Enter process title"
-                          value={stepData.process_title}
-                          onChange={(e) =>
-                            handleInputChange("process_title", e.target.value)
-                          }
-                        />
-                      </Field>
-                      <Field>
-                        <FieldLabel>Description</FieldLabel>
-                        <Input
-                          placeholder="Enter process description"
-                          value={stepData.description}
-                          onChange={(e) =>
-                            handleInputChange("description", e.target.value)
-                          }
-                        />
-                      </Field>
-                      <FieldGroup>
-                        <Field orientation="horizontal">
-                          <Checkbox />
-                          <FieldLabel>Redacted</FieldLabel>
-                        </Field>
-                      </FieldGroup>
-                    </FieldSet>
-                  </div>
-                  <DialogFooter className="sm:justify-start">
-                    <DialogClose asChild>
-                      <Button type="button" variant="secondary">
-                        Close
-                      </Button>
-                    </DialogClose>
-                    <Button
-                      type="submit"
-                      className="bg-blue-600 text-white hover:bg-blue-700"
-                      onClick={() => handleSaveStep(stage.id, stepData)}
-                    >
-                      Save Step
-                    </Button>
-                  </DialogFooter>
-                </DialogHeader>
-              </DialogContent>
-            </Dialog>
-          </div>
-        ))}
+          return (
+            <StageCard
+              key={stage.id}
+              stage={stage}
+              steps={stageSteps}
+              errors={errors}
+              dialogOpen={openDialogs[stage.id] || false}
+              onDialogOpenChange={(isOpen) =>
+                handleOpenDialog(stage.id, isOpen)
+              }
+              stepData={stepData}
+              onStepDataChange={handleInputChange}
+              redactedInfo={redactedInfo}
+              onRedactedInfoChange={setRedactedInfo}
+              assessments={stepData.assessments}
+              onAssessmentsChange={(newAssessments) =>
+                setStepData((prev) => ({
+                  ...prev,
+                  assessments: newAssessments,
+                }))
+              }
+              onDeleteAssessment={handleDeleteAssessment}
+              onAddAssessmentClick={() => setShowAddAssessment(true)}
+              selectedTeamMembers={selectedTeamMembers}
+              onToggleTeamMember={handleToggleTeamMember}
+              searchTeamMember={searchTeamMember}
+              onSearchTeamMemberChange={setSearchTeamMember}
+              showViewTeamMember={showViewTeamMember}
+              onToggleViewTeamMember={() =>
+                setShowViewTeamMember(!showViewTeamMember)
+              }
+              templateType={templateType}
+              onTemplateTypeChange={setTemplateType}
+              reminderTime={reminderTime}
+              onReminderTimeChange={setReminderTime}
+              onSaveStep={() => handleSaveStep(stage.id)}
+              onEditStep={handleEditStep}
+              onDeleteStep={pipelineDeleteHandler}
+            />
+          );
+        })}
       </div>
+
+      {/* Add Assessment Modal */}
+      <AddAssessmentModal
+        open={showAddAssessment}
+        onOpenChange={setShowAddAssessment}
+        assessmentForm={assessmentForm}
+        onAssessmentFormChange={setAssessmentForm}
+        onAdd={handleAddAssessment}
+      />
     </Card>
   );
 }
