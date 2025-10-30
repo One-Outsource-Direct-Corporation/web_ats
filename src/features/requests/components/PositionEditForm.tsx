@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/shared/components/ui/button";
 import type { JobPostingResponsePosition } from "@/features/jobs/types/job.types";
-import { StepNavigation } from "@/features/positions/components/create-position/navigation/StepNavigation";
-import { useStepNavigation } from "@/features/positions/hooks/create-position/useStepNavigation";
+import { StepNavigation } from "@/features/positions-client/components/StepNavigation";
+import { useStepNavigation } from "@/features/positions-client/hooks/useStepNavigation";
 import Step01 from "./position-edit/Step01";
 import Step02 from "./position-edit/Step02";
 import Step03 from "./position-edit/Step03";

@@ -1,4 +1,4 @@
-import useClient from "@/features/positions/hooks/create-position/useClient";
+import useClient from "@/features/positions-client/hooks/useClient";
 import {
   Field,
   FieldGroup,

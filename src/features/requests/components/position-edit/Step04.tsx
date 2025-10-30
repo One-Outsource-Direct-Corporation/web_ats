@@ -1,5 +1,5 @@
 import PipelineConfiguration from "@/shared/components/reusables/PipelineConfiguration";
-import type { PipelineStep } from "@/features/positions/types/create_position.types";
+import type { PipelineStep } from "@/features/positions-client/types/create_position.types";
 import type { JobPostingResponsePosition } from "@/features/jobs/types/job.types";
 
 export default function Step04({

@@ -2,7 +2,7 @@ import { Card } from "@/shared/components/ui/card";
 import type {
   PipelineStage,
   PipelineStep,
-} from "@/features/positions/types/create_position.types";
+} from "@/features/positions-client/types/create_position.types";
 import { useState } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { Plus, Edit, Trash2 } from "lucide-react";

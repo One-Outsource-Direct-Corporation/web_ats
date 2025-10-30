@@ -19,18 +19,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
-import { FormFieldRadioButton } from "../../../features/positions/components/create-position/form-management/FormFieldRadioButton";
+import { FormFieldRadioButton } from "../../../features/positions-client/components/FormFieldRadioButton";
 import type {
   FormFields,
   FormFieldNonNegotiables,
-} from "@/features/positions/types/create_position.types";
+} from "@/features/positions-client/types/create_position.types";
 import { memo, useState } from "react";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
-import { AddQuestionModal } from "@/features/questionnaires/components/AddQuestionModal";
-import { SectionList } from "@/features/questionnaires/components/SectionList";
-import { useQuestionnaireManager } from "@/features/questionnaires/hooks/useQuestionnaireManager";
-import { useQuestionForm } from "@/features/questionnaires/hooks/useQuestionForm";
+import { AddQuestionModal } from "@/features/positions-client/components/questionnaires/AddQuestionModal";
+import { SectionList } from "@/features/positions-client/components/questionnaires/SectionList";
+import { useQuestionnaireManager } from "@/features/positions-client/hooks/useQuestionnaireManager";
+import { useQuestionForm } from "@/features/positions-client/hooks/useQuestionForm";
 
 interface ApplicationFormManagementProps<
   T extends {

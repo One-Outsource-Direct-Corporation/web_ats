@@ -1,5 +1,8 @@
 import type { ApplicationForm } from "@/features/careers/types/job.types";
-import type { FormFields, PipelineStep } from "./create_position.types";
+import type {
+  FormFields,
+  PipelineStep,
+} from "../../positions-client/types/create_position.types";
 import type { User } from "@/features/auth/types/auth.types";
 import type { JobPostingResponse } from "@/features/jobs/types/job.types";
 
