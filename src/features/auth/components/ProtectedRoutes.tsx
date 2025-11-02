@@ -11,6 +11,10 @@ export default function ProtectedRoutes({
   const { user } = useAuth();
   const location = useLocation();
 
+  if (import.meta.env.VITE_REACT_ENV !== "production") {
+    return <>{children}</>;
+  }
+
   if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
 
   return <>{children}</>;

@@ -3,9 +3,9 @@ import { useLogout } from "@/features/auth/hooks/useLogout";
 import useRefreshToken from "@/features/auth/hooks/useRefreshToken";
 import { useEffect, useRef, useState } from "react";
 import { Outlet } from "react-router-dom";
-import LoadingComponent from "../components/reusables/LoadingComponent";
-import { Card } from "../components/ui/card";
-import { Button } from "../components/ui/button";
+import LoadingComponent from "../../../shared/components/reusables/LoadingComponent";
+import { Card } from "../../../shared/components/ui/card";
+import { Button } from "../../../shared/components/ui/button";
 
 export default function PersistLogin() {
   const [isLoading, setIsLoading] = useState(true);
@@ -13,6 +13,17 @@ export default function PersistLogin() {
   const { user, persist, isAuth } = useAuth();
   const { logout } = useLogout();
   const hasInitialized = useRef(false);
+
+  if (import.meta.env.VITE_REACT_ENV !== "production") {
+    return (
+      <>
+        <h1 className="text-red-600 fixed top-0 left-1/2 transform -translate-x-1/2 z-[51] pointer-events-none">
+          DEV MODE ENABLED
+        </h1>{" "}
+        <Outlet />
+      </>
+    );
+  }
 
   useEffect(() => {
     if (hasInitialized.current) return;

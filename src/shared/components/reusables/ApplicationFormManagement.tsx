@@ -21,7 +21,7 @@ import {
 } from "@/shared/components/ui/select";
 import { FormFieldRadioButton } from "../../../features/positions-client/components/FormFieldRadioButton";
 import type {
-  FormFields,
+  ApplicationForm,
   FormFieldNonNegotiables,
 } from "@/features/positions-client/types/create_position.types";
 import { memo, useState } from "react";
@@ -34,7 +34,7 @@ import { useQuestionForm } from "@/features/positions-client/hooks/useQuestionFo
 
 interface ApplicationFormManagementProps<
   T extends {
-    application_form: FormFields;
+    application_form: ApplicationForm;
     application_form_non_negotiables: FormFieldNonNegotiables;
   }
 > {
@@ -43,7 +43,7 @@ interface ApplicationFormManagementProps<
   setNonNegotiable: (fieldName: string, value: boolean) => void;
 }
 
-type FieldKey = keyof FormFields;
+type FieldKey = keyof ApplicationForm;
 
 const FIELD_LABELS: Record<FieldKey, string> = {
   name: "Name",
@@ -54,7 +54,7 @@ const FIELD_LABELS: Record<FieldKey, string> = {
   email: "Email",
   linkedin_profile: "LinkedIn Profile",
   address: "Address",
-  expect_salary: "Expected Salary",
+  expected_salary: "Expected Salary",
   willing_to_work_onsite: "Willing to Work Onsite",
   photo_2x2: "Photo 2x2",
   upload_med_cert: "Upload Medical Certificate",
@@ -78,7 +78,7 @@ const PERSONAL_INFO_FIELDS: FieldKey[] = [
   "email",
   "linkedin_profile",
   "address",
-  "expect_salary",
+  "expected_salary",
   "willing_to_work_onsite",
   "photo_2x2",
   "upload_med_cert",
@@ -168,7 +168,7 @@ FieldRow.displayName = "FieldRow";
 export const ApplicationFormManagement = memo(
   <
     T extends {
-      application_form: FormFields;
+      application_form: ApplicationForm;
       application_form_non_negotiables: FormFieldNonNegotiables;
     }
   >({
@@ -177,7 +177,7 @@ export const ApplicationFormManagement = memo(
     setNonNegotiable,
   }: ApplicationFormManagementProps<T>) => {
     const nonNegotiableFields = new Set<FieldKey>([
-      "expect_salary",
+      "expected_salary",
       "willing_to_work_onsite",
       "education_attained",
       "course",

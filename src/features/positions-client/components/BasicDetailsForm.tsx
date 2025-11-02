@@ -26,6 +26,7 @@ import { Button } from "@/shared/components/ui/button";
 import { CalendarIcon } from "lucide-react";
 import { Calendar } from "@/shared/components/ui/calendar";
 import useClient from "@/features/positions-client/hooks/useClient";
+import formatDate from "@/shared/utils/formatDate";
 
 interface BasicDetailsFormProps {
   formData: CreatePositionFormData;
@@ -42,7 +43,6 @@ export const BasicDetailsForm = ({
   errorFields,
 }: BasicDetailsFormProps) => {
   const { clients, loading, error } = useClient();
-  console.log(formData.client);
   return (
     <div>
       {/* Basic Details */}
@@ -289,7 +289,7 @@ export const BasicDetailsForm = ({
                     onSelect={(date) =>
                       onInputChange(
                         "target_start_date",
-                        date ? date.toISOString().split("T")[0] : null
+                        date ? formatDate(date.toLocaleDateString()) : null
                       )
                     }
                   />

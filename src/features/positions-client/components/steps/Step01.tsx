@@ -91,7 +91,7 @@ export default function Step01({
   );
   const [editingBatchId, setEditingBatchId] = useState<string | null>(null);
 
-  // Location handlers
+  // Location is Local
   const handleAddLocation = (location: {
     name: string;
     address: string;

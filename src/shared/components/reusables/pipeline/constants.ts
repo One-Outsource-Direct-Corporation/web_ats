@@ -1,4 +1,4 @@
-import type { TeamMember } from "./types";
+import type { TeamMember } from "@/features/positions-client/types/create_position.types";
 
 export const TEAM_MEMBERS: TeamMember[] = [
   {

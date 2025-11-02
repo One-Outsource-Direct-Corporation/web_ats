@@ -58,49 +58,6 @@ export interface StagePopupData {
   reminderTime: string;
 }
 
-// Form Field Status Types
-export type FormFieldStatus = "required" | "optional" | "disabled";
-
-// export interface FormFieldItem {
-//   field: string;
-//   status: FormFieldStatus;
-//   nonNegotiable: boolean;
-// }
-
-// export interface FormFieldStatuses {
-//   personal: FormFieldItem[];
-//   job: FormFieldItem[];
-//   education: FormFieldItem[];
-//   acknowledgement: FormFieldItem[];
-// }
-
-export interface FormFields {
-  name: FormFieldStatus;
-  birth_date: FormFieldStatus;
-  gender: FormFieldStatus;
-  primary_contact_number: FormFieldStatus;
-  secondary_contact_number: FormFieldStatus;
-  email: FormFieldStatus;
-  linkedin_profile: FormFieldStatus;
-  address: FormFieldStatus;
-
-  expect_salary: FormFieldStatus;
-  willing_to_work_onsite: FormFieldStatus;
-  photo_2x2: FormFieldStatus;
-  upload_med_cert: FormFieldStatus;
-  preferred_interview_schedule: FormFieldStatus;
-
-  education_attained: FormFieldStatus;
-  year_graduated: FormFieldStatus;
-  university: FormFieldStatus;
-  course: FormFieldStatus;
-  work_experience: FormFieldStatus;
-
-  how_did_you_hear_about_us: FormFieldStatus;
-  agreement: FormFieldStatus;
-  signature: FormFieldStatus;
-}
-
 export interface FormFieldNonNegotiables {
   expect_salary: boolean;
   willing_to_work_onsite: boolean;
@@ -127,13 +84,6 @@ export interface AssessmentSettings {
     timeLimit: string;
   };
 }
-
-// Time Picker Values
-// export interface TimePickerValues {
-//   hours: string;
-//   minutes: string;
-//   seconds: string;
-// }
 
 // Assessment Form Types
 
@@ -206,17 +156,6 @@ export interface PipelineStepLocal extends PipelineStepBase {
   source: "local";
 }
 
-// export interface PipelineStep {
-//   id?: number;
-//   pipeline_identifier?: number; // Only for React to identify steps uniquely
-//   process_type: string;
-//   process_title: string;
-//   description: string;
-//   order: number;
-//   stage: number;
-//   assessments: Assessment[];
-// }
-
 export type PipelineStep = PipelineStepInDb | PipelineStepLocal;
 
 interface AssessmentBase {
@@ -248,7 +187,7 @@ export type Assessment = AssessmentInDb | AssessmentLocal;
 
 // Client
 export interface Client {
-  id: string;
+  id: number;
   name: string;
   email: string;
   contact_number: string;
@@ -276,7 +215,7 @@ export interface CreatePositionFormData {
   qualifications: string;
   working_site: string;
   posted_by?: string; // User ID, will be handled in backend
-  application_form: FormFields;
+  application_form: ApplicationForm;
   application_form_non_negotiables: FormFieldNonNegotiables;
   non_negotiables: NonNegotiableValue[];
   pipeline: PipelineStep[] | [];

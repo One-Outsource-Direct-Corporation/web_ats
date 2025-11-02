@@ -10,6 +10,27 @@ export default function useClient() {
   const axiosPrivate = useAxiosPrivate();
 
   useEffect(() => {
+    if (import.meta.env.VITE_REACT_ENV === "development") {
+      setClients([
+        {
+          id: 1,
+          name: "Client A MockData",
+          email: "clienta@example.com",
+          contact_number: "1234567890",
+          posted_by: "User1",
+        },
+        {
+          id: 2,
+          name: "Client B MockData",
+          email: "clientb@example.com",
+          contact_number: "0987654321",
+          posted_by: "User2",
+        },
+      ]);
+
+      return;
+    }
+
     const fetchClients = async () => {
       try {
         const response = await axiosPrivate.get("api/client");
