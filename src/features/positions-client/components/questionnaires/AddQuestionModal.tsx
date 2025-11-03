@@ -2,6 +2,13 @@ import { memo } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { QuestionForm } from "./QuestionForm";
 import type { QuestionOption } from "../../types/questionnaire.types";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/shared/components/ui/dialog";
 
 interface AddQuestionModalProps {
   isOpen: boolean;
@@ -9,14 +16,12 @@ interface AddQuestionModalProps {
   questionText: string;
   questionDesc: string;
   questionType: string;
-  questionMode: string;
   parameterValue: string;
   options: QuestionOption[];
   onClose: () => void;
   onQuestionTextChange: (value: string) => void;
   onQuestionDescChange: (value: string) => void;
   onQuestionTypeChange: (value: string) => void;
-  onQuestionModeChange: (value: string) => void;
   onParameterValueChange: (value: string) => void;
   onOptionChange: (
     idx: number,
@@ -35,14 +40,12 @@ export const AddQuestionModal = memo(
     questionText,
     questionDesc,
     questionType,
-    questionMode,
     parameterValue,
     options,
     onClose,
     onQuestionTextChange,
     onQuestionDescChange,
     onQuestionTypeChange,
-    onQuestionModeChange,
     onParameterValueChange,
     onOptionChange,
     onAddOption,
@@ -52,40 +55,33 @@ export const AddQuestionModal = memo(
     if (!isOpen) return null;
 
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
-        <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-        <div className="relative bg-white rounded-xl shadow-xl w-full max-w-2xl h-[80vh] mx-4 flex flex-col">
-          <div className="p-6 border-b flex items-center justify-between flex-shrink-0">
-            <h2 className="text-2xl font-bold text-gray-900">
+      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="!max-w-3xl w-full h-[90vh] mx-4 flex flex-col p-0">
+          <DialogHeader className="p-6 border-b flex-shrink-0">
+            <DialogTitle className="text-2xl font-bold text-gray-900">
               {isEditMode ? "Edit Question" : "Add Question"}
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-700 text-xl font-bold"
-              aria-label="Close"
-            >
-              ×
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto p-6">
+            </DialogTitle>
+          </DialogHeader>
+
+          {/* Scrollable content area */}
+          <div className="flex-1 overflow-y-auto px-6">
             <QuestionForm
               questionText={questionText}
               questionDesc={questionDesc}
               questionType={questionType}
-              questionMode={questionMode}
               parameterValue={parameterValue}
               options={options}
               onQuestionTextChange={onQuestionTextChange}
               onQuestionDescChange={onQuestionDescChange}
               onQuestionTypeChange={onQuestionTypeChange}
-              onQuestionModeChange={onQuestionModeChange}
               onParameterValueChange={onParameterValueChange}
               onOptionChange={onOptionChange}
               onAddOption={onAddOption}
               onRemoveOption={onRemoveOption}
             />
           </div>
-          <div className="p-6 border-t flex justify-end gap-3 flex-shrink-0">
+
+          <DialogFooter className="p-6 border-t flex justify-end gap-3 flex-shrink-0">
             <Button
               type="button"
               variant="outline"
@@ -101,9 +97,9 @@ export const AddQuestionModal = memo(
             >
               {isEditMode ? "Update Question" : "Add Question"}
             </Button>
-          </div>
-        </div>
-      </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     );
   }
 );

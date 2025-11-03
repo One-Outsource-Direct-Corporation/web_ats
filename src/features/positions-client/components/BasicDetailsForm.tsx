@@ -1,4 +1,7 @@
-import type { CreatePositionFormData } from "../types/create_position.types";
+import type {
+  PositionBase,
+  PositionFormData,
+} from "../types/create_position.types";
 import {
   FieldSet,
   FieldGroup,
@@ -29,8 +32,15 @@ import useClient from "@/features/positions-client/hooks/useClient";
 import formatDate from "@/shared/utils/formatDate";
 
 interface BasicDetailsFormProps {
-  formData: CreatePositionFormData;
-  onInputChange: (field: string, value: any) => void;
+  formData: PositionFormData;
+  onInputChange: (
+    field: keyof PositionBase,
+    value: string | number | null
+  ) => void;
+  handleJobPostingChange: (
+    fieldName: keyof PositionFormData["job_posting"],
+    value: string | number | null
+  ) => void;
   errorFields: any;
 }
 
@@ -40,6 +50,7 @@ interface BasicDetailsFormProps {
 export const BasicDetailsForm = ({
   formData,
   onInputChange,
+  handleJobPostingChange,
   errorFields,
 }: BasicDetailsFormProps) => {
   const { clients, loading, error } = useClient();
@@ -53,7 +64,9 @@ export const BasicDetailsForm = ({
               <FieldLabel>Client *</FieldLabel>
               <Select
                 value={formData.client ? String(formData.client) : ""}
-                onValueChange={(value) => onInputChange("client", value)}
+                onValueChange={(value) =>
+                  onInputChange("client", Number(value))
+                }
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select Client" />
@@ -81,8 +94,10 @@ export const BasicDetailsForm = ({
               <FieldLabel>Job Title *</FieldLabel>
               <Input
                 type="text"
-                value={formData.job_title}
-                onChange={(e) => onInputChange("job_title", e.target.value)}
+                value={formData.job_posting.job_title ?? ""}
+                onChange={(e) =>
+                  handleJobPostingChange("job_title", e.target.value)
+                }
                 placeholder="Enter job title"
               />
               {errorFields?.job_posting?.job_title && (
@@ -92,8 +107,10 @@ export const BasicDetailsForm = ({
             <Field>
               <FieldLabel>Department *</FieldLabel>
               <Select
-                value={formData.department ?? ""}
-                onValueChange={(value) => onInputChange("department", value)}
+                value={formData.job_posting.department ?? ""}
+                onValueChange={(value) =>
+                  handleJobPostingChange("department", value)
+                }
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select Department" />
@@ -130,14 +147,14 @@ export const BasicDetailsForm = ({
               )}
             </Field>
 
-            {formData.department === "other" && (
+            {formData.job_posting.department === "other" && (
               <Field>
                 <FieldLabel>Please Specify *</FieldLabel>
                 <Input
                   type="text"
-                  value={formData.other_department}
+                  value={formData.job_posting.other_department ?? ""}
                   onChange={(e) =>
-                    onInputChange("other_department", e.target.value)
+                    handleJobPostingChange("other_department", e.target.value)
                   }
                 />
               </Field>
@@ -146,9 +163,9 @@ export const BasicDetailsForm = ({
             <Field>
               <FieldLabel>Employment Type *</FieldLabel>
               <Select
-                value={formData.employment_type ?? ""}
+                value={formData.job_posting.employment_type ?? ""}
                 onValueChange={(value) =>
-                  onInputChange("employment_type", value)
+                  handleJobPostingChange("employment_type", value)
                 }
               >
                 <SelectTrigger className="w-full">
@@ -171,8 +188,10 @@ export const BasicDetailsForm = ({
             <Field>
               <FieldLabel>Work Setup *</FieldLabel>
               <Select
-                value={formData.work_setup ?? ""}
-                onValueChange={(value) => onInputChange("work_setup", value)}
+                value={formData.job_posting.work_setup ?? ""}
+                onValueChange={(value) =>
+                  handleJobPostingChange("work_setup", value)
+                }
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select Work Setup" />
@@ -191,8 +210,10 @@ export const BasicDetailsForm = ({
               <FieldLabel>Working Site *</FieldLabel>
               <Input
                 type="text"
-                value={formData.working_site}
-                onChange={(e) => onInputChange("working_site", e.target.value)}
+                value={formData.job_posting.working_site ?? ""}
+                onChange={(e) =>
+                  handleJobPostingChange("working_site", e.target.value)
+                }
                 placeholder="Enter working site"
               />
               {errorFields?.job_posting?.working_site && (
@@ -257,8 +278,10 @@ export const BasicDetailsForm = ({
               <FieldLabel>Headcounts Needed *</FieldLabel>
               <Input
                 type="number"
-                value={formData.headcount}
-                onChange={(e) => onInputChange("headcount", e.target.value)}
+                value={formData.job_posting.headcount ?? "0"}
+                onChange={(e) =>
+                  handleJobPostingChange("headcount", Number(e.target.value))
+                }
                 placeholder="Enter number of positions"
               />
               {errorFields?.headcount && (
@@ -274,7 +297,7 @@ export const BasicDetailsForm = ({
                     // data-empty={!date}
                     className="w-[280px] justify-start text-left font-normal"
                   >
-                    {formData.target_start_date || "Pick a date"}
+                    {formData.job_posting.target_start_date || "Pick a date"}
                     <CalendarIcon />
                   </Button>
                 </PopoverTrigger>
@@ -282,12 +305,12 @@ export const BasicDetailsForm = ({
                   <Calendar
                     mode="single"
                     selected={
-                      formData.target_start_date
-                        ? new Date(formData.target_start_date)
+                      formData.job_posting.target_start_date
+                        ? new Date(formData.job_posting.target_start_date)
                         : new Date()
                     }
                     onSelect={(date) =>
-                      onInputChange(
+                      handleJobPostingChange(
                         "target_start_date",
                         date ? formatDate(date.toLocaleDateString()) : null
                       )
@@ -304,9 +327,9 @@ export const BasicDetailsForm = ({
             <Field>
               <FieldLabel>Reason for Hire *</FieldLabel>
               <Select
-                value={formData.reason_for_posting ?? ""}
+                value={formData.job_posting.reason_for_posting ?? ""}
                 onValueChange={(value) =>
-                  onInputChange("reason_for_posting", value)
+                  handleJobPostingChange("reason_for_posting", value)
                 }
               >
                 <SelectTrigger className="w-full">
@@ -324,14 +347,17 @@ export const BasicDetailsForm = ({
                 </FieldError>
               )}
             </Field>
-            {formData.reason_for_posting === "others" && (
+            {formData.job_posting.reason_for_posting === "others" && (
               <Field>
                 <FieldLabel>Please Specify *</FieldLabel>
                 <Input
                   type="text"
-                  value={formData.other_reason_for_posting}
+                  value={formData.job_posting.other_reason_for_posting ?? ""}
                   onChange={(e) =>
-                    onInputChange("other_reason_for_posting", e.target.value)
+                    handleJobPostingChange(
+                      "other_reason_for_posting",
+                      e.target.value
+                    )
                   }
                   placeholder="Enter reason for hire"
                 />
@@ -353,8 +379,10 @@ export const BasicDetailsForm = ({
               <FieldLabel>Minimum</FieldLabel>
               <Input
                 type="number"
-                value={formData.min_budget}
-                onChange={(e) => onInputChange("min_budget", e.target.value)}
+                value={formData.job_posting.min_budget ?? "0"}
+                onChange={(e) =>
+                  handleJobPostingChange("min_budget", e.target.value)
+                }
                 placeholder="Minimum salary"
               />
             </Field>
@@ -362,8 +390,10 @@ export const BasicDetailsForm = ({
               <FieldLabel>Maximum</FieldLabel>
               <Input
                 type="number"
-                value={formData.max_budget}
-                onChange={(e) => onInputChange("max_budget", e.target.value)}
+                value={formData.job_posting.max_budget ?? "0"}
+                onChange={(e) =>
+                  handleJobPostingChange("max_budget", e.target.value)
+                }
                 placeholder="Maximum salary"
               />
             </Field>

@@ -1,58 +1,48 @@
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { X, AlertCircle } from "lucide-react";
-import type {
-  FormFields,
-  FormFieldNonNegotiables,
-} from "@/features/positions-client/types/create_position.types";
+import { useState, useEffect } from "react";
+import type { ApplicationFormData } from "../types/application_form.types";
 
 interface NonNegotiableModalProps {
   show: boolean;
   onClose: () => void;
-  onSave: () => void;
-  formData: {
-    application_form: FormFields;
-    application_form_non_negotiables: FormFieldNonNegotiables;
-  };
-  nonNegotiableValues: { [key: string]: any };
-  setNonNegotiableValues: (values: { [key: string]: any }) => void;
+  onSave: (values: { [key: string]: any }) => void;
+  formData: ApplicationFormData;
 }
 
-type NonNegotiableField = {
-  key: keyof FormFieldNonNegotiables;
-  label: string;
-  type: "text" | "select" | "radio" | "number";
-  options?: string[];
-};
-
-const NON_NEGOTIABLE_FIELDS: NonNegotiableField[] = [
+// Field configuration for non-negotiable requirements
+const NON_NEGOTIABLE_FIELDS = [
   {
-    key: "expect_salary",
+    key: "expected_salary",
     label: "Expected Salary",
-    type: "number",
+    type: "number" as const,
   },
   {
     key: "willing_to_work_onsite",
     label: "Willing to Work Onsite",
-    type: "radio",
-    options: ["Yes", "No"],
+    type: "radio" as const,
+    options: {
+      yes: "Yes",
+      no: "No",
+    },
   },
   {
     key: "education_attained",
     label: "Education Attained",
-    type: "select",
-    options: [
-      "High School",
-      "Associate Degree",
-      "Bachelor's Degree",
-      "Master's Degree",
-      "Doctorate",
-    ],
+    type: "select" as const,
+    options: {
+      high_school: "High School",
+      associate: "Associate Degree",
+      bachelor: "Bachelor's Degree",
+      master: "Master's Degree",
+      doctorate: "Doctorate Degree",
+    },
   },
   {
     key: "course",
     label: "Course",
-    type: "text",
+    type: "text" as const,
   },
 ];
 
@@ -61,22 +51,38 @@ export const NonNegotiableModal = ({
   onClose,
   onSave,
   formData,
-  nonNegotiableValues,
-  setNonNegotiableValues,
 }: NonNegotiableModalProps) => {
+  const [nonNegotiableValues, setNonNegotiableValues] = useState<{
+    [key: string]: any;
+  }>({});
+
+  // Initialize values from formData when modal opens
+  useEffect(() => {
+    if (show) {
+      const initialValues: { [key: string]: any } = {};
+      formData.non_negotiables.forEach((item) => {
+        initialValues[item.field] = item.value;
+      });
+      setNonNegotiableValues(initialValues);
+    }
+  }, [show, formData.non_negotiables]);
+
   if (!show) return null;
 
   const handleFieldChange = (fieldKey: string, value: any) => {
-    const newValues = {
-      ...nonNegotiableValues,
+    setNonNegotiableValues((prev) => ({
+      ...prev,
       [fieldKey]: value,
-    };
-    setNonNegotiableValues(newValues);
+    }));
+  };
+
+  const handleSave = () => {
+    onSave(nonNegotiableValues);
   };
 
   // Filter only fields that are marked as non-negotiable
-  const activeNonNegotiableFields = NON_NEGOTIABLE_FIELDS.filter(
-    (field) => formData.application_form_non_negotiables[field.key]
+  const activeNonNegotiableFields = NON_NEGOTIABLE_FIELDS.filter((field) =>
+    formData.non_negotiables.some((item) => item.field === field.key)
   );
 
   return (
@@ -110,12 +116,9 @@ export const NonNegotiableModal = ({
               </p>
             </div>
           ) : (
-            <div
-              className="space-y-6"
-              key={JSON.stringify(nonNegotiableValues)}
-            >
+            <div className="space-y-6">
               {activeNonNegotiableFields.map((field) => {
-                const fieldKey = field.key;
+                const fieldKey = String(field.key);
                 return (
                   <div key={fieldKey} className="border rounded-lg p-4">
                     <div className="mb-2">
@@ -159,9 +162,9 @@ export const NonNegotiableModal = ({
                         className="w-full p-2 border border-gray-300 rounded-md text-sm"
                       >
                         <option value="">Select minimum requirement</option>
-                        {field.options.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
+                        {Object.entries(field.options).map(([value, text]) => (
+                          <option key={value} value={value}>
+                            {text}
                           </option>
                         ))}
                       </select>
@@ -169,18 +172,18 @@ export const NonNegotiableModal = ({
 
                     {field.type === "radio" && field.options && (
                       <div className="space-y-2">
-                        {field.options.map((option) => {
+                        {Object.entries(field.options).map(([value, text]) => {
                           const currentValue = nonNegotiableValues[fieldKey];
-                          const isChecked = currentValue === option;
+                          const isChecked = currentValue === value;
                           return (
                             <label
-                              key={`${fieldKey}-${option}`}
+                              key={`${fieldKey}-${value}`}
                               className="flex items-center gap-2 cursor-pointer"
                             >
                               <input
                                 type="radio"
                                 name={fieldKey}
-                                value={option}
+                                value={value}
                                 checked={isChecked}
                                 onChange={(e) => {
                                   handleFieldChange(fieldKey, e.target.value);
@@ -188,7 +191,7 @@ export const NonNegotiableModal = ({
                                 className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 focus:ring-2 cursor-pointer accent-blue-600"
                               />
                               <span className="text-sm text-gray-700">
-                                {option}
+                                {text}
                               </span>
                             </label>
                           );
@@ -222,7 +225,7 @@ export const NonNegotiableModal = ({
               Cancel
             </Button>
             <Button
-              onClick={onSave}
+              onClick={handleSave}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white"
             >
               Save and Continue

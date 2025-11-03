@@ -1,3 +1,6 @@
+import type { ApplicationFormData } from "./application_form.types";
+import type { Assessment, PipelineStep, TeamMember } from "./pipeline.types";
+
 // Location and Batch Management Types
 export interface LocationEntry {
   id: number;
@@ -58,18 +61,6 @@ export interface StagePopupData {
   reminderTime: string;
 }
 
-export interface FormFieldNonNegotiables {
-  expect_salary: boolean;
-  willing_to_work_onsite: boolean;
-  education_attained: boolean;
-  course: boolean;
-}
-
-export interface NonNegotiableValue {
-  name: string;
-  value: any;
-}
-
 // Step Component Props
 export interface StepProps {
   number: number;
@@ -85,8 +76,6 @@ export interface AssessmentSettings {
   };
 }
 
-// Assessment Form Types
-
 // Step Configuration Types
 export interface StepConfig {
   number: number;
@@ -94,98 +83,24 @@ export interface StepConfig {
   active: boolean;
 }
 
-// Non-negotiable Field Types
-export interface NonNegotiableField {
-  category: string;
-  field: string;
-  type: "text" | "select" | "radio" | "checkbox" | "file" | "date" | "number";
-  options?: string[];
+export interface JobPosting {
+  job_title: string | null;
+  department: string | null;
+  other_department: string | null;
+  employment_type: string | null;
+  headcount: number | null;
+  work_setup: string | null;
+  target_start_date: string | null;
+  reason_for_posting: string | null;
+  other_reason_for_posting: string | null;
+  min_budget: number | null;
+  max_budget: number | null;
+  description: string | null;
+  responsibilities: string | null;
+  qualifications: string | null;
+  working_site: string | null;
 }
 
-// -- Refactored Types --
-
-// Application Form
-export type ApplicationFormType = "required" | "optional" | "disabled";
-
-export interface ApplicationForm {
-  name: ApplicationFormType;
-  birth_date: ApplicationFormType;
-  gender: ApplicationFormType;
-  primary_contact_number: ApplicationFormType;
-  secondary_contact_number: ApplicationFormType;
-  email: ApplicationFormType;
-  linkedin_profile: ApplicationFormType;
-  address: ApplicationFormType;
-  expected_salary: ApplicationFormType;
-  willing_to_work_onsite: ApplicationFormType;
-  photo_2x2: ApplicationFormType;
-  upload_med_cert: ApplicationFormType;
-  preferred_interview_schedule: ApplicationFormType;
-  education_attained: ApplicationFormType;
-  year_graduated: ApplicationFormType;
-  university: ApplicationFormType;
-  course: ApplicationFormType;
-  work_experience: ApplicationFormType;
-  how_did_you_hear_about_us: ApplicationFormType;
-  agreement: ApplicationFormType;
-  signature: ApplicationFormType;
-}
-
-// Pipeline
-export interface PipelineStage {
-  id: number;
-  name: string;
-}
-
-interface PipelineStepBase {
-  process_type: string;
-  process_title: string;
-  description: string;
-  order: number;
-  stage: number;
-  assessments: Assessment[];
-}
-
-export interface PipelineStepInDb extends PipelineStepBase {
-  id: number;
-  source: "db";
-}
-
-export interface PipelineStepLocal extends PipelineStepBase {
-  pipeline_identifier: string; // Only for React to identify steps uniquely
-  source: "local";
-}
-
-export type PipelineStep = PipelineStepInDb | PipelineStepLocal;
-
-interface AssessmentBase {
-  type: string;
-  title: string;
-  description: string;
-  required: boolean;
-}
-
-export interface TeamMember {
-  id: number;
-  name: string;
-  position: string;
-  department: string;
-  process: string;
-}
-
-interface AssessmentInDb extends AssessmentBase {
-  id: number;
-  source: "db";
-}
-
-interface AssessmentLocal extends AssessmentBase {
-  localId: string;
-  source: "local";
-}
-
-export type Assessment = AssessmentInDb | AssessmentLocal;
-
-// Client
 export interface Client {
   id: number;
   name: string;
@@ -194,32 +109,33 @@ export interface Client {
   posted_by: string;
 }
 
-// Form Data
-export interface CreatePositionFormData {
+export interface PositionBase {
   client: number | null;
-  job_title: string;
-  education_level: string;
-  department: string;
-  other_department: string;
-  experience_level: string;
-  employment_type: string;
-  headcount: number;
-  work_setup: string;
-  target_start_date: string | null;
-  reason_for_posting: string;
-  other_reason_for_posting: string;
-  min_budget: number;
-  max_budget: number;
-  description: string;
-  responsibilities: string;
-  qualifications: string;
-  working_site: string;
-  posted_by?: string; // User ID, will be handled in backend
-  application_form: ApplicationForm;
-  application_form_non_negotiables: FormFieldNonNegotiables;
-  non_negotiables: NonNegotiableValue[];
-  pipeline: PipelineStep[] | [];
+  education_level: string | null;
+  experience_level: string | null;
 }
 
-// TYPES
-export type FormData = CreatePositionFormData;
+export interface Position extends PositionBase {
+  job_posting: JobPosting;
+  application_form: ApplicationFormData;
+  pipeline: PipelineStep[] | [];
+  section_questionnaire: {
+    // SectionQuestionnaire
+    // Questionnaire
+  };
+  locations_client: LocationEntry[] | [];
+  batches_client: BatchEntry[] | [];
+}
+
+export interface PositionDb extends Position {
+  id: number;
+  posted_by: string;
+  created_at: Date;
+  updated_at: Date;
+  type: "prf" | "client";
+  status: string;
+  published: boolean;
+  active: boolean;
+}
+
+export type PositionFormData = Position | PositionDb;

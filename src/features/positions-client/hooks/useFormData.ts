@@ -1,31 +1,40 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import type {
-  CreatePositionFormData,
+  PositionFormData,
+  PositionBase,
+} from "../types/create_position.types";
+import type {
+  ApplicationForm,
+  ApplicationFormType,
+} from "../types/application_form.types";
+import type {
   PipelineStep,
   PipelineStepInDb,
   PipelineStepLocal,
-} from "../types/create_position.types";
+} from "../types/pipeline.types";
 
-export const useFormData = () => {
-  const [formData, setFormData] = useState<CreatePositionFormData>({
-    client: null,
-    job_title: "",
-    department: "",
-    other_department: "",
-    employment_type: "",
-    education_level: "",
-    work_setup: "",
-    experience_level: "",
-    headcount: 0,
+const getDefaultFormData = (): PositionFormData => ({
+  client: null,
+  education_level: null,
+  experience_level: null,
+  job_posting: {
+    job_title: null,
+    department: null,
+    other_department: null,
+    employment_type: null,
+    headcount: null,
+    work_setup: null,
     target_start_date: null,
-    reason_for_posting: "",
-    other_reason_for_posting: "",
-    min_budget: 0,
-    max_budget: 0,
-    description: "",
-    responsibilities: "",
-    qualifications: "",
-    working_site: "",
+    reason_for_posting: null,
+    other_reason_for_posting: null,
+    min_budget: null,
+    max_budget: null,
+    description: null,
+    responsibilities: null,
+    qualifications: null,
+    working_site: null,
+  },
+  application_form: {
     application_form: {
       name: "optional",
       birth_date: "optional",
@@ -35,7 +44,7 @@ export const useFormData = () => {
       email: "optional",
       linkedin_profile: "optional",
       address: "optional",
-      expect_salary: "optional",
+      expected_salary: "optional",
       willing_to_work_onsite: "optional",
       photo_2x2: "optional",
       upload_med_cert: "optional",
@@ -49,180 +58,199 @@ export const useFormData = () => {
       agreement: "optional",
       signature: "optional",
     },
-    application_form_non_negotiables: {
-      expect_salary: false,
-      willing_to_work_onsite: false,
-      education_attained: false,
-      course: false,
-    },
     non_negotiables: [],
-    pipeline: [],
-  });
+  },
+  pipeline: [],
+  section_questionnaire: {},
+  locations_client: [],
+  batches_client: [],
+});
 
-  const handleInputChange = useCallback((field: string, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  }, []);
+export const useFormData = (initialData?: PositionFormData) => {
+  const [formData, setFormData] = useState<PositionFormData>(
+    initialData || getDefaultFormData()
+  );
 
-  const handleApplicationFormChange = useCallback(
-    (fieldName: string, status: string) => {
-      setFormData((prev) => ({
-        ...prev,
+  function handlePositionBaseChange(
+    field: keyof PositionBase,
+    value: string | number | null
+  ) {
+    setFormData((prev: PositionFormData) => ({
+      ...prev,
+      [field]: value,
+    }));
+  }
+
+  function handleJobPostingChange(
+    fieldName: keyof PositionFormData["job_posting"],
+    value: string | number | null
+  ) {
+    setFormData((prev: PositionFormData) => ({
+      ...prev,
+      job_posting: {
+        ...prev.job_posting,
+        [fieldName]: value,
+      },
+    }));
+  }
+
+  function handleApplicationFormChange(
+    fieldName: keyof ApplicationForm,
+    status: ApplicationFormType
+  ) {
+    setFormData((prev: PositionFormData) => ({
+      ...prev,
+      application_form: {
+        ...prev.application_form,
         application_form: {
-          ...prev.application_form,
+          ...prev.application_form.application_form,
           [fieldName]: status,
         },
-      }));
-    },
-    []
-  );
-
-  const handleNonNegotiableChange = useCallback(
-    (fieldName: string, value: boolean) => {
-      setFormData((prev) => ({
-        ...prev,
-        application_form_non_negotiables: {
-          ...prev.application_form_non_negotiables,
-          [fieldName]: value,
-        },
-      }));
-    },
-    []
-  );
-
-  const handlePipelineChange = useCallback(
-    (pipeline_identifier: string | number, data: PipelineStep) => {
-      setFormData((prev) => {
-        const existingStep = prev.pipeline.filter((step) =>
-          step.source === "local"
-            ? step.pipeline_identifier === pipeline_identifier
-            : step.id === pipeline_identifier
-        );
-
-        if (existingStep.length > 0) {
-          // Update existing step
-          return {
-            ...prev,
-            pipeline: prev.pipeline.map((step) => {
-              if (
-                step.source === "local"
-                  ? step.pipeline_identifier ===
-                    (existingStep[0] as PipelineStepLocal).pipeline_identifier
-                  : step.id === (existingStep[0] as PipelineStepInDb).id
-              ) {
-                return { ...data };
-              }
-              return step;
-            }),
-          };
-        } else {
-          return {
-            ...prev,
-            pipeline: [...prev.pipeline, data],
-          };
-        }
-      });
-    },
-    []
-  );
-
-  const handleDeletePipelineChange = useCallback(
-    (pipeline_identifier: string | number) => {
-      setFormData((prev) => ({
-        ...prev,
-        pipeline: prev.pipeline.filter((step) =>
-          step.source === "local"
-            ? step.pipeline_identifier === pipeline_identifier
-            : step.id === pipeline_identifier
-        ),
-      }));
-    },
-    []
-  );
-
-  const handleNonNegotiableValueChange = useCallback(
-    (name: string, value: any) => {
-      setFormData((prev) => {
-        const existingIndex = prev.non_negotiables.findIndex(
-          (item) => item.name === name
-        );
-
-        if (existingIndex !== -1) {
-          // Update existing non-negotiable value
-          const updated = [...prev.non_negotiables];
-          updated[existingIndex] = { name, value };
-          return { ...prev, non_negotiables: updated };
-        } else {
-          // Add new non-negotiable value
-          return {
-            ...prev,
-            non_negotiables: [...prev.non_negotiables, { name, value }],
-          };
-        }
-      });
-    },
-    []
-  );
-
-  const resetFormData = () => {
-    setFormData({
-      client: null,
-      job_title: "",
-      department: "",
-      other_department: "",
-      employment_type: "full_time",
-      education_level: "bachelors_degree",
-      work_setup: "hybrid",
-      experience_level: "entry_level",
-      headcount: 0,
-      target_start_date: null,
-      reason_for_posting: "",
-      other_reason_for_posting: "",
-      min_budget: 0,
-      max_budget: 0,
-      description: "",
-      responsibilities: "",
-      qualifications: "",
-      working_site: "",
-      application_form: {
-        name: "optional",
-        birth_date: "optional",
-        gender: "optional",
-        primary_contact_number: "optional",
-        secondary_contact_number: "optional",
-        email: "optional",
-        linkedin_profile: "optional",
-        address: "optional",
-        expect_salary: "optional",
-        willing_to_work_onsite: "optional",
-        photo_2x2: "optional",
-        upload_med_cert: "optional",
-        preferred_interview_schedule: "optional",
-        education_attained: "optional",
-        year_graduated: "optional",
-        university: "optional",
-        course: "optional",
-        work_experience: "optional",
-        how_did_you_hear_about_us: "optional",
-        agreement: "optional",
-        signature: "optional",
       },
-      application_form_non_negotiables: {
-        expect_salary: false,
-        willing_to_work_onsite: false,
-        education_attained: false,
-        course: false,
-      },
-      non_negotiables: [],
-      pipeline: [],
+    }));
+  }
+
+  function isNonNegotiable(fieldName: string): boolean {
+    return formData.application_form.non_negotiables.some(
+      (item) => item.field === fieldName
+    );
+  }
+
+  function toggleNonNegotiable(fieldName: string) {
+    setFormData((prev: PositionFormData) => {
+      const exists = prev.application_form.non_negotiables.some(
+        (item) => item.field === fieldName
+      );
+
+      if (exists) {
+        return {
+          ...prev,
+          application_form: {
+            ...prev.application_form,
+            non_negotiables: prev.application_form.non_negotiables.filter(
+              (item) => item.field !== fieldName
+            ),
+          },
+        };
+      } else {
+        return {
+          ...prev,
+          application_form: {
+            ...prev.application_form,
+            non_negotiables: [
+              ...prev.application_form.non_negotiables,
+              { field: fieldName, value: "" },
+            ],
+          },
+        };
+      }
     });
-  };
+  }
+
+  function setNonNegotiableValue(
+    fieldName: string,
+    value: string | number | boolean
+  ) {
+    setFormData((prev: PositionFormData) => {
+      const exists = prev.application_form.non_negotiables.some(
+        (item) => item.field === fieldName
+      );
+
+      if (exists) {
+        return {
+          ...prev,
+          application_form: {
+            ...prev.application_form,
+            non_negotiables: prev.application_form.non_negotiables.map((item) =>
+              item.field === fieldName ? { ...item, value } : item
+            ),
+          },
+        };
+      } else {
+        return {
+          ...prev,
+          application_form: {
+            ...prev.application_form,
+            non_negotiables: [
+              ...prev.application_form.non_negotiables,
+              { field: fieldName, value },
+            ],
+          },
+        };
+      }
+    });
+  }
+
+  function getNonNegotiableValue(
+    fieldName: string
+  ): string | number | boolean | null {
+    const item = formData.application_form.non_negotiables.find(
+      (item) => item.field === fieldName
+    );
+    return item?.value || null;
+  }
+
+  function handlePipelineChange(
+    pipeline_identifier: string | number,
+    data: PipelineStep
+  ) {
+    setFormData((prev: PositionFormData) => {
+      const existingStep = prev.pipeline.filter((step: PipelineStep) =>
+        step.source === "local"
+          ? step.pipeline_identifier === pipeline_identifier
+          : step.id === pipeline_identifier
+      );
+
+      if (existingStep.length > 0) {
+        // Update existing step
+        return {
+          ...prev,
+          pipeline: prev.pipeline.map((step: PipelineStep) => {
+            if (
+              step.source === "local"
+                ? step.pipeline_identifier ===
+                  (existingStep[0] as PipelineStepLocal).pipeline_identifier
+                : step.id === (existingStep[0] as PipelineStepInDb).id
+            ) {
+              return { ...data };
+            }
+            return step;
+          }),
+        };
+      } else {
+        return {
+          ...prev,
+          pipeline: [...prev.pipeline, data],
+        };
+      }
+    });
+  }
+
+  function handleDeletePipelineChange(pipeline_identifier: string | number) {
+    setFormData((prev: PositionFormData) => ({
+      ...prev,
+      pipeline: prev.pipeline.filter((step: PipelineStep) =>
+        step.source === "local"
+          ? step.pipeline_identifier !== pipeline_identifier
+          : step.id !== pipeline_identifier
+      ),
+    }));
+  }
+
+  function resetFormData() {
+    setFormData(getDefaultFormData());
+  }
+
   return {
     formData,
     setFormData,
-    handleInputChange,
+    handlePositionBaseChange,
+    handleJobPostingChange,
     handleApplicationFormChange,
-    handleNonNegotiableChange,
-    handleNonNegotiableValueChange,
+    isNonNegotiable,
+    toggleNonNegotiable,
+    setNonNegotiableValue,
+    getNonNegotiableValue,
     handlePipelineChange,
     handleDeletePipelineChange,
     resetFormData,

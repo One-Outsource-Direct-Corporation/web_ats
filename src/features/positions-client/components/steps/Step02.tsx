@@ -1,11 +1,11 @@
-import type { CreatePositionFormData } from "@/features/positions-client/types/create_position.types";
+import type { PositionFormData } from "@/features/positions-client/types/create_position.types";
 import { RichTextEditor } from "@/shared/components/reusables/RichTextEditor";
 import { Card } from "@/shared/components/ui/card";
 
 interface Step02Props {
-  formData: CreatePositionFormData;
+  formData: PositionFormData;
   handleInputChange: (
-    field: keyof CreatePositionFormData,
+    field: keyof PositionFormData["job_posting"],
     content: string
   ) => void;
   error?: any;
@@ -26,7 +26,7 @@ export default function Step02({
         )}
         <RichTextEditor
           title="Job Description"
-          value={formData.description || ""}
+          value={formData.job_posting.description || ""}
           onChange={(content) => handleInputChange("description", content)}
           placeholder="Enter the job description here..."
         />
@@ -40,7 +40,7 @@ export default function Step02({
         )}
         <RichTextEditor
           title="Responsibilities"
-          value={formData.responsibilities || ""}
+          value={formData.job_posting.responsibilities || ""}
           onChange={(content) => handleInputChange("responsibilities", content)}
           placeholder="Enter the responsibilities here..."
         />
@@ -54,7 +54,7 @@ export default function Step02({
         )}
         <RichTextEditor
           title="Qualifications"
-          value={formData.qualifications || ""}
+          value={formData.job_posting.qualifications || ""}
           onChange={(content) => handleInputChange("qualifications", content)}
           placeholder="Enter the qualifications here..."
         />

@@ -28,12 +28,16 @@ export function stateToDataFormatClient(formData: CreatePositionFormData) {
       description: DOMPurify.sanitize(formData.description),
       responsibilities: DOMPurify.sanitize(formData.responsibilities),
       qualifications: DOMPurify.sanitize(formData.qualifications),
+      application_form: { ...formData.application_form },
+      pipeline: [...formData.pipeline],
+      non_negotiables: formData.non_negotiables,
+      section_questionnaires: {
+        name: "",
+        questionnaires: [
+          { question: "", description: "", question_type: "text" },
+        ],
+      },
     },
-    application_form: {
-      ...formData.application_form,
-    },
-    non_negotiables: formData.non_negotiables,
-    pipeline: [...formData.pipeline],
     client: formData.client,
     education_level: formData.education_level,
     experience_level: formData.experience_level,

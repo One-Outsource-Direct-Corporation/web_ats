@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import type {
-  CreatePositionFormData,
-  PipelineStep,
+  PositionBase,
+  PositionFormData,
 } from "../types/create_position.types";
 import { useStepNavigation } from "../hooks/useStepNavigation";
 import { useModalManagement } from "../hooks/useModalManagement";
@@ -18,40 +18,48 @@ import Step03 from "../components/steps/Step03";
 import Step04 from "../components/steps/Step04";
 import { AssessmentManagement } from "../components/AssessmentManagement";
 import { NonNegotiableModal } from "../components/NonNegotiableModal";
-import { useState } from "react";
 import { stateToDataFormatClient } from "@/shared/utils/stateToDataFormat";
+import type {
+  ApplicationFormData,
+  ApplicationFormType,
+} from "../types/application_form.types";
+import type { PipelineStep } from "../types/pipeline.types";
 
 interface PositionClientProps {
-  formData: CreatePositionFormData;
-  handleInputChange: (
-    field: keyof CreatePositionFormData,
-    content: string
+  formData: PositionFormData;
+  handlePositionBaseChange: (
+    fieldName: keyof PositionBase,
+    value: string | number | null
   ) => void;
-  handleApplicationFormChange: (field: string, status: string) => void;
-  handleNonNegotiableChange: (field: string, value: boolean) => void;
-  handleNonNegotiableValueChange: (name: string, value: any) => void;
+  handleJobPostingChange: (
+    fieldName: keyof PositionFormData["job_posting"],
+    value: string | number | null
+  ) => void;
+  handleApplicationFormChange: (
+    fieldName: keyof ApplicationFormData["application_form"],
+    status: ApplicationFormType
+  ) => void;
   handlePipelineChange: (
     pipeline_identifier: string | number,
     data: PipelineStep
   ) => void;
   handleDeletePipelineChange: (pipeline_identifier: string | number) => void;
+  isNonNegotiable: (fieldName: string) => boolean;
+  toggleNonNegotiable: (fieldName: string) => void;
   resetFormData: () => void;
 }
 
 export default function PositionClient({
   formData,
-  handleInputChange,
+  handlePositionBaseChange,
+  handleJobPostingChange,
   handleApplicationFormChange,
-  handleNonNegotiableChange,
-  handleNonNegotiableValueChange,
   handlePipelineChange,
   handleDeletePipelineChange,
+  isNonNegotiable,
+  toggleNonNegotiable,
   resetFormData,
 }: PositionClientProps) {
-  const [nonNegotiableValues, setNonNegotiableValues] = useState<{
-    [key: string]: any;
-  }>({});
-
   const navigate = useNavigate();
   const {
     steps,
@@ -61,6 +69,7 @@ export default function PositionClient({
     handleBack,
     handleStepClick,
     getStepTitle,
+
     resetSteps,
   } = useStepNavigation();
   const axiosPrivate = useAxiosPrivate();
@@ -106,11 +115,11 @@ export default function PositionClient({
     }
   };
 
-  const handleSaveNonNegotiables = () => {
-    // Convert nonNegotiableValues object to array format
-    Object.entries(nonNegotiableValues).forEach(([name, value]) => {
-      handleNonNegotiableValueChange(name, value);
-    });
+  const handleSaveNonNegotiables = (values: { [key: string]: any }) => {
+    // Set values for all non-negotiable fields
+    // Object.entries(values).forEach(([fieldName, value]) => {
+    //   setNonNegotiableValue(fieldName, value);
+    // });
     modalHooks.setShowNonNegotiableModal(false);
     stepHandleNext();
   };
@@ -119,18 +128,26 @@ export default function PositionClient({
     switch (currentStep) {
       case 1:
         return (
-          <Step01 formData={formData} handleInputChange={handleInputChange} />
+          <Step01
+            formData={formData}
+            handleInputChange={handlePositionBaseChange}
+            handleJobPostingChange={handleJobPostingChange}
+          />
         );
       case 2:
         return (
-          <Step02 formData={formData} handleInputChange={handleInputChange} />
+          <Step02
+            formData={formData}
+            handleInputChange={handleJobPostingChange}
+          />
         );
       case 3:
         return (
           <Step03
-            formData={formData}
+            formData={formData.application_form}
             handleApplicationFormChange={handleApplicationFormChange}
-            handleNonNegotiableChange={handleNonNegotiableChange}
+            isNonNegotiable={isNonNegotiable}
+            toggleNonNegotiable={toggleNonNegotiable}
           />
         );
       case 4:
@@ -213,9 +230,7 @@ export default function PositionClient({
         show={modalHooks.showNonNegotiableModal}
         onClose={() => modalHooks.setShowNonNegotiableModal(false)}
         onSave={handleSaveNonNegotiables}
-        formData={formData}
-        nonNegotiableValues={nonNegotiableValues}
-        setNonNegotiableValues={setNonNegotiableValues}
+        formData={formData.application_form}
       />
     </>
   );

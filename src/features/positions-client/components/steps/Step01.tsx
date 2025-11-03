@@ -3,10 +3,21 @@ import { Card } from "@/shared/components/ui/card";
 import { BasicDetailsForm } from "../BasicDetailsForm";
 import { LocationManagement } from "../LocationManagement";
 import { BatchManagement } from "../BatchManagement";
+import type {
+  PositionBase,
+  PositionFormData,
+} from "../../types/create_position.types";
 
 interface Step01Props {
-  formData: any;
-  handleInputChange: any;
+  formData: PositionFormData;
+  handleInputChange: (
+    fieldName: keyof PositionBase,
+    value: string | number | null
+  ) => void;
+  handleJobPostingChange: (
+    fieldName: keyof PositionFormData["job_posting"],
+    value: string | number | null
+  ) => void;
   error?: any;
 }
 
@@ -79,6 +90,7 @@ const initialBatches = [
 export default function Step01({
   formData,
   handleInputChange,
+  handleJobPostingChange,
   error,
 }: Step01Props) {
   const [locations, setLocations] = useState(initialLocations);
@@ -181,6 +193,7 @@ export default function Step01({
       <BasicDetailsForm
         formData={formData}
         onInputChange={handleInputChange}
+        handleJobPostingChange={handleJobPostingChange}
         errorFields={error}
       />
 
