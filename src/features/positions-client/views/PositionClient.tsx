@@ -26,6 +26,7 @@ import type { PipelineStep } from "../types/pipeline.types";
 
 interface PositionClientProps {
   formData: PositionFormData;
+  setFormData: React.Dispatch<React.SetStateAction<PositionFormData>>;
   handlePositionBaseChange: (
     fieldName: keyof PositionBase,
     value: string | number | null
@@ -54,6 +55,7 @@ interface PositionClientProps {
 
 export default function PositionClient({
   formData,
+  setFormData,
   handlePositionBaseChange,
   handleJobPostingChange,
   handleApplicationFormChange,
@@ -123,6 +125,7 @@ export default function PositionClient({
         return (
           <Step01
             formData={formData}
+            setFormData={setFormData}
             handleInputChange={handlePositionBaseChange}
             handleJobPostingChange={handleJobPostingChange}
           />

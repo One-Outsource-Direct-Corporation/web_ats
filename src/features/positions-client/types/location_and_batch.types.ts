@@ -14,7 +14,7 @@ export interface LocationEntryDb extends LocationEntryBase {
 }
 
 interface BatchEntryBase {
-  location_entry_id: number | string;
+  location_entry: number | string;
   name: string;
   headcount: number;
   deploymentDate: Date | null;

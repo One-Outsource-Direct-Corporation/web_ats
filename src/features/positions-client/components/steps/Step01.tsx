@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { Card } from "@/shared/components/ui/card";
 import { BasicDetailsForm } from "../BasicDetailsForm";
 import { LocationManagement } from "../LocationManagement";
@@ -9,9 +10,14 @@ import type {
 } from "../../types/create_position.types";
 import { useBatchEntries } from "../../hooks/useBatchEntries";
 import { useLocationEntries } from "../../hooks/useLocationEntries";
+import type {
+  LocationEntryDb,
+  LocationEntryLocal,
+} from "../../types/location_and_batch.types";
 
 interface Step01Props {
   formData: PositionFormData;
+  setFormData: Dispatch<SetStateAction<PositionFormData>>;
   handleInputChange: (
     fieldName: keyof PositionBase,
     value: string | number | null
@@ -25,27 +31,28 @@ interface Step01Props {
 
 export default function Step01({
   formData,
+  setFormData,
   handleInputChange,
   handleJobPostingChange,
   error,
 }: Step01Props) {
-  const [selectedLocationId, setSelectedLocationId] = useState<
-    number | string | null
-  >(null);
-  const [editingLocationId, setEditingLocationId] = useState<
-    number | string | null
-  >(null);
-  const [editingBatchId, setEditingBatchId] = useState<number | string | null>(
-    null
-  );
   const {
     locations,
     addLocationEntry,
     updateLocationEntry,
     deleteLocationEntry,
-  } = useLocationEntries(formData.locations);
+  } = useLocationEntries(formData.locations, setFormData);
   const { batches, addBatchEntry, updateBatchEntry, deleteBatchEntry } =
-    useBatchEntries(formData.batches);
+    useBatchEntries(formData.batches, setFormData);
+
+  const [selectedLocationId, setSelectedLocationId] = useState<
+    number | string | null
+  >(null);
+  const selectedLocation = locations.find((loc) => {
+    const id =
+      (loc as LocationEntryDb).id ?? (loc as LocationEntryLocal).tempId;
+    return id === selectedLocationId;
+  });
 
   function handleLocationSelect(id: number | string | null) {
     setSelectedLocationId(id);
@@ -73,14 +80,15 @@ export default function Step01({
         onDeleteLocation={deleteLocationEntry}
       />
 
-      {/* <BatchManagement
-        batches={batches}
-        selectedLocationId={selectedLocationId}
-        onAddBatch={addBatchEntry}
-        onUpdateBatch={updateBatchEntry}
-        onDeleteBatch={deleteBatchEntry}
-        onEditBatch={setEditingBatchId}
-      /> */}
+      {selectedLocation?.withBatch && (
+        <BatchManagement
+          batches={batches}
+          selectedLocationId={selectedLocationId}
+          onAddBatch={addBatchEntry}
+          onUpdateBatch={updateBatchEntry}
+          onDeleteBatch={deleteBatchEntry}
+        />
+      )}
     </Card>
   );
 }

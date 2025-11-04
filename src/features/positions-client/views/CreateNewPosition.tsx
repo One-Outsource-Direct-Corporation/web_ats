@@ -9,6 +9,7 @@ export default function CreateNewPosition() {
 
   const {
     formData,
+    setFormData,
     handlePositionBaseChange,
     handleJobPostingChange,
     handleApplicationFormChange,
@@ -23,6 +24,7 @@ export default function CreateNewPosition() {
   return (
     <PositionClient
       formData={formData}
+      setFormData={setFormData}
       handlePositionBaseChange={handlePositionBaseChange}
       handleJobPostingChange={handleJobPostingChange}
       handleApplicationFormChange={handleApplicationFormChange}

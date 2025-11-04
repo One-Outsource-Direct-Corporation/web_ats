@@ -6,84 +6,99 @@ import type {
   Batch,
   BatchFormData,
 } from "../../positions/types/location-batch.types";
+import type {
+  BatchEntry,
+  BatchEntryDb,
+  BatchEntryLocal,
+} from "../types/location_and_batch.types";
+import formatDate from "@/shared/utils/formatDate";
 
 interface BatchManagementProps {
-  batches: Batch[];
-  selectedLocationId: string | null;
-  selectedLocationName: string;
-  editingBatchId: string | null;
-  onAddBatch: (batch: BatchFormData) => void;
-  onUpdateBatch: (id: string, batch: BatchFormData) => void;
-  onDeleteBatch: (id: string) => void;
-  onEditBatch: (id: string | null) => void;
+  batches: BatchEntry[];
+  selectedLocationId: string | number | null;
+  onAddBatch: (batch: BatchEntryLocal) => void;
+  onUpdateBatch: (id: string | number, batch: BatchEntry) => void;
+  onDeleteBatch: (id: string | number) => void;
+  selectedLocationName?: string;
 }
 
-export const BatchManagement: React.FC<BatchManagementProps> = ({
+export const BatchManagement = ({
   batches,
   selectedLocationId,
-  selectedLocationName,
-  editingBatchId,
   onAddBatch,
   onUpdateBatch,
   onDeleteBatch,
-  onEditBatch,
-}) => {
-  const [newBatch, setNewBatch] = useState<BatchFormData>({
+  selectedLocationName,
+}: BatchManagementProps) => {
+  const [newBatch, setNewBatch] = useState<
+    Omit<BatchEntryLocal, "tempId" | "location_entry">
+  >({
     name: "",
-    startTime: "",
-    endTime: "",
     headcount: 0,
+    deploymentDate: null,
   });
   const [isAddingNew, setIsAddingNew] = useState(false);
-  const [editFormData, setEditFormData] = useState<BatchFormData>({
+  const [editingBatchId, setEditingBatchId] = useState<string | number | null>(
+    null
+  );
+  const [editFormData, setEditFormData] = useState<
+    Omit<BatchEntry, "id" | "tempId" | "location_entry">
+  >({
     name: "",
-    startTime: "",
-    endTime: "",
     headcount: 0,
+    deploymentDate: null,
   });
 
-  const handleStartEdit = (batch: Batch) => {
+  const handleStartEdit = (batch: BatchEntry) => {
+    setEditingBatchId(
+      (batch as BatchEntryLocal).tempId ?? (batch as BatchEntryDb).id
+    );
     setEditFormData({
       name: batch.name,
-      startTime: batch.startTime,
-      endTime: batch.endTime,
       headcount: batch.headcount,
+      deploymentDate: batch.deploymentDate || null,
     });
-    onEditBatch(batch.id);
   };
 
-  const handleSaveEdit = (id: string) => {
+  const handleSaveEdit = (id: string | number) => {
     if (
       editFormData.name.trim() &&
-      editFormData.startTime &&
-      editFormData.endTime &&
+      editFormData.deploymentDate &&
       editFormData.headcount > 0
     ) {
-      onUpdateBatch(id, editFormData);
+      if (typeof id === "string")
+        onUpdateBatch(id, { ...editFormData, tempId: id } as BatchEntryLocal);
+      else onUpdateBatch(id, { ...editFormData, id } as BatchEntryDb);
+
+      setEditingBatchId(null);
+      setEditFormData({ name: "", headcount: 0, deploymentDate: null });
     }
   };
 
   const handleCancelEdit = () => {
-    onEditBatch(null);
-    setEditFormData({ name: "", startTime: "", endTime: "", headcount: 0 });
+    setEditingBatchId(null);
+    setEditFormData({ name: "", headcount: 0, deploymentDate: null });
   };
 
   const handleAddNewBatch = () => {
     if (
       selectedLocationId &&
       newBatch.name.trim() &&
-      newBatch.startTime &&
-      newBatch.endTime &&
-      newBatch.headcount > 0
+      newBatch.headcount > 0 &&
+      newBatch.deploymentDate
     ) {
-      onAddBatch(newBatch);
-      setNewBatch({ name: "", startTime: "", endTime: "", headcount: 0 });
+      onAddBatch({
+        ...newBatch,
+        tempId: `tmp-${Date.now()}`,
+        location_entry: selectedLocationId,
+      });
+      setNewBatch({ name: "", headcount: 0, deploymentDate: null });
       setIsAddingNew(false);
     }
   };
 
   const handleCancelAdd = () => {
-    setNewBatch({ name: "", startTime: "", endTime: "", headcount: 0 });
+    setNewBatch({ name: "", headcount: 0, deploymentDate: null });
     setIsAddingNew(false);
   };
 
@@ -104,7 +119,8 @@ export const BatchManagement: React.FC<BatchManagementProps> = ({
     <div className="mb-8">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-medium text-gray-800">
-          Batch Management - {selectedLocationName}
+          Batch Management{" "}
+          {selectedLocationName ? `- ${selectedLocationName}` : ""}
         </h3>
         <Button
           onClick={() => setIsAddingNew(true)}
@@ -121,9 +137,8 @@ export const BatchManagement: React.FC<BatchManagementProps> = ({
           <thead className="bg-blue-600 text-white">
             <tr>
               <th className="px-4 py-3 text-left">Batch Name</th>
-              <th className="px-4 py-3 text-left">Start Time</th>
-              <th className="px-4 py-3 text-left">End Time</th>
               <th className="px-4 py-3 text-left">Headcount</th>
+              <th className="px-4 py-3 text-left">Deployment Date</th>
               <th className="px-4 py-3 text-center">Actions</th>
             </tr>
           </thead>
@@ -142,26 +157,6 @@ export const BatchManagement: React.FC<BatchManagementProps> = ({
                 </td>
                 <td className="px-4 py-3">
                   <Input
-                    type="time"
-                    value={newBatch.startTime}
-                    onChange={(e) =>
-                      setNewBatch({ ...newBatch, startTime: e.target.value })
-                    }
-                    className="w-full"
-                  />
-                </td>
-                <td className="px-4 py-3">
-                  <Input
-                    type="time"
-                    value={newBatch.endTime}
-                    onChange={(e) =>
-                      setNewBatch({ ...newBatch, endTime: e.target.value })
-                    }
-                    className="w-full"
-                  />
-                </td>
-                <td className="px-4 py-3">
-                  <Input
                     type="number"
                     min="1"
                     placeholder="headcount"
@@ -170,6 +165,27 @@ export const BatchManagement: React.FC<BatchManagementProps> = ({
                       setNewBatch({
                         ...newBatch,
                         headcount: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    className="w-full"
+                  />
+                </td>
+                <td className="px-4 py-3">
+                  <Input
+                    type="date"
+                    value={
+                      newBatch.deploymentDate
+                        ? new Date(newBatch.deploymentDate)
+                            .toISOString()
+                            .split("T")[0]
+                        : ""
+                    }
+                    onChange={(e) =>
+                      setNewBatch({
+                        ...newBatch,
+                        deploymentDate: e.target.value
+                          ? new Date(e.target.value)
+                          : null,
                       })
                     }
                     className="w-full"
@@ -197,121 +213,121 @@ export const BatchManagement: React.FC<BatchManagementProps> = ({
                 </td>
               </tr>
             )}
-            {batches.map((batch) => (
-              <tr key={batch.id} className="border-t hover:bg-gray-50">
-                <td className="px-4 py-3">
-                  {editingBatchId === batch.id ? (
-                    <Input
-                      value={editFormData.name}
-                      onChange={(e) =>
-                        setEditFormData({
-                          ...editFormData,
-                          name: e.target.value,
-                        })
-                      }
-                      className="w-full"
-                    />
-                  ) : (
-                    <span className="font-medium">{batch.name}</span>
-                  )}
-                </td>
-                <td className="px-4 py-3">
-                  {editingBatchId === batch.id ? (
-                    <Input
-                      type="time"
-                      value={editFormData.startTime}
-                      onChange={(e) =>
-                        setEditFormData({
-                          ...editFormData,
-                          startTime: e.target.value,
-                        })
-                      }
-                      className="w-full"
-                    />
-                  ) : (
-                    <span className="text-gray-600">{batch.startTime}</span>
-                  )}
-                </td>
-                <td className="px-4 py-3">
-                  {editingBatchId === batch.id ? (
-                    <Input
-                      type="time"
-                      value={editFormData.endTime}
-                      onChange={(e) =>
-                        setEditFormData({
-                          ...editFormData,
-                          endTime: e.target.value,
-                        })
-                      }
-                      className="w-full"
-                    />
-                  ) : (
-                    <span className="text-gray-600">{batch.endTime}</span>
-                  )}
-                </td>
-                <td className="px-4 py-3">
-                  {editingBatchId === batch.id ? (
-                    <Input
-                      type="number"
-                      min="1"
-                      value={editFormData.headcount}
-                      onChange={(e) =>
-                        setEditFormData({
-                          ...editFormData,
-                          headcount: parseInt(e.target.value) || 0,
-                        })
-                      }
-                      className="w-full"
-                    />
-                  ) : (
-                    <span className="text-gray-600">{batch.headcount}</span>
-                  )}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center justify-center gap-2">
-                    {editingBatchId === batch.id ? (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleSaveEdit(batch.id)}
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={handleCancelEdit}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </>
+            {batches.map((batch) => {
+              const batchId =
+                (batch as BatchEntryDb).id ?? (batch as BatchEntryLocal).tempId;
+              return (
+                <tr key={batchId} className="border-t hover:bg-gray-50">
+                  <td className="px-4 py-3">
+                    {editingBatchId === batchId ? (
+                      <Input
+                        value={editFormData.name}
+                        onChange={(e) =>
+                          setEditFormData({
+                            ...editFormData,
+                            name: e.target.value,
+                          })
+                        }
+                        className="w-full"
+                      />
                     ) : (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleStartEdit(batch)}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => onDeleteBatch(batch.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </>
+                      <span className="font-medium">{batch.name}</span>
                     )}
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="px-4 py-3">
+                    {editingBatchId === batchId ? (
+                      <Input
+                        type="number"
+                        min="1"
+                        value={editFormData.headcount}
+                        onChange={(e) =>
+                          setEditFormData({
+                            ...editFormData,
+                            headcount: parseInt(e.target.value) || 0,
+                          })
+                        }
+                        className="w-full"
+                      />
+                    ) : (
+                      <span className="text-gray-600">{batch.headcount}</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {editingBatchId === batchId ? (
+                      <Input
+                        type="date"
+                        value={
+                          editFormData.deploymentDate
+                            ? new Date(editFormData.deploymentDate)
+                                .toISOString()
+                                .split("T")[0]
+                            : ""
+                        }
+                        onChange={(e) =>
+                          setEditFormData({
+                            ...editFormData,
+                            deploymentDate: e.target.value
+                              ? new Date(e.target.value)
+                              : null,
+                          })
+                        }
+                        className="w-full"
+                      />
+                    ) : (
+                      <span className="text-gray-600">
+                        {formatDate(
+                          batch.deploymentDate?.toISOString().split("T")[0] ||
+                            ""
+                        )}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-center gap-2">
+                      {editingBatchId === batchId ? (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleSaveEdit(batchId)}
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={handleCancelEdit}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleStartEdit(batch)}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => onDeleteBatch(batchId)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -319,8 +335,9 @@ export const BatchManagement: React.FC<BatchManagementProps> = ({
       {batches.length === 0 && !isAddingNew && (
         <div className="text-center py-8 text-gray-500 border rounded-lg bg-gray-50">
           <p>
-            No batches added for {selectedLocationName} yet. Click "Add Batch"
-            to get started.
+            No batches added
+            {selectedLocationName ? ` for ${selectedLocationName}` : ""}
+            yet. Click "Add Batch" to get started.
           </p>
         </div>
       )}

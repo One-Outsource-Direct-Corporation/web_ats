@@ -1,14 +1,15 @@
-import { useEffect, useState } from "react";
 import type {
   BatchEntry,
   BatchEntryDb,
   BatchEntryLocal,
 } from "../types/location_and_batch.types";
 import { fakeBatchesData } from "../data-dev/batches.data";
+import type { PositionFormData } from "../types/create_position.types";
 
-export const useBatchEntries = (formData?: BatchEntry[]) => {
-  const [batches, setBatches] = useState<BatchEntry[]>(formData || []);
-
+export const useBatchEntries = (
+  batches: BatchEntry[],
+  setFormData: React.Dispatch<React.SetStateAction<PositionFormData>>
+) => {
   //   useEffect(() => {
   //     if (import.meta.env.VITE_REACT_ENV === "development") {
   //       setBatches(fakeBatchesData);
@@ -17,28 +18,29 @@ export const useBatchEntries = (formData?: BatchEntry[]) => {
 
   function addBatchEntry(data: BatchEntryLocal) {
     data.tempId = `tmp-${Date.now()}`;
-    setBatches((prevBatches) => [...prevBatches, data]);
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      batches: [...prevFormData.batches, data],
+    }));
   }
 
-  function updateBatchEntry(
-    id: string | number,
-    field: keyof BatchEntry,
-    value: string | number | null
-  ) {
-    setBatches((prevBatches) =>
-      prevBatches.map((batch) => {
+  function updateBatchEntry(id: string | number, batch: Partial<BatchEntry>) {
+    setFormData((prev) => ({
+      ...prev,
+      batches: prev.batches.map((bat) => {
         const match =
           typeof id === "string"
-            ? (batch as BatchEntryLocal).tempId === id
-            : (batch as BatchEntryDb).id === id;
-        return match ? { ...batch, [field]: value } : batch;
-      })
-    );
+            ? (bat as BatchEntryLocal).tempId === id
+            : (bat as BatchEntryDb).id === id;
+        return match ? { ...bat, ...batch } : bat;
+      }),
+    }));
   }
 
   function deleteBatchEntry(id: string | number) {
-    setBatches((prevBatches) =>
-      prevBatches
+    setFormData((prev) => ({
+      ...prev,
+      batches: prev.batches
         .map((batch) =>
           typeof id === "number" && (batch as BatchEntryDb).id === id
             ? { ...batch, _delete: true }
@@ -49,8 +51,8 @@ export const useBatchEntries = (formData?: BatchEntry[]) => {
             !(
               typeof id === "string" && (batch as BatchEntryLocal).tempId === id
             )
-        )
-    );
+        ),
+    }));
   }
 
   return {

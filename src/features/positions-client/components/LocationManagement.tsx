@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
+import formatDate from "@/shared/utils/formatDate";
 
 interface LocationManagementProps {
   locations: LocationEntry[];
@@ -136,6 +137,7 @@ export const LocationManagement = ({
           <thead className="bg-blue-600 text-white">
             <tr>
               <th className="px-4 py-3 text-left">Location</th>
+              <th className="px-4 py-3 text-left">Headcount</th>
               <th className="px-4 py-3 text-left">Deployment Date</th>
               <th className="px-4 py-3 text-left">With Batch?</th>
               <th className="px-4 py-3 text-center">Actions</th>
@@ -150,6 +152,21 @@ export const LocationManagement = ({
                     value={newLocation.name}
                     onChange={(e) =>
                       setNewLocation({ ...newLocation, name: e.target.value })
+                    }
+                    className="w-full"
+                  />
+                </td>
+                <td className="px-4 py-3">
+                  <Input
+                    placeholder="Enter headcount"
+                    type="number"
+                    min="1"
+                    value={newLocation.headcount || ""}
+                    onChange={(e) =>
+                      setNewLocation({
+                        ...newLocation,
+                        headcount: parseInt(e.target.value) || 0,
+                      })
                     }
                     className="w-full"
                   />
@@ -194,7 +211,6 @@ export const LocationManagement = ({
                     </SelectContent>
                   </Select>
                 </td>
-
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-center gap-2">
                     <Button
@@ -251,6 +267,26 @@ export const LocationManagement = ({
                   <td className="px-4 py-3">
                     {editingLocationId === locId ? (
                       <Input
+                        type="number"
+                        min="1"
+                        value={editFormData.headcount}
+                        onChange={(e) =>
+                          setEditFormData({
+                            ...editFormData,
+                            headcount: parseInt(e.target.value) || 0,
+                          })
+                        }
+                        className="w-full"
+                      />
+                    ) : (
+                      <span className="text-gray-600">
+                        {location.headcount}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {editingLocationId === locId ? (
+                      <Input
                         type="date"
                         value={
                           editFormData.deploymentDate
@@ -267,15 +303,11 @@ export const LocationManagement = ({
                       />
                     ) : (
                       <span className="text-gray-600">
-                        {location.deploymentDate
-                          ? new Date(
-                              location.deploymentDate
-                            ).toLocaleDateString(undefined, {
-                              month: "short",
-                              day: "2-digit",
-                              year: "numeric",
-                            })
-                          : "-"}
+                        {formatDate(
+                          location.deploymentDate
+                            ?.toISOString()
+                            .split("T")[0] || ""
+                        )}
                       </span>
                     )}
                   </td>
