@@ -62,8 +62,8 @@ const getDefaultFormData = (): PositionFormData => ({
   },
   pipeline: [],
   section_questionnaire: {},
-  locations_client: [],
-  batches_client: [],
+  locations: [],
+  batches: [],
 });
 
 export const useFormData = (initialData?: PositionFormData) => {

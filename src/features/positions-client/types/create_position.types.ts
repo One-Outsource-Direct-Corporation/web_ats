@@ -1,21 +1,8 @@
 import type { ApplicationFormData } from "./application_form.types";
+import type { BatchEntry, LocationEntry } from "./location_and_batch.types";
 import type { Assessment, PipelineStep, TeamMember } from "./pipeline.types";
 
-// Location and Batch Management Types
-export interface LocationEntry {
-  id: number;
-  location: string;
-  headcount: number;
-  deploymentDate: string;
-  withBatch: boolean;
-}
-
-export interface BatchEntry {
-  id: number;
-  batch: number;
-  headcount: number;
-  deploymentDate: string;
-}
+// TODO: Move the Question to a separate types file
 
 // Question and Assessment Types
 export interface Question {
@@ -123,8 +110,8 @@ export interface Position extends PositionBase {
     // SectionQuestionnaire
     // Questionnaire
   };
-  locations_client: LocationEntry[] | [];
-  batches_client: BatchEntry[] | [];
+  locations: LocationEntry[] | [];
+  batches: BatchEntry[] | [];
 }
 
 export interface PositionDb extends Position {

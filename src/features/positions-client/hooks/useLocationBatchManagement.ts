@@ -1,5 +1,8 @@
 import { useState } from "react";
-import type { LocationEntry, BatchEntry } from "../types/create_position.types";
+import type {
+  BatchEntry,
+  LocationEntry,
+} from "../types/location_and_batch.types";
 
 export const useLocationBatchManagement = () => {
   const [locations, setLocations] = useState<LocationEntry[]>([
@@ -17,13 +20,13 @@ export const useLocationBatchManagement = () => {
       id: 1,
       batch: 1,
       headcount: 5,
-      deploymentDate: "Oct 01, 2024",
+      deploymentDate: new Date("2022-07-01"),
     },
     {
       id: 2,
       batch: 2,
       headcount: 5,
-      deploymentDate: "Jul 08, 2022",
+      deploymentDate: new Date("2022-07-08"),
     },
   ]);
 
