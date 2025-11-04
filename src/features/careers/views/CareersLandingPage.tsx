@@ -36,7 +36,6 @@ export default function CareersLandingPage() {
     status: "active",
     non_admin: true,
   });
-  console.log("Fetched Job Listings:", positions);
 
   let content = null;
 

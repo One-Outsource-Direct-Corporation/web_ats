@@ -17,7 +17,6 @@ import Step02 from "../components/steps/Step02";
 import Step03 from "../components/steps/Step03";
 import Step04 from "../components/steps/Step04";
 import { AssessmentManagement } from "../components/AssessmentManagement";
-import { NonNegotiableModal } from "../components/NonNegotiableModal";
 import { stateToDataFormatClient } from "@/shared/utils/stateToDataFormat";
 import type {
   ApplicationFormData,
@@ -46,6 +45,10 @@ interface PositionClientProps {
   handleDeletePipelineChange: (pipeline_identifier: string | number) => void;
   isNonNegotiable: (fieldName: string) => boolean;
   toggleNonNegotiable: (fieldName: string) => void;
+  setNonNegotiableValue: (
+    fieldName: string,
+    value: string | number | boolean
+  ) => void;
   resetFormData: () => void;
 }
 
@@ -58,6 +61,7 @@ export default function PositionClient({
   handleDeletePipelineChange,
   isNonNegotiable,
   toggleNonNegotiable,
+  setNonNegotiableValue,
   resetFormData,
 }: PositionClientProps) {
   const navigate = useNavigate();
@@ -78,9 +82,7 @@ export default function PositionClient({
   // TODO: Add The Step Errors
 
   const handleNext = async () => {
-    if (currentStep === 3) {
-      modalHooks.setShowNonNegotiableModal(true);
-    } else if (currentStep === 5) {
+    if (currentStep === 5) {
       // TODO: bring back the Pool Applicants Here
       // TODO: change the data structure from changes made
 
@@ -115,15 +117,6 @@ export default function PositionClient({
     }
   };
 
-  const handleSaveNonNegotiables = (values: { [key: string]: any }) => {
-    // Set values for all non-negotiable fields
-    // Object.entries(values).forEach(([fieldName, value]) => {
-    //   setNonNegotiableValue(fieldName, value);
-    // });
-    modalHooks.setShowNonNegotiableModal(false);
-    stepHandleNext();
-  };
-
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
@@ -148,6 +141,7 @@ export default function PositionClient({
             handleApplicationFormChange={handleApplicationFormChange}
             isNonNegotiable={isNonNegotiable}
             toggleNonNegotiable={toggleNonNegotiable}
+            setNonNegotiableValue={setNonNegotiableValue}
           />
         );
       case 4:
@@ -224,13 +218,6 @@ export default function PositionClient({
         onClose={() => modalHooks.setShowPreview(false)}
         formData={formData}
         currentStep={currentStep}
-      />
-
-      <NonNegotiableModal
-        show={modalHooks.showNonNegotiableModal}
-        onClose={() => modalHooks.setShowNonNegotiableModal(false)}
-        onSave={handleSaveNonNegotiables}
-        formData={formData.application_form}
       />
     </>
   );

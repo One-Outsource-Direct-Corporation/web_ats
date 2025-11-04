@@ -14,6 +14,10 @@ interface Step03Props {
   ) => void;
   isNonNegotiable: (fieldName: string) => boolean;
   toggleNonNegotiable: (fieldName: string) => void;
+  setNonNegotiableValue: (
+    fieldName: string,
+    value: string | number | boolean
+  ) => void;
 }
 
 export default function Step03({
@@ -21,6 +25,7 @@ export default function Step03({
   handleApplicationFormChange,
   isNonNegotiable,
   toggleNonNegotiable,
+  setNonNegotiableValue,
 }: Step03Props) {
   return (
     <Card className="p-6">
@@ -29,6 +34,7 @@ export default function Step03({
         setFormData={handleApplicationFormChange}
         isNonNegotiable={isNonNegotiable}
         toggleNonNegotiable={toggleNonNegotiable}
+        setNonNegotiableValue={setNonNegotiableValue}
       />
     </Card>
   );

@@ -7,17 +7,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/shared/components/ui/table";
+import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
 import { FormFieldRadioButton } from "../../../features/positions-client/components/FormFieldRadioButton";
 import { useState } from "react";
 import { Checkbox } from "../ui/checkbox";
 import { useQuestionnaireManager } from "@/features/positions-client/hooks/useQuestionnaireManager";
 import { useQuestionForm } from "@/features/positions-client/hooks/useQuestionForm";
 import QuestionnaireBase from "@/features/positions-client/components/questionnaires/QuestionnaireBase";
+import { NonNegotiableModal } from "@/features/positions-client/components/NonNegotiableModal";
+import { Button } from "@/shared/components/ui/button";
+import { Settings } from "lucide-react";
 import type {
   ApplicationForm,
   ApplicationFormData,
+  ApplicationFormType,
 } from "@/features/positions-client/types/application_form.types";
-import type { ApplicationFormType } from "@/features/careers/types/job.types";
 
 interface ApplicationFormManagementProps {
   formData: ApplicationFormData;
@@ -27,6 +31,10 @@ interface ApplicationFormManagementProps {
   ) => void;
   isNonNegotiable: (fieldName: string) => boolean;
   toggleNonNegotiable: (fieldName: string) => void;
+  setNonNegotiableValue: (
+    fieldName: string,
+    value: string | number | boolean
+  ) => void;
 }
 
 type FieldKey = keyof ApplicationForm;
@@ -98,7 +106,7 @@ const FieldRow = ({
   label: string;
   fieldValue: string;
   setFormData: (
-    fieldName: keyof ApplicationFormData["application_form"],
+    fieldName: keyof ApplicationForm,
     status: ApplicationFormType
   ) => void;
   hasNonNegotiable?: boolean;
@@ -114,7 +122,7 @@ const FieldRow = ({
             <Checkbox
               checked={isNonNegotiable?.(fieldKey) || false}
               onCheckedChange={() => toggleNonNegotiable?.(fieldKey)}
-              className="data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white dark:data-[state=checked]:border-blue-700 dark:data-[state=checked]:bg-blue-700 bg-gray-200/50"
+              className="cursor-pointer data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white dark:data-[state=checked]:border-blue-700 dark:data-[state=checked]:bg-blue-700 bg-gray-200/50"
             />
           </div>
         </TableCell>
@@ -156,6 +164,7 @@ export const ApplicationFormManagement = ({
   setFormData,
   isNonNegotiable,
   toggleNonNegotiable,
+  setNonNegotiableValue,
 }: ApplicationFormManagementProps) => {
   const nonNegotiableFields = new Set<FieldKey>([
     "expected_salary",
@@ -167,6 +176,7 @@ export const ApplicationFormManagement = ({
   const [showAddQuestionnaireModal, setShowAddQuestionnaireModal] =
     useState(false);
   const [questionnaireName, setQuestionnaireName] = useState("");
+  const [showNonNegotiableModal, setShowNonNegotiableModal] = useState(false);
 
   // Use custom hooks for questionnaire management
   const questionnaireManager = useQuestionnaireManager();
@@ -220,16 +230,82 @@ export const ApplicationFormManagement = ({
     console.log("Move questions");
   };
 
+  // Check if any non-negotiable fields are selected
+  const hasNonNegotiablesSelected = formData.non_negotiables.length > 0;
+
+  // Candidate Application radio state
+  const [candidateApplicationType, setCandidateApplicationType] =
+    useState<string>("external");
+
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-2xl font-semibold text-gray-800 mb-2">
-          Application Form
-        </h3>
-        <p className="text-sm text-gray-600">
-          Choose what information to collect from candidates who apply through
-          your Careers Site.
-        </p>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          {/* Candidate Applications (selectable radio group) */}
+          <div className="flex flex-col min-w-[260px] p-2">
+            <h3 className="text-2xl font-semibold text-gray-800 mb-2">
+              Candidate Applications
+            </h3>
+            <span className="text-xs text-gray-600 mb-2">
+              Choose how candidates can apply to this position.
+            </span>
+            <div className="flex flex-col gap-2">
+              {/* ShadCN RadioGroup for candidate application type (selectable) */}
+              <RadioGroup
+                value={candidateApplicationType}
+                onValueChange={setCandidateApplicationType}
+                className="flex flex-col gap-2"
+              >
+                <div className="flex items-center gap-3 mb-1">
+                  <RadioGroupItem
+                    value="external"
+                    id="external"
+                    className="accent-blue-600"
+                  />
+                  <label
+                    htmlFor="external"
+                    className="text-sm cursor-pointer flex items-center gap-2"
+                  >
+                    <span className="text-blue-700 font-semibold">
+                      External Job Posting Platforms
+                    </span>
+                    <span className="text-xs text-gray-500 ml-1">
+                      (LinkedIn, Jobstreet, etc.)
+                    </span>
+                  </label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <RadioGroupItem value="internal" id="internal" className="" />
+                  <label
+                    htmlFor="internal"
+                    className="text-sm cursor-pointer text-gray-400"
+                  >
+                    Internal Only
+                  </label>
+                </div>
+              </RadioGroup>
+            </div>
+          </div>
+
+          {hasNonNegotiablesSelected && (
+            <Button
+              onClick={() => setShowNonNegotiableModal(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Configure Non-Negotiables
+            </Button>
+          )}
+        </div>
+        <div>
+          <h3 className="text-2xl font-semibold text-gray-800 mb-2">
+            Application Form
+          </h3>
+          <p className="text-sm text-gray-600">
+            Choose what information to collect from candidates who apply through
+            your Careers Site.
+          </p>
+        </div>
       </div>
 
       {/* Personal Information Section */}
@@ -353,6 +429,15 @@ export const ApplicationFormManagement = ({
         handleEditQuestion={handleEditQuestion}
         handleDeleteQuestion={handleDeleteQuestion}
         handleAddQuestion={handleAddQuestion}
+      />
+
+      {/* Non-Negotiable Modal */}
+      <NonNegotiableModal
+        show={showNonNegotiableModal}
+        onClose={() => setShowNonNegotiableModal(false)}
+        onContinue={() => setShowNonNegotiableModal(false)}
+        formData={formData}
+        setNonNegotiableValue={setNonNegotiableValue}
       />
     </div>
   );

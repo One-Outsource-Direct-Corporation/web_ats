@@ -15,7 +15,6 @@ export default function CreateNewPosition() {
     isNonNegotiable,
     toggleNonNegotiable,
     setNonNegotiableValue,
-    getNonNegotiableValue,
     handlePipelineChange,
     handleDeletePipelineChange,
     resetFormData,
@@ -31,6 +30,7 @@ export default function CreateNewPosition() {
       handleDeletePipelineChange={handleDeletePipelineChange}
       isNonNegotiable={isNonNegotiable}
       toggleNonNegotiable={toggleNonNegotiable}
+      setNonNegotiableValue={setNonNegotiableValue}
       resetFormData={resetFormData}
     />
   );

@@ -181,15 +181,6 @@ export const useFormData = (initialData?: PositionFormData) => {
     });
   }
 
-  function getNonNegotiableValue(
-    fieldName: string
-  ): string | number | boolean | null {
-    const item = formData.application_form.non_negotiables.find(
-      (item) => item.field === fieldName
-    );
-    return item?.value || null;
-  }
-
   function handlePipelineChange(
     pipeline_identifier: string | number,
     data: PipelineStep
@@ -250,7 +241,6 @@ export const useFormData = (initialData?: PositionFormData) => {
     isNonNegotiable,
     toggleNonNegotiable,
     setNonNegotiableValue,
-    getNonNegotiableValue,
     handlePipelineChange,
     handleDeletePipelineChange,
     resetFormData,
