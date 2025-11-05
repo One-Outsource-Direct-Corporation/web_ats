@@ -1,7 +1,7 @@
 import type {
   ApplicationForm,
   ApplicationFormType,
-} from "../types/application_form.types";
+} from "../../../shared/types/application_form.types";
 
 interface FormFieldRadioButtonProps {
   name: keyof ApplicationForm;

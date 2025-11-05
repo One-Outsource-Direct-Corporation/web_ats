@@ -1,10 +1,7 @@
 import type { ApplicationForm } from "@/features/careers/types/job.types";
-import type {
-  FormFields,
-  PipelineStep,
-} from "../../positions-client/types/create_position.types";
 import type { User } from "@/features/auth/types/auth.types";
 import type { JobPostingResponse } from "@/features/jobs/types/job.types";
+import type { PipelineStep } from "@/shared/types/pipeline.types";
 
 export interface PositionData {
   id: number;
@@ -134,7 +131,7 @@ export interface PositionResponse {
   // job_posting: JobPostingResponse;
   client: number;
   client_display: string;
-  application_form: FormFields & { id: number; position: number };
+  application_form: ApplicationForm;
   pipeline: PipelineStepResponse[];
   education_level: string;
   experience_level: string;

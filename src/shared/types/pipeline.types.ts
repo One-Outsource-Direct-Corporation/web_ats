@@ -45,7 +45,7 @@ export interface PipelineStepInDb extends PipelineStepBase {
 }
 
 export interface PipelineStepLocal extends PipelineStepBase {
-  pipeline_identifier: string; // Only for React to identify steps uniquely
+  tempId: string; // Only for React to identify steps uniquely
   source: "local";
 }
 

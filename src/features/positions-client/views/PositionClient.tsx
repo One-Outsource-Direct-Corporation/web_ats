@@ -21,12 +21,13 @@ import { stateToDataFormatClient } from "@/shared/utils/stateToDataFormat";
 import type {
   ApplicationFormData,
   ApplicationFormType,
-} from "../types/application_form.types";
-import type { PipelineStep } from "../types/pipeline.types";
+} from "../../../shared/types/application_form.types";
+import type { PipelineStep } from "../../../shared/types/pipeline.types";
 
 interface PositionClientProps {
   formData: PositionFormData;
   setFormData: React.Dispatch<React.SetStateAction<PositionFormData>>;
+  pipelineHandler: (updatedPipelines: PipelineStep[]) => void;
   handlePositionBaseChange: (
     fieldName: keyof PositionBase,
     value: string | number | null
@@ -39,11 +40,6 @@ interface PositionClientProps {
     fieldName: keyof ApplicationFormData["application_form"],
     status: ApplicationFormType
   ) => void;
-  handlePipelineChange: (
-    pipeline_identifier: string | number,
-    data: PipelineStep
-  ) => void;
-  handleDeletePipelineChange: (pipeline_identifier: string | number) => void;
   isNonNegotiable: (fieldName: string) => boolean;
   toggleNonNegotiable: (fieldName: string) => void;
   setNonNegotiableValue: (
@@ -56,11 +52,10 @@ interface PositionClientProps {
 export default function PositionClient({
   formData,
   setFormData,
+  pipelineHandler,
   handlePositionBaseChange,
   handleJobPostingChange,
   handleApplicationFormChange,
-  handlePipelineChange,
-  handleDeletePipelineChange,
   isNonNegotiable,
   toggleNonNegotiable,
   setNonNegotiableValue,
@@ -151,8 +146,7 @@ export default function PositionClient({
         return (
           <Step04
             pipelineSteps={formData.pipeline}
-            pipelineHandler={handlePipelineChange}
-            pipelineDeleteHandler={handleDeletePipelineChange}
+            pipelineHandler={pipelineHandler}
           />
         );
       case 5:

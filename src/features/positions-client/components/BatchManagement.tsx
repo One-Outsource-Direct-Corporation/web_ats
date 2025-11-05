@@ -1,11 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Plus, Trash2, Edit, Check, X } from "lucide-react";
-import type {
-  Batch,
-  BatchFormData,
-} from "../../positions/types/location-batch.types";
 import type {
   BatchEntry,
   BatchEntryDb,

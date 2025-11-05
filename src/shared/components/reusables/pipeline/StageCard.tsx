@@ -1,10 +1,12 @@
 import type {
-  PipelineStep,
   PipelineStage,
-} from "@/features/positions-client/types/create_position.types";
+  PipelineStep,
+  PipelineStepInDb,
+  PipelineStepLocal,
+  Assessment,
+} from "@/shared/types/pipeline.types";
 import { StepCard } from "./StepCard";
 import { StepFormDialog } from "./StepFormDialog";
-import type { Assessment } from "./types";
 
 interface StageCardProps {
   stage: PipelineStage;
@@ -31,8 +33,8 @@ interface StageCardProps {
   reminderTime: string;
   onReminderTimeChange: (value: string) => void;
   onSaveStep: () => void;
-  onEditStep: (pipelineIdentifier: number) => void;
-  onDeleteStep: (pipelineIdentifier: number) => void;
+  onEditStep: (pipelineIdentifier: string | number) => void;
+  onDeleteStep: (pipelineIdentifier: string | number) => void;
 }
 
 export function StageCard({
@@ -70,16 +72,20 @@ export function StageCard({
       </h4>
 
       <div className="space-y-3 mb-4">
-        {steps.map((step, index) => (
-          <StepCard
-            key={step.id || step.pipeline_identifier}
-            step={step}
-            errors={errors}
-            index={index}
-            onEdit={onEditStep}
-            onDelete={onDeleteStep}
-          />
-        ))}
+        {steps.map((step, index) => {
+          const stepId =
+            (step as PipelineStepInDb).id || (step as PipelineStepLocal).tempId;
+          return (
+            <StepCard
+              key={stepId}
+              step={step}
+              errors={errors}
+              index={index}
+              onEdit={onEditStep}
+              onDelete={onDeleteStep}
+            />
+          );
+        })}
       </div>
 
       <StepFormDialog

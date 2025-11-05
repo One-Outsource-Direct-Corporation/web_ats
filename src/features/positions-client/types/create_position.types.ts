@@ -1,6 +1,10 @@
-import type { ApplicationFormData } from "./application_form.types";
+import type { ApplicationFormData } from "../../../shared/types/application_form.types";
 import type { BatchEntry, LocationEntry } from "./location_and_batch.types";
-import type { Assessment, PipelineStep, TeamMember } from "./pipeline.types";
+import type {
+  Assessment,
+  PipelineStep,
+  TeamMember,
+} from "../../../shared/types/pipeline.types";
 
 // TODO: Move the Question to a separate types file
 

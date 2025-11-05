@@ -73,6 +73,7 @@ export default function Step01({
 
       <LocationManagement
         locations={locations}
+        batches={batches}
         selectedLocationId={selectedLocationId}
         onLocationSelect={handleLocationSelect}
         onAddLocation={addLocationEntry}

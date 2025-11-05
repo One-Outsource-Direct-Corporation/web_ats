@@ -5,26 +5,25 @@ import type {
   Assessment,
   PipelineStepInDb,
   PipelineStepLocal,
-} from "@/features/positions-client/types/create_position.types";
+} from "../../types/pipeline.types";
 import { useState } from "react";
 import { StageCard } from "./pipeline/StageCard";
 import { AddAssessmentModal } from "./pipeline/AddAssessmentModal";
 
 interface PipelineConfigurationProps {
   pipelineSteps: PipelineStep[];
-  pipelineHandler: (
-    pipeline_identifier: string | number,
-    data: PipelineStep
-  ) => void;
-  pipelineDeleteHandler: (pipeline_identifier: string | number) => void;
-  errors: any;
+  addPipelineStep: (data: PipelineStep) => void;
+  updatePipelineStep: (id: string | number, data: PipelineStep) => void;
+  deletePipelineStep: (id: string | number) => void;
+  errors?: any;
   title?: string;
 }
 
 export default function PipelineConfiguration({
   pipelineSteps,
-  pipelineHandler,
-  pipelineDeleteHandler,
+  addPipelineStep,
+  updatePipelineStep,
+  deletePipelineStep,
   errors,
   title = "Pipeline Configuration",
 }: PipelineConfigurationProps) {
@@ -36,7 +35,7 @@ export default function PipelineConfiguration({
   ];
   const [showViewTeamMember, setShowViewTeamMember] = useState(false);
   const [stepData, setStepData] = useState<PipelineStep>({
-    pipeline_identifier: `tmp-${Date.now()}`,
+    tempId: `tmp-${Date.now()}`,
     process_type: "",
     process_title: "",
     description: "",
@@ -69,7 +68,7 @@ export default function PipelineConfiguration({
 
   const handleResetStepData = () => {
     setStepData({
-      pipeline_identifier: `tmp-${Date.now()}`,
+      tempId: `tmp-${Date.now()}`,
       process_type: "",
       process_title: "",
       description: "",
@@ -135,14 +134,14 @@ export default function PipelineConfiguration({
     );
   };
 
-  const handleEditStep = (pipeline_identifier: string | number) => {
+  const handleEditStep = (stepId: string | number) => {
     const step = pipelineSteps.find((step) => {
-      if (step.source === "local" && typeof pipeline_identifier === "string") {
-        return step.pipeline_identifier === pipeline_identifier;
+      if (step.source === "local" && typeof stepId === "string") {
+        return step.tempId === stepId;
       }
 
-      if (step.source === "db" && typeof pipeline_identifier === "number") {
-        return step.id === pipeline_identifier;
+      if (step.source === "db" && typeof stepId === "number") {
+        return step.id === stepId;
       }
 
       return false;
@@ -150,19 +149,10 @@ export default function PipelineConfiguration({
 
     if (step) {
       setOpenDialogs((prev) => ({ ...prev, [step.stage]: true }));
-      if (step.source === "local") {
-        setStepData({
-          ...step,
-          pipeline_identifier: step.pipeline_identifier,
-          assessments: step.assessments || [],
-        });
-      } else {
-        const { ...rest } = step as PipelineStepInDb;
-        setStepData({
-          ...rest,
-          assessments: step.assessments || [],
-        });
-      }
+      setStepData({
+        ...step,
+        assessments: step.assessments || [],
+      });
       setSelectedTeamMembers((step as any).teamMembers || []);
       setRedactedInfo((step as any).redactedInfo || false);
       setTemplateType((step as any).templateType || "");
@@ -172,20 +162,29 @@ export default function PipelineConfiguration({
 
   const handleSaveStep = async (stage_id: number) => {
     const isLocal = stepData.source === "local";
+    const isNewStep =
+      isLocal &&
+      !pipelineSteps.find(
+        (s) =>
+          s.source === "local" &&
+          (s as PipelineStepLocal).tempId ===
+            (stepData as PipelineStepLocal).tempId
+      );
 
-    const data = {
+    const data: PipelineStep = {
       ...stepData,
       stage: stage_id,
-      source: isLocal ? "local" : "db",
-    } as PipelineStep;
+    };
 
-    if (isLocal) {
-      if ((data as PipelineStepLocal).pipeline_identifier) {
-        (data as PipelineStepLocal).pipeline_identifier = `tmp-${Date.now()}`;
-      }
-      pipelineHandler((data as PipelineStepLocal).pipeline_identifier, data);
+    // Generate new tempId for new steps
+    if (isNewStep && isLocal) {
+      (data as PipelineStepLocal).tempId = `tmp-${Date.now()}`;
+      addPipelineStep(data);
     } else {
-      pipelineHandler((data as PipelineStepInDb).id, data);
+      const stepId = isLocal
+        ? (data as PipelineStepLocal).tempId
+        : (data as PipelineStepInDb).id;
+      updatePipelineStep(stepId, data);
     }
 
     setOpenDialogs((prev) => ({ ...prev, [stage_id]: false }));
@@ -244,7 +243,7 @@ export default function PipelineConfiguration({
               onReminderTimeChange={setReminderTime}
               onSaveStep={() => handleSaveStep(stage.id)}
               onEditStep={handleEditStep}
-              onDeleteStep={pipelineDeleteHandler}
+              onDeleteStep={deletePipelineStep}
             />
           );
         })}

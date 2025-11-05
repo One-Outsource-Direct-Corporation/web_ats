@@ -2,6 +2,7 @@ import { useEffect } from "react";
 
 import { useFormData } from "../hooks/useFormData";
 import PositionClient from "./PositionClient";
+
 export default function CreateNewPosition() {
   useEffect(() => {
     document.title = "Create New Position";
@@ -16,8 +17,7 @@ export default function CreateNewPosition() {
     isNonNegotiable,
     toggleNonNegotiable,
     setNonNegotiableValue,
-    handlePipelineChange,
-    handleDeletePipelineChange,
+    pipelineHandler,
     resetFormData,
   } = useFormData();
 
@@ -25,11 +25,10 @@ export default function CreateNewPosition() {
     <PositionClient
       formData={formData}
       setFormData={setFormData}
+      pipelineHandler={pipelineHandler}
       handlePositionBaseChange={handlePositionBaseChange}
       handleJobPostingChange={handleJobPostingChange}
       handleApplicationFormChange={handleApplicationFormChange}
-      handlePipelineChange={handlePipelineChange}
-      handleDeletePipelineChange={handleDeletePipelineChange}
       isNonNegotiable={isNonNegotiable}
       toggleNonNegotiable={toggleNonNegotiable}
       setNonNegotiableValue={setNonNegotiableValue}

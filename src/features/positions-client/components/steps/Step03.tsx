@@ -4,7 +4,7 @@ import type {
   ApplicationForm,
   ApplicationFormData,
   ApplicationFormType,
-} from "../../types/application_form.types";
+} from "../../../../shared/types/application_form.types";
 
 interface Step03Props {
   formData: ApplicationFormData;

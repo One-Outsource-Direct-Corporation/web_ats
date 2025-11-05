@@ -1,15 +1,19 @@
 import { Button } from "@/shared/components/ui/button";
 import { Edit, Trash2 } from "lucide-react";
 import formatName from "@/shared/utils/formatName";
-import type { PipelineStep } from "@/features/positions-client/types/create_position.types";
+import type {
+  PipelineStep,
+  PipelineStepInDb,
+  PipelineStepLocal,
+} from "@/shared/types/pipeline.types";
 import { ProcessTypeIcon } from "./ProcessTypeIcon";
 
 interface StepCardProps {
   step: PipelineStep;
   errors?: any;
   index: number;
-  onEdit: (pipelineIdentifier: number) => void;
-  onDelete: (pipelineIdentifier: number) => void;
+  onEdit: (pipelineIdentifier: string | number) => void;
+  onDelete: (pipelineIdentifier: string | number) => void;
 }
 
 export function StepCard({
@@ -19,7 +23,8 @@ export function StepCard({
   onEdit,
   onDelete,
 }: StepCardProps) {
-  const pipelineIdentifier = step.pipeline_identifier || step.id || 0;
+  const pipelineIdentifier =
+    (step as PipelineStepInDb).id || (step as PipelineStepLocal).tempId;
 
   return (
     <div className="p-3 border border-gray-200 rounded-md bg-gray-50">

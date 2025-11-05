@@ -6,12 +6,8 @@ import type {
 import type {
   ApplicationForm,
   ApplicationFormType,
-} from "../types/application_form.types";
-import type {
-  PipelineStep,
-  PipelineStepInDb,
-  PipelineStepLocal,
-} from "../types/pipeline.types";
+} from "../../../shared/types/application_form.types";
+import type { PipelineStep } from "../../../shared/types/pipeline.types";
 
 const getDefaultFormData = (): PositionFormData => ({
   client: null,
@@ -181,55 +177,15 @@ export const useFormData = (initialData?: PositionFormData) => {
     });
   }
 
-  function handlePipelineChange(
-    pipeline_identifier: string | number,
-    data: PipelineStep
-  ) {
-    setFormData((prev: PositionFormData) => {
-      const existingStep = prev.pipeline.filter((step: PipelineStep) =>
-        step.source === "local"
-          ? step.pipeline_identifier === pipeline_identifier
-          : step.id === pipeline_identifier
-      );
-
-      if (existingStep.length > 0) {
-        // Update existing step
-        return {
-          ...prev,
-          pipeline: prev.pipeline.map((step: PipelineStep) => {
-            if (
-              step.source === "local"
-                ? step.pipeline_identifier ===
-                  (existingStep[0] as PipelineStepLocal).pipeline_identifier
-                : step.id === (existingStep[0] as PipelineStepInDb).id
-            ) {
-              return { ...data };
-            }
-            return step;
-          }),
-        };
-      } else {
-        return {
-          ...prev,
-          pipeline: [...prev.pipeline, data],
-        };
-      }
-    });
-  }
-
-  function handleDeletePipelineChange(pipeline_identifier: string | number) {
-    setFormData((prev: PositionFormData) => ({
-      ...prev,
-      pipeline: prev.pipeline.filter((step: PipelineStep) =>
-        step.source === "local"
-          ? step.pipeline_identifier !== pipeline_identifier
-          : step.id !== pipeline_identifier
-      ),
-    }));
-  }
-
   function resetFormData() {
     setFormData(getDefaultFormData());
+  }
+
+  function pipelineHandler(updatedPipelines: PipelineStep[]) {
+    setFormData((prev) => ({
+      ...prev,
+      pipeline: updatedPipelines,
+    }));
   }
 
   return {
@@ -241,8 +197,7 @@ export const useFormData = (initialData?: PositionFormData) => {
     isNonNegotiable,
     toggleNonNegotiable,
     setNonNegotiableValue,
-    handlePipelineChange,
-    handleDeletePipelineChange,
     resetFormData,
+    pipelineHandler,
   };
 };

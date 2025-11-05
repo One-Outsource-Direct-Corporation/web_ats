@@ -21,7 +21,7 @@ import type {
   ApplicationForm,
   ApplicationFormData,
   ApplicationFormType,
-} from "@/features/positions-client/types/application_form.types";
+} from "@/shared/types/application_form.types";
 
 interface ApplicationFormManagementProps {
   formData: ApplicationFormData;

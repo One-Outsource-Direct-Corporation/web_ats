@@ -3,6 +3,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Plus, Trash2, Edit, Check, X, Eye } from "lucide-react";
 import type {
+  BatchEntry,
   LocationEntry,
   LocationEntryDb,
   LocationEntryLocal,
@@ -18,6 +19,7 @@ import formatDate from "@/shared/utils/formatDate";
 
 interface LocationManagementProps {
   locations: LocationEntry[];
+  batches: BatchEntry[];
   selectedLocationId: string | number | null;
   onLocationSelect: (id: string | number) => void;
   onAddLocation: (location: LocationEntryLocal) => void;
@@ -27,6 +29,7 @@ interface LocationManagementProps {
 
 export const LocationManagement = ({
   locations,
+  batches,
   selectedLocationId,
   onLocationSelect,
   onAddLocation,
@@ -138,6 +141,7 @@ export const LocationManagement = ({
             <tr>
               <th className="px-4 py-3 text-left">Location</th>
               <th className="px-4 py-3 text-left">Headcount</th>
+              <th className="px-4 py-3 text-left">Total Headcount</th>
               <th className="px-4 py-3 text-left">Deployment Date</th>
               <th className="px-4 py-3 text-left">With Batch?</th>
               <th className="px-4 py-3 text-center">Actions</th>
@@ -170,6 +174,9 @@ export const LocationManagement = ({
                     }
                     className="w-full"
                   />
+                </td>
+                <td className="px-4 py-3">
+                  <span className="text-gray-600">-</span>
                 </td>
                 <td className="px-4 py-3">
                   <Input
@@ -237,6 +244,13 @@ export const LocationManagement = ({
               const locId =
                 (location as LocationEntryDb).id ??
                 (location as LocationEntryLocal).tempId;
+
+              const batchHeadcount = batches
+                .filter((batch) => batch.location_entry === locId)
+                .reduce((sum, batch) => sum + (batch.headcount || 0), 0);
+
+              const totalHeadcount = location.headcount + batchHeadcount;
+
               return (
                 <tr
                   key={locId}
@@ -283,6 +297,11 @@ export const LocationManagement = ({
                         {location.headcount}
                       </span>
                     )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="text-gray-600">
+                      {location.withBatch ? totalHeadcount : "-"}
+                    </span>
                   </td>
                   <td className="px-4 py-3">
                     {editingLocationId === locId ? (

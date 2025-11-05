@@ -2,7 +2,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
-import type { ApplicationFormData } from "../types/application_form.types";
+import type { ApplicationFormData } from "../../../shared/types/application_form.types";
 import {
   Select,
   SelectContent,

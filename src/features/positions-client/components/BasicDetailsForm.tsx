@@ -283,6 +283,7 @@ export const BasicDetailsForm = ({
                   handleJobPostingChange("headcount", Number(e.target.value))
                 }
                 placeholder="Enter number of positions"
+                min={0}
               />
               {errorFields?.headcount && (
                 <FieldError>{errorFields.headcount[0]}</FieldError>
