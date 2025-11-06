@@ -10,7 +10,7 @@ import {
 } from "@/shared/components/ui/select";
 import type { PRF } from "../types/prf.types";
 import { PreviewInfo } from "./PreviewInfo";
-import { useUsersByDepartment } from "../hooks/useUsersByDepartment";
+import { useUsersByDepartment } from "../hooks/useUsers";
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import type { User } from "@/features/auth/types/auth.types";
 import { formatDepartmentName } from "@/shared/utils/formatDepartmentName";

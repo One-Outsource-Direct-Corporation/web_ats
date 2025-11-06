@@ -4,6 +4,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/shared/components/ui/dialog";
 import {
   Select,
@@ -15,53 +16,107 @@ import {
 import { Input } from "@/shared/components/ui/input";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Button } from "@/shared/components/ui/button";
-import { X } from "lucide-react";
-
-interface AssessmentFormData {
-  type: string;
-  title: string;
-  description: string;
-  required: boolean;
-}
+import type {
+  Assessment,
+  AssessmentLocal,
+} from "@/shared/types/pipeline.types";
+import { useState, useEffect } from "react";
+import { Field, FieldGroup, FieldLabel } from "../../ui/field";
+import { Textarea } from "../../ui/textarea";
 
 interface AddAssessmentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  assessmentForm: AssessmentFormData;
-  onAssessmentFormChange: (form: AssessmentFormData) => void;
-  onAdd: () => void;
+  onAdd: (assessment: AssessmentLocal) => void;
+  editingAssessment?: Assessment | null;
+  onUpdate?: (id: number | string, assessment: Assessment) => void;
 }
 
 export function AddAssessmentModal({
   open,
   onOpenChange,
-  assessmentForm,
-  onAssessmentFormChange,
   onAdd,
+  editingAssessment,
+  onUpdate,
 }: AddAssessmentModalProps) {
+  const isEditing = !!editingAssessment;
+
+  const [assessmentForm, setAssessmentForm] = useState<
+    Omit<Assessment, "id" | "tempId">
+  >({
+    type: "",
+    title: "",
+    description: "",
+    required: false,
+    order: 0,
+  });
+
+  // Reset form when modal opens/closes or when editing a different assessment
+  useEffect(() => {
+    if (editingAssessment) {
+      setAssessmentForm({
+        type: editingAssessment.type,
+        title: editingAssessment.title,
+        description: editingAssessment.description,
+        required: editingAssessment.required,
+        order: editingAssessment.order,
+      });
+    } else {
+      setAssessmentForm({
+        type: "",
+        title: "",
+        description: "",
+        required: false,
+        order: 0,
+      });
+    }
+  }, [editingAssessment, open]);
+
+  function handleAssessmentFormChange(
+    field: keyof Assessment,
+    value: string | boolean
+  ) {
+    setAssessmentForm({ ...assessmentForm, [field]: value });
+  }
+
+  function handleSubmit() {
+    if (isEditing && editingAssessment && onUpdate) {
+      const id =
+        (editingAssessment as any).id || (editingAssessment as any).tempId;
+      onUpdate(id, { ...editingAssessment, ...assessmentForm });
+    } else {
+      onAdd({ ...assessmentForm, tempId: `temp-${Date.now()}` });
+    }
+    onOpenChange(false);
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>
+        <Button
+          variant="outline"
+          className="w-full text-blue-600 border-blue-600 hover:bg-blue-50 hover:text-blue-600"
+        >
+          Add Assessment
+        </Button>
+      </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Assessment</DialogTitle>
-          <button
-            onClick={() => onOpenChange(false)}
-            className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          <DialogTitle>
+            {isEditing ? "Edit Assessment" : "Add Assessment"}
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <FieldGroup className="py-4">
           {/* Assessment Type */}
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
+          <Field>
+            <FieldLabel className="text-sm font-medium text-gray-700 mb-2 block">
               Assessment Type
-            </label>
+            </FieldLabel>
             <Select
               value={assessmentForm.type}
               onValueChange={(value) =>
-                onAssessmentFormChange({ ...assessmentForm, type: value })
+                handleAssessmentFormChange("type", value)
               }
             >
               <SelectTrigger>
@@ -84,57 +139,55 @@ export function AddAssessmentModal({
                 </SelectItem>
               </SelectContent>
             </Select>
-          </div>
+          </Field>
 
           {/* Assessment Title */}
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
+          <Field>
+            <FieldLabel className="text-sm font-medium text-gray-700 mb-2 block">
               Assessment Title
-            </label>
+            </FieldLabel>
             <Input
               placeholder="Enter assessment title"
               value={assessmentForm.title}
               onChange={(e) =>
-                onAssessmentFormChange({
-                  ...assessmentForm,
-                  title: e.target.value,
-                })
+                handleAssessmentFormChange("title", e.target.value)
               }
             />
-          </div>
+          </Field>
 
           {/* Description */}
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
+          <Field>
+            <FieldLabel className="text-sm font-medium text-gray-700 mb-2 block">
               Description
-            </label>
-            <textarea
+            </FieldLabel>
+            <Textarea
               placeholder="Enter assessment description"
               value={assessmentForm.description}
               onChange={(e) =>
-                onAssessmentFormChange({
-                  ...assessmentForm,
-                  description: e.target.value,
-                })
+                handleAssessmentFormChange("description", e.target.value)
               }
               className="w-full min-h-[80px] px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-          </div>
+          </Field>
 
           {/* Required Assessment */}
-          <div className="flex items-center gap-2">
+          <Field orientation="horizontal">
             <Checkbox
+              id="required-assessment"
               checked={assessmentForm.required}
               onCheckedChange={(checked) =>
-                onAssessmentFormChange({
-                  ...assessmentForm,
-                  required: checked as boolean,
-                })
+                handleAssessmentFormChange("required", checked)
               }
+              className="data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white dark:data-[state=checked]:border-blue-700 dark:data-[state=checked]:bg-blue-700"
             />
-            <label className="text-sm text-gray-700">Required Assessment</label>
-          </div>
-        </div>
+            <FieldLabel
+              htmlFor="required-assessment"
+              className="text-sm text-gray-700"
+            >
+              Required Assessment
+            </FieldLabel>
+          </Field>
+        </FieldGroup>
 
         <DialogFooter>
           <Button
@@ -147,9 +200,9 @@ export function AddAssessmentModal({
           <Button
             type="button"
             className="bg-blue-600 hover:bg-blue-700"
-            onClick={onAdd}
+            onClick={handleSubmit}
           >
-            Add Assessment
+            {isEditing ? "Update Assessment" : "Add Assessment"}
           </Button>
         </DialogFooter>
       </DialogContent>

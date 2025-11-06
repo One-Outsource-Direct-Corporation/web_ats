@@ -6,20 +6,19 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import { Input } from "@/shared/components/ui/input";
+import { useState } from "react";
 
 interface StageActionTemplateProps {
-  templateType: string;
   reminderTime: string;
-  onTemplateTypeChange: (value: string) => void;
   onReminderTimeChange: (value: string) => void;
 }
 
 export function StageActionTemplate({
-  templateType,
   reminderTime,
-  onTemplateTypeChange,
   onReminderTimeChange,
 }: StageActionTemplateProps) {
+  const [templateType, setTemplateType] = useState("");
+
   return (
     <div>
       <div className="mb-2">
@@ -38,7 +37,7 @@ export function StageActionTemplate({
           <label className="text-sm text-gray-700 mb-1 block">
             Set Template
           </label>
-          <Select value={templateType} onValueChange={onTemplateTypeChange}>
+          <Select value={templateType} onValueChange={setTemplateType}>
             <SelectTrigger>
               <SelectValue placeholder="Select Template" />
             </SelectTrigger>

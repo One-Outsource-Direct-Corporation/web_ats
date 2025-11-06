@@ -4,67 +4,140 @@ import type {
   PipelineStepInDb,
   PipelineStepLocal,
   Assessment,
+  AssessmentLocal,
+  AssessmentInDb,
 } from "@/shared/types/pipeline.types";
 import { StepCard } from "./StepCard";
-import { StepFormDialog } from "./StepFormDialog";
+import { AddStepFormDialog } from "./AddStepFormDialog";
+import { useState } from "react";
+import type { User } from "@/features/auth/types/auth.types";
 
 interface StageCardProps {
   stage: PipelineStage;
   steps: PipelineStep[];
   errors?: any;
-  dialogOpen: boolean;
-  onDialogOpenChange: (open: boolean) => void;
-  stepData: PipelineStep;
-  onStepDataChange: (field: string, value: string) => void;
-  redactedInfo: boolean;
-  onRedactedInfoChange: (checked: boolean) => void;
-  assessments: Assessment[];
-  onAssessmentsChange: (assessments: Assessment[]) => void;
-  onDeleteAssessment: (id: number) => void;
-  onAddAssessmentClick: () => void;
-  selectedTeamMembers: number[];
-  onToggleTeamMember: (memberId: number) => void;
-  searchTeamMember: string;
-  onSearchTeamMemberChange: (value: string) => void;
-  showViewTeamMember: boolean;
-  onToggleViewTeamMember: () => void;
-  templateType: string;
-  onTemplateTypeChange: (value: string) => void;
-  reminderTime: string;
-  onReminderTimeChange: (value: string) => void;
-  onSaveStep: () => void;
-  onEditStep: (pipelineIdentifier: string | number) => void;
-  onDeleteStep: (pipelineIdentifier: string | number) => void;
+  addPipelineStep: (newStep: PipelineStepLocal) => void;
+  updatePipelineStep: (id: string | number, data: PipelineStep) => void;
+  deletePipelineStep: (id: string | number) => void;
 }
 
 export function StageCard({
   stage,
   steps,
   errors,
-  dialogOpen,
-  onDialogOpenChange,
-  stepData,
-  onStepDataChange,
-  redactedInfo,
-  onRedactedInfoChange,
-  assessments,
-  onAssessmentsChange,
-  onDeleteAssessment,
-  onAddAssessmentClick,
-  selectedTeamMembers,
-  onToggleTeamMember,
-  searchTeamMember,
-  onSearchTeamMemberChange,
-  showViewTeamMember,
-  onToggleViewTeamMember,
-  templateType,
-  onTemplateTypeChange,
-  reminderTime,
-  onReminderTimeChange,
-  onSaveStep,
-  onEditStep,
-  onDeleteStep,
+  addPipelineStep,
+  updatePipelineStep,
+  deletePipelineStep,
 }: StageCardProps) {
+  const [stepData, setStepData] = useState<Omit<PipelineStep, "id" | "tempId">>(
+    {
+      process_type: "",
+      process_title: "",
+      description: "",
+      order: 0,
+      stage: 0,
+      redacted: false,
+      reminder: "",
+      hiring_managers: [],
+      assessments: [],
+    }
+  );
+  const [openDialogs, setOpenDialogs] = useState<{ [key: number]: boolean }>(
+    {}
+  );
+  const [editingStep, setEditingStep] = useState<PipelineStep | null>(null);
+
+  function handleStepDataChange(
+    field: keyof PipelineStep,
+    value: string | number | boolean | User[]
+  ) {
+    setStepData((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function resetStepData() {
+    setStepData({
+      process_type: "",
+      process_title: "",
+      description: "",
+      order: 0,
+      stage: 0,
+      redacted: false,
+      reminder: "",
+      hiring_managers: [],
+      assessments: [],
+    });
+  }
+
+  function handleOpenDialog(stageId: number, isOpen: boolean) {
+    setOpenDialogs((prev) => ({ ...prev, [stageId]: isOpen }));
+    if (!isOpen) {
+      resetStepData();
+      setEditingStep(null);
+    }
+  }
+
+  function handleEditStep(step: PipelineStep) {
+    setEditingStep(step);
+    setStepData({
+      process_type: step.process_type,
+      process_title: step.process_title,
+      description: step.description,
+      order: step.order,
+      stage: step.stage,
+      redacted: step.redacted,
+      reminder: step.reminder,
+      hiring_managers: step.hiring_managers,
+      assessments: step.assessments,
+    });
+    setOpenDialogs((prev) => ({ ...prev, [stage.id]: true }));
+  }
+
+  function handleAddAssessment(data: AssessmentLocal) {
+    setStepData((prev) => ({
+      ...prev,
+      assessments: [...prev.assessments, data],
+    }));
+  }
+
+  function handleUpdateAssessment(
+    id: string | number,
+    updatedData: Partial<Assessment>
+  ) {
+    setStepData((prev) => ({
+      ...prev,
+      assessments: prev.assessments.map((assessment) => {
+        if ((assessment as AssessmentLocal).tempId === id) {
+          return { ...assessment, ...updatedData };
+        }
+
+        if ((assessment as AssessmentInDb).id === id) {
+          return { ...assessment, ...updatedData };
+        }
+
+        return assessment;
+      }),
+    }));
+  }
+
+  function handleDeleteAssessment(id: string | number) {
+    setStepData((prev) => ({
+      ...prev,
+      assessments: prev.assessments
+        .map((assessment) =>
+          typeof id === "number" && (assessment as AssessmentInDb).id === id
+            ? { ...assessment, _delete: true }
+            : assessment
+        )
+        .filter(
+          (assessment) =>
+            !(
+              typeof id === "string" &&
+              (assessment as AssessmentLocal).tempId === id
+            )
+        ),
+    }));
+  }
+
   return (
     <div className="border border-gray-300 rounded-lg p-4">
       <h4 className="text-sm font-semibold text-gray-700 mb-4 text-center">
@@ -81,36 +154,27 @@ export function StageCard({
               step={step}
               errors={errors}
               index={index}
-              onEdit={onEditStep}
-              onDelete={onDeleteStep}
+              onEdit={handleEditStep}
+              onDelete={deletePipelineStep}
             />
           );
         })}
       </div>
 
-      <StepFormDialog
-        open={dialogOpen}
-        onOpenChange={onDialogOpenChange}
-        stageName={stage.name}
+      <AddStepFormDialog
+        open={openDialogs[stage.id] || false}
+        onOpenChange={(isOpen) => handleOpenDialog(stage.id, isOpen)}
+        stage={stage}
         stepData={stepData}
-        onStepDataChange={onStepDataChange}
-        redactedInfo={redactedInfo}
-        onRedactedInfoChange={onRedactedInfoChange}
-        assessments={assessments}
-        onAssessmentsChange={onAssessmentsChange}
-        onDeleteAssessment={onDeleteAssessment}
-        onAddAssessmentClick={onAddAssessmentClick}
-        selectedTeamMembers={selectedTeamMembers}
-        onToggleTeamMember={onToggleTeamMember}
-        searchTeamMember={searchTeamMember}
-        onSearchTeamMemberChange={onSearchTeamMemberChange}
-        showViewTeamMember={showViewTeamMember}
-        onToggleViewTeamMember={onToggleViewTeamMember}
-        templateType={templateType}
-        onTemplateTypeChange={onTemplateTypeChange}
-        reminderTime={reminderTime}
-        onReminderTimeChange={onReminderTimeChange}
-        onSave={onSaveStep}
+        onStepDataChange={handleStepDataChange}
+        // Spacer
+        // onAssessmentsChange={onAssessmentsChange}
+        addAssessment={handleAddAssessment}
+        updateAssessment={handleUpdateAssessment}
+        deleteAssessment={handleDeleteAssessment}
+        addPipelineStep={addPipelineStep}
+        editingStep={editingStep}
+        updatePipelineStep={updatePipelineStep}
       />
     </div>
   );

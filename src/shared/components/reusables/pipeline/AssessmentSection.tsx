@@ -1,6 +1,5 @@
 import { Button } from "@/shared/components/ui/button";
-import { Plus, Edit, Trash2, GripVertical } from "lucide-react";
-import type { Assessment } from "./types";
+import { Edit, Trash2, GripVertical, FileText } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -18,20 +17,30 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import type {
+  Assessment,
+  AssessmentInDb,
+  AssessmentLocal,
+} from "@/shared/types/pipeline.types";
+import { AddAssessmentModal } from "./AddAssessmentModal";
+import { useState, useEffect } from "react";
 
 interface AssessmentSectionProps {
   assessments: Assessment[];
-  onAssessmentsChange: (assessments: Assessment[]) => void;
-  onAddClick: () => void;
-  onDeleteAssessment: (id: number) => void;
+  onChange: (id: number | string, data: Assessment) => void;
+  onAdd: (assessment: AssessmentLocal) => void;
+  onDelete: (id: number | string) => void;
+  onReorder?: (assessments: Assessment[]) => void;
 }
 
 function SortableAssessmentItem({
   assessment,
   onDelete,
+  onEdit,
 }: {
   assessment: Assessment;
-  onDelete: (id: number) => void;
+  onDelete: (id: number | string) => void;
+  onEdit: (assessment: Assessment) => void;
 }) {
   const {
     attributes,
@@ -40,7 +49,11 @@ function SortableAssessmentItem({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: assessment.id });
+  } = useSortable({
+    id:
+      (assessment as AssessmentInDb)?.id ||
+      (assessment as AssessmentLocal).tempId,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -77,7 +90,13 @@ function SortableAssessmentItem({
       </div>
 
       <div className="flex items-center gap-2">
-        <Button type="button" variant="ghost" size="icon" className="h-8 w-8">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => onEdit(assessment)}
+        >
           <Edit className="h-4 w-4" />
         </Button>
         <Button
@@ -85,7 +104,12 @@ function SortableAssessmentItem({
           variant="ghost"
           size="icon"
           className="h-8 w-8 text-red-600"
-          onClick={() => onDelete(assessment.id)}
+          onClick={() =>
+            onDelete(
+              (assessment as AssessmentInDb)?.id ||
+                (assessment as AssessmentLocal).tempId
+            )
+          }
         >
           <Trash2 className="h-4 w-4" />
         </Button>
@@ -96,10 +120,18 @@ function SortableAssessmentItem({
 
 export function AssessmentSection({
   assessments,
-  onAssessmentsChange,
-  onAddClick,
-  onDeleteAssessment,
+  onChange,
+  onAdd,
+  onDelete,
+  onReorder,
 }: AssessmentSectionProps) {
+  const [openAssessment, setOpenAssessment] = useState(false);
+  const [editingAssessment, setEditingAssessment] = useState<Assessment | null>(
+    null
+  );
+  const [localAssessments, setLocalAssessments] =
+    useState<Assessment[]>(assessments);
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -107,13 +139,35 @@ export function AssessmentSection({
     })
   );
 
+  // Sync with parent assessments
+  useEffect(() => {
+    setLocalAssessments(assessments);
+  }, [assessments]);
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const oldIndex = assessments.findIndex((a) => a.id === active.id);
-      const newIndex = assessments.findIndex((a) => a.id === over.id);
-      onAssessmentsChange(arrayMove(assessments, oldIndex, newIndex));
+      const getId = (a: Assessment) =>
+        (a as AssessmentInDb)?.id || (a as AssessmentLocal).tempId;
+      const oldIndex = localAssessments.findIndex(
+        (a) => getId(a) === active.id
+      );
+      const newIndex = localAssessments.findIndex((a) => getId(a) === over.id);
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const reorderedAssessments = arrayMove(
+          localAssessments,
+          oldIndex,
+          newIndex
+        );
+        setLocalAssessments(reorderedAssessments);
+
+        // Update parent with new order
+        if (onReorder) {
+          onReorder(reorderedAssessments);
+        }
+      }
     }
   };
 
@@ -121,29 +175,15 @@ export function AssessmentSection({
     return (
       <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
         <div className="flex flex-col items-center justify-center text-gray-400">
-          <svg
-            className="w-12 h-12 mb-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
+          <FileText className="w-12 h-12 mb-2" />
           <p className="text-sm">
             No assessments have been added for this interview stage.
           </p>
-          <Button
-            type="button"
-            className="mt-4 bg-blue-600 hover:bg-blue-700"
-            onClick={onAddClick}
-          >
-            + Add Assessment
-          </Button>
+          <AddAssessmentModal
+            open={openAssessment}
+            onOpenChange={setOpenAssessment}
+            onAdd={onAdd}
+          />
         </div>
       </div>
     );
@@ -157,27 +197,69 @@ export function AssessmentSection({
         onDragEnd={handleDragEnd}
       >
         <SortableContext
-          items={assessments.map((a) => a.id)}
+          items={localAssessments.map(
+            (a) => (a as AssessmentInDb)?.id || (a as AssessmentLocal).tempId
+          )}
           strategy={verticalListSortingStrategy}
         >
-          {assessments.map((assessment) => (
+          {localAssessments.map((assessment) => (
             <SortableAssessmentItem
-              key={assessment.id}
+              key={
+                (assessment as AssessmentInDb)?.id ||
+                (assessment as AssessmentLocal).tempId
+              }
               assessment={assessment}
-              onDelete={onDeleteAssessment}
+              onDelete={onDelete}
+              onEdit={(editedAssessment) =>
+                setEditingAssessment(editedAssessment)
+              }
             />
           ))}
         </SortableContext>
       </DndContext>
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full border-blue-600 text-blue-600 hover:bg-blue-50"
-        onClick={onAddClick}
-      >
-        <Plus className="h-4 w-4 mr-2" />
-        Add More
-      </Button>
+
+      <AddAssessmentModal
+        open={openAssessment || editingAssessment !== null}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setOpenAssessment(false);
+            setEditingAssessment(null);
+          } else {
+            setOpenAssessment(true);
+          }
+        }}
+        onAdd={(assessment) => {
+          onAdd(assessment);
+          setOpenAssessment(false);
+        }}
+        editingAssessment={editingAssessment}
+        onUpdate={(id, updatedAssessment) => {
+          onChange(id, updatedAssessment);
+          setEditingAssessment(null);
+          setOpenAssessment(false);
+        }}
+      />
+
+      {/* {editingAssessment ? (
+        <AddAssessmentModal
+          open={!!editingAssessment}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) setEditingAssessment(null);
+          }}
+          onAdd={onAdd}
+          editingAssessment={editingAssessment}
+          onUpdate={(id, updatedAssessment) => {
+            onChange(id, updatedAssessment);
+            setEditingAssessment(null);
+          }}
+        />
+      ) : (
+        <AddAssessmentModal
+          open={openAssessment}
+          onOpenChange={setOpenAssessment}
+          onAdd={onAdd}
+        />
+      )} */}
     </div>
   );
 }

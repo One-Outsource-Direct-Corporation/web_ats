@@ -15,7 +15,6 @@ export default function Step04({
 }: Step04Props) {
   const { pipelines, addPipelineStep, updatePipelineStep, deletePipelineStep } =
     usePipeline(pipelineSteps, pipelineHandler);
-
   return (
     <PipelineConfiguration
       pipelineSteps={pipelines}

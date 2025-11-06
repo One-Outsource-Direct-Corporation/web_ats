@@ -1,26 +1,19 @@
+import type { User } from "@/features/auth/types/auth.types";
+
 interface AssessmentBase {
   type: string;
   title: string;
   description: string;
   required: boolean;
+  order: number;
 }
 
-export interface TeamMember {
+export interface AssessmentInDb extends AssessmentBase {
   id: number;
-  name: string;
-  position: string;
-  department: string;
-  process: string;
 }
 
-interface AssessmentInDb extends AssessmentBase {
-  id: number;
-  source: "db";
-}
-
-interface AssessmentLocal extends AssessmentBase {
-  localId: string;
-  source: "local";
+export interface AssessmentLocal extends AssessmentBase {
+  tempId: string;
 }
 
 export type Assessment = AssessmentInDb | AssessmentLocal;
@@ -36,17 +29,18 @@ interface PipelineStepBase {
   description: string;
   order: number;
   stage: number;
+  redacted: boolean;
+  reminder: string;
+  hiring_managers: User[] | [];
   assessments: Assessment[];
 }
 
 export interface PipelineStepInDb extends PipelineStepBase {
   id: number;
-  source: "db";
 }
 
 export interface PipelineStepLocal extends PipelineStepBase {
   tempId: string; // Only for React to identify steps uniquely
-  source: "local";
 }
 
 export type PipelineStep = PipelineStepInDb | PipelineStepLocal;

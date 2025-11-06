@@ -1,85 +1,13 @@
 import type { ApplicationFormData } from "../../../shared/types/application_form.types";
 import type { BatchEntry, LocationEntry } from "./location_and_batch.types";
-import type {
-  Assessment,
-  PipelineStep,
-  TeamMember,
-} from "../../../shared/types/pipeline.types";
-
-// TODO: Move the Question to a separate types file
-
-// Question and Assessment Types
-export interface Question {
-  id: number;
-  question: string;
-  description: string;
-  type: string;
-  mode: string;
-  options: string[];
-  // For Parameter mode
-  scorePerOption?: Array<{ option: string; score: number }>;
-  parameterValue?: string;
-  nonNegotiableText?: string;
-  // For Multiple Choice/Checkboxes non-negotiable requirements
-  nonNegotiableOptions?: Array<{
-    option: string;
-    required: boolean;
-    requiredValue?: string;
-  }>;
-  required: boolean;
-}
-
-export interface QuestionnaireSection {
-  id: number;
-  name: string;
-  questions: Question[];
-}
-
-export interface SavedQuestionnaire {
-  name: string;
-  sections: QuestionnaireSection[];
-}
-
-// Stage Popup Data
-export interface StagePopupData {
-  processType: string;
-  processTitle: string;
-  description: string;
-  redactedInfo: boolean;
-  assessments: Assessment[];
-  teamMembers: TeamMember[];
-  templateType: string;
-  reminderTime: string;
-}
-
-// Step Component Props
-export interface StepProps {
-  number: number;
-  title: string;
-  active: boolean;
-}
-
-// Assessment Settings
-export interface AssessmentSettings {
-  [key: number]: {
-    dueDate: string;
-    timeLimit: string;
-  };
-}
-
-// Step Configuration Types
-export interface StepConfig {
-  number: number;
-  title: string;
-  active: boolean;
-}
+import type { PipelineStep } from "../../../shared/types/pipeline.types";
 
 export interface JobPosting {
   job_title: string | null;
   department: string | null;
   other_department: string | null;
   employment_type: string | null;
-  headcount: number | null;
+  number_of_vacancies: number | null;
   work_setup: string | null;
   target_start_date: string | null;
   reason_for_posting: string | null;

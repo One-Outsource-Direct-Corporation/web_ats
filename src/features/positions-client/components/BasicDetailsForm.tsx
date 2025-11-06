@@ -278,9 +278,12 @@ export const BasicDetailsForm = ({
               <FieldLabel>Headcounts Needed *</FieldLabel>
               <Input
                 type="number"
-                value={formData.job_posting.headcount ?? "0"}
+                value={formData.job_posting.number_of_vacancies ?? "0"}
                 onChange={(e) =>
-                  handleJobPostingChange("headcount", Number(e.target.value))
+                  handleJobPostingChange(
+                    "number_of_vacancies",
+                    Number(e.target.value)
+                  )
                 }
                 placeholder="Enter number of positions"
                 min={0}

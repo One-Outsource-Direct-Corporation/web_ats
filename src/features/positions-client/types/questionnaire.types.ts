@@ -14,7 +14,8 @@ export interface Question {
 
 export interface Section {
   name: string;
-  questions?: Question[];
+  template: boolean;
+  questions: Question[];
 }
 
 export interface Questionnaire {

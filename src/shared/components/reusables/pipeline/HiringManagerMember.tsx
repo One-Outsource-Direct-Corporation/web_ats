@@ -1,3 +1,4 @@
+import { useUsers } from "@/features/prf/hooks/useUsers";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import {
@@ -8,43 +9,52 @@ import {
   TableHeader,
   TableRow,
 } from "@/shared/components/ui/table";
+import { formatDepartmentName } from "@/shared/utils/formatDepartmentName";
+import formatName from "@/shared/utils/formatName";
 import { Trash2, Plus, X, ChevronDown, ChevronUp } from "lucide-react";
-import { TEAM_MEMBERS } from "./constants";
+import { useState } from "react";
+import type { User } from "@/features/auth/types/auth.types";
 
-interface TeamMemberSectionProps {
-  selectedTeamMembers: number[];
-  onToggleTeamMember: (memberId: number) => void;
-  searchValue: string;
-  onSearchChange: (value: string) => void;
-  showViewTeamMember: boolean;
-  onToggleViewTeamMember: () => void;
+interface HiringManagerMemberProps {
+  hiringManagers: User[] | [];
+  handleHiringManagerSelection: (manager: User) => void;
 }
 
-export function TeamMemberSection({
-  selectedTeamMembers,
-  onToggleTeamMember,
-  searchValue,
-  onSearchChange,
-  showViewTeamMember,
-  onToggleViewTeamMember,
-}: TeamMemberSectionProps) {
-  const filteredTeamMembers = TEAM_MEMBERS.filter((member) =>
-    member.name.toLowerCase().includes(searchValue.toLowerCase())
-  );
+export function HiringManagerMember({
+  hiringManagers,
+  handleHiringManagerSelection,
+}: HiringManagerMemberProps) {
+  const [showViewHiringManager, setShowViewHiringManager] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+
+  const { users } = useUsers({ position: "hiring_manager" });
+
+  const handleToggleViewHiringManager = () => {
+    setShowViewHiringManager((prev) => !prev);
+  };
+
+  // Filter users by role and search value
+  const filteredUsers = users
+    .filter((user) => user.role === "hiring_manager")
+    .filter((user) =>
+      user.full_name.toLowerCase().includes(searchValue.toLowerCase())
+    );
 
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <label className="text-sm font-medium text-gray-700">Team Member</label>
+        <label className="text-sm font-medium text-gray-700">
+          Hiring Manager
+        </label>
         <Button
           type="button"
           variant="ghost"
           size="sm"
           className="text-blue-600 hover:text-blue-700"
-          onClick={onToggleViewTeamMember}
+          onClick={handleToggleViewHiringManager}
         >
-          View Team Member{" "}
-          {showViewTeamMember ? (
+          View Hiring Manager{" "}
+          {showViewHiringManager ? (
             <ChevronUp className="h-4 w-4 ml-1" />
           ) : (
             <ChevronDown className="h-4 w-4 ml-1" />
@@ -53,9 +63,9 @@ export function TeamMemberSection({
       </div>
 
       <Input
-        placeholder="Search team members..."
+        placeholder="Search hiring manager name"
         value={searchValue}
-        onChange={(e) => onSearchChange(e.target.value)}
+        onChange={(e) => setSearchValue(e.target.value)}
         className="mb-3"
       />
 
@@ -69,29 +79,31 @@ export function TeamMemberSection({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {selectedTeamMembers.length === 0 ? (
+            {hiringManagers.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={3}
                   className="text-center text-gray-500 py-8"
                 >
-                  No team members selected
+                  No hiring manager selected
                 </TableCell>
               </TableRow>
             ) : (
-              filteredTeamMembers
-                .filter((member) => selectedTeamMembers.includes(member.id))
-                .map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell>{member.name}</TableCell>
-                    <TableCell>{member.position}</TableCell>
+              filteredUsers
+                .filter((manager) =>
+                  hiringManagers.some((hm) => hm.id === manager.id)
+                )
+                .map((manager) => (
+                  <TableRow key={manager.id}>
+                    <TableCell>{manager.full_name}</TableCell>
+                    <TableCell>{formatName(manager.role)}</TableCell>
                     <TableCell>
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-red-600"
-                        onClick={() => onToggleTeamMember(member.id)}
+                        onClick={() => handleHiringManagerSelection(manager)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -103,8 +115,8 @@ export function TeamMemberSection({
         </Table>
       </div>
 
-      {/* View Team Member Expanded List */}
-      {showViewTeamMember && (
+      {/* View Hiring Manager Expanded List */}
+      {showViewHiringManager && (
         <div className="mt-3 border rounded-lg overflow-hidden bg-blue-50">
           <div className="bg-blue-600 text-white p-3">
             <h4 className="font-semibold">Pipeline Stages</h4>
@@ -118,25 +130,28 @@ export function TeamMemberSection({
                 <TableHead className="text-blue-900">Names</TableHead>
                 <TableHead className="text-blue-900">Position</TableHead>
                 <TableHead className="text-blue-900">Department</TableHead>
-                <TableHead className="text-blue-900">Process</TableHead>
+                <TableHead className="text-blue-900">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTeamMembers.map((member) => {
-                const isSelected = selectedTeamMembers.includes(member.id);
+              {filteredUsers.map((manager) => {
+                const isSelected = hiringManagers.some(
+                  (hm) => hm.id === manager.id
+                );
                 return (
                   <TableRow
-                    key={member.id}
+                    key={manager.id}
                     className={isSelected ? "bg-blue-50" : "bg-white"}
                   >
                     <TableCell className="text-blue-600 underline cursor-pointer">
-                      {member.name}
+                      {manager.full_name}
                     </TableCell>
-                    <TableCell>{member.position}</TableCell>
-                    <TableCell>{member.department}</TableCell>
+                    <TableCell>{formatName(manager.role)}</TableCell>
+                    <TableCell>
+                      {formatDepartmentName(manager.department)}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-between">
-                        <span>{member.process}</span>
                         <Button
                           type="button"
                           variant="ghost"
@@ -146,7 +161,7 @@ export function TeamMemberSection({
                               ? "text-red-600 hover:text-red-700"
                               : "text-blue-600 hover:text-blue-700"
                           }`}
-                          onClick={() => onToggleTeamMember(member.id)}
+                          onClick={() => handleHiringManagerSelection(manager)}
                         >
                           {isSelected ? (
                             <X className="h-4 w-4" />

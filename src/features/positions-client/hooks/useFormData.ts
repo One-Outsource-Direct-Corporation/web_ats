@@ -18,7 +18,7 @@ const getDefaultFormData = (): PositionFormData => ({
     department: null,
     other_department: null,
     employment_type: null,
-    headcount: null,
+    number_of_vacancies: null,
     work_setup: null,
     target_start_date: null,
     reason_for_posting: null,

@@ -1,35 +1,58 @@
-import type { PipelineStep } from "../types/pipeline.types";
+import type {
+  PipelineStep,
+  PipelineStepInDb,
+  PipelineStepLocal,
+} from "../types/pipeline.types";
 
 export const usePipeline = (
   pipelines: PipelineStep[],
   setPipelines: (updatedPipelines: PipelineStep[]) => void
 ) => {
-  function addPipelineStep(data: PipelineStep) {
-    const newStep: PipelineStep = {
-      ...data,
-      ...(data.source === "local" && {
-        tempId: data.tempId || `tmp-${Date.now()}`,
-      }),
-    };
+  function addPipelineStep(newStep: PipelineStepLocal) {
+    console.log("Adding new pipeline step:", newStep);
+    const stepsInStage = pipelines.filter((s) => s.stage === newStep.stage);
+    const nextOrder = stepsInStage.length + 1;
 
-    setPipelines([...pipelines, newStep]);
+    const stepToAdd = {
+      ...newStep,
+      order: nextOrder,
+    };
+    setPipelines([...pipelines, stepToAdd]);
   }
 
-  function updatePipelineStep(id: string | number, data: PipelineStep) {
+  function updatePipelineStep(
+    id: string | number,
+    data: Partial<PipelineStep>
+  ) {
     setPipelines(
       pipelines.map((step) => {
-        const stepId = step.source === "local" ? step.tempId : step.id;
-        return stepId === id ? { ...step, ...data } : step;
+        if ((step as PipelineStepLocal).tempId === id) {
+          return { ...step, ...data };
+        }
+
+        if ((step as PipelineStepInDb).id === id) {
+          return { ...step, ...data };
+        }
+        return step;
       })
     );
   }
 
   function deletePipelineStep(id: string | number) {
     setPipelines(
-      pipelines.filter((step) => {
-        const stepId = step.source === "local" ? step.tempId : step.id;
-        return stepId !== id;
-      })
+      pipelines
+        .map((step) =>
+          typeof id === "number" && (step as PipelineStepInDb).id === id
+            ? { ...step, _delete: true }
+            : step
+        )
+        .filter(
+          (step) =>
+            !(
+              typeof id === "string" &&
+              (step as PipelineStepLocal).tempId === id
+            )
+        )
     );
   }
 

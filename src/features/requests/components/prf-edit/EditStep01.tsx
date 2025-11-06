@@ -13,7 +13,7 @@ import {
   FieldGroup,
   FieldError,
 } from "@/shared/components/ui/field";
-import { useUsersByDepartment } from "@/features/prf/hooks/useUsersByDepartment";
+import { useUsersByDepartment } from "@/features/prf/hooks/useUsers";
 import type { User } from "@/features/auth/types/auth.types";
 import type { JobPostingResponsePRF } from "@/features/jobs/types/job.types";
 import type { PRFHiringManagerResponse } from "@/features/prf/types/prf.types";

@@ -12,8 +12,8 @@ interface StepCardProps {
   step: PipelineStep;
   errors?: any;
   index: number;
-  onEdit: (pipelineIdentifier: string | number) => void;
-  onDelete: (pipelineIdentifier: string | number) => void;
+  onEdit?: (step: PipelineStep) => void;
+  onDelete?: (id: string | number) => void;
 }
 
 export function StepCard({
@@ -56,17 +56,13 @@ export function StepCard({
           </span>
         </div>
         <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => onEdit(pipelineIdentifier)}
-          >
+          <Button variant="outline" size="icon" onClick={() => onEdit?.(step)}>
             <Edit />
           </Button>
           <Button
             variant="destructive"
             size="icon"
-            onClick={() => onDelete(pipelineIdentifier)}
+            onClick={() => onDelete?.(pipelineIdentifier)}
           >
             <Trash2 />
           </Button>
