@@ -11,8 +11,6 @@ import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
 import { FormFieldRadioButton } from "../../../features/positions-client/components/FormFieldRadioButton";
 import { useState } from "react";
 import { Checkbox } from "../ui/checkbox";
-import { useQuestionnaireManager } from "@/features/positions-client/hooks/useQuestionnaireManager";
-import { useQuestionForm } from "@/features/positions-client/hooks/useQuestionForm";
 import QuestionnaireBase from "@/features/positions-client/components/questionnaires/QuestionnaireBase";
 import { NonNegotiableModal } from "@/features/positions-client/components/NonNegotiableModal";
 import { Button } from "@/shared/components/ui/button";
@@ -22,6 +20,7 @@ import type {
   ApplicationFormData,
   ApplicationFormType,
 } from "@/shared/types/application_form.types";
+import type { ApplicationFormQuestionnaireBase } from "@/features/positions-client/types/questionnaire.types";
 
 interface ApplicationFormManagementProps {
   formData: ApplicationFormData;
@@ -157,7 +156,11 @@ const FieldRow = ({
   );
 };
 
-FieldRow.displayName = "FieldRow";
+const defaultData = {
+  name: "",
+  template: false,
+  sections: [],
+};
 
 export const ApplicationFormManagement = ({
   formData,
@@ -172,70 +175,17 @@ export const ApplicationFormManagement = ({
     "education_attained",
     "course",
   ]);
-
-  const [showAddQuestionnaireModal, setShowAddQuestionnaireModal] =
-    useState(false);
-  const [questionnaireName, setQuestionnaireName] = useState("");
-  const [showNonNegotiableModal, setShowNonNegotiableModal] = useState(false);
-
-  // Use custom hooks for questionnaire management
-  const questionnaireManager = useQuestionnaireManager();
-  const questionForm = useQuestionForm();
-
-  // Handle adding question
-  const handleAddQuestion = () => {
-    if (questionForm.isEditMode) {
-      // Edit mode: update existing question
-      if (
-        questionForm.editQuestionSectionIdx !== null &&
-        questionForm.editQuestionIdx !== null
-      ) {
-        const updatedQuestion = questionForm.getCurrentQuestion();
-        questionnaireManager.updateQuestionInSection(
-          questionForm.editQuestionSectionIdx,
-          questionForm.editQuestionIdx,
-          updatedQuestion
-        );
-      }
-    } else {
-      // Add mode: add new question
-      if (questionForm.addQuestionSectionIdx !== null) {
-        const newQuestion = questionForm.getCurrentQuestion();
-        questionnaireManager.addQuestionToSection(
-          questionForm.addQuestionSectionIdx,
-          newQuestion
-        );
-      }
-    }
-    questionForm.resetForm();
-  };
-
-  // Handle editing question
-  const handleEditQuestion = (sectionIdx: number, questionIdx: number) => {
-    const section = questionnaireManager.sections[sectionIdx];
-    const question = section.questions?.[questionIdx];
-    if (question) {
-      questionForm.handleOpenEditQuestion(sectionIdx, questionIdx, question);
-    }
-  };
-
-  // Handle deleting question
-  const handleDeleteQuestion = (sectionIdx: number, questionIdx: number) => {
-    questionnaireManager.deleteQuestionFromSection(sectionIdx, questionIdx);
-  };
-
-  // Handle move questions (placeholder for future implementation)
-  const handleMoveQuestions = () => {
-    // TODO: Implement move questions logic
-    console.log("Move questions");
-  };
-
-  // Check if any non-negotiable fields are selected
-  const hasNonNegotiablesSelected = formData.non_negotiables.length > 0;
-
-  // Candidate Application radio state
+  // NOTE: This selectedTemplate will come from database
+  // const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [candidateApplicationType, setCandidateApplicationType] =
     useState<string>("external");
+  const [applicationFormQuestionnaire, setApplicationFormQuestionnaire] =
+    useState<ApplicationFormQuestionnaireBase>(
+      formData.questionnaire || defaultData
+    );
+  const [showNonNegotiableModal, setShowNonNegotiableModal] = useState(false);
+
+  const hasNonNegotiablesSelected = formData.non_negotiables.length > 0;
 
   return (
     <div className="space-y-6">
@@ -418,17 +368,8 @@ export const ApplicationFormManagement = ({
 
       {/* Available Questionnaires Section */}
       <QuestionnaireBase
-        showAddQuestionnaireModal={showAddQuestionnaireModal}
-        setShowAddQuestionnaireModal={setShowAddQuestionnaireModal}
-        questionnaireName={questionnaireName}
-        setQuestionnaireName={setQuestionnaireName}
-        questionnaireManager={questionnaireManager}
-        questionForm={questionForm}
-        onMoveQuestionsClick={() => {}}
-        handleMoveQuestions={handleMoveQuestions}
-        handleEditQuestion={handleEditQuestion}
-        handleDeleteQuestion={handleDeleteQuestion}
-        handleAddQuestion={handleAddQuestion}
+        questionnaire={applicationFormQuestionnaire}
+        setQuestionnaire={setApplicationFormQuestionnaire}
       />
 
       {/* Non-Negotiable Modal */}
@@ -442,5 +383,3 @@ export const ApplicationFormManagement = ({
     </div>
   );
 };
-
-ApplicationFormManagement.displayName = "ApplicationFormManagement";

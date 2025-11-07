@@ -38,10 +38,6 @@ export interface Position extends PositionBase {
   job_posting: JobPosting;
   application_form: ApplicationFormData;
   pipeline: PipelineStep[] | [];
-  section_questionnaire: {
-    // SectionQuestionnaire
-    // Questionnaire
-  };
   locations: LocationEntry[] | [];
   batches: BatchEntry[] | [];
 }

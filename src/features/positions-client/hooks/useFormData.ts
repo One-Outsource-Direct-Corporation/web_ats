@@ -55,9 +55,9 @@ const getDefaultFormData = (): PositionFormData => ({
       signature: "optional",
     },
     non_negotiables: [],
+    questionnaire: { name: null, template: false, sections: [] },
   },
   pipeline: [],
-  section_questionnaire: {},
   locations: [],
   batches: [],
 });

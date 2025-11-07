@@ -1,8 +1,8 @@
 import { memo } from "react";
-import type { Question } from "../../types/questionnaire.types";
+import type { Questionnaire } from "../../types/questionnaire.types";
 
 interface QuestionCardProps {
-  question: Question;
+  question: Questionnaire;
   questionNumber: number;
   onEdit: () => void;
   onDelete: () => void;
@@ -16,17 +16,16 @@ export const QuestionCard = memo(
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
               <span className="font-medium text-gray-900">
-                Q{questionNumber}: {question.text}
+                Q{questionNumber}: {question.name}
               </span>
               <span className="px-2 py-1 text-xs rounded-md bg-blue-100 text-blue-700">
                 {question.type}
               </span>
-              <span className="px-2 py-1 text-xs rounded-md bg-purple-100 text-purple-700">
-                {question.mode}
-              </span>
             </div>
-            {question.desc && (
-              <p className="text-sm text-gray-600 mb-2">{question.desc}</p>
+            {question.description && (
+              <p className="text-sm text-gray-600 mb-2">
+                {question.description}
+              </p>
             )}
             {question.options && question.options.length > 0 && (
               <div className="mt-2">

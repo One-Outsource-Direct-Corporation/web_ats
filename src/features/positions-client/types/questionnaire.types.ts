@@ -1,24 +1,52 @@
-export interface QuestionOption {
-  value: string;
-  score: number;
+export interface ApplicationFormQuestionnaireBase {
+  name: string | null;
+  template: boolean;
+  sections: Section[] | [];
 }
 
-export interface Question {
-  text: string;
-  desc: string;
+export interface ApplicationFormQuestionnaireDb
+  extends ApplicationFormQuestionnaireBase {
+  id: number;
+}
+
+export type ApplicationFormQuestionnaire =
+  | ApplicationFormQuestionnaireBase
+  | ApplicationFormQuestionnaireDb;
+
+export interface SectionBase {
+  name: string;
+  questionnaires: Questionnaire[] | [];
+}
+
+export interface SectionDb extends SectionBase {
+  id: number;
+}
+
+export interface SectionLocal extends SectionBase {
+  tempId: string;
+}
+
+export type Section = SectionLocal | SectionDb;
+
+export interface QuestionnaireBase {
+  name: string;
+  description?: string;
   type: "Multiple Choice" | "Checkboxes" | "Text Entry" | "Paragraph";
-  mode: string;
   options?: QuestionOption[];
   parameter?: string;
 }
 
-export interface Section {
-  name: string;
-  template: boolean;
-  questions: Question[];
+export interface QuestionnaireDb extends QuestionnaireBase {
+  id: number;
 }
 
-export interface Questionnaire {
-  name: string;
-  sections: Section[];
+export interface QuestionnaireLocal extends QuestionnaireBase {
+  tempId: string;
+}
+
+export type Questionnaire = QuestionnaireDb | QuestionnaireLocal;
+
+export interface QuestionOption {
+  value: string;
+  score: number;
 }

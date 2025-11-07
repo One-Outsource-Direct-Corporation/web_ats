@@ -49,7 +49,7 @@ export function StageCard({
 
   function handleStepDataChange(
     field: keyof PipelineStep,
-    value: string | number | boolean | User[]
+    value: string | number | boolean | User[] | Assessment[]
   ) {
     setStepData((prev) => ({ ...prev, [field]: value }));
   }

@@ -1,6 +1,11 @@
+import type {
+  ApplicationFormQuestionnaire,
+  ApplicationFormQuestionnaireBase,
+} from "@/features/positions-client/types/questionnaire.types";
+
 export type ApplicationFormType = "required" | "optional" | "disabled";
 
-export interface ApplicationForm {
+export interface ApplicationFormBase {
   name: ApplicationFormType;
   birth_date: ApplicationFormType;
   gender: ApplicationFormType;
@@ -24,13 +29,27 @@ export interface ApplicationForm {
   signature: ApplicationFormType;
 }
 
-// Simplified: Single interface for non-negotiable requirements
-export interface NonNegotiable {
-  field: string; // Field name (e.g., "expected_salary")
-  value: string | number | boolean; // Required value
+export interface ApplicationFormDb extends ApplicationFormBase {
+  id: number;
 }
+
+export type ApplicationForm = ApplicationFormBase | ApplicationFormDb;
+
+// Simplified: Single interface for non-negotiable requirements
+export interface NonNegotiableBase {
+  field: string;
+  value: string | number | boolean;
+}
+
+export interface NonNegotiableDb {
+  id: number;
+  non_negotiable: NonNegotiableBase[];
+}
+
+export type NonNegotiable = NonNegotiableBase | NonNegotiableDb;
 
 export type ApplicationFormData = {
   application_form: ApplicationForm;
-  non_negotiables: NonNegotiable[]; // Simple array of field requirements
+  non_negotiables: NonNegotiable[];
+  questionnaire: ApplicationFormQuestionnaire;
 };
