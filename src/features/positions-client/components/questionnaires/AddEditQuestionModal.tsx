@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import type {
   QuestionOption,
   Questionnaire,
+  QuestionnaireBase,
 } from "../../types/questionnaire.types";
 import {
   Field,
@@ -28,35 +29,28 @@ import {
 } from "@/shared/components/ui/select";
 import { Textarea } from "@/shared/components/ui/textarea";
 
-interface AddQuestionModalProps {
+interface AddEditQuestionModalProps {
   question?: Questionnaire;
   onSave: (question: Questionnaire) => void;
   onDelete?: (question: Questionnaire) => void;
 }
 
-type QuestionForm = {
-  name: string;
-  description: string;
-  type: "Multiple Choice" | "Checkboxes" | "Text Entry" | "Paragraph";
-  parameter: string;
-  options: QuestionOption[];
-};
-
-const defaultForm: QuestionForm = {
+const defaultForm: QuestionnaireBase = {
   name: "",
   description: "",
   type: "Multiple Choice",
-  parameter: "",
-  options: [{ value: "", score: 0 }],
+  parameter: undefined,
+  options: undefined,
 };
 
-export function AddQuestionModal({
+export function AddEditQuestionModal({
   question,
   onSave,
   onDelete,
-}: AddQuestionModalProps) {
+}: AddEditQuestionModalProps) {
   const [showDialog, setShowDialog] = useState(false);
-  const [questionForm, setQuestionForm] = useState<QuestionForm>(defaultForm);
+  const [questionForm, setQuestionForm] =
+    useState<QuestionnaireBase>(defaultForm);
   const isEdit = !!question;
 
   useEffect(() => {
@@ -65,14 +59,14 @@ export function AddQuestionModal({
         name: question.name,
         description: question.description || "",
         type: question.type,
-        parameter: question.parameter || "",
-        options: question.options || [{ value: "", score: 0 }],
+        parameter: question.parameter || undefined,
+        options: question.options || undefined,
       });
     }
   }, [question]);
 
   const handleFormChange = (
-    field: keyof QuestionForm,
+    field: keyof QuestionnaireBase,
     value: string | QuestionOption[]
   ) => {
     setQuestionForm((prev) => ({
@@ -86,7 +80,7 @@ export function AddQuestionModal({
     field: "value" | "score",
     value: string | number
   ) => {
-    const newOptions = [...questionForm.options];
+    const newOptions = [...(questionForm?.options || [])];
     if (field === "value") {
       newOptions[idx].value = value as string;
     } else {
@@ -97,16 +91,16 @@ export function AddQuestionModal({
 
   const handleAddOption = () => {
     handleFormChange("options", [
-      ...questionForm.options,
+      ...(questionForm?.options || []),
       { value: "", score: 0 },
     ]);
   };
 
   const handleRemoveOption = (idx: number) => {
-    if (questionForm.options.length > 1) {
+    if ((questionForm?.options || []).length > 1) {
       handleFormChange(
         "options",
-        questionForm.options.filter((_, i) => i !== idx)
+        (questionForm?.options || []).filter((_, i) => i !== idx)
       );
     }
   };
@@ -117,7 +111,6 @@ export function AddQuestionModal({
 
   const handleSave = () => {
     if (!questionForm.name.trim()) {
-      alert("Please enter a question name");
       return;
     }
 
@@ -129,7 +122,7 @@ export function AddQuestionModal({
       options:
         questionForm.type === "Multiple Choice" ||
         questionForm.type === "Checkboxes"
-          ? questionForm.options.filter((opt) => opt.value.trim() !== "")
+          ? questionForm.options?.filter((opt) => opt.value.trim() !== "")
           : undefined,
       parameter:
         questionForm.type === "Text Entry" || questionForm.type === "Paragraph"
@@ -223,7 +216,7 @@ export function AddQuestionModal({
             <FieldGroup>
               <FieldLabel>Options</FieldLabel>
               <FieldGroup className="grid grid-cols-1 gap-2">
-                {questionForm.options.map((opt, idx) => (
+                {questionForm.options?.map((opt, idx) => (
                   <div key={idx} className="flex gap-2 items-center">
                     <Input
                       type="text"

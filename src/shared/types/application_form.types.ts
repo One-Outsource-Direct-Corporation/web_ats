@@ -1,7 +1,4 @@
-import type {
-  ApplicationFormQuestionnaire,
-  ApplicationFormQuestionnaireBase,
-} from "@/features/positions-client/types/questionnaire.types";
+import type { ApplicationFormQuestionnaire } from "@/features/positions-client/types/questionnaire.types";
 
 export type ApplicationFormType = "required" | "optional" | "disabled";
 

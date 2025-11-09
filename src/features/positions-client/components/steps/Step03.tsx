@@ -4,37 +4,35 @@ import type {
   ApplicationForm,
   ApplicationFormData,
   ApplicationFormType,
+  NonNegotiable,
 } from "../../../../shared/types/application_form.types";
+import type { ApplicationFormQuestionnaire } from "../../types/questionnaire.types";
 
 interface Step03Props {
-  formData: ApplicationFormData;
-  handleApplicationFormChange: (
-    fieldName: keyof ApplicationForm,
-    status: ApplicationFormType
+  applicationFormData: ApplicationFormData;
+  applicationFormHandler: (
+    field: keyof ApplicationForm,
+    value: ApplicationFormType
   ) => void;
-  isNonNegotiable: (fieldName: string) => boolean;
-  toggleNonNegotiable: (fieldName: string) => void;
-  setNonNegotiableValue: (
-    fieldName: string,
-    value: string | number | boolean
+  nonNegotiableHandler: (updatedNonNegotiables: NonNegotiable[]) => void;
+  questionnaireHandler: (
+    updatedQuestionnaire: ApplicationFormQuestionnaire
   ) => void;
 }
 
 export default function Step03({
-  formData,
-  handleApplicationFormChange,
-  isNonNegotiable,
-  toggleNonNegotiable,
-  setNonNegotiableValue,
+  applicationFormData,
+  applicationFormHandler,
+  nonNegotiableHandler,
+  questionnaireHandler,
 }: Step03Props) {
   return (
     <Card className="p-6">
       <ApplicationFormManagement
-        formData={formData}
-        setFormData={handleApplicationFormChange}
-        isNonNegotiable={isNonNegotiable}
-        toggleNonNegotiable={toggleNonNegotiable}
-        setNonNegotiableValue={setNonNegotiableValue}
+        applicationFormData={applicationFormData}
+        applicationFormHandler={applicationFormHandler}
+        nonNegotiableHandler={nonNegotiableHandler}
+        questionnaireHandler={questionnaireHandler}
       />
     </Card>
   );

@@ -26,81 +26,76 @@ import { Input } from "@/shared/components/ui/input";
 import type {
   Section,
   ApplicationFormQuestionnaire,
+  ApplicationFormQuestionnaireDb,
+  SectionLocal,
+  SectionDb,
 } from "../../types/questionnaire.types";
-
-// interface QuestionnaireBaseProps {
-//   // Questionnaire state
-//   questionnaireName: string;
-//   onQuestionnaireNameChange: (name: string) => void;
-
-//   // Template selection
-//   selectedTemplate?: string;
-//   onTemplateChange?: (templateId: string) => void;
-
-//   // Include in candidate experience
-//   includeInCandidateExperience: boolean;
-//   onIncludeInCandidateExperienceChange: (value: boolean) => void;
-
-//   // Sections data
-//   sections: Section[];
-
-//   // Section CRUD operations
-//   onAddSection: (name: string) => void;
-//   onEditSection: (idx: number, name: string) => void;
-//   onDeleteSection: (idx: number) => void;
-
-//   // Question CRUD operations
-//   onAddQuestion: (sectionIdx: number, question: Questionnaire) => void;
-//   onEditQuestion: (
-//     sectionIdx: number,
-//     questionIdx: number,
-//     question: Questionnaire
-//   ) => void;
-//   onDeleteQuestion: (sectionIdx: number, questionIdx: number) => void;
-
-//   // Save operations
-//   onSave: () => void;
-//   onSaveAsTemplate?: () => void;
-// }
 
 interface QuestionnaireBaseProps {
   questionnaire: ApplicationFormQuestionnaire;
-  setQuestionnaire: React.Dispatch<
-    React.SetStateAction<ApplicationFormQuestionnaire>
-  >;
+  onQuestionnaireChange?: (
+    updatedQuestionnaire: ApplicationFormQuestionnaire
+  ) => void;
 }
 
 export default function QuestionnaireBase({
   questionnaire,
-  setQuestionnaire,
+  onQuestionnaireChange,
 }: QuestionnaireBaseProps) {
   const [showDialog, setShowDialog] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | undefined>(
     undefined
   );
 
+  // Helper function to update questionnaire and sync with parent
   function handleSetQuestionnaire(
     field: keyof ApplicationFormQuestionnaire,
     value: string | boolean | Section[] | null
   ) {
-    setQuestionnaire((prev) => ({
-      ...prev,
+    const updatedQuestionnaire = {
+      ...questionnaire,
       [field]: value,
-    }));
+    };
+
+    // Sync with parent if handler is provided
+    onQuestionnaireChange?.(updatedQuestionnaire);
   }
 
   function handleSectionsChange(newSection: Section) {
-    handleSetQuestionnaire("sections", [...questionnaire.sections, newSection]);
+    const updatedSections = [...questionnaire.sections, newSection];
+    handleSetQuestionnaire("sections", updatedSections);
   }
 
-  function handleUpdateSection(sectionIndex: number, updatedSection: Section) {
-    const updatedSections = [...questionnaire.sections];
-    updatedSections[sectionIndex] = updatedSection;
+  function handleUpdateSection(id: number | string, updatedSection: Section) {
+    const updatedSections = questionnaire.sections.map((sec) =>
+      (sec as SectionDb).id === id || (sec as SectionLocal).tempId === id
+        ? updatedSection
+        : sec
+    );
+
+    handleSetQuestionnaire("sections", updatedSections);
+  }
+
+  function handleDeleteSection(id: number | string) {
+    let updatedSections;
+    if (typeof id === "number") {
+      // Persisted section: set _delete flag
+      updatedSections = questionnaire.sections.map((sec) => {
+        if ((sec as SectionDb).id === id) {
+          return { ...sec, _delete: true };
+        }
+        return sec;
+      });
+    } else {
+      // Local section: remove from array
+      updatedSections = questionnaire.sections.filter(
+        (sec) => (sec as SectionLocal).tempId !== id
+      );
+    }
     handleSetQuestionnaire("sections", updatedSections);
   }
 
   function handleSave() {
-    // Current implementation is automatic syncing, so save button is just to close the dialog
     if (
       questionnaire.template &&
       (questionnaire.name === null || questionnaire.name.trim() === "")
@@ -159,19 +154,22 @@ export default function QuestionnaireBase({
               type="button"
               className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors"
             >
-              Add Questionnaire
+              {(questionnaire as ApplicationFormQuestionnaireDb)?.id ||
+              questionnaire.sections.length > 0
+                ? "Configure Questionnaire"
+                : "Add Questionnaire"}
             </Button>
           </DialogTrigger>
           <DialogContent className="!max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold text-gray-900">
-                Add Questionnaire
+                {questionnaire ? questionnaire.name : "Add Questionnaire"}
               </DialogTitle>
             </DialogHeader>
-            <Field className="mb-6">
+            <Field>
               <FieldLabel
                 htmlFor="questionnaireName"
-                className="block text-base font-medium text-gray-800 mb-2"
+                className="font-medium text-gray-800"
               >
                 Questionnaire Name
               </FieldLabel>
@@ -183,13 +181,14 @@ export default function QuestionnaireBase({
                   handleSetQuestionnaire("name", e.target.value);
                 }}
                 placeholder="Enter questionnaire name"
-                className="w-full p-3 border border-gray-300 rounded-md text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </Field>
             <SectionList
               sections={questionnaire.sections}
               addSection={handleSectionsChange}
               onUpdateSection={handleUpdateSection}
+              onDeleteSection={handleDeleteSection}
             />
             <div className="flex gap-3 justify-end">
               <Button
@@ -210,7 +209,7 @@ export default function QuestionnaireBase({
               </Button>
               <Button
                 type="button"
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-md"
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md"
                 onClick={handleSave}
               >
                 Save

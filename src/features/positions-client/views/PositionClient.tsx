@@ -19,15 +19,25 @@ import Step04 from "../components/steps/Step04";
 import { AssessmentManagement } from "../components/AssessmentManagement";
 import { stateToDataFormatClient } from "@/shared/utils/stateToDataFormat";
 import type {
-  ApplicationFormData,
+  ApplicationForm,
   ApplicationFormType,
+  NonNegotiable,
 } from "../../../shared/types/application_form.types";
 import type { PipelineStep } from "../../../shared/types/pipeline.types";
+import type { ApplicationFormQuestionnaire } from "../types/questionnaire.types";
 
 interface PositionClientProps {
   formData: PositionFormData;
   setFormData: React.Dispatch<React.SetStateAction<PositionFormData>>;
   pipelineHandler: (updatedPipelines: PipelineStep[]) => void;
+  applicationFormHandler: (
+    field: keyof ApplicationForm,
+    value: ApplicationFormType
+  ) => void;
+  nonNegotiableHandler: (updatedNonNegotiables: NonNegotiable[]) => void;
+  questionnaireHandler: (
+    updatedQuestionnaire: ApplicationFormQuestionnaire
+  ) => void;
   handlePositionBaseChange: (
     fieldName: keyof PositionBase,
     value: string | number | null
@@ -36,29 +46,18 @@ interface PositionClientProps {
     fieldName: keyof PositionFormData["job_posting"],
     value: string | number | null
   ) => void;
-  handleApplicationFormChange: (
-    fieldName: keyof ApplicationFormData["application_form"],
-    status: ApplicationFormType
-  ) => void;
-  isNonNegotiable: (fieldName: string) => boolean;
-  toggleNonNegotiable: (fieldName: string) => void;
-  setNonNegotiableValue: (
-    fieldName: string,
-    value: string | number | boolean
-  ) => void;
   resetFormData: () => void;
 }
 
 export default function PositionClient({
   formData,
   setFormData,
+  applicationFormHandler,
+  nonNegotiableHandler,
+  questionnaireHandler,
   pipelineHandler,
   handlePositionBaseChange,
   handleJobPostingChange,
-  handleApplicationFormChange,
-  isNonNegotiable,
-  toggleNonNegotiable,
-  setNonNegotiableValue,
   resetFormData,
 }: PositionClientProps) {
   const navigate = useNavigate();
@@ -135,11 +134,14 @@ export default function PositionClient({
       case 3:
         return (
           <Step03
-            formData={formData.application_form}
-            handleApplicationFormChange={handleApplicationFormChange}
-            isNonNegotiable={isNonNegotiable}
-            toggleNonNegotiable={toggleNonNegotiable}
-            setNonNegotiableValue={setNonNegotiableValue}
+            applicationFormData={formData.application_form}
+            applicationFormHandler={applicationFormHandler}
+            nonNegotiableHandler={nonNegotiableHandler}
+            questionnaireHandler={questionnaireHandler}
+            // handleApplicationFormChange={handleApplicationFormChange}
+            // isNonNegotiable={isNonNegotiable}
+            // toggleNonNegotiable={toggleNonNegotiable}
+            // setNonNegotiableValue={setNonNegotiableValue}
           />
         );
       case 4:

@@ -6,8 +6,10 @@ import type {
 import type {
   ApplicationForm,
   ApplicationFormType,
+  NonNegotiable,
 } from "../../../shared/types/application_form.types";
 import type { PipelineStep } from "../../../shared/types/pipeline.types";
+import type { ApplicationFormQuestionnaire } from "../types/questionnaire.types";
 
 const getDefaultFormData = (): PositionFormData => ({
   client: null,
@@ -90,93 +92,6 @@ export const useFormData = (initialData?: PositionFormData) => {
     }));
   }
 
-  function handleApplicationFormChange(
-    fieldName: keyof ApplicationForm,
-    status: ApplicationFormType
-  ) {
-    setFormData((prev: PositionFormData) => ({
-      ...prev,
-      application_form: {
-        ...prev.application_form,
-        application_form: {
-          ...prev.application_form.application_form,
-          [fieldName]: status,
-        },
-      },
-    }));
-  }
-
-  function isNonNegotiable(fieldName: string): boolean {
-    return formData.application_form.non_negotiables.some(
-      (item) => item.field === fieldName
-    );
-  }
-
-  function toggleNonNegotiable(fieldName: string) {
-    setFormData((prev: PositionFormData) => {
-      const exists = prev.application_form.non_negotiables.some(
-        (item) => item.field === fieldName
-      );
-
-      if (exists) {
-        return {
-          ...prev,
-          application_form: {
-            ...prev.application_form,
-            non_negotiables: prev.application_form.non_negotiables.filter(
-              (item) => item.field !== fieldName
-            ),
-          },
-        };
-      } else {
-        return {
-          ...prev,
-          application_form: {
-            ...prev.application_form,
-            non_negotiables: [
-              ...prev.application_form.non_negotiables,
-              { field: fieldName, value: "" },
-            ],
-          },
-        };
-      }
-    });
-  }
-
-  function setNonNegotiableValue(
-    fieldName: string,
-    value: string | number | boolean
-  ) {
-    setFormData((prev: PositionFormData) => {
-      const exists = prev.application_form.non_negotiables.some(
-        (item) => item.field === fieldName
-      );
-
-      if (exists) {
-        return {
-          ...prev,
-          application_form: {
-            ...prev.application_form,
-            non_negotiables: prev.application_form.non_negotiables.map((item) =>
-              item.field === fieldName ? { ...item, value } : item
-            ),
-          },
-        };
-      } else {
-        return {
-          ...prev,
-          application_form: {
-            ...prev.application_form,
-            non_negotiables: [
-              ...prev.application_form.non_negotiables,
-              { field: fieldName, value },
-            ],
-          },
-        };
-      }
-    });
-  }
-
   function resetFormData() {
     setFormData(getDefaultFormData());
   }
@@ -188,16 +103,53 @@ export const useFormData = (initialData?: PositionFormData) => {
     }));
   }
 
+  function applicationFormHandler(
+    field: keyof ApplicationForm,
+    value: ApplicationFormType
+  ) {
+    setFormData((prev) => ({
+      ...prev,
+      application_form: {
+        ...prev.application_form,
+        application_form: {
+          ...prev.application_form.application_form,
+          [field]: value,
+        },
+      },
+    }));
+  }
+
+  function nonNegotiableHandler(updatedNonNegotiables: NonNegotiable[]) {
+    setFormData((prev) => ({
+      ...prev,
+      application_form: {
+        ...prev.application_form,
+        non_negotiables: updatedNonNegotiables,
+      },
+    }));
+  }
+
+  function questionnaireHandler(
+    updatedQuestionnaire: ApplicationFormQuestionnaire
+  ) {
+    setFormData((prev) => ({
+      ...prev,
+      application_form: {
+        ...prev.application_form,
+        questionnaire: updatedQuestionnaire,
+      },
+    }));
+  }
+
   return {
     formData,
     setFormData,
     handlePositionBaseChange,
     handleJobPostingChange,
-    handleApplicationFormChange,
-    isNonNegotiable,
-    toggleNonNegotiable,
-    setNonNegotiableValue,
     resetFormData,
+    applicationFormHandler,
+    nonNegotiableHandler,
+    questionnaireHandler,
     pipelineHandler,
   };
 };

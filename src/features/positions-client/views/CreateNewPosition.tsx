@@ -13,11 +13,10 @@ export default function CreateNewPosition() {
     setFormData,
     handlePositionBaseChange,
     handleJobPostingChange,
-    handleApplicationFormChange,
-    isNonNegotiable,
-    toggleNonNegotiable,
-    setNonNegotiableValue,
     pipelineHandler,
+    applicationFormHandler,
+    nonNegotiableHandler,
+    questionnaireHandler,
     resetFormData,
   } = useFormData();
 
@@ -25,13 +24,12 @@ export default function CreateNewPosition() {
     <PositionClient
       formData={formData}
       setFormData={setFormData}
+      applicationFormHandler={applicationFormHandler}
+      nonNegotiableHandler={nonNegotiableHandler}
+      questionnaireHandler={questionnaireHandler}
       pipelineHandler={pipelineHandler}
       handlePositionBaseChange={handlePositionBaseChange}
       handleJobPostingChange={handleJobPostingChange}
-      handleApplicationFormChange={handleApplicationFormChange}
-      isNonNegotiable={isNonNegotiable}
-      toggleNonNegotiable={toggleNonNegotiable}
-      setNonNegotiableValue={setNonNegotiableValue}
       resetFormData={resetFormData}
     />
   );
