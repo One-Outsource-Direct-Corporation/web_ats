@@ -1,7 +1,7 @@
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { AlertCircle } from "lucide-react";
-import { useState, useEffect } from "react";
+
 import type { ApplicationFormData } from "../../../shared/types/application_form.types";
 import {
   Select,
@@ -10,6 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
+
+import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
 import { Field, FieldGroup } from "@/shared/components/ui/field";
 import {
   Dialog,
@@ -45,8 +47,8 @@ const NON_NEGOTIABLE_FIELDS = [
     label: "Willing to Work Onsite",
     type: "radio" as const,
     options: [
-      { value: "yes", label: "Yes" },
-      { value: "no", label: "No" },
+      { value: true, label: "Yes" },
+      { value: false, label: "No" },
     ],
   },
   {
@@ -83,44 +85,41 @@ export const NonNegotiableModal = ({
   formData,
   setNonNegotiableValue,
 }: NonNegotiableModalProps) => {
-  const [localValues, setLocalValues] = useState<{
-    [key: string]: string | number | boolean;
-  }>({});
-
-  // Initialize values from formData.non_negotiables when modal opens
-  useEffect(() => {
-    if (show) {
-      const initialValues: { [key: string]: string | number | boolean } = {};
-      formData.non_negotiables.forEach((item) => {
-        initialValues[item.field] = item.value;
-      });
-      setLocalValues(initialValues);
-    }
-  }, [show, formData.non_negotiables]);
-
+  // No local state: update parent immediately
   if (!show) return null;
+
+  // Get value for a non-negotiable field from parent data
+  const getFieldValue = (fieldKey: string) => {
+    const item = formData.non_negotiable.non_negotiable.find(
+      (nn) => nn.field === fieldKey
+    );
+    return item ? item.value : "";
+  };
+
+  // For "other" option, get value from parent data
+  const getOtherValue = (fieldKey: string) => {
+    const item = formData.non_negotiable.non_negotiable.find(
+      (nn) => nn.field === `${fieldKey}_other`
+    );
+    return item ? item.value : "";
+  };
 
   const handleFieldChange = (
     fieldKey: string,
     value: string | number | boolean
   ) => {
-    setLocalValues((prev) => ({
-      ...prev,
-      [fieldKey]: value,
-    }));
+    setNonNegotiableValue(fieldKey, value);
   };
 
   const handleSave = () => {
-    // Save all non-negotiable values to parent state
-    Object.entries(localValues).forEach(([fieldName, value]) => {
-      setNonNegotiableValue(fieldName, value);
-    });
     onContinue();
   };
 
   // Filter only fields that are marked as non-negotiable in application form
   const activeNonNegotiableFields = NON_NEGOTIABLE_FIELDS.filter((field) =>
-    formData.non_negotiables.some((item) => item.field === field.key)
+    formData.non_negotiable.non_negotiable.some(
+      (item) => item.field === field.key
+    )
   );
 
   return (
@@ -144,6 +143,15 @@ export const NonNegotiableModal = ({
           <div className="space-y-4">
             {activeNonNegotiableFields.map((field) => {
               const fieldKey = String(field.key);
+              let fieldValue = getFieldValue(fieldKey);
+              // For boolean radio, convert string to boolean if needed
+              if (
+                field.type === "radio" &&
+                fieldKey === "willing_to_work_onsite"
+              ) {
+                if (fieldValue === "true") fieldValue = true;
+                if (fieldValue === "false") fieldValue = false;
+              }
               return (
                 <FieldGroup
                   key={fieldKey}
@@ -162,7 +170,7 @@ export const NonNegotiableModal = ({
                     <Input
                       type="number"
                       placeholder={field.placeholder}
-                      value={String(localValues[fieldKey] ?? "")}
+                      value={String(fieldValue ?? "")}
                       onChange={(e) =>
                         handleFieldChange(fieldKey, Number(e.target.value))
                       }
@@ -173,8 +181,8 @@ export const NonNegotiableModal = ({
                   {field.type === "select" && field.options && (
                     <Field>
                       <Select
-                        value={String(localValues[fieldKey] ?? "")}
-                        onValueChange={(value) =>
+                        value={String(fieldValue ?? "")}
+                        onValueChange={(value: string) =>
                           handleFieldChange(fieldKey, value)
                         }
                       >
@@ -190,11 +198,11 @@ export const NonNegotiableModal = ({
                         </SelectContent>
                       </Select>
                       {/* If "Other" is selected, show an additional input */}
-                      {localValues[fieldKey] === "other" && (
+                      {fieldValue === "other" && (
                         <Input
                           className="w-full"
                           placeholder="Please specify"
-                          value={String(localValues[`${fieldKey}_other`] ?? "")}
+                          value={String(getOtherValue(fieldKey) ?? "")}
                           onChange={(e) =>
                             handleFieldChange(
                               `${fieldKey}_other`,
@@ -208,30 +216,31 @@ export const NonNegotiableModal = ({
 
                   {field.type === "radio" && field.options && (
                     <Field>
-                      {field.options.map((option) => {
-                        const currentValue = localValues[fieldKey];
-                        const isChecked = currentValue === option.value;
-                        return (
-                          <label
+                      <RadioGroup
+                        value={String(fieldValue)}
+                        onValueChange={(value: string) =>
+                          handleFieldChange(fieldKey, value === "true")
+                        }
+                      >
+                        {field.options.map((option) => (
+                          <div
                             key={`${fieldKey}-${option.value}`}
-                            className="flex items-center gap-2 cursor-pointer"
+                            className="flex items-center"
                           >
-                            <input
-                              type="radio"
-                              name={fieldKey}
-                              value={option.value}
-                              checked={isChecked}
-                              onChange={(e) => {
-                                handleFieldChange(fieldKey, e.target.value);
-                              }}
-                              className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 focus:ring-2 cursor-pointer accent-blue-600"
+                            <RadioGroupItem
+                              value={String(option.value)}
+                              id={`${fieldKey}-${option.value}`}
+                              className="text-blue-500 border-blue-500 [&_svg]:fill-blue-500"
                             />
-                            <span className="text-sm text-gray-700">
+                            <label
+                              htmlFor={`${fieldKey}-${option.value}`}
+                              className="text-sm cursor-pointer text-gray-700 ml-2"
+                            >
                               {option.label}
-                            </span>
-                          </label>
-                        );
-                      })}
+                            </label>
+                          </div>
+                        ))}
+                      </RadioGroup>
                     </Field>
                   )}
                 </FieldGroup>

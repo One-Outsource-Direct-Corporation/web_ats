@@ -32,7 +32,6 @@ export interface ApplicationFormDb extends ApplicationFormBase {
 
 export type ApplicationForm = ApplicationFormBase | ApplicationFormDb;
 
-// Simplified: Single interface for non-negotiable requirements
 export interface NonNegotiableBase {
   field: string;
   value: string | number | boolean;
@@ -43,10 +42,14 @@ export interface NonNegotiableDb {
   non_negotiable: NonNegotiableBase[];
 }
 
-export type NonNegotiable = NonNegotiableBase | NonNegotiableDb;
+export interface NonNegotiableLocal {
+  non_negotiable: NonNegotiableBase[];
+}
+
+export type NonNegotiable = NonNegotiableDb | NonNegotiableLocal;
 
 export type ApplicationFormData = {
   application_form: ApplicationForm;
-  non_negotiables: NonNegotiable[];
+  non_negotiable: NonNegotiable;
   questionnaire: ApplicationFormQuestionnaire;
 };

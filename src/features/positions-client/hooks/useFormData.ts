@@ -56,7 +56,7 @@ const getDefaultFormData = (): PositionFormData => ({
       agreement: "optional",
       signature: "optional",
     },
-    non_negotiables: [],
+    non_negotiable: { non_negotiable: [] },
     questionnaire: { name: null, template: false, sections: [] },
   },
   pipeline: [],
@@ -119,12 +119,12 @@ export const useFormData = (initialData?: PositionFormData) => {
     }));
   }
 
-  function nonNegotiableHandler(updatedNonNegotiables: NonNegotiable[]) {
+  function nonNegotiableHandler(updatedNonNegotiables: NonNegotiable) {
     setFormData((prev) => ({
       ...prev,
       application_form: {
         ...prev.application_form,
-        non_negotiables: updatedNonNegotiables,
+        non_negotiable: updatedNonNegotiables,
       },
     }));
   }

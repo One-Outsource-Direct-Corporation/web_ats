@@ -20,6 +20,7 @@ import type {
   ApplicationFormData,
   ApplicationFormType,
   NonNegotiable,
+  NonNegotiableBase,
 } from "@/shared/types/application_form.types";
 import type { ApplicationFormQuestionnaire } from "@/features/positions-client/types/questionnaire.types";
 
@@ -29,7 +30,7 @@ interface ApplicationFormManagementProps {
     field: keyof ApplicationForm,
     value: ApplicationFormType
   ) => void;
-  nonNegotiableHandler: (updatedNonNegotiables: NonNegotiable[]) => void;
+  nonNegotiableHandler: (updatedNonNegotiables: NonNegotiable) => void;
   questionnaireHandler: (
     updatedQuestionnaire: ApplicationFormQuestionnaire
   ) => void;
@@ -175,43 +176,44 @@ export const ApplicationFormManagement = ({
   const [showNonNegotiableModal, setShowNonNegotiableModal] = useState(false);
 
   const hasNonNegotiablesSelected =
-    applicationFormData.non_negotiables.length > 0;
+    applicationFormData.non_negotiable.non_negotiable.length > 0;
 
   // Check if a field is marked as non-negotiable
   const isNonNegotiable = (fieldName: string): boolean => {
-    return applicationFormData.non_negotiables.some((nn) => {
-      if ("field" in nn) {
-        return nn.field === fieldName;
-      }
-      return false;
-    });
+    return applicationFormData.non_negotiable.non_negotiable.some(
+      (nn) => nn.field === fieldName
+    );
   };
 
   // Toggle non-negotiable status for a field
   const toggleNonNegotiable = (fieldName: string) => {
-    const currentNonNegotiables = applicationFormData.non_negotiables;
+    const currentNonNegotiables =
+      applicationFormData.non_negotiable.non_negotiable;
     const isCurrentlyNonNegotiable = isNonNegotiable(fieldName);
 
-    let updatedNonNegotiables: NonNegotiable[];
+    let updatedNonNegotiables: NonNegotiableBase[];
 
     if (isCurrentlyNonNegotiable) {
       // Remove from non-negotiables
-      updatedNonNegotiables = currentNonNegotiables.filter((nn) => {
-        if ("field" in nn) {
-          return nn.field !== fieldName;
-        }
-        return true;
-      });
+      updatedNonNegotiables = currentNonNegotiables.filter(
+        (nn) => nn.field !== fieldName
+      );
     } else {
       // Add to non-negotiables with default value
-      const newNonNegotiable: NonNegotiable = {
+      const newNonNegotiable: NonNegotiableBase = {
         field: fieldName,
         value: "",
       };
       updatedNonNegotiables = [...currentNonNegotiables, newNonNegotiable];
     }
 
-    nonNegotiableHandler(updatedNonNegotiables);
+    // Preserve the id if it exists (for NonNegotiableDb)
+    const updatedNonNegotiable: NonNegotiable = {
+      ...applicationFormData.non_negotiable,
+      non_negotiable: updatedNonNegotiables,
+    };
+
+    nonNegotiableHandler(updatedNonNegotiable);
   };
 
   // Update non-negotiable value
@@ -219,19 +221,23 @@ export const ApplicationFormManagement = ({
     fieldName: string,
     value: string | number | boolean
   ) => {
-    const updatedNonNegotiables = applicationFormData.non_negotiables.map(
-      (nn) => {
-        if ("field" in nn && nn.field === fieldName) {
+    const updatedNonNegotiables =
+      applicationFormData.non_negotiable.non_negotiable.map((nn) => {
+        if (nn.field === fieldName) {
           return {
             ...nn,
             value,
           };
         }
         return nn;
-      }
-    );
+      });
 
-    nonNegotiableHandler(updatedNonNegotiables);
+    const updatedNonNegotiable: NonNegotiable = {
+      ...applicationFormData.non_negotiable,
+      non_negotiable: updatedNonNegotiables,
+    };
+
+    nonNegotiableHandler(updatedNonNegotiable);
   };
 
   return (

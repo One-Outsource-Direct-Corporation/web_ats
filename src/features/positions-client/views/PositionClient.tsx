@@ -34,7 +34,7 @@ interface PositionClientProps {
     field: keyof ApplicationForm,
     value: ApplicationFormType
   ) => void;
-  nonNegotiableHandler: (updatedNonNegotiables: NonNegotiable[]) => void;
+  nonNegotiableHandler: (updatedNonNegotiables: NonNegotiable) => void;
   questionnaireHandler: (
     updatedQuestionnaire: ApplicationFormQuestionnaire
   ) => void;
@@ -82,7 +82,7 @@ export default function PositionClient({
       // TODO: bring back the Pool Applicants Here
       // TODO: change the data structure from changes made
 
-      console.log("Submitting form data:", formData);
+      console.log(formData.application_form);
       return;
 
       const data = stateToDataFormatClient(formData);
@@ -138,10 +138,6 @@ export default function PositionClient({
             applicationFormHandler={applicationFormHandler}
             nonNegotiableHandler={nonNegotiableHandler}
             questionnaireHandler={questionnaireHandler}
-            // handleApplicationFormChange={handleApplicationFormChange}
-            // isNonNegotiable={isNonNegotiable}
-            // toggleNonNegotiable={toggleNonNegotiable}
-            // setNonNegotiableValue={setNonNegotiableValue}
           />
         );
       case 4:

@@ -14,7 +14,7 @@ interface Step03Props {
     field: keyof ApplicationForm,
     value: ApplicationFormType
   ) => void;
-  nonNegotiableHandler: (updatedNonNegotiables: NonNegotiable[]) => void;
+  nonNegotiableHandler: (updatedNonNegotiables: NonNegotiable) => void;
   questionnaireHandler: (
     updatedQuestionnaire: ApplicationFormQuestionnaire
   ) => void;
