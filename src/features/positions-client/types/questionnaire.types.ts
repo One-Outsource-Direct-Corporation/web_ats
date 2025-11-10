@@ -20,6 +20,7 @@ export interface SectionBase {
 
 export interface SectionDb extends SectionBase {
   id: number;
+  _delete?: boolean;
 }
 
 export interface SectionLocal extends SectionBase {
@@ -38,6 +39,7 @@ export interface QuestionnaireBase {
 
 export interface QuestionnaireDb extends QuestionnaireBase {
   id: number;
+  _delete?: boolean;
 }
 
 export interface QuestionnaireLocal extends QuestionnaireBase {

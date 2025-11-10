@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "@/shared/components/ui/button";
 import { X, Briefcase } from "lucide-react";
-import type { CreatePositionFormData } from "@/features/positions-client/types/create_position.types";
+import type { PositionFormData } from "@/features/positions-client/types/create_position.types";
 import formatName from "@/shared/utils/formatName";
 import formatMoney from "@/shared/utils/formatMoney";
 import formatDate from "@/shared/utils/formatDate";
@@ -15,14 +15,14 @@ interface CancelModalProps {
 interface PreviewModalProps {
   show: boolean;
   onClose: () => void;
-  formData: CreatePositionFormData;
+  formData: PositionFormData;
   currentStep: number;
 }
 
 interface PoolApplicantsModalProps {
   show: boolean;
   onClose: () => void;
-  formData: CreatePositionFormData;
+  formData: PositionFormData;
   selectedPoolingOption: string;
   onPoolingOptionChange: (option: string) => void;
   onPublish: () => void;
@@ -94,13 +94,15 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
           <div className="space-y-6">
             <div>
               <h3 className="text-xl font-bold text-gray-800 mb-2">
-                {formData.job_title || "Position Title"}
+                {formData.job_posting.job_title || "Position Title"}
               </h3>
               <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                <span>{formatName(formData.department)}</span>
-                <span>{formatName(formData.employment_type)}</span>
-                <span>{formatName(formData.work_setup)}</span>
-                <span>{formatName(formData.experience_level)}</span>
+                <span>{formatName(formData.job_posting.department ?? "")}</span>
+                <span>
+                  {formatName(formData.job_posting.employment_type ?? "")}
+                </span>
+                <span>{formatName(formData.job_posting.work_setup ?? "")}</span>
+                <span>{formatName(formData.experience_level ?? "")}</span>
               </div>
             </div>
 
@@ -113,7 +115,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
                   <div
                     className="prose prose-sm max-w-none preview-content"
                     dangerouslySetInnerHTML={{
-                      __html: formData.description || "",
+                      __html: formData.job_posting.description || "",
                     }}
                   />
                 </div>
@@ -124,7 +126,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
                   <div
                     className="prose prose-sm max-w-none preview-content"
                     dangerouslySetInnerHTML={{
-                      __html: formData.responsibilities || "",
+                      __html: formData.job_posting.responsibilities || "",
                     }}
                   />
                 </div>
@@ -135,7 +137,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
                   <div
                     className="prose prose-sm max-w-none preview-content"
                     dangerouslySetInnerHTML={{
-                      __html: formData.qualifications || "",
+                      __html: formData.job_posting.qualifications || "",
                     }}
                   />
                 </div>
@@ -145,26 +147,28 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <strong className="text-gray-700">Headcount:</strong>
-                <span className="ml-2">{formData.headcount}</span>
+                <span className="ml-2">
+                  {formData.job_posting.number_of_vacancies}
+                </span>
               </div>
               <div>
                 <strong className="text-gray-700">Date Needed:</strong>
                 <span className="ml-2">
-                  {formData.target_start_date &&
-                    formatDate(String(formData.target_start_date))}
+                  {formData.job_posting.target_start_date &&
+                    formatDate(String(formData.job_posting.target_start_date))}
                 </span>
               </div>
               <div>
                 <strong className="text-gray-700">Budget Range:</strong>
                 <span className="ml-2">
-                  {formatMoney(Number(formData.min_budget))} -{" "}
-                  {formatMoney(Number(formData.max_budget))}
+                  {formatMoney(Number(formData.job_posting.min_budget))} -{" "}
+                  {formatMoney(Number(formData.job_posting.max_budget))}
                 </span>
               </div>
               <div>
                 <strong className="text-gray-700">Education:</strong>
                 <span className="ml-2">
-                  {formatName(formData.education_level)}
+                  {formatName(formData.education_level ?? "")}
                 </span>
               </div>
             </div>
@@ -205,7 +209,7 @@ export const PoolApplicantsModal: React.FC<PoolApplicantsModalProps> = ({
 
         <p className="text-sm text-gray-600 mb-6">
           You're about to publish the job post for:{" "}
-          <strong>{formData.job_title}</strong>
+          <strong>{formData.job_posting.job_title}</strong>
         </p>
 
         <div className="flex items-center justify-center gap-4 mb-6">
@@ -213,7 +217,9 @@ export const PoolApplicantsModal: React.FC<PoolApplicantsModalProps> = ({
             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-2">
               <Briefcase className="w-6 h-6 text-blue-600" />
             </div>
-            <p className="text-sm font-medium">{formData.job_title}</p>
+            <p className="text-sm font-medium">
+              {formData.job_posting.job_title}
+            </p>
           </div>
         </div>
 

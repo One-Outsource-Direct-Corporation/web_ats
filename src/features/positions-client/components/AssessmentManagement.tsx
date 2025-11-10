@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { FileText, Trash2, GripVertical } from "lucide-react";
-import type { PipelineStep } from "@/shared/types/pipeline.types";
+import type {
+  AssessmentInDb,
+  AssessmentLocal,
+  PipelineStep,
+  PipelineStepInDb,
+  PipelineStepLocal,
+} from "@/shared/types/pipeline.types";
 import { Card } from "@/shared/components/ui/card";
 import { Field, FieldLabel } from "@/shared/components/ui/field";
 import { Checkbox } from "@/shared/components/ui/checkbox";
@@ -17,9 +23,13 @@ import {
   getProcessTypeLabel,
 } from "@/shared/components/reusables/pipeline/ProcessTypeIcon";
 import { AddEditQuestionModal } from "./questionnaires/AddEditQuestionModal";
-import type { Questionnaire } from "../types/questionnaire.types";
+import type {
+  Questionnaire,
+  QuestionnaireDb,
+  QuestionnaireLocal,
+} from "../types/questionnaire.types";
 
-interface AssessmentManagementProps2 {
+interface AssessmentManagementProps {
   pipelineSteps: PipelineStep[];
   pipelineHandler: (updatedPipelines: PipelineStep[]) => void;
 }
@@ -27,66 +37,40 @@ interface AssessmentManagementProps2 {
 export const AssessmentManagement = ({
   pipelineSteps,
   pipelineHandler,
-}: AssessmentManagementProps2) => {
-  const [selectedStage, setSelectedStage] = useState<number | null>(null);
-  const [selectedProcessType, setSelectedProcessType] = useState<string>("");
+}: AssessmentManagementProps) => {
+  const [selectedPipelineStep, setSelectedPipelineStep] =
+    useState<PipelineStep | null>(null);
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<
     string | number | null
   >(null);
 
-  // Get unique stages from pipeline steps that have assessments
-  const stagesWithAssessments = Array.from(
-    new Set(
-      pipelineSteps
-        .filter((step) => step.assessments && step.assessments.length > 0)
-        .map((step) => step.stage)
-    )
-  ).sort((a, b) => a - b);
+  const pipelineStepsWithAssessments = pipelineSteps.filter(
+    (step) => step.assessments && step.assessments.length > 0
+  );
 
-  // Get process types for selected stage
-  const processTypesForStage = selectedStage
-    ? pipelineSteps
-        .filter(
-          (step) =>
-            step.stage === selectedStage &&
-            step.assessments &&
-            step.assessments.length > 0
-        )
-        .map((step) => step.process_type)
-    : [];
-
-  // Get assessments for selected stage and process type
-  const getAssessmentsForStageAndProcessType = (
-    stage: number,
-    processType: string
-  ) => {
-    const step = pipelineSteps.find(
-      (s) => s.stage === stage && s.process_type === processType
-    );
-    return step?.assessments || [];
-  };
-
-  const selectedAssessments =
-    selectedStage && selectedProcessType
-      ? getAssessmentsForStageAndProcessType(selectedStage, selectedProcessType)
-      : [];
+  const selectedAssessments = selectedPipelineStep?.assessments || [];
 
   const selectedAssessment = selectedAssessments.find((assessment) => {
-    const id = (assessment as any).id || (assessment as any).tempId;
+    const id =
+      (assessment as AssessmentInDb).id ||
+      (assessment as AssessmentLocal).tempId;
     return id === selectedAssessmentId;
   });
 
-  // Handler to add a new question to the selected assessment
   const handleAddQuestion = (question: Questionnaire) => {
-    if (!selectedStage || !selectedProcessType || !selectedAssessmentId) return;
+    if (!selectedPipelineStep || !selectedAssessmentId) return;
 
     const updatedPipelines = pipelineSteps.map((step) => {
-      if (
-        step.stage === selectedStage &&
-        step.process_type === selectedProcessType
-      ) {
+      const stepId = (step as any).id || (step as any).tempId;
+      const selectedStepId =
+        (selectedPipelineStep as any).id ||
+        (selectedPipelineStep as any).tempId;
+
+      if (stepId === selectedStepId) {
         const updatedAssessments = step.assessments.map((assessment) => {
-          const id = (assessment as any).id || (assessment as any).tempId;
+          const id =
+            (assessment as AssessmentInDb).id ||
+            (assessment as AssessmentLocal).tempId;
           if (id === selectedAssessmentId) {
             return {
               ...assessment,
@@ -95,7 +79,13 @@ export const AssessmentManagement = ({
           }
           return assessment;
         });
-        return { ...step, assessments: updatedAssessments };
+        const updatedStep = { ...step, assessments: updatedAssessments };
+
+        if (stepId === selectedStepId) {
+          setSelectedPipelineStep(updatedStep);
+        }
+
+        return updatedStep;
       }
       return step;
     });
@@ -103,20 +93,25 @@ export const AssessmentManagement = ({
     pipelineHandler(updatedPipelines);
   };
 
-  // Handler to update an existing question
   const handleUpdateQuestion = (updatedQuestion: Questionnaire) => {
-    if (!selectedStage || !selectedProcessType || !selectedAssessmentId) return;
+    if (!selectedPipelineStep || !selectedAssessmentId) return;
 
     const updatedPipelines = pipelineSteps.map((step) => {
-      if (
-        step.stage === selectedStage &&
-        step.process_type === selectedProcessType
-      ) {
+      const stepId =
+        (step as PipelineStepInDb).id || (step as PipelineStepLocal).tempId;
+      const selectedStepId =
+        (selectedPipelineStep as PipelineStepInDb).id ||
+        (selectedPipelineStep as PipelineStepLocal).tempId;
+
+      if (stepId === selectedStepId) {
         const updatedAssessments = step.assessments.map((assessment) => {
-          const id = (assessment as any).id || (assessment as any).tempId;
+          const id =
+            (assessment as AssessmentInDb).id ||
+            (assessment as AssessmentLocal).tempId;
           if (id === selectedAssessmentId) {
             const updatedQuestions = (assessment.questions || []).map((q) => {
-              const qId = (q as any).id || (q as any).tempId;
+              const qId =
+                (q as QuestionnaireDb).id || (q as QuestionnaireLocal).tempId;
               const updatedQId =
                 (updatedQuestion as any).id || (updatedQuestion as any).tempId;
               return qId === updatedQId ? updatedQuestion : q;
@@ -125,7 +120,13 @@ export const AssessmentManagement = ({
           }
           return assessment;
         });
-        return { ...step, assessments: updatedAssessments };
+        const updatedStep = { ...step, assessments: updatedAssessments };
+
+        if (stepId === selectedStepId) {
+          setSelectedPipelineStep(updatedStep);
+        }
+
+        return updatedStep;
       }
       return step;
     });
@@ -133,31 +134,49 @@ export const AssessmentManagement = ({
     pipelineHandler(updatedPipelines);
   };
 
-  // Handler to delete a question
   const handleDeleteQuestion = (questionToDelete: Questionnaire) => {
-    if (!selectedStage || !selectedProcessType || !selectedAssessmentId) return;
+    if (!selectedPipelineStep || !selectedAssessmentId) return;
 
     const updatedPipelines = pipelineSteps.map((step) => {
-      if (
-        step.stage === selectedStage &&
-        step.process_type === selectedProcessType
-      ) {
+      const stepId =
+        (step as PipelineStepInDb).id || (step as PipelineStepLocal).tempId;
+      const selectedStepId =
+        (selectedPipelineStep as PipelineStepInDb).id ||
+        (selectedPipelineStep as PipelineStepLocal).tempId;
+
+      if (stepId === selectedStepId) {
         const updatedAssessments = step.assessments.map((assessment) => {
-          const id = (assessment as any).id || (assessment as any).tempId;
+          const id =
+            (assessment as AssessmentInDb).id ||
+            (assessment as AssessmentLocal).tempId;
           if (id === selectedAssessmentId) {
             const qIdToDelete =
-              (questionToDelete as any).id || (questionToDelete as any).tempId;
-            const updatedQuestions = (assessment.questions || []).filter(
-              (q) => {
-                const qId = (q as any).id || (q as any).tempId;
-                return qId !== qIdToDelete;
-              }
-            );
+              (questionToDelete as QuestionnaireDb).id ||
+              (questionToDelete as QuestionnaireLocal).tempId;
+
+            const updatedQuestions = (assessment.questions || [])
+              .map((q) => {
+                const qId =
+                  (q as QuestionnaireDb).id || (q as QuestionnaireLocal).tempId;
+                if (qId === qIdToDelete) {
+                  if (typeof qId === "number") return { ...q, _delete: true };
+                  else return null;
+                }
+                return q;
+              })
+              .filter((q) => q !== null) as Questionnaire[];
+
             return { ...assessment, questions: updatedQuestions };
           }
           return assessment;
         });
-        return { ...step, assessments: updatedAssessments };
+        const updatedStep = { ...step, assessments: updatedAssessments };
+
+        if (stepId === selectedStepId) {
+          setSelectedPipelineStep(updatedStep);
+        }
+
+        return updatedStep;
       }
       return step;
     });
@@ -165,7 +184,9 @@ export const AssessmentManagement = ({
     pipelineHandler(updatedPipelines);
   };
 
-  const assessmentQuestions = selectedAssessment?.questions || [];
+  const assessmentQuestions = (selectedAssessment?.questions || []).filter(
+    (q) => !(q as QuestionnaireDb)._delete
+  );
 
   return (
     <Card className="p-6">
@@ -190,76 +211,70 @@ export const AssessmentManagement = ({
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left Panel - Stage and Process Type Selection and Assessments List */}
+            {/* Left Panel - Pipeline Step Selection and Assessments List */}
             <div className="space-y-4">
-              {/* Stage Selection */}
+              {/* Pipeline Step Selection */}
               <Field>
-                <FieldLabel>Select Stage</FieldLabel>
+                <FieldLabel>Select Pipeline Step</FieldLabel>
                 <Select
-                  value={selectedStage?.toString() || ""}
+                  value={
+                    selectedPipelineStep
+                      ? String(
+                          (selectedPipelineStep as any).id ||
+                            (selectedPipelineStep as any).tempId
+                        )
+                      : ""
+                  }
                   onValueChange={(value) => {
-                    setSelectedStage(Number(value));
-                    setSelectedProcessType("");
+                    const step = pipelineStepsWithAssessments.find((s) => {
+                      const stepId = (s as any).id || (s as any).tempId;
+                      return String(stepId) === value;
+                    });
+                    setSelectedPipelineStep(step || null);
                     setSelectedAssessmentId(null);
                   }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a stage" />
+                    <SelectValue placeholder="Select a pipeline step">
+                      {selectedPipelineStep && (
+                        <div className="flex items-center gap-2">
+                          <ProcessTypeIcon
+                            processType={selectedPipelineStep.process_type}
+                            className="h-4 w-4 text-blue-600"
+                          />
+                          <span>
+                            Stage {selectedPipelineStep.stage} -{" "}
+                            {getProcessTypeLabel(
+                              selectedPipelineStep.process_type
+                            )}
+                          </span>
+                        </div>
+                      )}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {stagesWithAssessments.map((stage) => (
-                      <SelectItem key={stage} value={stage.toString()}>
-                        Stage {stage}
-                      </SelectItem>
-                    ))}
+                    {pipelineStepsWithAssessments.map((step) => {
+                      const stepId = (step as any).id || (step as any).tempId;
+                      return (
+                        <SelectItem key={stepId} value={String(stepId)}>
+                          <div className="flex items-center gap-2">
+                            <ProcessTypeIcon
+                              processType={step.process_type}
+                              className="h-4 w-4 text-blue-600"
+                            />
+                            <span>
+                              Stage {step.stage} -{" "}
+                              {getProcessTypeLabel(step.process_type)}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </Field>
 
-              {/* Process Type Selection - Only show when stage is selected */}
-              {selectedStage && processTypesForStage.length > 0 && (
-                <Field>
-                  <FieldLabel>Filter by Process Type</FieldLabel>
-                  <Select
-                    value={selectedProcessType}
-                    onValueChange={(value) => {
-                      setSelectedProcessType(value);
-                      setSelectedAssessmentId(null);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a process type">
-                        {selectedProcessType && (
-                          <div className="flex items-center gap-2">
-                            <ProcessTypeIcon
-                              processType={selectedProcessType}
-                              className="h-4 w-4 text-blue-600"
-                            />
-                            <span>
-                              {getProcessTypeLabel(selectedProcessType)}
-                            </span>
-                          </div>
-                        )}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {processTypesForStage.map((processType) => (
-                        <SelectItem key={processType} value={processType}>
-                          <div className="flex items-center gap-2">
-                            <ProcessTypeIcon
-                              processType={processType}
-                              className="h-4 w-4 text-blue-600"
-                            />
-                            <span>{getProcessTypeLabel(processType)}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-              )}
-
-              {selectedStage && selectedProcessType && (
+              {selectedPipelineStep && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-700">

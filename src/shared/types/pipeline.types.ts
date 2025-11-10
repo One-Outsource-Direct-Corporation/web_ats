@@ -12,6 +12,7 @@ interface AssessmentBase {
 
 export interface AssessmentInDb extends AssessmentBase {
   id: number;
+  _delete?: boolean;
 }
 
 export interface AssessmentLocal extends AssessmentBase {
@@ -39,6 +40,7 @@ interface PipelineStepBase {
 
 export interface PipelineStepInDb extends PipelineStepBase {
   id: number;
+  _delete?: boolean;
 }
 
 export interface PipelineStepLocal extends PipelineStepBase {
