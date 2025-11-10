@@ -1,4 +1,5 @@
 import type { User } from "@/features/auth/types/auth.types";
+import type { Questionnaire } from "@/features/positions-client/types/questionnaire.types";
 
 interface AssessmentBase {
   type: string;
@@ -6,6 +7,7 @@ interface AssessmentBase {
   description: string;
   required: boolean;
   order: number;
+  questions?: Questionnaire[];
 }
 
 export interface AssessmentInDb extends AssessmentBase {

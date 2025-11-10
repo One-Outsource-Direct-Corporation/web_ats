@@ -16,7 +16,7 @@ import Step01 from "../components/steps/Step01";
 import Step02 from "../components/steps/Step02";
 import Step03 from "../components/steps/Step03";
 import Step04 from "../components/steps/Step04";
-import { AssessmentManagement } from "../components/AssessmentManagement";
+import Step05 from "../components/steps/Step05";
 import { stateToDataFormatClient } from "@/shared/utils/stateToDataFormat";
 import type {
   ApplicationForm,
@@ -82,7 +82,7 @@ export default function PositionClient({
       // TODO: bring back the Pool Applicants Here
       // TODO: change the data structure from changes made
 
-      console.log(formData.application_form);
+      console.log(formData.pipeline);
       return;
 
       const data = stateToDataFormatClient(formData);
@@ -149,9 +149,9 @@ export default function PositionClient({
         );
       case 5:
         return (
-          <AssessmentManagement
+          <Step05
             pipelineSteps={formData.pipeline}
-            goToPipeline={() => handleStepClick(4)}
+            pipelineHandler={pipelineHandler}
           />
         );
     }

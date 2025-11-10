@@ -139,9 +139,12 @@ export function AssessmentSection({
     })
   );
 
-  // Sync with parent assessments
+  // Sync with parent assessments and sort by order field
   useEffect(() => {
-    setLocalAssessments(assessments);
+    const sortedAssessments = [...assessments].sort(
+      (a, b) => a.order - b.order
+    );
+    setLocalAssessments(sortedAssessments);
   }, [assessments]);
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -161,11 +164,20 @@ export function AssessmentSection({
           oldIndex,
           newIndex
         );
-        setLocalAssessments(reorderedAssessments);
+
+        // Update the order field for each assessment based on new position
+        const assessmentsWithUpdatedOrder = reorderedAssessments.map(
+          (assessment, index) => ({
+            ...assessment,
+            order: index + 1, // Start order from 1
+          })
+        );
+
+        setLocalAssessments(assessmentsWithUpdatedOrder);
 
         // Update parent with new order
         if (onReorder) {
-          onReorder(reorderedAssessments);
+          onReorder(assessmentsWithUpdatedOrder);
         }
       }
     }
@@ -182,7 +194,14 @@ export function AssessmentSection({
           <AddAssessmentModal
             open={openAssessment}
             onOpenChange={setOpenAssessment}
-            onAdd={onAdd}
+            onAdd={(assessment) => {
+              // First assessment should have order 1
+              const assessmentWithOrder = {
+                ...assessment,
+                order: 1,
+              };
+              onAdd(assessmentWithOrder);
+            }}
           />
         </div>
       </div>
@@ -229,7 +248,16 @@ export function AssessmentSection({
           }
         }}
         onAdd={(assessment) => {
-          onAdd(assessment);
+          // Calculate next order value
+          const maxOrder =
+            localAssessments.length > 0
+              ? Math.max(...localAssessments.map((a) => a.order))
+              : 0;
+          const assessmentWithOrder = {
+            ...assessment,
+            order: maxOrder + 1,
+          };
+          onAdd(assessmentWithOrder);
           setOpenAssessment(false);
         }}
         editingAssessment={editingAssessment}
@@ -239,27 +267,6 @@ export function AssessmentSection({
           setOpenAssessment(false);
         }}
       />
-
-      {/* {editingAssessment ? (
-        <AddAssessmentModal
-          open={!!editingAssessment}
-          onOpenChange={(isOpen) => {
-            if (!isOpen) setEditingAssessment(null);
-          }}
-          onAdd={onAdd}
-          editingAssessment={editingAssessment}
-          onUpdate={(id, updatedAssessment) => {
-            onChange(id, updatedAssessment);
-            setEditingAssessment(null);
-          }}
-        />
-      ) : (
-        <AddAssessmentModal
-          open={openAssessment}
-          onOpenChange={setOpenAssessment}
-          onAdd={onAdd}
-        />
-      )} */}
     </div>
   );
 }
