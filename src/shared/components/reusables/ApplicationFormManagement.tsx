@@ -240,6 +240,30 @@ export const ApplicationFormManagement = ({
     nonNegotiableHandler(updatedNonNegotiable);
   };
 
+  const removeNonNegotiable = (fieldName: string) => {
+    const updatedNonNegotiables =
+      applicationFormData.non_negotiable.non_negotiable.filter(
+        (nn) => nn.field !== fieldName
+      );
+    const updatedNonNegotiable: NonNegotiable = {
+      ...applicationFormData.non_negotiable,
+      non_negotiable: updatedNonNegotiables,
+    };
+    nonNegotiableHandler(updatedNonNegotiable);
+  };
+
+  const addNonNegotiable = (newNonNegotiable: NonNegotiableBase) => {
+    const updatedNonNegotiables = {
+      ...applicationFormData.non_negotiable,
+      non_negotiable: [
+        ...applicationFormData.non_negotiable.non_negotiable,
+        newNonNegotiable,
+      ],
+    };
+
+    nonNegotiableHandler(updatedNonNegotiables);
+  };
+
   return (
     <div className="space-y-6">
       <div className="space-y-4">
@@ -290,15 +314,13 @@ export const ApplicationFormManagement = ({
             </div>
           </div>
 
-          {hasNonNegotiablesSelected && (
-            <Button
-              onClick={() => setShowNonNegotiableModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              Configure Non-Negotiables
-            </Button>
-          )}
+          <Button
+            onClick={() => setShowNonNegotiableModal(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Configure Non-Negotiables
+          </Button>
         </div>
         <div>
           <h3 className="text-2xl font-semibold text-gray-800 mb-2">
@@ -432,6 +454,8 @@ export const ApplicationFormManagement = ({
         onContinue={() => setShowNonNegotiableModal(false)}
         formData={applicationFormData}
         setNonNegotiableValue={setNonNegotiableValue}
+        addCustomNonNegotiable={addNonNegotiable}
+        removeNonNegotiable={removeNonNegotiable}
       />
     </div>
   );

@@ -1,8 +1,12 @@
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, PlusCircle, X } from "lucide-react";
+import { useState } from "react";
 
-import type { ApplicationFormData } from "../../../shared/types/application_form.types";
+import type {
+  ApplicationFormData,
+  NonNegotiableBase,
+} from "../../../shared/types/application_form.types";
 import {
   Select,
   SelectContent,
@@ -13,6 +17,7 @@ import {
 
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
 import { Field, FieldGroup } from "@/shared/components/ui/field";
+import { Label } from "@/shared/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -32,7 +37,11 @@ interface NonNegotiableModalProps {
     fieldName: string,
     value: string | number | boolean
   ) => void;
+  addCustomNonNegotiable: (newNonNegotiable: NonNegotiableBase) => void;
+  removeNonNegotiable: (fieldName: string) => void;
 }
+
+type InputType = "text" | "number" | "boolean";
 
 // Field configuration for non-negotiable requirements
 const NON_NEGOTIABLE_FIELDS = [
@@ -84,7 +93,14 @@ export const NonNegotiableModal = ({
   onContinue,
   formData,
   setNonNegotiableValue,
+  addCustomNonNegotiable,
+  removeNonNegotiable,
 }: NonNegotiableModalProps) => {
+  // State for adding new non-negotiable
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newFieldLabel, setNewFieldLabel] = useState("");
+  const [newFieldType, setNewFieldType] = useState<InputType>("text");
+
   // No local state: update parent immediately
   if (!show) return null;
 
@@ -111,6 +127,40 @@ export const NonNegotiableModal = ({
     setNonNegotiableValue(fieldKey, value);
   };
 
+  const handleAddNonNegotiable = () => {
+    if (!newFieldLabel.trim()) {
+      alert("Please enter a field name");
+      return;
+    }
+
+    // Create a field key from the label (convert to snake_case)
+    const fieldKey = newFieldLabel.toLowerCase().replace(/\s+/g, "_");
+    let initialValue: string | number | boolean = "";
+
+    if (newFieldType === "boolean") {
+      initialValue = false;
+    } else if (newFieldType === "number") {
+      initialValue = 0;
+    } else {
+      initialValue = "";
+    }
+
+    addCustomNonNegotiable({
+      field: fieldKey,
+      value: initialValue,
+    });
+
+    addCustomNonNegotiable({
+      field: fieldKey,
+      value: initialValue,
+    });
+
+    // Reset form
+    setNewFieldLabel("");
+    setNewFieldType("text");
+    setShowAddForm(false);
+  };
+
   const handleSave = () => {
     onContinue();
   };
@@ -121,6 +171,116 @@ export const NonNegotiableModal = ({
       (item) => item.field === field.key
     )
   );
+
+  // Get custom non-negotiable fields (fields not in predefined list)
+  const customNonNegotiableFields =
+    formData.non_negotiable.non_negotiable.filter(
+      (item) => !NON_NEGOTIABLE_FIELDS.some((field) => field.key === item.field)
+    );
+
+  // Helper to determine input type for custom field
+  const getCustomFieldInputType = (fieldKey: string): InputType => {
+    const item = formData.non_negotiable.non_negotiable.find(
+      (nn) => nn.field === fieldKey
+    );
+    if (!item) return "text";
+
+    if (typeof item.value === "boolean") return "boolean";
+    if (typeof item.value === "number") return "number";
+    return "text";
+  };
+
+  const renderCustomField = (fieldKey: string) => {
+    const inputType = getCustomFieldInputType(fieldKey);
+    let fieldValue = getFieldValue(fieldKey);
+
+    // Convert label from snake_case to Title Case
+    const fieldLabel = fieldKey
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+
+    return (
+      <FieldGroup className="border gap-4 rounded-lg p-4 relative">
+        <div className="flex justify-between items-start">
+          <div>
+            <span className="text-xs text-purple-600 font-medium">
+              Custom Field
+            </span>
+            <h4 className="text-sm font-medium text-gray-800">{fieldLabel}</h4>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => removeNonNegotiable(fieldKey)}
+            className="h-6 w-6 p-0 text-gray-400 hover:text-red-600"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {inputType === "text" && (
+          <Input
+            type="text"
+            placeholder="Enter required value"
+            value={String(fieldValue ?? "")}
+            onChange={(e) => handleFieldChange(fieldKey, e.target.value)}
+            className="w-full"
+          />
+        )}
+
+        {inputType === "number" && (
+          <Input
+            type="number"
+            placeholder="Enter minimum required value"
+            value={String(fieldValue ?? "")}
+            onChange={(e) =>
+              handleFieldChange(fieldKey, Number(e.target.value))
+            }
+            className="w-full"
+          />
+        )}
+
+        {inputType === "boolean" && (
+          <Field>
+            <RadioGroup
+              value={String(fieldValue)}
+              onValueChange={(value: string) =>
+                handleFieldChange(fieldKey, value === "true")
+              }
+            >
+              <div className="flex items-center">
+                <RadioGroupItem
+                  value="true"
+                  id={`${fieldKey}-true`}
+                  className="text-blue-500 border-blue-500 [&_svg]:fill-blue-500"
+                />
+                <label
+                  htmlFor={`${fieldKey}-true`}
+                  className="text-sm cursor-pointer text-gray-700 ml-2"
+                >
+                  Yes
+                </label>
+              </div>
+              <div className="flex items-center">
+                <RadioGroupItem
+                  value="false"
+                  id={`${fieldKey}-false`}
+                  className="text-blue-500 border-blue-500 [&_svg]:fill-blue-500"
+                />
+                <label
+                  htmlFor={`${fieldKey}-false`}
+                  className="text-sm cursor-pointer text-gray-700 ml-2"
+                >
+                  No
+                </label>
+              </div>
+            </RadioGroup>
+          </Field>
+        )}
+      </FieldGroup>
+    );
+  };
 
   return (
     <Dialog open={show} onOpenChange={(open) => !open && onClose()}>
@@ -133,14 +293,17 @@ export const NonNegotiableModal = ({
           </DialogDescription>
         </DialogHeader>
 
-        {activeNonNegotiableFields.length === 0 ? (
+        {activeNonNegotiableFields.length === 0 &&
+        customNonNegotiableFields.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-gray-500">
-              No non-negotiable fields have been selected.
+              No non-negotiable fields have been selected. Click "Add
+              Non-Negotiables" to create custom fields.
             </p>
           </div>
         ) : (
           <div className="space-y-4">
+            {/* Predefined Non-Negotiable Fields */}
             {activeNonNegotiableFields.map((field) => {
               const fieldKey = String(field.key);
               let fieldValue = getFieldValue(fieldKey);
@@ -154,17 +317,27 @@ export const NonNegotiableModal = ({
               }
               return (
                 <FieldGroup
-                  key={fieldKey}
-                  className="border gap-4 rounded-lg p-4"
+                  key={`predefined-${fieldKey}-${field.label}`}
+                  className="border gap-4 rounded-lg p-4 relative"
                 >
-                  <div>
-                    <span className="text-xs text-blue-600 font-medium">
-                      Application Form
-                    </span>
-                    <h4 className="text-sm font-medium text-gray-800">
-                      {field.label}
-                    </h4>
-                  </div>
+                  <Field orientation="horizontal" className="justify-between">
+                    <div>
+                      <span className="text-xs text-blue-600 font-medium">
+                        Application Form
+                      </span>
+                      <h4 className="text-sm font-medium text-gray-800">
+                        {field.label}
+                      </h4>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeNonNegotiable(fieldKey)}
+                      className="h-6 w-6 p-0 text-gray-400 hover:text-red-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </Field>
 
                   {field.type === "number" && (
                     <Input
@@ -246,7 +419,100 @@ export const NonNegotiableModal = ({
                 </FieldGroup>
               );
             })}
+
+            {/* Custom Non-Negotiable Fields */}
+            {customNonNegotiableFields.map((item, index) => (
+              <div key={`custom-${item.field}-${index}`}>
+                {renderCustomField(item.field)}
+              </div>
+            ))}
           </div>
+        )}
+
+        {/* Add Non-Negotiable Form */}
+        {showAddForm ? (
+          <div className="border border-blue-300 rounded-lg p-4 space-y-4 bg-blue-50">
+            <div className="flex justify-between items-center">
+              <h3 className="text-sm font-semibold text-gray-800">
+                Add Custom Non-Negotiable
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAddForm(false)}
+                className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <Label
+                  htmlFor="field-label"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Field Name
+                </Label>
+                <Input
+                  id="field-label"
+                  type="text"
+                  placeholder="e.g., Years of Experience, Certification"
+                  value={newFieldLabel}
+                  onChange={(e) => setNewFieldLabel(e.target.value)}
+                  className="w-full mt-1"
+                />
+              </div>
+
+              <div>
+                <Label
+                  htmlFor="field-type"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Input Type
+                </Label>
+                <Select
+                  value={newFieldType}
+                  onValueChange={(value: InputType) => setNewFieldType(value)}
+                >
+                  <SelectTrigger id="field-type" className="w-full mt-1">
+                    <SelectValue placeholder="Select input type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="text">Text</SelectItem>
+                    <SelectItem value="number">Number</SelectItem>
+                    <SelectItem value="boolean">Yes/No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAddForm(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleAddNonNegotiable}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Add Field
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <Button
+            variant="outline"
+            onClick={() => setShowAddForm(true)}
+            className="text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white w-full"
+          >
+            <PlusCircle className="w-4 h-4 mr-1" />
+            Add Non-Negotiables
+          </Button>
         )}
 
         <div className="bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 p-4 flex items-start gap-3 rounded-md">
