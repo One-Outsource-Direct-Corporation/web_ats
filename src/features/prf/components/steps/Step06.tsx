@@ -1,56 +1,64 @@
-import React from "react";
 import { Button } from "@/shared/components/ui/button";
-import type { PRF } from "../types/prf.types";
-import { PreviewInfo } from "./PreviewInfo";
+import type { PRFFormData } from "../../types/prf.types";
 import formatName from "@/shared/utils/formatName";
+import formatDate from "@/shared/utils/formatDate";
+import { ArrowLeft } from "lucide-react";
+import DOMPurify from "dompurify";
+import { PreviewInfo } from "../PreviewInfo";
 
-interface Step04Props {
+interface Step06Props {
   goToPreviousStep: () => void;
+  formData: PRFFormData;
   step: number;
-  formData: PRF;
   handleSubmit: () => void;
 }
 
-export const Step04: React.FC<Step04Props> = ({
+export const Step06 = ({
   goToPreviousStep,
-  step,
   formData,
+  step,
   handleSubmit,
-}) => {
+}: Step06Props) => {
   // Preview all entered data and submit
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-6 text-gray-800">
       <div className="lg:col-span-2 space-y-10">
-        <h2 className="text-[#0056D2] font-bold text-lg mb-4 border-l-4 border-[#0056D2] pl-2 uppercase">
+        <h2 className="text-blue-700 font-bold text-lg mb-4 border-l-4 border-blue-700 pl-2 uppercase">
           Review Your Request
         </h2>
         <div className="space-y-6">
           {/* Position & Department Info */}
           <div>
-            <h3 className="font-semibold text-md mb-2">Position Information</h3>
+            <h3 className="font-semibold text-md mb-2 border-blue-700 text-blue-700 border-l-4 pl-2">
+              Position Information
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <span className="font-medium">Job Title:</span>{" "}
-                {formData.job_title}
+                {formData.job_posting.job_title}
               </div>
               <div>
                 <span className="font-medium">Target Start Date:</span>{" "}
-                {formData.target_start_date}
+                {formatDate(
+                  formData.job_posting.target_start_date
+                    ? formData.job_posting.target_start_date
+                    : ""
+                )}
               </div>
               <div>
                 <span className="font-medium">No. of Vacancies:</span>{" "}
-                {formData.number_of_vacancies}
+                {formData.job_posting.number_of_vacancies}
               </div>
               <div>
                 <span className="font-medium">Reason for Posting:</span>{" "}
-                {formData.reason_for_posting}{" "}
-                {formData.reason_for_posting === "Other" &&
-                  `(${formData.other_reason_for_posting})`}
+                {formData.job_posting.reason_for_posting}{" "}
+                {formData.job_posting.reason_for_posting === "Other" &&
+                  `(${formData.job_posting.other_reason_for_posting})`}
               </div>
             </div>
           </div>
           <div>
-            <h3 className="font-semibold text-md mb-2">
+            <h3 className="font-semibold text-md mb-2 border-blue-700 text-blue-700 border-l-4 pl-2">
               Department Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -60,41 +68,39 @@ export const Step04: React.FC<Step04Props> = ({
               </div>
               <div>
                 <span className="font-medium">Department Name:</span>{" "}
-                {formData.department}
+                {formData.job_posting.department}
               </div>
               <div>
                 <span className="font-medium">Immediate Supervisor:</span>{" "}
                 {formData.immediate_supervisor}
               </div>
-              <div>
-                <span className="font-medium">Interview Levels:</span>{" "}
-                {formData.interview_levels}
-              </div>
             </div>
           </div>
           {/* Job Details */}
           <div>
-            <h3 className="font-semibold text-md mb-2">Job Details</h3>
+            <h3 className="font-semibold text-md mb-2 border-blue-700 text-blue-700 border-l-4 pl-2">
+              Job Details
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <span className="font-medium">Employment Type:</span>{" "}
-                {formData.employment_type}
+                {formData.job_posting.employment_type}
               </div>
               <div>
                 <span className="font-medium">Work Setup:</span>{" "}
-                {formData.work_setup}
+                {formData.job_posting.work_setup}
               </div>
               <div>
                 <span className="font-medium">Category:</span>{" "}
                 {formData.category}
               </div>
               <div>
-                <span className="font-medium">Position:</span>{" "}
-                {formData.position}
+                <span className="font-medium">Experience Level:</span>{" "}
+                {formData.job_posting.experience_level}
               </div>
               <div>
                 <span className="font-medium">Working Site:</span>{" "}
-                {formData.working_site}
+                {formData.job_posting.working_site}
               </div>
               <div>
                 <span className="font-medium">Work Schedule:</span>{" "}
@@ -104,73 +110,59 @@ export const Step04: React.FC<Step04Props> = ({
           </div>
           {/* Job Description */}
           <div>
-            <h3 className="font-semibold text-md mb-2">Job Description</h3>
+            <h3 className="font-semibold text-md mb-2 border-blue-700 text-blue-700 border-l-4 pl-2">
+              Job Description
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <span className="font-medium">Description:</span>{" "}
-                {formData.description}
+                <div
+                  className="text-gray-700 mb-4 preview-content"
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(
+                      formData.job_posting?.description || ""
+                    ),
+                  }}
+                />
               </div>
               <div>
                 <span className="font-medium">Responsibilities:</span>{" "}
-                {formData.responsibilities}
+                <div
+                  className="text-gray-700 mb-4 preview-content"
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(
+                      formData.job_posting?.responsibilities || ""
+                    ),
+                  }}
+                />
               </div>
               <div>
                 <span className="font-medium">Qualifications:</span>{" "}
-                {formData.qualifications}
-              </div>
-              <div>
-                <span className="font-medium">Non-Negotiables:</span>{" "}
-                {formData.non_negotiables}
+                <div
+                  className="text-gray-700 mb-4 preview-content"
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(
+                      formData.job_posting?.qualifications || ""
+                    ),
+                  }}
+                />
               </div>
             </div>
           </div>
           {/* Salary Budget */}
           <div>
-            <h3 className="font-semibold text-md mb-2">Salary Budget</h3>
+            <h3 className="font-semibold text-md mb-2 border-blue-700 text-blue-700 border-l-4 pl-2">
+              Salary Budget
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <span className="font-medium">Budget:</span>{" "}
-                {formData.salary_budget}
+                <span className="font-medium">Min Salary:</span>{" "}
+                {formData.job_posting.min_budget}
               </div>
               <div>
-                <span className="font-medium">Is Salary Range:</span>{" "}
-                {formData.is_salary_range ? "Yes" : "No"}
+                <span className="font-medium">Max Salary:</span>{" "}
+                {formData.job_posting.max_budget}
               </div>
-              {formData.is_salary_range && (
-                <>
-                  <div>
-                    <span className="font-medium">Min Salary:</span>{" "}
-                    {formData.min_salary}
-                  </div>
-                  <div>
-                    <span className="font-medium">Max Salary:</span>{" "}
-                    {formData.max_salary}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-          {/* Assessments */}
-          <div>
-            <h3 className="font-semibold text-md mb-2">Assessments</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <span className="font-medium">Required:</span>{" "}
-                {formData.assessment_required}
-              </div>
-              <div>
-                <span className="font-medium">Types:</span>{" "}
-                {Object.entries(formData.assessment_types)
-                  .filter(([_, v]) => v)
-                  .map(([k]) => k.charAt(0).toUpperCase() + k.slice(1))
-                  .join(", ")}
-              </div>
-              {formData.other_assessment && (
-                <div>
-                  <span className="font-medium">Other Assessment:</span>{" "}
-                  {formData.other_assessment}
-                </div>
-              )}
             </div>
           </div>
           {/* Asset Request */}
@@ -196,7 +188,8 @@ export const Step04: React.FC<Step04Props> = ({
         </div>
         <div className="flex justify-between mt-10">
           <Button variant="outline" onClick={goToPreviousStep}>
-            &larr; Previous
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Previous
           </Button>
           <Button
             className="bg-[#0056D2] hover:bg-blue-700 text-white"

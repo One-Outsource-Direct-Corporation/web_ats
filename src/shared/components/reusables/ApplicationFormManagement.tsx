@@ -175,9 +175,6 @@ export const ApplicationFormManagement = ({
 
   const [showNonNegotiableModal, setShowNonNegotiableModal] = useState(false);
 
-  const hasNonNegotiablesSelected =
-    applicationFormData.non_negotiable.non_negotiable.length > 0;
-
   // Check if a field is marked as non-negotiable
   const isNonNegotiable = (fieldName: string): boolean => {
     return applicationFormData.non_negotiable.non_negotiable.some(

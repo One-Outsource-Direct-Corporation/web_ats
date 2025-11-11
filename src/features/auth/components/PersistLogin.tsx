@@ -40,7 +40,7 @@ export default function PersistLogin() {
         return;
       }
 
-      if (persist && isAuth && !user?.access) {
+      if (persist && isAuth) {
         try {
           await refresh();
         } catch (err) {

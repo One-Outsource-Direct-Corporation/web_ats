@@ -14,10 +14,10 @@ import type { ApplicationFormQuestionnaire } from "../types/questionnaire.types"
 const getDefaultFormData = (): PositionFormData => ({
   client: null,
   education_level: null,
-  experience_level: null,
   job_posting: {
     job_title: null,
     department: null,
+    experience_level: null,
     other_department: null,
     employment_type: null,
     number_of_vacancies: null,

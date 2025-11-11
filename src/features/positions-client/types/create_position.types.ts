@@ -4,6 +4,7 @@ import type { PipelineStep } from "../../../shared/types/pipeline.types";
 
 export interface JobPosting {
   job_title: string | null;
+  experience_level: string | null;
   department: string | null;
   other_department: string | null;
   employment_type: string | null;
@@ -31,7 +32,6 @@ export interface Client {
 export interface PositionBase {
   client: number | null;
   education_level: string | null;
-  experience_level: string | null;
 }
 
 export interface Position extends PositionBase {
@@ -47,7 +47,7 @@ export interface PositionDb extends Position {
   posted_by: string;
   created_at: Date;
   updated_at: Date;
-  type: "prf" | "client";
+  type: "client";
   status: string;
   published: boolean;
   active: boolean;
