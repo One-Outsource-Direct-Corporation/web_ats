@@ -2,6 +2,12 @@ import type { ApplicationFormData } from "../../../shared/types/application_form
 import type { BatchEntry, LocationEntry } from "./location_and_batch.types";
 import type { PipelineStep } from "../../../shared/types/pipeline.types";
 
+export interface StepProps {
+  number: number;
+  title: string;
+  active: boolean;
+}
+
 export interface JobPosting {
   job_title: string | null;
   experience_level: string | null;

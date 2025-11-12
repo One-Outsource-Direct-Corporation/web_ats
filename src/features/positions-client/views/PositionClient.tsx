@@ -16,7 +16,6 @@ import Step01 from "../components/steps/Step01";
 import Step02 from "../components/steps/Step02";
 import Step03 from "../components/steps/Step03";
 import Step04 from "../components/steps/Step04";
-import Step05 from "../components/steps/Step05";
 import { stateToDataFormatClient } from "@/shared/utils/stateToDataFormat";
 import type {
   ApplicationForm,
@@ -78,7 +77,7 @@ export default function PositionClient({
   // TODO: Add The Step Errors
 
   const handleNext = async () => {
-    if (currentStep === 5) {
+    if (currentStep === 4) {
       // TODO: bring back the Pool Applicants Here
       // TODO: change the data structure from changes made
 
@@ -147,13 +146,15 @@ export default function PositionClient({
             pipelineHandler={pipelineHandler}
           />
         );
-      case 5:
-        return (
-          <Step05
-            pipelineSteps={formData.pipeline}
-            pipelineHandler={pipelineHandler}
-          />
-        );
+
+      // Disabled Step 5 (Phase 2)
+      // case 5:
+      //   return (
+      //     <Step05
+      //       pipelineSteps={formData.pipeline}
+      //       pipelineHandler={pipelineHandler}
+      //     />
+      //   );
     }
   };
 
@@ -203,7 +204,7 @@ export default function PositionClient({
             className="bg-blue-600 hover:bg-blue-700 text-white"
             onClick={handleNext}
           >
-            {currentStep === 5 ? "Publish Position" : "Next step →"}
+            {currentStep === 4 ? "Publish Position" : "Next step →"}
           </Button>
         </div>
       </div>

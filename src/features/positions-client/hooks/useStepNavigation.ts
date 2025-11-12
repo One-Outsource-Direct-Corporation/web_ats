@@ -10,7 +10,7 @@ export const useStepNavigation = () => {
     { number: 2, title: "Description", active: currentStep === 2 },
     { number: 3, title: "Application Form", active: currentStep === 3 },
     { number: 4, title: "Pipeline", active: currentStep === 4 },
-    { number: 5, title: "Assessment", active: currentStep === 5 },
+    // { number: 5, title: "Assessment", active: currentStep === 5 },
   ];
 
   const getStepTitle = () => {
@@ -23,8 +23,8 @@ export const useStepNavigation = () => {
         return steps[2].title;
       case 4:
         return steps[3].title;
-      case 5:
-        return steps[4].title;
+      // case 5:
+      //   return steps[4].title;
     }
   };
 
@@ -32,7 +32,7 @@ export const useStepNavigation = () => {
     if (!completedSteps.includes(currentStep)) {
       setCompletedSteps((prev) => [...prev, currentStep]);
     }
-    if (currentStep < 5) {
+    if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
     }
   };
