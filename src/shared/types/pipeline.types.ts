@@ -1,13 +1,22 @@
 import type { User } from "@/features/auth/types/auth.types";
-import type { Questionnaire } from "@/features/positions-client/types/questionnaire.types";
+
+interface FileBase {
+  file: File;
+  filename: string;
+}
+
+interface FileInDb extends FileBase {
+  id: number;
+}
+
+export type FileI = FileInDb | FileBase;
 
 interface AssessmentBase {
-  type: string;
-  title: string;
-  description: string;
-  required: boolean;
+  name?: string | null; // For template assessments
+  is_template: boolean;
+  type: string | null;
   order: number;
-  questions?: Questionnaire[];
+  file: FileI | null;
 }
 
 export interface AssessmentInDb extends AssessmentBase {
@@ -32,7 +41,6 @@ interface PipelineStepBase {
   description: string;
   order: number;
   stage: number;
-  redacted: boolean;
   reminder: string;
   hiring_managers: User[] | [];
   assessments: Assessment[];

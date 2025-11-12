@@ -8,7 +8,6 @@ import {
 } from "@/shared/components/ui/dialog";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
-import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Plus } from "lucide-react";
 import type {
   PipelineStep,
@@ -110,24 +109,6 @@ export function AddStepFormDialog({
               onChange={(e) => onStepDataChange("description", e.target.value)}
               className="w-full min-h-[80px] px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-          </Field>
-
-          {/* Redacted Information */}
-          <Field orientation="horizontal">
-            <Checkbox
-              id="redacted-information"
-              checked={stepData.redacted}
-              onCheckedChange={(checked) =>
-                onStepDataChange("redacted", checked)
-              }
-              className="data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white dark:data-[state=checked]:border-blue-700 dark:data-[state=checked]:bg-blue-700"
-            />
-            <FieldLabel
-              htmlFor="redacted-information"
-              className="text-sm text-gray-700"
-            >
-              Redacted Information
-            </FieldLabel>
           </Field>
 
           {/* Assessment Section */}

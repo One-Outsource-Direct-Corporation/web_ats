@@ -75,8 +75,8 @@ function SortableAssessmentItem({
       >
         <GripVertical className="h-5 w-5" />
       </button>
-
-      <div className="flex-1">
+      {/* PHASE 2 */}
+      {/* <div className="flex-1">
         <div className="font-medium text-sm">{assessment.title}</div>
         <div className="text-xs text-gray-600">{assessment.type}</div>
         {assessment.description && (
@@ -87,6 +87,10 @@ function SortableAssessmentItem({
         {assessment.required && (
           <span className="text-xs text-blue-600 font-medium">Required</span>
         )}
+      </div> */}
+
+      <div className="flex-1">
+        <div className="text-xs text-gray-600">{assessment.type}</div>
       </div>
 
       <div className="flex items-center gap-2">
