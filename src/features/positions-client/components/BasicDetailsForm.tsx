@@ -107,9 +107,9 @@ export const BasicDetailsForm = ({
             <Field>
               <FieldLabel>Department *</FieldLabel>
               <Select
-                value={formData.job_posting.department ?? ""}
+                value={formData.job_posting.department_name ?? ""}
                 onValueChange={(value) =>
-                  handleJobPostingChange("department", value)
+                  handleJobPostingChange("department_name", value)
                 }
               >
                 <SelectTrigger className="w-full">
@@ -147,14 +147,17 @@ export const BasicDetailsForm = ({
               )}
             </Field>
 
-            {formData.job_posting.department === "other" && (
+            {formData.job_posting.department_name === "other" && (
               <Field>
                 <FieldLabel>Please Specify *</FieldLabel>
                 <Input
                   type="text"
-                  value={formData.job_posting.other_department ?? ""}
+                  value={formData.job_posting.department_name_other ?? ""}
                   onChange={(e) =>
-                    handleJobPostingChange("other_department", e.target.value)
+                    handleJobPostingChange(
+                      "department_name_other",
+                      e.target.value
+                    )
                   }
                 />
               </Field>
@@ -253,9 +256,9 @@ export const BasicDetailsForm = ({
             <Field>
               <FieldLabel>Experience Level *</FieldLabel>
               <Select
-                value={formData.experience_level ?? ""}
+                value={formData.job_posting.experience_level ?? ""}
                 onValueChange={(value) =>
-                  onInputChange("experience_level", value)
+                  handleJobPostingChange("experience_level", value)
                 }
               >
                 <SelectTrigger className="w-full">
@@ -383,9 +386,9 @@ export const BasicDetailsForm = ({
               <FieldLabel>Minimum</FieldLabel>
               <Input
                 type="number"
-                value={formData.job_posting.min_budget ?? "0"}
+                value={formData.job_posting.min_salary ?? "0"}
                 onChange={(e) =>
-                  handleJobPostingChange("min_budget", e.target.value)
+                  handleJobPostingChange("min_salary", e.target.value)
                 }
                 placeholder="Minimum salary"
               />
@@ -394,9 +397,9 @@ export const BasicDetailsForm = ({
               <FieldLabel>Maximum</FieldLabel>
               <Input
                 type="number"
-                value={formData.job_posting.max_budget ?? "0"}
+                value={formData.job_posting.max_salary ?? "0"}
                 onChange={(e) =>
-                  handleJobPostingChange("max_budget", e.target.value)
+                  handleJobPostingChange("max_salary", e.target.value)
                 }
                 placeholder="Maximum salary"
               />

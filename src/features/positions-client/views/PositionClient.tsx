@@ -81,7 +81,8 @@ export default function PositionClient({
       // TODO: bring back the Pool Applicants Here
       // TODO: change the data structure from changes made
 
-      console.log(formData.pipeline);
+      console.log(formData);
+      console.log(stateToDataFormatClient(formData));
       return;
 
       const data = stateToDataFormatClient(formData);
