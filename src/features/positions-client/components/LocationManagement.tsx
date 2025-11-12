@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
-import formatDate from "@/shared/utils/formatDate";
+import { formatDate } from "@/shared/utils/formatDate";
 
 interface LocationManagementProps {
   locations: LocationEntry[];

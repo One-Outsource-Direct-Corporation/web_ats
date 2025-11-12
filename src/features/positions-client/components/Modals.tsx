@@ -4,7 +4,7 @@ import { X, Briefcase } from "lucide-react";
 import type { PositionFormData } from "@/features/positions-client/types/create_position.types";
 import formatName from "@/shared/utils/formatName";
 import formatMoney from "@/shared/utils/formatMoney";
-import formatDate from "@/shared/utils/formatDate";
+import { formatDate } from "@/shared/utils/formatDate";
 
 interface CancelModalProps {
   show: boolean;
@@ -97,12 +97,16 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
                 {formData.job_posting.job_title || "Position Title"}
               </h3>
               <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                <span>{formatName(formData.job_posting.department ?? "")}</span>
+                <span>
+                  {formatName(formData.job_posting.department_name ?? "")}
+                </span>
                 <span>
                   {formatName(formData.job_posting.employment_type ?? "")}
                 </span>
                 <span>{formatName(formData.job_posting.work_setup ?? "")}</span>
-                <span>{formatName(formData.experience_level ?? "")}</span>
+                <span>
+                  {formatName(formData.job_posting.experience_level ?? "")}
+                </span>
               </div>
             </div>
 
@@ -161,8 +165,8 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
               <div>
                 <strong className="text-gray-700">Budget Range:</strong>
                 <span className="ml-2">
-                  {formatMoney(Number(formData.job_posting.min_budget))} -{" "}
-                  {formatMoney(Number(formData.job_posting.max_budget))}
+                  {formatMoney(Number(formData.job_posting.min_salary))} -{" "}
+                  {formatMoney(Number(formData.job_posting.max_salary))}
                 </span>
               </div>
               <div>

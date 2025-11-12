@@ -1,7 +1,7 @@
 import { Button } from "@/shared/components/ui/button";
 import type { PRFFormData } from "../../types/prf.types";
 import formatName from "@/shared/utils/formatName";
-import formatDate from "@/shared/utils/formatDate";
+import { formatDate } from "@/shared/utils/formatDate";
 import { ArrowLeft } from "lucide-react";
 import DOMPurify from "dompurify";
 import { PreviewInfo } from "../PreviewInfo";
@@ -68,7 +68,7 @@ export const Step06 = ({
               </div>
               <div>
                 <span className="font-medium">Department Name:</span>{" "}
-                {formData.job_posting.department}
+                {formData.job_posting.department_name}
               </div>
               <div>
                 <span className="font-medium">Immediate Supervisor:</span>{" "}
@@ -157,11 +157,11 @@ export const Step06 = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <span className="font-medium">Min Salary:</span>{" "}
-                {formData.job_posting.min_budget}
+                {formData.job_posting.min_salary}
               </div>
               <div>
                 <span className="font-medium">Max Salary:</span>{" "}
-                {formData.job_posting.max_budget}
+                {formData.job_posting.max_salary}
               </div>
             </div>
           </div>

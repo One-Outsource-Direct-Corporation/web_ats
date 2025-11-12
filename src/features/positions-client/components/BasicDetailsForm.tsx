@@ -29,7 +29,7 @@ import { Button } from "@/shared/components/ui/button";
 import { CalendarIcon } from "lucide-react";
 import { Calendar } from "@/shared/components/ui/calendar";
 import useClient from "@/features/positions-client/hooks/useClient";
-import formatDate from "@/shared/utils/formatDate";
+import { formatDate } from "@/shared/utils/formatDate";
 
 interface BasicDetailsFormProps {
   formData: PositionFormData;

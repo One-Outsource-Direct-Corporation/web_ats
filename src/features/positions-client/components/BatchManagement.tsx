@@ -7,7 +7,7 @@ import type {
   BatchEntryDb,
   BatchEntryLocal,
 } from "../types/location_and_batch.types";
-import formatDate from "@/shared/utils/formatDate";
+import { formatDate } from "@/shared/utils/formatDate";
 
 interface BatchManagementProps {
   batches: BatchEntry[];

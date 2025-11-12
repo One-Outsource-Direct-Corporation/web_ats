@@ -1,5 +1,6 @@
 import type { PositionFormData } from "@/features/positions-client/types/create_position.types";
 import type { PRFFormData } from "@/features/prf/types/prf.types";
+import { formatDateYYYYMMDD } from "./formatDate";
 
 export function stateToDataFormatClient(formData: PositionFormData) {
   // TODO: change the data structure from changes made
@@ -14,7 +15,9 @@ export function stateToDataFormatClient(formData: PositionFormData) {
       employment_type: formData.job_posting.employment_type,
       number_of_vacancies: formData.job_posting.number_of_vacancies,
       work_setup: formData.job_posting.work_setup,
-      target_start_date: formData.job_posting.target_start_date,
+      target_start_date: formatDateYYYYMMDD(
+        formData.job_posting.target_start_date ?? ""
+      ),
       reason_for_posting: formData.job_posting.reason_for_posting,
       other_reason_for_posting: formData.job_posting.other_reason_for_posting,
       min_salary: formData.job_posting.min_salary,
@@ -26,7 +29,7 @@ export function stateToDataFormatClient(formData: PositionFormData) {
     },
     application_form: {
       application_form: formData.application_form.application_form,
-      non_negotiable: formData.application_form.non_negotiable,
+      non_negotiable: { ...formData.application_form.non_negotiable },
       questionnaire: {
         name: formData.application_form.questionnaire.name,
         template: formData.application_form.questionnaire.template,

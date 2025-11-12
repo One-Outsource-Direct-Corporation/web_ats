@@ -21,7 +21,7 @@ import {
 } from "@/shared/components/ui/popover";
 import { ArrowRight, ChevronDownIcon } from "lucide-react";
 import { Calendar } from "@/shared/components/ui/calendar";
-import formatDate from "@/shared/utils/formatDate";
+import { formatDate } from "@/shared/utils/formatDate";
 
 interface Step01Props {
   goToNextStep: () => void;
@@ -36,7 +36,7 @@ export const Step01: React.FC<Step01Props> = ({
 }) => {
   const { users, loading } = useUsersByDepartment({
     business_unit: formData.business_unit?.toLowerCase() || "",
-    department_name: formData.job_posting.department?.toLowerCase() || "",
+    department_name: formData.job_posting.department_name?.toLowerCase() || "",
     include: "hiring_manager",
   });
 

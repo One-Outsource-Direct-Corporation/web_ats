@@ -1,6 +1,6 @@
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import { usePositions } from "@/shared/hooks/usePositions";
-import formatDate from "@/shared/utils/formatDate";
+import { formatDate } from "@/shared/utils/formatDate";
 import formatName from "@/shared/utils/formatName";
 import FilterBar from "../components/FilterBar";
 import { Checkbox } from "@/shared/components/ui/checkbox";
