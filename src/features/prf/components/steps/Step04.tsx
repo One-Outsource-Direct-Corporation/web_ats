@@ -31,8 +31,6 @@ export const Step04 = ({
   nonNegotiableHandler,
   questionnaireHandler,
 }: Step04Props) => {
-  console.log(formData);
-  // Preview all entered data and submit
   return (
     <div className="space-y-10">
       <ApplicationFormManagement

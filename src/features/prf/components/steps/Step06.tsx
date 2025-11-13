@@ -181,7 +181,7 @@ export const Step06 = ({
                 <span className="font-medium">Hardware:</span>{" "}
                 {Object.entries(formData.hardware_required)
                   .filter(([_, v]) => v)
-                  .map(([k]) => k.charAt(0).toUpperCase() + k.slice(1))
+                  .map(([k]) => formatName(k))
                   .join(", ")}
               </div>
               <div>

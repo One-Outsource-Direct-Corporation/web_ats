@@ -1,6 +1,8 @@
 import type { PositionFormData } from "@/features/positions-client/types/create_position.types";
 import type { PRFFormData } from "@/features/prf/types/prf.types";
 import { formatDateYYYYMMDD } from "./formatDate";
+import { formatForJSON } from "./formatName";
+import DOMPurify from "dompurify";
 
 export function stateToDataFormatClient(formData: PositionFormData) {
   // TODO: change the data structure from changes made
@@ -8,7 +10,7 @@ export function stateToDataFormatClient(formData: PositionFormData) {
     client: formData.client,
     education_level: formData.education_level,
     job_posting: {
-      job_title: formData.job_posting.job_title,
+      job_title: formatForJSON(formData.job_posting.job_title ?? ""),
       department_name: formData.job_posting.department_name,
       department_name_other: formData.job_posting.department_name_other,
       experience_level: formData.job_posting.experience_level,
@@ -23,9 +25,13 @@ export function stateToDataFormatClient(formData: PositionFormData) {
       min_salary: formData.job_posting.min_salary,
       max_salary: formData.job_posting.max_salary,
       description: formData.job_posting.description,
-      responsibilities: formData.job_posting.responsibilities,
-      qualifications: formData.job_posting.qualifications,
-      working_site: formData.job_posting.working_site,
+      responsibilities: DOMPurify.sanitize(
+        formData.job_posting.responsibilities ?? ""
+      ),
+      qualifications: DOMPurify.sanitize(
+        formData.job_posting.qualifications ?? ""
+      ),
+      working_site: DOMPurify.sanitize(formData.job_posting.working_site ?? ""),
     },
     application_form: {
       application_form: formData.application_form.application_form,
@@ -47,15 +53,15 @@ export function stateToDataFormatClient(formData: PositionFormData) {
 
 export function stateToDataFormatPRF(formData: PRFFormData) {
   return {
-    business_unit: formData.business_unit,
+    business_unit: formatForJSON(formData.business_unit ?? ""),
     immediate_supervisor: formData.immediate_supervisor,
-    category: formData.category,
+    category: formatForJSON(formData.category ?? ""),
     work_schedule_from: formData.work_schedule_from,
     work_schedule_to: formData.work_schedule_to,
     hardware_required: formData.hardware_required,
     software_required: formData.software_required,
     job_posting: {
-      job_title: formData.job_posting.job_title,
+      job_title: formatForJSON(formData.job_posting.job_title ?? ""),
       department_name: formData.job_posting.department_name,
       department_name_other: formData.job_posting.department_name_other,
       experience_level: formData.job_posting.experience_level,
@@ -69,9 +75,13 @@ export function stateToDataFormatPRF(formData: PRFFormData) {
       other_reason_for_posting: formData.job_posting.other_reason_for_posting,
       min_salary: formData.job_posting.min_salary,
       max_salary: formData.job_posting.max_salary,
-      description: formData.job_posting.description,
-      responsibilities: formData.job_posting.responsibilities,
-      qualifications: formData.job_posting.qualifications,
+      description: DOMPurify.sanitize(formData.job_posting.description ?? ""),
+      responsibilities: DOMPurify.sanitize(
+        formData.job_posting.responsibilities ?? ""
+      ),
+      qualifications: DOMPurify.sanitize(
+        formData.job_posting.qualifications ?? ""
+      ),
       working_site: formData.job_posting.working_site,
     },
     application_form: {

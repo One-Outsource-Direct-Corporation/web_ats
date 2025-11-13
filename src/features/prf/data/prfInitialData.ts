@@ -5,8 +5,8 @@ export default function initialData(user: User | null): PRFFormData {
   return {
     job_posting: {
       job_title: null,
-      department: null,
-      other_department: null,
+      department_name: null,
+      department_name_other: null,
       employment_type: null,
       experience_level: null,
       number_of_vacancies: null,
@@ -14,8 +14,8 @@ export default function initialData(user: User | null): PRFFormData {
       target_start_date: null,
       reason_for_posting: null,
       other_reason_for_posting: null,
-      min_budget: null,
-      max_budget: null,
+      min_salary: null,
+      max_salary: null,
       description: null,
       responsibilities: null,
       qualifications: null,
@@ -56,5 +56,84 @@ export default function initialData(user: User | null): PRFFormData {
     work_schedule_to: null,
     hardware_required: {},
     software_required: {},
+  };
+}
+
+export function testData(): PRFFormData {
+  return {
+    job_posting: {
+      job_title: "tqwe",
+      department_name: "operations-rpo",
+      department_name_other: null,
+      employment_type: "full_time",
+      experience_level: "junior",
+      number_of_vacancies: 23,
+      work_setup: "hybrid",
+      target_start_date: "November 27, 2025",
+      reason_for_posting: "Reliver",
+      other_reason_for_posting: null,
+      min_salary: 20000,
+      max_salary: 30000,
+      description: "<p>qw</p><p>eqweqweqw</p>",
+      responsibilities: "<p>qeqweqeqeqeqweqweweqeqw</p>",
+      qualifications: "<p>qeqweqweqeqweqwe</p>",
+      working_site: "Hehe",
+    },
+    application_form: {
+      application_form: {
+        name: "optional",
+        birth_date: "optional",
+        gender: "optional",
+        primary_contact_number: "optional",
+        secondary_contact_number: "optional",
+        email: "optional",
+        linkedin_profile: "optional",
+        address: "optional",
+        expected_salary: "optional",
+        willing_to_work_onsite: "optional",
+        photo_2x2: "optional",
+        upload_med_cert: "optional",
+        preferred_interview_schedule: "optional",
+        education_attained: "optional",
+        year_graduated: "optional",
+        university: "optional",
+        course: "optional",
+        work_experience: "optional",
+        how_did_you_hear_about_us: "optional",
+        agreement: "optional",
+        signature: "optional",
+      },
+      non_negotiable: {
+        non_negotiable: [
+          {
+            field: "expected_salary",
+            value: 123,
+          },
+          {
+            field: "willing_to_work_onsite",
+            value: true,
+          },
+        ],
+      },
+      questionnaire: {
+        name: null,
+        template: false,
+        sections: [],
+      },
+    },
+    pipeline: [],
+    business_unit: "oodc",
+    immediate_supervisor: null,
+    category: "supervisory",
+    work_schedule_from: "16:13",
+    work_schedule_to: "16:12",
+    hardware_required: {
+      desktop: true,
+      handset: true,
+      laptop: true,
+    },
+    software_required: {
+      zoho: true,
+    },
   };
 }

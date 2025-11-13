@@ -40,8 +40,6 @@ export const Step01 = ({
     include: "hiring_manager",
   });
 
-  console.log(users);
-
   const handleReasonForPostingChange = (value: string) => {
     updateFormData((prev) => ({
       ...prev,
