@@ -1,10 +1,11 @@
 import { Button } from "@/shared/components/ui/button";
 import type { PRFFormData } from "../../types/prf.types";
 import formatName from "@/shared/utils/formatName";
-import { formatDate } from "@/shared/utils/formatDate";
+import { formatDate, formatTime } from "@/shared/utils/formatDate";
 import { ArrowLeft } from "lucide-react";
 import DOMPurify from "dompurify";
 import { PreviewInfo } from "../PreviewInfo";
+import { formatDepartmentName } from "@/shared/utils/formatDepartmentName";
 
 interface Step06Props {
   goToPreviousStep: () => void;
@@ -64,15 +65,17 @@ export const Step06 = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <span className="font-medium">Business Unit:</span>{" "}
-                {formData.business_unit}
+                {formData.business_unit?.toUpperCase()}
               </div>
               <div>
                 <span className="font-medium">Department Name:</span>{" "}
-                {formData.job_posting.department_name}
+                {formatDepartmentName(
+                  formData.job_posting.department_name ?? ""
+                )}
               </div>
               <div>
                 <span className="font-medium">Immediate Supervisor:</span>{" "}
-                {formData.immediate_supervisor}
+                {formData.immediate_supervisor ?? "Not specified"}
               </div>
             </div>
           </div>
@@ -84,19 +87,19 @@ export const Step06 = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <span className="font-medium">Employment Type:</span>{" "}
-                {formData.job_posting.employment_type}
+                {formatName(formData.job_posting.employment_type ?? "")}
               </div>
               <div>
                 <span className="font-medium">Work Setup:</span>{" "}
-                {formData.job_posting.work_setup}
+                {formatName(formData.job_posting.work_setup ?? "")}
               </div>
               <div>
                 <span className="font-medium">Category:</span>{" "}
-                {formData.category}
+                {formatName(formData.category ?? "")}
               </div>
               <div>
                 <span className="font-medium">Experience Level:</span>{" "}
-                {formData.job_posting.experience_level}
+                {formatName(formData.job_posting.experience_level ?? "")}
               </div>
               <div>
                 <span className="font-medium">Working Site:</span>{" "}
@@ -104,7 +107,10 @@ export const Step06 = ({
               </div>
               <div>
                 <span className="font-medium">Work Schedule:</span>{" "}
-                {formData.work_schedule_from} - {formData.work_schedule_to}
+                {formatTime(
+                  formData.work_schedule_from ?? "",
+                  formData.work_schedule_to ?? ""
+                ) || "Not specified"}
               </div>
             </div>
           </div>
@@ -167,7 +173,9 @@ export const Step06 = ({
           </div>
           {/* Asset Request */}
           <div>
-            <h3 className="font-semibold text-md mb-2">Asset Request</h3>
+            <h3 className="font-semibold text-md mb-2 border-blue-700 text-blue-700 border-l-4 pl-2">
+              Asset Request
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <span className="font-medium">Hardware:</span>{" "}

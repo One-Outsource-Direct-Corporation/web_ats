@@ -76,6 +76,9 @@ export default function PRF() {
       // navigate("/requests");
     }, 1500);
 
+    console.log(formData);
+    return;
+
     const data = stateToDataFormatPRF(formData);
 
     try {

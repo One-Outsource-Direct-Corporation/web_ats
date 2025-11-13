@@ -40,6 +40,8 @@ export const Step01 = ({
     include: "hiring_manager",
   });
 
+  console.log(users);
+
   const handleReasonForPostingChange = (value: string) => {
     updateFormData((prev) => ({
       ...prev,
@@ -58,7 +60,7 @@ export const Step01 = ({
       <div className="lg:col-span-2 space-y-6">
         {/* Position Information */}
         <FieldGroup>
-          <h2 className="text-blue-700 font-bold text-sm mb-4 border-l-4 border-blue-700 pl-2 uppercase">
+          <h2 className="text-blue-700 font-bold text-sm border-l-4 border-blue-700 pl-2 uppercase">
             Position Information
           </h2>
           <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -177,7 +179,7 @@ export const Step01 = ({
         </FieldGroup>
         {/* Department Information */}
         <FieldGroup>
-          <h2 className="text-blue-700 font-bold text-sm mb-4 border-l-4 border-blue-700 pl-2 uppercase">
+          <h2 className="text-blue-700 font-bold text-sm border-l-4 border-blue-700 pl-2 uppercase">
             Department Information
           </h2>
           <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -191,7 +193,7 @@ export const Step01 = ({
                     business_unit: value,
                     job_posting: {
                       ...prev.job_posting,
-                      department: null,
+                      department_name: null,
                     },
                   }))
                 }
@@ -223,7 +225,7 @@ export const Step01 = ({
                     ...prev,
                     job_posting: {
                       ...prev.job_posting,
-                      department: value,
+                      department_name: value,
                       // department_display: formatDepartmentName(value),
                     },
                     immediate_supervisor: null,

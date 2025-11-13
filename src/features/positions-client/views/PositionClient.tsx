@@ -48,6 +48,50 @@ interface PositionClientProps {
   resetFormData: () => void;
 }
 
+function extractFiles(
+  obj: any,
+  prefix = ""
+): { data: any; files: Record<string, File> } {
+  const data: any = {};
+  const files: Record<string, File> = {};
+
+  for (const [key, value] of Object.entries(obj)) {
+    const fullKey = prefix ? `${prefix}.${key}` : key;
+
+    if (value instanceof File) {
+      files[fullKey] = value;
+      data[key] = null; // Replace file with null in JSON
+    } else if (Array.isArray(value)) {
+      data[key] = value.map((item, index) => {
+        if (item instanceof File) {
+          const fileKey = `${fullKey}[${index}]`;
+          files[fileKey] = item;
+          return null;
+        } else if (typeof item === "object" && item !== null) {
+          const { data: nestedData, files: nestedFiles } = extractFiles(
+            item,
+            `${fullKey}[${index}]`
+          );
+          Object.assign(files, nestedFiles);
+          return nestedData;
+        }
+        return item;
+      });
+    } else if (typeof value === "object" && value !== null) {
+      const { data: nestedData, files: nestedFiles } = extractFiles(
+        value,
+        fullKey
+      );
+      data[key] = nestedData;
+      Object.assign(files, nestedFiles);
+    } else {
+      data[key] = value;
+    }
+  }
+
+  return { data, files };
+}
+
 export default function PositionClient({
   formData,
   setFormData,
@@ -78,17 +122,31 @@ export default function PositionClient({
 
   const handleNext = async () => {
     if (currentStep === 4) {
-      // TODO: bring back the Pool Applicants Here
-      // TODO: change the data structure from changes made
-
-      console.log(formData);
-      console.log(stateToDataFormatClient(formData));
-      return;
-
       const data = stateToDataFormatClient(formData);
 
+      // Extract files and replace them with null in the data
+      const { data: jsonData, files } = extractFiles(data);
+
+      const formDataObj = new FormData();
+
+      // Append JSON data
+      formDataObj.append("data", JSON.stringify(jsonData));
+
+      // Append files separately
+      Object.entries(files).forEach(([key, file]) => {
+        formDataObj.append(key, file);
+      });
+
       try {
-        const response = await axiosPrivate.post("/api/position/", data);
+        const response = await axiosPrivate.post(
+          "/api/position/",
+          formDataObj,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
         console.log("Response from server:", response);
         if (response.status === 201) {
           toast.success(
@@ -112,7 +170,6 @@ export default function PositionClient({
       stepHandleNext();
     }
   };
-
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
@@ -147,15 +204,6 @@ export default function PositionClient({
             pipelineHandler={pipelineHandler}
           />
         );
-
-      // Disabled Step 5 (Phase 2)
-      // case 5:
-      //   return (
-      //     <Step05
-      //       pipelineSteps={formData.pipeline}
-      //       pipelineHandler={pipelineHandler}
-      //     />
-      //   );
     }
   };
 

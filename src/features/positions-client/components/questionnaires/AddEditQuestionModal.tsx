@@ -59,8 +59,8 @@ export function AddEditQuestionModal({
         name: question.name,
         description: question.description || "",
         type: question.type,
-        parameter: question.parameter || undefined,
-        options: question.options || undefined,
+        parameter: question.parameter,
+        options: question.options,
       });
     }
   }, [question]);

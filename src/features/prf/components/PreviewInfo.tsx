@@ -3,6 +3,7 @@ import type { PRFFormData } from "../types/prf.types";
 import formatName from "@/shared/utils/formatName";
 import DOMPurify from "dompurify";
 import { formatDepartmentName } from "@/shared/utils/formatDepartmentName";
+import { formatTime } from "@/shared/utils/formatDate";
 
 interface PreviewInfoProps {
   step: number;
@@ -19,24 +20,6 @@ export const PreviewInfo = ({ step, formData }: PreviewInfoProps) => {
   const selectedSoftware = Object.entries(formData.software_required)
     .filter(([, selected]) => selected)
     .map(([software]) => software);
-
-  function formatTimeAMPM(time: string) {
-    if (!time) return "";
-    const [hourStr, minuteStr] = time.split(":");
-    let hour = parseInt(hourStr, 10);
-    const minute = parseInt(minuteStr, 10);
-    const ampm = hour >= 12 ? "PM" : "AM";
-    hour = hour % 12;
-    if (hour === 0) hour = 12;
-    return `${hour}:${minute.toString().padStart(2, "0")} ${ampm}`;
-  }
-
-  const displayWorkSchedule =
-    formData.work_schedule_from && formData.work_schedule_to
-      ? `${formatTimeAMPM(formData.work_schedule_from)} - ${formatTimeAMPM(
-          formData.work_schedule_to
-        )}`
-      : "Not specified";
 
   return (
     <div className="border rounded-md p-4 bg-white text-sm h-fit sticky top-28 space-y-4">
@@ -75,8 +58,9 @@ export const PreviewInfo = ({ step, formData }: PreviewInfoProps) => {
             </p>
             <p>
               <strong>Department Name:</strong>{" "}
-              {formatDepartmentName(formData.job_posting.department ?? "") ||
-                "Not specified"}
+              {formatDepartmentName(
+                formData.job_posting.department_name ?? ""
+              ) || "Not specified"}
             </p>
             <p>
               <strong>Immediate Supervisor:</strong>{" "}
@@ -115,7 +99,11 @@ export const PreviewInfo = ({ step, formData }: PreviewInfoProps) => {
                   {formData.job_posting.working_site || "Not specified"}
                 </p>
                 <p>
-                  <strong>Working Schedule:</strong> {displayWorkSchedule}
+                  <strong>Working Schedule:</strong>{" "}
+                  {formatTime(
+                    formData.work_schedule_from ?? "",
+                    formData.work_schedule_to ?? ""
+                  ) || "Not specified"}
                 </p>
               </div>
               <div className="space-y-2">
@@ -165,8 +153,8 @@ export const PreviewInfo = ({ step, formData }: PreviewInfoProps) => {
                       SALARY BUDGET
                     </h2>
                     <p className="font-semibold text-gray-800">
-                      {formData.job_posting.min_budget} -{" "}
-                      {formData.job_posting.max_budget}
+                      {formData.job_posting.min_salary} -{" "}
+                      {formData.job_posting.max_salary}
                     </p>
                   </div>
                   <div className="space-y-2">
@@ -284,9 +272,9 @@ export const PreviewInfo = ({ step, formData }: PreviewInfoProps) => {
                     <input
                       type="text"
                       value={
-                        formData.job_posting.min_budget &&
-                        formData.job_posting.max_budget
-                          ? `${formData.job_posting.min_budget} - ${formData.job_posting.max_budget}`
+                        formData.job_posting.min_salary &&
+                        formData.job_posting.max_salary
+                          ? `${formData.job_posting.min_salary} - ${formData.job_posting.max_salary}`
                           : `No budget allocated`
                       }
                       disabled

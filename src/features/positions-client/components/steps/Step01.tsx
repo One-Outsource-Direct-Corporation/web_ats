@@ -81,7 +81,7 @@ export default function Step01({
         onDeleteLocation={deleteLocationEntry}
       />
 
-      {selectedLocation?.withBatch && (
+      {selectedLocation?.with_batch && (
         <BatchManagement
           batches={batches}
           selectedLocationId={selectedLocationId}

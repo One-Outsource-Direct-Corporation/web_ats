@@ -64,9 +64,127 @@ const getDefaultFormData = (): PositionFormData => ({
   batches: [],
 });
 
+const testData = (): PositionFormData => ({
+  client: 1,
+  education_level: "master",
+  job_posting: {
+    job_title: "Bomboclat",
+    department_name: "operations-prime",
+    department_name_other: null,
+    experience_level: "junior",
+    employment_type: "contract",
+    number_of_vacancies: 123,
+    work_setup: "remote",
+    target_start_date: "2025-11-07",
+    reason_for_posting: "others",
+    other_reason_for_posting: "123",
+    min_salary: 10000,
+    max_salary: 20000,
+    description: "<p>qweqwe</p>",
+    responsibilities: "<p>qweqwe</p>",
+    qualifications: "<p>qweqwe</p>",
+    working_site: "123123",
+  },
+  application_form: {
+    application_form: {
+      name: "optional",
+      birth_date: "optional",
+      gender: "optional",
+      primary_contact_number: "optional",
+      secondary_contact_number: "optional",
+      email: "optional",
+      linkedin_profile: "required",
+      address: "required",
+      expected_salary: "required",
+      willing_to_work_onsite: "required",
+      photo_2x2: "optional",
+      upload_med_cert: "optional",
+      preferred_interview_schedule: "optional",
+      education_attained: "required",
+      year_graduated: "required",
+      university: "required",
+      course: "required",
+      work_experience: "optional",
+      how_did_you_hear_about_us: "optional",
+      agreement: "optional",
+      signature: "optional",
+    },
+    non_negotiable: {
+      non_negotiable: [
+        {
+          field: "willing_to_work_onsite",
+          value: false,
+        },
+        {
+          field: "expected_salary",
+          value: 12,
+        },
+        {
+          field: "course",
+          value: "business_administration",
+        },
+        {
+          field: "education_attained",
+          value: "associate",
+        },
+      ],
+    },
+    questionnaire: {
+      name: "qwe",
+      template: false,
+      sections: [
+        {
+          name: "qwe",
+          questionnaires: [
+            {
+              tempId: "temp-1762933776009",
+              name: "123",
+              description: "123",
+              type: "Paragraph",
+              parameter: "123",
+            },
+          ],
+          tempId: "tmp-1762933771731",
+        },
+      ],
+    },
+  },
+  pipeline: [
+    {
+      process_type: "initial_interview",
+      process_title: "qweqwe",
+      description: "qweqwe",
+      order: 1,
+      stage: 1,
+      reminder: "2025-11-26T15:55",
+      hiring_managers: [],
+      assessments: [],
+      tempId: "tmp-1762933870971",
+    },
+  ],
+  locations: [
+    {
+      name: "123",
+      headcount: 123,
+      deployment_date: "2025-11-26",
+      with_batch: true,
+      tempId: "tmp-1762933731892",
+    },
+  ],
+  batches: [
+    {
+      name: "qweqwe",
+      headcount: 12,
+      deployment_date: "2025-11-27",
+      tempId: "tmp-1762933739785",
+      location: "tmp-1762933731892",
+    },
+  ],
+});
+
 export const useFormData = (initialData?: PositionFormData) => {
   const [formData, setFormData] = useState<PositionFormData>(
-    initialData || getDefaultFormData()
+    initialData || testData()
   );
 
   function handlePositionBaseChange(

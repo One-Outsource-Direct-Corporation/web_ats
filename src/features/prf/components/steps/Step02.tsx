@@ -253,14 +253,14 @@ export const Step02 = ({
               <Input
                 type="number"
                 placeholder="Minimum Salary"
-                value={formData.job_posting.min_budget ?? 0}
+                value={formData.job_posting.min_salary ?? 0}
                 min={0}
                 onChange={(e) =>
                   updateFormData((prev) => ({
                     ...prev,
                     job_posting: {
                       ...prev.job_posting,
-                      min_budget: Number(e.target.value),
+                      min_salary: Number(e.target.value),
                     },
                   }))
                 }
@@ -271,14 +271,14 @@ export const Step02 = ({
               <Input
                 type="number"
                 placeholder="Maximum Salary"
-                value={formData.job_posting.max_budget ?? 0}
+                value={formData.job_posting.max_salary ?? 0}
                 min={0}
                 onChange={(e) =>
                   updateFormData((prev) => ({
                     ...prev,
                     job_posting: {
                       ...prev.job_posting,
-                      max_budget: Number(e.target.value),
+                      max_salary: Number(e.target.value),
                     },
                   }))
                 }
