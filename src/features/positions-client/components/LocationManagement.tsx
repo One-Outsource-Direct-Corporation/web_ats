@@ -41,8 +41,8 @@ export const LocationManagement = ({
   >({
     name: "",
     headcount: 0,
-    deploymentDate: null,
-    withBatch: false,
+    deployment_date: null,
+    with_batch: false,
   });
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [editingLocationId, setEditingLocationId] = useState<
@@ -53,16 +53,16 @@ export const LocationManagement = ({
   >({
     name: "",
     headcount: 0,
-    deploymentDate: null,
-    withBatch: false,
+    deployment_date: null,
+    with_batch: false,
   });
 
   const handleStartEdit = (location: LocationEntry) => {
     setEditFormData({
       name: location.name,
       headcount: location.headcount,
-      deploymentDate: location.deploymentDate || null,
-      withBatch: location.withBatch,
+      deployment_date: location.deployment_date || null,
+      with_batch: location.with_batch,
     });
     setEditingLocationId(
       (location as LocationEntryDb).id ??
@@ -82,8 +82,8 @@ export const LocationManagement = ({
       setEditFormData({
         name: "",
         headcount: 0,
-        deploymentDate: null,
-        withBatch: false,
+        deployment_date: null,
+        with_batch: false,
       });
     }
   };
@@ -93,19 +93,19 @@ export const LocationManagement = ({
     setEditFormData({
       name: "",
       headcount: 0,
-      deploymentDate: null,
-      withBatch: false,
+      deployment_date: null,
+      with_batch: false,
     });
   };
 
   const handleAddNewLocation = () => {
-    if (newLocation.name.trim() && newLocation.deploymentDate) {
+    if (newLocation.name.trim() && newLocation.deployment_date) {
       onAddLocation({ ...newLocation, tempId: `tmp-${Date.now()}` });
       setNewLocation({
         name: "",
         headcount: 0,
-        deploymentDate: null,
-        withBatch: false,
+        deployment_date: null,
+        with_batch: false,
       });
       setIsAddingNew(false);
     }
@@ -115,8 +115,8 @@ export const LocationManagement = ({
     setNewLocation({
       name: "",
       headcount: 0,
-      deploymentDate: null,
-      withBatch: false,
+      deployment_date: null,
+      with_batch: false,
     });
     setIsAddingNew(false);
   };
@@ -181,19 +181,11 @@ export const LocationManagement = ({
                 <td className="px-4 py-3">
                   <Input
                     type="date"
-                    value={
-                      newLocation.deploymentDate
-                        ? new Date(newLocation.deploymentDate)
-                            .toISOString()
-                            .split("T")[0]
-                        : ""
-                    }
+                    value={newLocation.deployment_date ?? ""}
                     onChange={(e) =>
                       setNewLocation({
                         ...newLocation,
-                        deploymentDate: e.target.value
-                          ? new Date(e.target.value)
-                          : null,
+                        deployment_date: e.target.value ? e.target.value : null,
                       })
                     }
                     className="w-full"
@@ -201,11 +193,11 @@ export const LocationManagement = ({
                 </td>
                 <td className="px-4 py-3">
                   <Select
-                    value={newLocation.withBatch ? "true" : "false"}
+                    value={newLocation.with_batch ? "true" : "false"}
                     onValueChange={(value) =>
                       setNewLocation((prev) => ({
                         ...prev,
-                        withBatch: value === "true",
+                        with_batch: value === "true",
                       }))
                     }
                   >
@@ -246,7 +238,7 @@ export const LocationManagement = ({
                 (location as LocationEntryLocal).tempId;
 
               const batchHeadcount = batches
-                .filter((batch) => batch.location_entry === locId)
+                .filter((batch) => batch.location === locId)
                 .reduce((sum, batch) => sum + (batch.headcount || 0), 0);
 
               const totalHeadcount = location.headcount + batchHeadcount;
@@ -300,44 +292,36 @@ export const LocationManagement = ({
                   </td>
                   <td className="px-4 py-3">
                     <span className="text-gray-600">
-                      {location.withBatch ? totalHeadcount : "-"}
+                      {location.with_batch ? totalHeadcount : "-"}
                     </span>
                   </td>
                   <td className="px-4 py-3">
                     {editingLocationId === locId ? (
                       <Input
                         type="date"
-                        value={
-                          editFormData.deploymentDate
-                            ?.toISOString()
-                            .split("T")[0] || ""
-                        }
+                        value={editFormData.deployment_date ?? ""}
                         onChange={(e) =>
                           setEditFormData({
                             ...editFormData,
-                            deploymentDate: new Date(e.target.value),
+                            deployment_date: e.target.value,
                           })
                         }
                         className="w-full"
                       />
                     ) : (
                       <span className="text-gray-600">
-                        {formatDate(
-                          location.deploymentDate
-                            ?.toISOString()
-                            .split("T")[0] || ""
-                        )}
+                        {formatDate(location.deployment_date ?? "")}
                       </span>
                     )}
                   </td>
                   <td className="px-4 py-3">
                     {editingLocationId === locId ? (
                       <Select
-                        value={editFormData.withBatch ? "true" : "false"}
+                        value={editFormData.with_batch ? "true" : "false"}
                         onValueChange={(value) =>
                           setEditFormData((prev) => ({
                             ...prev,
-                            withBatch: value === "true",
+                            with_batch: value === "true",
                           }))
                         }
                       >
@@ -351,7 +335,7 @@ export const LocationManagement = ({
                       </Select>
                     ) : (
                       <span className="text-green-600 font-medium">
-                        {location.withBatch ? "Yes" : "No"}
+                        {location.with_batch ? "Yes" : "No"}
                       </span>
                     )}
                   </td>

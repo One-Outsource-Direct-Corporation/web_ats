@@ -27,22 +27,22 @@ export const BatchManagement = ({
   selectedLocationName,
 }: BatchManagementProps) => {
   const [newBatch, setNewBatch] = useState<
-    Omit<BatchEntryLocal, "tempId" | "location_entry">
+    Omit<BatchEntryLocal, "tempId" | "location">
   >({
     name: "",
     headcount: 0,
-    deploymentDate: null,
+    deployment_date: null,
   });
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [editingBatchId, setEditingBatchId] = useState<string | number | null>(
     null
   );
   const [editFormData, setEditFormData] = useState<
-    Omit<BatchEntry, "id" | "tempId" | "location_entry">
+    Omit<BatchEntry, "id" | "tempId" | "location">
   >({
     name: "",
     headcount: 0,
-    deploymentDate: null,
+    deployment_date: null,
   });
 
   const handleStartEdit = (batch: BatchEntry) => {
@@ -52,14 +52,14 @@ export const BatchManagement = ({
     setEditFormData({
       name: batch.name,
       headcount: batch.headcount,
-      deploymentDate: batch.deploymentDate || null,
+      deployment_date: batch.deployment_date || null,
     });
   };
 
   const handleSaveEdit = (id: string | number) => {
     if (
       editFormData.name.trim() &&
-      editFormData.deploymentDate &&
+      editFormData.deployment_date &&
       editFormData.headcount > 0
     ) {
       if (typeof id === "string")
@@ -67,13 +67,13 @@ export const BatchManagement = ({
       else onUpdateBatch(id, { ...editFormData, id } as BatchEntryDb);
 
       setEditingBatchId(null);
-      setEditFormData({ name: "", headcount: 0, deploymentDate: null });
+      setEditFormData({ name: "", headcount: 0, deployment_date: null });
     }
   };
 
   const handleCancelEdit = () => {
     setEditingBatchId(null);
-    setEditFormData({ name: "", headcount: 0, deploymentDate: null });
+    setEditFormData({ name: "", headcount: 0, deployment_date: null });
   };
 
   const handleAddNewBatch = () => {
@@ -81,20 +81,20 @@ export const BatchManagement = ({
       selectedLocationId &&
       newBatch.name.trim() &&
       newBatch.headcount > 0 &&
-      newBatch.deploymentDate
+      newBatch.deployment_date
     ) {
       onAddBatch({
         ...newBatch,
         tempId: `tmp-${Date.now()}`,
-        location_entry: selectedLocationId,
+        location: selectedLocationId,
       });
-      setNewBatch({ name: "", headcount: 0, deploymentDate: null });
+      setNewBatch({ name: "", headcount: 0, deployment_date: null });
       setIsAddingNew(false);
     }
   };
 
   const handleCancelAdd = () => {
-    setNewBatch({ name: "", headcount: 0, deploymentDate: null });
+    setNewBatch({ name: "", headcount: 0, deployment_date: null });
     setIsAddingNew(false);
   };
 
@@ -170,8 +170,8 @@ export const BatchManagement = ({
                   <Input
                     type="date"
                     value={
-                      newBatch.deploymentDate
-                        ? new Date(newBatch.deploymentDate)
+                      newBatch.deployment_date
+                        ? new Date(newBatch.deployment_date)
                             .toISOString()
                             .split("T")[0]
                         : ""
@@ -179,9 +179,7 @@ export const BatchManagement = ({
                     onChange={(e) =>
                       setNewBatch({
                         ...newBatch,
-                        deploymentDate: e.target.value
-                          ? new Date(e.target.value)
-                          : null,
+                        deployment_date: e.target.value ? e.target.value : null,
                       })
                     }
                     className="w-full"
@@ -253,8 +251,8 @@ export const BatchManagement = ({
                       <Input
                         type="date"
                         value={
-                          editFormData.deploymentDate
-                            ? new Date(editFormData.deploymentDate)
+                          editFormData.deployment_date
+                            ? new Date(editFormData.deployment_date)
                                 .toISOString()
                                 .split("T")[0]
                             : ""
@@ -262,8 +260,8 @@ export const BatchManagement = ({
                         onChange={(e) =>
                           setEditFormData({
                             ...editFormData,
-                            deploymentDate: e.target.value
-                              ? new Date(e.target.value)
+                            deployment_date: e.target.value
+                              ? e.target.value
                               : null,
                           })
                         }
@@ -272,8 +270,9 @@ export const BatchManagement = ({
                     ) : (
                       <span className="text-gray-600">
                         {formatDate(
-                          batch.deploymentDate?.toISOString().split("T")[0] ||
-                            ""
+                          batch.deployment_date
+                            ? batch.deployment_date.split("T")[0]
+                            : ""
                         )}
                       </span>
                     )}

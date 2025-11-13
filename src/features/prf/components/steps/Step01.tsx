@@ -29,11 +29,11 @@ interface Step01Props {
   updateFormData: React.Dispatch<React.SetStateAction<PRFFormData>>;
 }
 
-export const Step01: React.FC<Step01Props> = ({
+export const Step01 = ({
   goToNextStep,
   formData,
   updateFormData,
-}) => {
+}: Step01Props) => {
   const { users, loading } = useUsersByDepartment({
     business_unit: formData.business_unit?.toLowerCase() || "",
     department_name: formData.job_posting.department_name?.toLowerCase() || "",
@@ -217,7 +217,7 @@ export const Step01: React.FC<Step01Props> = ({
             <Field>
               <FieldLabel>Department Name</FieldLabel>
               <Select
-                value={formData.job_posting.department ?? ""}
+                value={formData.job_posting.department_name ?? ""}
                 onValueChange={(value) =>
                   updateFormData((prev) => ({
                     ...prev,
