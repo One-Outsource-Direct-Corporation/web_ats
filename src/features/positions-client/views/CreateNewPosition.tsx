@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { useFormData } from "../hooks/useFormData";
+import { usePositionFormData } from "../hooks/usePositionFormData";
 import PositionClient from "./PositionClient";
 
 export default function CreateNewPosition() {
@@ -18,7 +18,7 @@ export default function CreateNewPosition() {
     nonNegotiableHandler,
     questionnaireHandler,
     resetFormData,
-  } = useFormData();
+  } = usePositionFormData();
 
   return (
     <PositionClient

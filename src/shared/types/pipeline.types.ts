@@ -30,6 +30,13 @@ export interface AssessmentLocal extends AssessmentBase {
 
 export type Assessment = AssessmentInDb | AssessmentLocal;
 
+export interface AssessmentResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: AssessmentInDb[];
+}
+
 export interface PipelineStage {
   id: number;
   name: string;

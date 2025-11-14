@@ -9,7 +9,6 @@ export const usePipeline = (
   setPipelines: (updatedPipelines: PipelineStep[]) => void
 ) => {
   function addPipelineStep(newStep: PipelineStepLocal) {
-    console.log("Adding new pipeline step:", newStep);
     const stepsInStage = pipelines.filter((s) => s.stage === newStep.stage);
     const nextOrder = stepsInStage.length + 1;
 

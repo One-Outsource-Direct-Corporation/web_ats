@@ -1,7 +1,7 @@
 import type { User } from "@/features/auth/types/auth.types";
 import type { PRFFormData } from "../types/prf.types";
 
-export default function initialData(user: User | null): PRFFormData {
+export default function initialDataPrf(user?: User): PRFFormData {
   return {
     job_posting: {
       job_title: null,
@@ -61,32 +61,51 @@ export default function initialData(user: User | null): PRFFormData {
 
 export function testData(): PRFFormData {
   return {
+    business_unit: "oodc",
+    immediate_supervisor: null,
+    category: "supervisory",
+    work_schedule_from: "08:16",
+    work_schedule_to: "20:16",
+    hardware_required: {
+      headset: true,
+      desktop: true,
+      laptop: true,
+      handset: true,
+      oh_ma_god: true,
+    },
+    software_required: {
+      google_chrome: true,
+      zoho: true,
+      xlite: true,
+      nitro_pro_8_pdf: true,
+      email: true,
+    },
     job_posting: {
-      job_title: "tqwe",
-      department_name: "operations-rpo",
+      job_title: "Test Job Title",
+      department_name: "sales-and-marketing",
       department_name_other: null,
-      employment_type: "full_time",
-      experience_level: "junior",
+      experience_level: "mid_level",
+      employment_type: "contract",
       number_of_vacancies: 23,
       work_setup: "hybrid",
-      target_start_date: "November 27, 2025",
-      reason_for_posting: "Reliver",
+      target_start_date: "2025-10-31",
+      reason_for_posting: "Replacement",
       other_reason_for_posting: null,
-      min_salary: 20000,
-      max_salary: 30000,
-      description: "<p>qw</p><p>eqweqweqw</p>",
-      responsibilities: "<p>qeqweqeqeqeqweqweweqeqw</p>",
-      qualifications: "<p>qeqweqweqeqweqwe</p>",
-      working_site: "Hehe",
+      min_salary: 10000,
+      max_salary: 20000,
+      description: "<p>qwerty</p>",
+      responsibilities: "<p>qwertyu</p>",
+      qualifications: "<p>qwertyu</p>",
+      working_site: "Makati City",
     },
     application_form: {
       application_form: {
-        name: "optional",
-        birth_date: "optional",
-        gender: "optional",
-        primary_contact_number: "optional",
-        secondary_contact_number: "optional",
-        email: "optional",
+        name: "required",
+        birth_date: "required",
+        gender: "required",
+        primary_contact_number: "required",
+        secondary_contact_number: "required",
+        email: "required",
         linkedin_profile: "optional",
         address: "optional",
         expected_salary: "optional",
@@ -95,8 +114,8 @@ export function testData(): PRFFormData {
         upload_med_cert: "optional",
         preferred_interview_schedule: "optional",
         education_attained: "optional",
-        year_graduated: "optional",
-        university: "optional",
+        year_graduated: "required",
+        university: "required",
         course: "optional",
         work_experience: "optional",
         how_did_you_hear_about_us: "optional",
@@ -106,34 +125,64 @@ export function testData(): PRFFormData {
       non_negotiable: {
         non_negotiable: [
           {
-            field: "expected_salary",
-            value: 123,
+            field: "willing_to_work_onsite",
+            value: true,
           },
           {
-            field: "willing_to_work_onsite",
+            field: "expected_salary",
+            value: 20000,
+          },
+          {
+            field: "yerts",
             value: true,
           },
         ],
       },
       questionnaire: {
-        name: null,
+        name: "Test",
         template: false,
-        sections: [],
+        sections: [
+          {
+            name: "Bombaclats",
+            questionnaires: [
+              {
+                tempId: "temp-1763079155675",
+                name: "Bombaclats",
+                type: "Checkboxes",
+                options: [
+                  {
+                    value: "Testes",
+                    score: 1,
+                  },
+                ],
+              },
+            ],
+            tempId: "tmp-1763079137109",
+          },
+        ],
       },
     },
-    pipeline: [],
-    business_unit: "oodc",
-    immediate_supervisor: null,
-    category: "supervisory",
-    work_schedule_from: "16:13",
-    work_schedule_to: "16:12",
-    hardware_required: {
-      desktop: true,
-      handset: true,
-      laptop: true,
-    },
-    software_required: {
-      zoho: true,
-    },
+    pipeline: [
+      {
+        process_type: "final_interview",
+        process_title: "This is a title",
+        description: "",
+        order: 1,
+        stage: 1,
+        reminder: "2025-11-15T08:18",
+        hiring_managers: [],
+        assessments: [
+          {
+            name: null,
+            is_template: false,
+            type: "Skills Assessment",
+            order: 1,
+            file: null,
+            tempId: "temp-1763079178304",
+          },
+        ],
+        tempId: "tmp-1763079186929",
+      },
+    ],
   };
 }

@@ -10,8 +10,8 @@ export function usersDev(): User[] {
       last_name: "Doe",
       email: "john.doe@example.com",
       business_unit: "engineering",
-      department: "Software Development",
-      role: "Developer",
+      department: "sales",
+      role: "supervisor",
     },
     {
       id: 2,
@@ -21,7 +21,7 @@ export function usersDev(): User[] {
       last_name: "Smith",
       email: "jane.smith@example.com",
       business_unit: "oodc",
-      department: "Sales Department",
+      department: "sales",
       role: "manager",
     },
     {
@@ -32,7 +32,7 @@ export function usersDev(): User[] {
       last_name: "Reyes",
       email: "carlos.reyes@example.com",
       business_unit: "oors",
-      department: "Finance Department",
+      department: "finance",
       role: "supervisor",
     },
     {
@@ -43,7 +43,7 @@ export function usersDev(): User[] {
       last_name: "Garcia",
       email: "maria.garcia@example.com",
       business_unit: "oodc",
-      department: "Human Resources Department",
+      department: "hr",
       role: "human_resources",
     },
     {
@@ -54,7 +54,7 @@ export function usersDev(): User[] {
       last_name: "Tan",
       email: "liam.tan@example.com",
       business_unit: "oors",
-      department: "Sales and Marketing Department",
+      department: "sales-and-marketing",
       role: "hiring_manager",
     },
     {
@@ -65,7 +65,7 @@ export function usersDev(): User[] {
       last_name: "Chen",
       email: "emily.chen@example.com",
       business_unit: "oodc",
-      department: "Continuous Improvement Department",
+      department: "ci",
       role: "manager",
     },
     {
@@ -76,7 +76,7 @@ export function usersDev(): User[] {
       last_name: "Cruz",
       email: "noah.cruz@example.com",
       business_unit: "oors",
-      department: "Operations - ISLA Department",
+      department: "operations-isla",
       role: "supervisor",
     },
     {
@@ -87,7 +87,7 @@ export function usersDev(): User[] {
       last_name: "Santos",
       email: "olivia.santos@example.com",
       business_unit: "oodc",
-      department: "Operations - Shell Department",
+      department: "operations-shell",
       role: "hiring_manager",
     },
     {
@@ -98,7 +98,7 @@ export function usersDev(): User[] {
       last_name: "Lim",
       email: "ethan.lim@example.com",
       business_unit: "oors",
-      department: "Operations - Prime Department",
+      department: "operations-prime",
       role: "human_resources",
     },
     {
@@ -109,7 +109,7 @@ export function usersDev(): User[] {
       last_name: "Dela Cruz",
       email: "sophia.delacruz@example.com",
       business_unit: "oodc",
-      department: "Operations - RPO Department",
+      department: "operations-rpo",
       role: "manager",
     },
     {
@@ -120,7 +120,7 @@ export function usersDev(): User[] {
       last_name: "Ramos",
       email: "gabriel.ramos@example.com",
       business_unit: "oors",
-      department: "Sales Department",
+      department: "sales",
       role: "supervisor",
     },
     {
@@ -131,7 +131,7 @@ export function usersDev(): User[] {
       last_name: "Mendoza",
       email: "isabella.mendoza@example.com",
       business_unit: "oodc",
-      department: "Finance Department",
+      department: "finance",
       role: "hiring_manager",
     },
   ];

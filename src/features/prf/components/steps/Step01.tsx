@@ -281,11 +281,6 @@ export const Step01 = ({
                     ...prev,
                     immediate_supervisor:
                       value === "no-supervisor" ? null : Number(value),
-                    // immediate_supervisor_display:
-                    //   value === "no-supervisor"
-                    //     ? null
-                    //     : users.find((usr: User) => usr.id === value)
-                    //         ?.full_name,
                   }))
                 }
               >
@@ -309,14 +304,20 @@ export const Step01 = ({
                       ) : null;
                     })()}
 
-                  {/* Then show all supervisors from current business unit */}
+                  {/* Then show all supervisors from the selected department */}
                   <SelectItem value="no-supervisor">No Supervisor</SelectItem>
                   {users.length > 0 &&
-                  users.some((usr: User) => usr.role === "supervisor")
+                  users.some(
+                    (usr: User) =>
+                      usr.role === "supervisor" &&
+                      usr.department === formData.job_posting.department_name
+                  )
                     ? users
                         .filter(
                           (usr: User) =>
                             usr.role === "supervisor" &&
+                            usr.department ===
+                              formData.job_posting.department_name &&
                             usr.id !== formData.immediate_supervisor
                         )
                         .map((usr: User) => (

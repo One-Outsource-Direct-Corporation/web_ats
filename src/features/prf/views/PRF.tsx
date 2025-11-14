@@ -10,8 +10,6 @@ import {
   SuccessPopup,
 } from "../components/PRFModal";
 
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import initialData from "../data/prfInitialData";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import type { AxiosError } from "axios";
 import { toast } from "react-toastify";
@@ -21,15 +19,20 @@ import { MinusCircle } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import Step05 from "../components/steps/Step05";
 import { Step06 } from "../components/steps/Step06";
+import type { PRFFormData } from "../types/prf.types";
 
-export default function PRF() {
+interface PRFProps {
+  initialData?: PRFFormData;
+}
+
+export default function PRF({ initialData }: PRFProps) {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [maxStepVisited, setMaxStepVisited] = useState(1);
   const [showCancelConfirmDialog, setShowCancelConfirmDialog] = useState(false);
   const [showSubmitConfirmDialog, setShowSubmitConfirmDialog] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-  const { user } = useAuth();
+
   const {
     formData,
     setFormData,
@@ -37,7 +40,8 @@ export default function PRF() {
     nonNegotiableHandler,
     questionnaireHandler,
     pipelineHandler,
-  } = usePRFForm(initialData(user));
+  } = usePRFForm(initialData);
+
   const axiosPrivate = useAxiosPrivate();
 
   const goToNextStep = () => {
@@ -76,13 +80,15 @@ export default function PRF() {
       // navigate("/requests");
     }, 1500);
 
-    console.log(formData);
-    return;
-
-    const data = stateToDataFormatPRF(formData);
+    const formDataObj = stateToDataFormatPRF(formData);
+    // return;
 
     try {
-      const response = await axiosPrivate.post("/api/prf/", data);
+      const response = await axiosPrivate.post("/api/prf/", formDataObj, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       if (response.status === 201) {
         toast.success("PRF submitted successfully!");

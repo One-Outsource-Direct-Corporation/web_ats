@@ -3,19 +3,12 @@ import type {
   BatchEntryDb,
   BatchEntryLocal,
 } from "../types/location_and_batch.types";
-import { fakeBatchesData } from "../data-dev/batches.data";
 import type { PositionFormData } from "../types/create_position.types";
 
 export const useBatchEntries = (
   batches: BatchEntry[],
   setFormData: React.Dispatch<React.SetStateAction<PositionFormData>>
 ) => {
-  //   useEffect(() => {
-  //     if (import.meta.env.VITE_REACT_ENV === "development") {
-  //       setBatches(fakeBatchesData);
-  //     }
-  //   }, []);
-
   function addBatchEntry(data: BatchEntryLocal) {
     data.tempId = `tmp-${Date.now()}`;
     setFormData((prevFormData) => ({
