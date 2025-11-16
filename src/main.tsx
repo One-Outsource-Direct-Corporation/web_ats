@@ -5,7 +5,11 @@ import "./styles/global.css";
 import App from "./App.tsx";
 
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
+  import.meta.env.VITE_REACT_ENV === "development" ? (
+    <StrictMode>
+      <App />
+    </StrictMode>
+  ) : (
     <App />
-  </StrictMode>
+  )
 );

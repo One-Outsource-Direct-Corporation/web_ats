@@ -1,9 +1,16 @@
 import { useState } from "react";
 import type { StepProps } from "../types/create_position.types";
+import type { StepErrors } from "../utils/validateSteps";
 
 export const useStepNavigation = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  const [stepErrors, setStepErrors] = useState<StepErrors>({
+    1: null,
+    2: null,
+    3: null,
+    4: null,
+  });
 
   const steps: StepProps[] = [
     { number: 1, title: "Details", active: currentStep === 1 },
@@ -52,16 +59,28 @@ export const useStepNavigation = () => {
   const resetSteps = () => {
     setCurrentStep(1);
     setCompletedSteps([]);
+    setStepErrors({
+      1: null,
+      2: null,
+      3: null,
+      4: null,
+    });
+  };
+
+  const updateStepErrors = (errors: StepErrors) => {
+    setStepErrors(errors);
   };
 
   return {
     steps,
     currentStep,
     completedSteps,
+    stepErrors,
     handleNext,
     handleBack,
     handleStepClick,
     getStepTitle,
     resetSteps,
+    updateStepErrors,
   };
 };

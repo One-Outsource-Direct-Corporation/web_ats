@@ -28,23 +28,32 @@ export function StepCard({
 
   return (
     <div className="p-3 border border-gray-200 rounded-md bg-gray-50">
-      {errors?.pipeline && errors.pipeline[index] && (
-        <div className="text-red-600 text-sm mb-2">
-          {Object.entries(errors.pipeline[index]).map(([field]) => {
-            let errorMessage = "";
-            if (field === "process_type") {
-              errorMessage = "Process type is required";
-            } else if (field === "process_title") {
-              errorMessage = "Process title is required";
-            }
-            return (
-              <p key={field + index} className="mb-1">
-                {errorMessage}
-              </p>
-            );
-          })}
-        </div>
-      )}
+      {errors?.pipeline &&
+        errors.pipeline[index] &&
+        typeof errors.pipeline[index] === "object" && (
+          <div className="text-red-600 text-sm mb-2">
+            {Object.entries(errors.pipeline[index]).map(
+              ([field, fieldErrors]) => {
+                let errorMessage = "";
+                if (field === "process_type") {
+                  errorMessage = "Process type is required";
+                } else if (field === "process_title") {
+                  errorMessage = "Process title is required";
+                } else if (
+                  Array.isArray(fieldErrors) &&
+                  fieldErrors.length > 0
+                ) {
+                  errorMessage = fieldErrors[0];
+                }
+                return errorMessage ? (
+                  <p key={field + index} className="mb-1">
+                    {errorMessage}
+                  </p>
+                ) : null;
+              }
+            )}
+          </div>
+        )}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ProcessTypeIcon

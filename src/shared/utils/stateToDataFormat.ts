@@ -13,9 +13,16 @@ function sanitizeString(input?: string): string {
 
 /** Format a generic job posting object with date and sanitization */
 function formatJobPosting<T extends Record<string, any>>(jobPosting: T): T {
+  let formattedDate = jobPosting.target_start_date;
+
+  // Only format if it's not already in YYYY-MM-DD format
+  if (formattedDate && !/^\d{4}-\d{2}-\d{2}$/.test(formattedDate)) {
+    formattedDate = formatDateYYYYMMDD(formattedDate);
+  }
+
   return {
     ...jobPosting,
-    target_start_date: formatDateYYYYMMDD(jobPosting.target_start_date ?? ""),
+    target_start_date: formattedDate,
     description: sanitizeString(jobPosting.description),
     responsibilities: sanitizeString(jobPosting.responsibilities),
     qualifications: sanitizeString(jobPosting.qualifications),
@@ -94,12 +101,12 @@ export function stateToDataFormat<T extends object>(
     customFields?: (data: T) => Partial<T>;
   } = {}
 ): FormData {
-  let baseData: any = { ...formData };
+  let baseData = { ...formData } as any;
 
   // Format the job posting field if present and specified
-  if (options.jobPostingField && baseData[options.jobPostingField]) {
-    baseData[options.jobPostingField] = formatJobPosting(
-      baseData[options.jobPostingField]
+  if (options.jobPostingField && baseData[options.jobPostingField as string]) {
+    baseData[options.jobPostingField as string] = formatJobPosting(
+      baseData[options.jobPostingField as string]
     );
   }
 
@@ -109,7 +116,7 @@ export function stateToDataFormat<T extends object>(
   }
 
   // Normalize pipeline data, if present
-  if (Array.isArray(baseData.pipeline)) {
+  if ("pipeline" in baseData && Array.isArray(baseData.pipeline)) {
     baseData.pipeline = baseData.pipeline.map((step: any) => ({
       ...step,
       hiring_managers: Array.isArray(step.hiring_managers)
@@ -117,6 +124,33 @@ export function stateToDataFormat<T extends object>(
         : [],
       assessments: step.assessments,
     }));
+  }
+
+  // Normalize questionnaire name if present (can be at root or nested in application_form)
+  const questionnaireLocations = [
+    { obj: baseData, path: "questionnaire" },
+    { obj: baseData.application_form, path: "application_form.questionnaire" },
+  ];
+
+  for (const location of questionnaireLocations) {
+    if (
+      location.obj &&
+      "questionnaire" in location.obj &&
+      location.obj.questionnaire &&
+      typeof location.obj.questionnaire === "object"
+    ) {
+      if (
+        !location.obj.questionnaire.name ||
+        (typeof location.obj.questionnaire.name === "string" &&
+          location.obj.questionnaire.name.trim() === "") ||
+        location.obj.questionnaire.name === null
+      ) {
+        location.obj.questionnaire = {
+          ...location.obj.questionnaire,
+          name: "anonymous",
+        };
+      }
+    }
   }
 
   // Extract files and normalized data recursively
@@ -134,6 +168,7 @@ export function stateToDataFormat<T extends object>(
 
 // Usage for PositionFormData
 export function stateToDataFormatClient(formData: PositionFormData): FormData {
+  console.log("Converting formData to FormData:", formData);
   return stateToDataFormat(formData, { jobPostingField: "job_posting" });
 }
 

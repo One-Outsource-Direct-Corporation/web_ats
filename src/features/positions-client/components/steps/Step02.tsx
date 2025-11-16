@@ -1,6 +1,7 @@
 import type { PositionFormData } from "@/features/positions-client/types/create_position.types";
 import { RichTextEditor } from "@/shared/components/reusables/RichTextEditor";
 import { Card } from "@/shared/components/ui/card";
+import type { ValidationError } from "../../utils/validateSteps";
 
 interface Step02Props {
   formData: PositionFormData;
@@ -8,7 +9,7 @@ interface Step02Props {
     field: keyof PositionFormData["job_posting"],
     content: string
   ) => void;
-  error?: any;
+  error?: ValidationError | null;
 }
 
 export default function Step02({
@@ -16,14 +17,17 @@ export default function Step02({
   handleInputChange,
   error,
 }: Step02Props) {
+  const jobPostingErrors = error?.job_posting as ValidationError | undefined;
+
   return (
     <Card className="p-6">
       <div className="space-y-2 ">
-        {error?.job_posting?.description && (
-          <p className="text-sm text-red-500">
-            {error.job_posting.description[0]}
-          </p>
-        )}
+        {jobPostingErrors?.description &&
+          Array.isArray(jobPostingErrors.description) && (
+            <p className="text-sm text-red-500">
+              {jobPostingErrors.description[0]}
+            </p>
+          )}
         <RichTextEditor
           title="Job Description"
           value={formData.job_posting.description || ""}
@@ -33,11 +37,12 @@ export default function Step02({
       </div>
 
       <div className="space-y-2 ">
-        {error?.job_posting?.responsibilities && (
-          <p className="text-sm text-red-500">
-            {error.job_posting.responsibilities[0]}
-          </p>
-        )}
+        {jobPostingErrors?.responsibilities &&
+          Array.isArray(jobPostingErrors.responsibilities) && (
+            <p className="text-sm text-red-500">
+              {jobPostingErrors.responsibilities[0]}
+            </p>
+          )}
         <RichTextEditor
           title="Responsibilities"
           value={formData.job_posting.responsibilities || ""}
@@ -47,11 +52,12 @@ export default function Step02({
       </div>
 
       <div className="space-y-2 ">
-        {error?.job_posting?.qualifications && (
-          <p className="text-sm text-red-500">
-            {error.job_posting.qualifications[0]}
-          </p>
-        )}
+        {jobPostingErrors?.qualifications &&
+          Array.isArray(jobPostingErrors.qualifications) && (
+            <p className="text-sm text-red-500">
+              {jobPostingErrors.qualifications[0]}
+            </p>
+          )}
         <RichTextEditor
           title="Qualifications"
           value={formData.job_posting.qualifications || ""}

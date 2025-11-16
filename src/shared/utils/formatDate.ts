@@ -23,8 +23,24 @@ export function formatDate(dateString: string): string {
 export function formatDateYYYYMMDD(date: string): string {
   if (!date) return "";
 
-  const dateObj = new Date(date).toISOString();
-  return dateObj.split("T")[0];
+  // If already in YYYY-MM-DD format, return as is
+  if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return date;
+  }
+
+  const dateObj = new Date(date);
+
+  // Check if date is valid
+  if (isNaN(dateObj.getTime())) {
+    return "";
+  }
+
+  // Use local date to avoid timezone issues
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const day = String(dateObj.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }
 
 export function formatTime(from: string, to: string): string {

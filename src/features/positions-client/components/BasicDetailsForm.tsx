@@ -273,8 +273,10 @@ export const BasicDetailsForm = ({
                   <SelectItem value="executive">Executive</SelectItem>
                 </SelectContent>
               </Select>
-              {errorFields?.experience_level && (
-                <FieldError>{errorFields.experience_level[0]}</FieldError>
+              {errorFields?.job_posting?.experience_level && (
+                <FieldError>
+                  {errorFields.job_posting.experience_level[0]}
+                </FieldError>
               )}
             </Field>
             <Field>
@@ -291,8 +293,10 @@ export const BasicDetailsForm = ({
                 placeholder="Enter number of positions"
                 min={0}
               />
-              {errorFields?.headcount && (
-                <FieldError>{errorFields.headcount[0]}</FieldError>
+              {errorFields?.job_posting?.number_of_vacancies && (
+                <FieldError>
+                  {errorFields.job_posting.number_of_vacancies[0]}
+                </FieldError>
               )}
             </Field>
             <Field>
@@ -392,6 +396,9 @@ export const BasicDetailsForm = ({
                 }
                 placeholder="Minimum salary"
               />
+              {errorFields?.job_posting?.min_salary && (
+                <FieldError>{errorFields.job_posting.min_salary[0]}</FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Maximum</FieldLabel>
@@ -403,6 +410,9 @@ export const BasicDetailsForm = ({
                 }
                 placeholder="Maximum salary"
               />
+              {errorFields?.job_posting?.max_salary && (
+                <FieldError>{errorFields.job_posting.max_salary[0]}</FieldError>
+              )}
             </Field>
           </FieldGroup>
         </FieldSet>

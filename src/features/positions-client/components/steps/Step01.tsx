@@ -14,6 +14,7 @@ import type {
   LocationEntryDb,
   LocationEntryLocal,
 } from "../../types/location_and_batch.types";
+import type { ValidationError } from "../../utils/validateSteps";
 
 interface Step01Props {
   formData: PositionFormData;
@@ -26,7 +27,7 @@ interface Step01Props {
     fieldName: keyof PositionFormData["job_posting"],
     value: string | number | null
   ) => void;
-  error?: any;
+  error?: ValidationError | null;
 }
 
 export default function Step01({

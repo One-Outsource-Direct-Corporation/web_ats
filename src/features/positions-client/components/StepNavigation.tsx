@@ -1,6 +1,8 @@
 import type { StepProps } from "../types/create_position.types";
 import { Button } from "@/shared/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import type { StepErrors } from "../utils/validateSteps";
+import { hasStepErrors } from "../utils/validateSteps";
 
 import {
   Dialog,
@@ -19,7 +21,7 @@ interface StepNavigationProps {
   completedSteps: number[];
   onStepClick: (stepNumber: number) => void;
   resetForm: () => void;
-  stepErrors?: { [key: number]: any };
+  stepErrors?: StepErrors;
 }
 
 export const StepNavigation = ({
@@ -27,8 +29,8 @@ export const StepNavigation = ({
   completedSteps,
   onStepClick,
   resetForm,
-}: // stepErrors,
-StepNavigationProps) => {
+  stepErrors,
+}: StepNavigationProps) => {
   const navigate = useNavigate();
 
   const handleCancel = () => {
@@ -40,8 +42,9 @@ StepNavigationProps) => {
     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between border-b pb-4">
       <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start sm:gap-8">
         {steps.map((step) => {
-          // const hasError = stepErrors[step.number];
-          const hasError = false;
+          const hasError = stepErrors
+            ? hasStepErrors(stepErrors[step.number])
+            : false;
           const isCompleted = completedSteps.includes(step.number);
           const isActive = step.active;
 

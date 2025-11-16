@@ -7,7 +7,6 @@ import { useStepNavigation } from "../hooks/useStepNavigation";
 import { useModalManagement } from "../hooks/useModalManagement";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import { toast } from "react-toastify";
-import type { AxiosError } from "axios";
 import { PreviewModal } from "../components/Modals";
 import { StepNavigation } from "../components/StepNavigation";
 import { Button } from "@/shared/components/ui/button";
@@ -24,6 +23,11 @@ import type {
 } from "../../../shared/types/application_form.types";
 import type { PipelineStep } from "../../../shared/types/pipeline.types";
 import type { ApplicationFormQuestionnaire } from "../types/questionnaire.types";
+import {
+  validateSteps,
+  mapServerErrorsToSteps,
+  hasStepErrors,
+} from "../utils/validateSteps";
 
 interface PositionClientProps {
   formData: PositionFormData;
@@ -64,20 +68,41 @@ export default function PositionClient({
     steps,
     currentStep,
     completedSteps,
+    stepErrors,
     handleNext: stepHandleNext,
     handleBack,
     handleStepClick,
     getStepTitle,
-
     resetSteps,
+    updateStepErrors,
   } = useStepNavigation();
   const axiosPrivate = useAxiosPrivate();
   const modalHooks = useModalManagement();
 
-  // TODO: Add The Step Errors
-
   const handleNext = async () => {
+    // Only validate on final submission (step 4)
     if (currentStep === 4) {
+      // Validate all steps before submitting
+      const allErrors = validateSteps(formData);
+      const hasAnyErrors = Object.values(allErrors).some((error) =>
+        hasStepErrors(error)
+      );
+
+      if (hasAnyErrors) {
+        toast.error("Please fix all errors before publishing the position");
+        updateStepErrors(allErrors);
+
+        // Find the first step with errors and navigate to it
+        const firstErrorStep = Object.keys(allErrors)
+          .map(Number)
+          .find((step) => hasStepErrors(allErrors[step]));
+
+        if (firstErrorStep && firstErrorStep !== currentStep) {
+          handleStepClick(firstErrorStep);
+        }
+        return;
+      }
+
       const formDataObj = stateToDataFormatClient(formData);
 
       try {
@@ -106,8 +131,28 @@ export default function PositionClient({
           resetFormData();
           resetSteps();
         }
-      } catch (err: AxiosError | any) {
-        console.log(err);
+      } catch (err: any) {
+        console.error("Position creation error:", err);
+
+        // Map server errors to steps
+        if (err.response?.data) {
+          const serverErrors = mapServerErrorsToSteps(err.response.data);
+          updateStepErrors(serverErrors);
+
+          // Find the first step with errors and navigate to it
+          const firstErrorStep = Object.keys(serverErrors)
+            .map(Number)
+            .find((step) => hasStepErrors(serverErrors[step]));
+
+          if (firstErrorStep) {
+            handleStepClick(firstErrorStep);
+            toast.error(`Please fix the errors in Step ${firstErrorStep}`);
+          } else {
+            toast.error("Please fix the errors in the form");
+          }
+        } else {
+          toast.error("Failed to create position. Please try again.");
+        }
       }
     } else {
       stepHandleNext();
@@ -122,6 +167,7 @@ export default function PositionClient({
             setFormData={setFormData}
             handleInputChange={handlePositionBaseChange}
             handleJobPostingChange={handleJobPostingChange}
+            error={stepErrors[1]}
           />
         );
       case 2:
@@ -129,6 +175,7 @@ export default function PositionClient({
           <Step02
             formData={formData}
             handleInputChange={handleJobPostingChange}
+            error={stepErrors[2]}
           />
         );
       case 3:
@@ -145,6 +192,7 @@ export default function PositionClient({
           <Step04
             pipelineSteps={formData.pipeline}
             pipelineHandler={pipelineHandler}
+            errors={stepErrors[4]}
           />
         );
     }
@@ -165,7 +213,7 @@ export default function PositionClient({
           completedSteps={completedSteps}
           onStepClick={handleStepClick}
           resetForm={resetFormData}
-          //   stepErrors={stepErrors}
+          stepErrors={stepErrors}
         />
 
         <div className="flex justify-between items-start">
@@ -174,7 +222,7 @@ export default function PositionClient({
             variant="outline"
             className="text-blue-600 border-blue-600 bg-transparent hover:bg-blue-600 hover:text-white"
             onClick={() => modalHooks.setShowPreview(true)}
-            disabled={currentStep === 4 || currentStep === 5}
+            disabled={currentStep >= 4}
           >
             <Eye className="w-4 h-4 mr-2" />
             Preview
