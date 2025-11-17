@@ -6,8 +6,9 @@ import { defaultAxios } from "@/config/axios";
 import type {
   JobPostingAPIResponse,
   JobPostingResponsePosition,
-  JobPostingResponsePRF,
 } from "@/features/jobs/types/job.types";
+import type { PRFFormData } from "@/features/prf/types/prf.types";
+import type { PositionFormData } from "@/features/positions-client/types/create_position.types";
 
 export function usePositions({
   my_postings = false,
@@ -133,7 +134,7 @@ export function usePositionDetail({
   non_admin: boolean;
 }) {
   const [position, setPosition] = useState<
-    JobPostingResponsePRF | JobPostingResponsePosition | null
+    PRFFormData | PositionFormData | null
   >(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<AxiosError | any>(null);
@@ -148,9 +149,7 @@ export function usePositionDetail({
     try {
       setLoading(true);
       setError(null);
-      let response: AxiosResponse<
-        JobPostingResponsePRF | JobPostingResponsePosition
-      >;
+      let response: AxiosResponse<PRFFormData | PositionFormData>;
 
       if (non_admin) {
         response = await defaultAxios.get(`/api/job/${id}/`, {

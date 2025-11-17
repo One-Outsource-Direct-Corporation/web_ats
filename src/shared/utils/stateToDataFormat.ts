@@ -174,5 +174,6 @@ export function stateToDataFormatClient(formData: PositionFormData): FormData {
 
 // Usage for PRFFormData
 export function stateToDataFormatPRF(formData: PRFFormData): FormData {
+  console.log(formData);
   return stateToDataFormat(formData, { jobPostingField: "job_posting" });
 }

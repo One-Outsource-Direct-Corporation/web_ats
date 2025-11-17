@@ -27,6 +27,17 @@ export interface JobPosting {
   working_site: string | null;
 }
 
+export interface JobPostingDb extends JobPosting {
+  id: number;
+  status: string;
+  type: "client" | "prf";
+  active: boolean;
+  published: boolean;
+  posted_by: number;
+  created_at: Date;
+  updated_at: Date;
+}
+
 export interface Client {
   id: number;
   name: string;
@@ -48,8 +59,9 @@ export interface Position extends PositionBase {
   batches: BatchEntry[] | [];
 }
 
-export interface PositionDb extends Position {
+export interface PositionDb extends Omit<Position, "job_posting"> {
   id: number;
+  job_posting: JobPostingDb;
   posted_by: string;
   created_at: Date;
   updated_at: Date;

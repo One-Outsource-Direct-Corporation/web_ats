@@ -21,6 +21,9 @@ import type {
 import { usePositionDetail } from "@/shared/hooks/usePositions";
 import PositionEditForm from "../components/PositionEditForm";
 import { useEffect } from "react";
+import PRF from "@/features/prf/views/PRF";
+import type { PRFDb, PRFFormData } from "@/features/prf/types/prf.types";
+import type { PositionDb } from "@/features/positions-client/types/create_position.types";
 
 export default function EditRequestItem() {
   const { type, id } = useParams<{ type: "prf" | "position"; id: string }>();
@@ -73,14 +76,18 @@ export default function EditRequestItem() {
               Edit {type === "prf" ? "PRF" : "Position"}
             </h1>
             <p className="text-gray-600">
-              {position.job_title} • ID: {position.id}
+              {position.job_posting.job_title} • ID:{" "}
+              {((position as PRFDb) || (position as PositionDb)).job_posting.id}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <Select
-            value={position.status}
+            value={
+              ((position as PRFDb) || (position as PositionDb)).job_posting
+                .status
+            }
             onValueChange={async (
               value: "draft" | "pending" | "active" | "closed" | "cancelled"
             ) => {
@@ -102,7 +109,8 @@ export default function EditRequestItem() {
           >
             <SelectTrigger
               className={`w-32 rounded-4xl border-0 font-semibold ${formatBackgroundStatus(
-                position.status
+                ((position as PRFDb) || (position as PositionDb)).job_posting
+                  .status
               )}`}
             >
               <SelectValue />
@@ -115,9 +123,12 @@ export default function EditRequestItem() {
               <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
-          {position.status === "active" && (
+          {((position as PRFDb) || (position as PositionDb)).job_posting
+            .status === "active" && (
             <Select
-              value={position.published.toString()}
+              value={(
+                (position as PRFDb) || (position as PositionDb)
+              ).job_posting.published.toString()}
               onValueChange={async (value: "true" | "false") => {
                 try {
                   const endpoint =
@@ -125,7 +136,8 @@ export default function EditRequestItem() {
                   const response = await axiosPrivate.patch(endpoint, {
                     job_posting: {
                       published: value === "true",
-                      status: position.status,
+                      status: ((position as PRFDb) || (position as PositionDb))
+                        .job_posting.status,
                     },
                   });
                   console.log(response);
@@ -155,7 +167,7 @@ export default function EditRequestItem() {
       {/* Form Content */}
       <div className="bg-white rounded-lg shadow-sm border p-6">
         {type === "prf" ? (
-          <PRFEditForm initialData={position as JobPostingResponsePRF} />
+          <PRF initialData={position as PRFFormData} updateMode={true} />
         ) : (
           <PositionEditForm
             initialData={position as JobPostingResponsePosition}

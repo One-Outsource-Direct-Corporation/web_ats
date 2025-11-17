@@ -1,4 +1,7 @@
-import type { JobPosting } from "@/features/positions-client/types/create_position.types";
+import type {
+  JobPosting,
+  JobPostingDb,
+} from "@/features/positions-client/types/create_position.types";
 import type { ApplicationFormData } from "@/shared/types/application_form.types";
 import type { PipelineStep } from "@/shared/types/pipeline.types";
 
@@ -99,8 +102,9 @@ export interface PRF extends PRFBase {
   pipeline: PipelineStep[] | [];
 }
 
-export interface PRFDb extends PRF {
+export interface PRFDb extends Omit<PRF, "job_posting"> {
   id: number;
+  job_posting: JobPostingDb;
   posted_by: string;
   created_at: Date;
   updated_at: Date;

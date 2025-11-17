@@ -19,7 +19,7 @@ import { MinusCircle } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import Step05 from "../components/steps/Step05";
 import { Step06 } from "../components/steps/Step06";
-import type { PRFFormData } from "../types/prf.types";
+import type { PRFDb, PRFFormData } from "../types/prf.types";
 import {
   validateSteps,
   mapServerErrorsToSteps,
@@ -29,9 +29,10 @@ import {
 
 interface PRFProps {
   initialData?: PRFFormData;
+  updateMode?: boolean;
 }
 
-export default function PRF({ initialData }: PRFProps) {
+export default function PRF({ initialData, updateMode }: PRFProps) {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [maxStepVisited, setMaxStepVisited] = useState(1);
@@ -108,11 +109,26 @@ export default function PRF({ initialData }: PRFProps) {
     const formDataObj = stateToDataFormatPRF(formData);
 
     try {
-      const response = await axiosPrivate.post("/api/prf/", formDataObj, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      let response;
+      if (updateMode) {
+        response = await axiosPrivate.patch(
+          `/api/prf/${(formData as PRFDb).job_posting.id}/`,
+          formDataObj,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+      } else {
+        response = await axiosPrivate.post("/api/prf/", formDataObj, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      }
+
+      console.log(response);
 
       if (response.status === 201) {
         setShowSuccessPopup(true);
