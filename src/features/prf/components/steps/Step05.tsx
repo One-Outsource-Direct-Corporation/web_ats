@@ -3,13 +3,14 @@ import type { PipelineStep } from "../../../../shared/types/pipeline.types";
 import { usePipeline } from "@/shared/hooks/usePipeline";
 import { Button } from "@/shared/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import type { ValidationError } from "../../utils/validateSteps";
 
 interface Step05Props {
   goToNextStep: () => void;
   goToPreviousStep: () => void;
   pipelineSteps: PipelineStep[];
   pipelineHandler: (updatedPipelines: PipelineStep[]) => void;
-  errors?: any;
+  errors?: ValidationError | null;
 }
 
 export default function Step05({
@@ -23,6 +24,13 @@ export default function Step05({
     usePipeline(pipelineSteps, pipelineHandler);
   return (
     <div className="space-y-10">
+      {errors?.pipeline &&
+        Array.isArray(errors.pipeline) &&
+        typeof errors.pipeline[0] === "string" && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-sm text-red-600">{errors.pipeline[0]}</p>
+          </div>
+        )}
       <PipelineConfiguration
         pipelineSteps={pipelines}
         addPipelineStep={addPipelineStep}

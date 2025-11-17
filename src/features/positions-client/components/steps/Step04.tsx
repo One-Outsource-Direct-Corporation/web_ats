@@ -19,11 +19,13 @@ export default function Step04({
 
   return (
     <div>
-      {errors?.pipeline && Array.isArray(errors.pipeline) && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
-          <p className="text-sm text-red-600">{errors.pipeline[0]}</p>
-        </div>
-      )}
+      {errors?.pipeline &&
+        Array.isArray(errors.pipeline) &&
+        typeof errors.pipeline[0] === "string" && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-sm text-red-600">{errors.pipeline[0]}</p>
+          </div>
+        )}
       <PipelineConfiguration
         pipelineSteps={pipelines}
         addPipelineStep={addPipelineStep}

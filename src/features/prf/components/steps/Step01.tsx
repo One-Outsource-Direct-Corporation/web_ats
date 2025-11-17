@@ -12,7 +12,12 @@ import type { PRFFormData } from "../../types/prf.types";
 import { useUsersByDepartment } from "../../hooks/useUsers";
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import type { User } from "@/features/auth/types/auth.types";
-import { Field, FieldGroup, FieldLabel } from "@/shared/components/ui/field";
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+  FieldError,
+} from "@/shared/components/ui/field";
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
 import {
   Popover,
@@ -22,17 +27,24 @@ import {
 import { ArrowRight, ChevronDownIcon } from "lucide-react";
 import { Calendar } from "@/shared/components/ui/calendar";
 import { formatDate } from "@/shared/utils/formatDate";
+import type { ValidationError } from "../../utils/validateSteps";
+import {
+  getJobPostingError,
+  getFieldError,
+} from "@/shared/utils/formValidation";
 
 interface Step01Props {
   goToNextStep: () => void;
   formData: PRFFormData;
   updateFormData: React.Dispatch<React.SetStateAction<PRFFormData>>;
+  errors?: ValidationError | null;
 }
 
 export const Step01 = ({
   goToNextStep,
   formData,
   updateFormData,
+  errors,
 }: Step01Props) => {
   const { users, loading } = useUsersByDepartment({
     business_unit: formData.business_unit?.toLowerCase() || "",
@@ -77,6 +89,11 @@ export const Step01 = ({
                   }))
                 }
               />
+              {getJobPostingError(errors, "job_title") && (
+                <FieldError>
+                  {getJobPostingError(errors, "job_title")}
+                </FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Target Start Date</FieldLabel>
@@ -118,6 +135,11 @@ export const Step01 = ({
                   />
                 </PopoverContent>
               </Popover>
+              {getJobPostingError(errors, "target_start_date") && (
+                <FieldError>
+                  {getJobPostingError(errors, "target_start_date")}
+                </FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>No. of Vacancies</FieldLabel>
@@ -135,6 +157,11 @@ export const Step01 = ({
                   }))
                 }
               />
+              {getJobPostingError(errors, "number_of_vacancies") && (
+                <FieldError>
+                  {getJobPostingError(errors, "number_of_vacancies")}
+                </FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Reason for Posting Position</FieldLabel>
@@ -152,6 +179,11 @@ export const Step01 = ({
                   <SelectItem value="Other">Other</SelectItem>
                 </SelectContent>
               </Select>
+              {getJobPostingError(errors, "reason_for_posting") && (
+                <FieldError>
+                  {getJobPostingError(errors, "reason_for_posting")}
+                </FieldError>
+              )}
               {formData.job_posting.reason_for_posting === "Other" && (
                 <Input
                   className="w-full mt-2"
@@ -213,6 +245,11 @@ export const Step01 = ({
                   <FieldLabel htmlFor="oors">OORS</FieldLabel>
                 </div>
               </RadioGroup>
+              {getFieldError(errors, "business_unit") && (
+                <FieldError>
+                  {getFieldError(errors, "business_unit")}
+                </FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Department Name</FieldLabel>
@@ -267,6 +304,11 @@ export const Step01 = ({
                   )}
                 </SelectContent>
               </Select>
+              {getJobPostingError(errors, "department_name") && (
+                <FieldError>
+                  {getJobPostingError(errors, "department_name")}
+                </FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Immediate Supervisor</FieldLabel>
@@ -328,6 +370,11 @@ export const Step01 = ({
                     : null}
                 </SelectContent>
               </Select>
+              {getFieldError(errors, "immediate_supervisor") && (
+                <FieldError>
+                  {getFieldError(errors, "immediate_supervisor")}
+                </FieldError>
+              )}
             </Field>
           </FieldGroup>
         </FieldGroup>

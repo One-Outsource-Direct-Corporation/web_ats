@@ -20,6 +20,12 @@ import { Button } from "@/shared/components/ui/button";
 import Step05 from "../components/steps/Step05";
 import { Step06 } from "../components/steps/Step06";
 import type { PRFFormData } from "../types/prf.types";
+import {
+  validateSteps,
+  mapServerErrorsToSteps,
+  hasStepErrors,
+  type StepErrors,
+} from "../utils/validateSteps";
 
 interface PRFProps {
   initialData?: PRFFormData;
@@ -32,6 +38,7 @@ export default function PRF({ initialData }: PRFProps) {
   const [showCancelConfirmDialog, setShowCancelConfirmDialog] = useState(false);
   const [showSubmitConfirmDialog, setShowSubmitConfirmDialog] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [stepErrors, setStepErrors] = useState<StepErrors>({});
 
   const {
     formData,
@@ -69,19 +76,36 @@ export default function PRF({ initialData }: PRFProps) {
   };
 
   const handleSubmit = () => {
+    // Validate all steps before submitting
+    const allErrors = validateSteps(formData);
+    const hasAnyErrors = Object.values(allErrors).some((error) =>
+      hasStepErrors(error)
+    );
+
+    if (hasAnyErrors) {
+      toast.error("Please fix all errors before submitting the PRF");
+      setStepErrors(allErrors);
+
+      // Find the first step with errors and navigate to it
+      const firstErrorStep = Object.keys(allErrors)
+        .map(Number)
+        .find((stepNum) => hasStepErrors(allErrors[stepNum]));
+
+      if (firstErrorStep && firstErrorStep !== step) {
+        setStep(firstErrorStep);
+        setMaxStepVisited((currentMax) => Math.max(currentMax, firstErrorStep));
+      }
+      console.log(allErrors);
+      return;
+    }
+
     setShowSubmitConfirmDialog(true);
   };
 
   const handleConfirmSubmit = async () => {
     setShowSubmitConfirmDialog(false);
-    setShowSuccessPopup(true);
-    setTimeout(() => {
-      setShowSuccessPopup(false);
-      // navigate("/requests");
-    }, 1500);
 
     const formDataObj = stateToDataFormatPRF(formData);
-    // return;
 
     try {
       const response = await axiosPrivate.post("/api/prf/", formDataObj, {
@@ -91,11 +115,38 @@ export default function PRF({ initialData }: PRFProps) {
       });
 
       if (response.status === 201) {
+        setShowSuccessPopup(true);
+        setTimeout(() => {
+          setShowSuccessPopup(false);
+          navigate("/requests");
+        }, 1500);
         toast.success("PRF submitted successfully!");
       }
     } catch (err: AxiosError | any) {
-      toast.error("Failed to submit PRF. Please try again.");
       console.error("Error submitting PRF:", err);
+
+      // Map server errors to steps
+      if (err.response?.data) {
+        const serverErrors = mapServerErrorsToSteps(err.response.data);
+        setStepErrors(serverErrors);
+
+        // Find the first step with errors and navigate to it
+        const firstErrorStep = Object.keys(serverErrors)
+          .map(Number)
+          .find((stepNum) => hasStepErrors(serverErrors[stepNum]));
+
+        if (firstErrorStep) {
+          setStep(firstErrorStep);
+          setMaxStepVisited((currentMax) =>
+            Math.max(currentMax, firstErrorStep)
+          );
+          toast.error(`Please fix the errors in Step ${firstErrorStep}`);
+        } else {
+          toast.error("Please fix the errors in the form");
+        }
+      } else {
+        toast.error("Failed to submit PRF. Please try again.");
+      }
     }
   };
 
@@ -124,30 +175,39 @@ export default function PRF({ initialData }: PRFProps) {
               "Step 04",
               "Step 05",
               "Step 06",
-            ].map((label, i) => (
-              <div
-                key={i}
-                className={`flex-1 text-center py-2 text-sm font-semibold relative ${
-                  i + 1 === step
-                    ? "bg-[#0056D2] text-white"
-                    : "bg-white text-gray-500"
-                } ${
-                  i + 1 <= maxStepVisited && i + 1 !== step
-                    ? "cursor-pointer hover:bg-gray-100"
-                    : ""
-                }`}
-                onClick={() => {
-                  if (i + 1 <= maxStepVisited && i + 1 !== step) {
-                    setStep(i + 1);
-                  }
-                }}
-              >
-                {label}
-                {i < 6 && (
-                  <span className="absolute right-0 top-0 h-full w-px bg-gray-300" />
-                )}
-              </div>
-            ))}
+            ].map((label, i) => {
+              const stepNumber = i + 1;
+              const hasError =
+                stepErrors[stepNumber] && hasStepErrors(stepErrors[stepNumber]);
+              return (
+                <div
+                  key={i}
+                  className={`flex-1 text-center py-2 text-sm font-semibold relative ${
+                    hasError
+                      ? "bg-red-600 text-white"
+                      : stepNumber === step
+                      ? "bg-[#0056D2] text-white"
+                      : "bg-white text-gray-500"
+                  } ${
+                    stepNumber <= maxStepVisited && stepNumber !== step
+                      ? hasError
+                        ? "cursor-pointer hover:bg-red-700"
+                        : "cursor-pointer hover:bg-gray-100"
+                      : ""
+                  }`}
+                  onClick={() => {
+                    if (stepNumber <= maxStepVisited && stepNumber !== step) {
+                      setStep(stepNumber);
+                    }
+                  }}
+                >
+                  {label}
+                  {i < 6 && (
+                    <span className="absolute right-0 top-0 h-full w-px bg-gray-300" />
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {step === 1 && (
@@ -155,6 +215,7 @@ export default function PRF({ initialData }: PRFProps) {
               goToNextStep={goToNextStep}
               formData={formData}
               updateFormData={setFormData}
+              errors={stepErrors[1]}
             />
           )}
           {step === 2 && (
@@ -164,6 +225,7 @@ export default function PRF({ initialData }: PRFProps) {
               step={step}
               formData={formData}
               updateFormData={setFormData}
+              errors={stepErrors[2]}
             />
           )}
           {step === 3 && (
@@ -191,6 +253,7 @@ export default function PRF({ initialData }: PRFProps) {
               goToPreviousStep={goToPreviousStep}
               pipelineSteps={formData.pipeline}
               pipelineHandler={pipelineHandler}
+              errors={stepErrors[5]}
             />
           )}
           {step === 6 && (

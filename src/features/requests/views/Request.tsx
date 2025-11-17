@@ -47,7 +47,6 @@ export default function Request() {
     employment_type: filters.employment_type,
     work_setup: filters.work_setup,
     order_by: filters.order_by,
-    no_active: filters.status === "active" ? false : true,
   });
   const selectAll = positions
     ? positions.results.length > 0 &&

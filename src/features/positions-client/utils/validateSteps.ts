@@ -1,8 +1,14 @@
 import type { PositionFormData } from "../types/create_position.types";
+import {
+  validateJobPosting,
+  validatePipeline,
+  mapServerErrorsToSteps as mapServerErrors,
+  hasStepErrors as checkStepErrors,
+  getStepErrorSummary as getErrorSummary,
+  type ValidationError,
+} from "@/shared/utils/formValidation";
 
-export interface ValidationError {
-  [key: string]: string[] | ValidationError;
-}
+export type { ValidationError };
 
 export interface StepErrors {
   [stepNumber: number]: ValidationError | null;
@@ -30,125 +36,9 @@ export function validateSteps(formData: PositionFormData): StepErrors {
     step1Errors.education_level = ["This field may not be null."];
   }
 
-  // Job posting basic fields
-  const jobPostingErrors: ValidationError = {};
-
-  if (!formData.job_posting.job_title) {
-    jobPostingErrors.job_title = ["This field may not be null."];
-  }
-
-  if (!formData.job_posting.target_start_date) {
-    jobPostingErrors.target_start_date = ["This field may not be null."];
-  }
-
-  if (!formData.job_posting.reason_for_posting) {
-    jobPostingErrors.reason_for_posting = ["This field may not be null."];
-  }
-
-  if (!formData.job_posting.experience_level) {
-    jobPostingErrors.experience_level = ["This field may not be null."];
-  }
-
-  if (!formData.job_posting.department_name) {
-    jobPostingErrors.department_name = ["This field may not be null."];
-  }
-
-  if (!formData.job_posting.employment_type) {
-    jobPostingErrors.employment_type = ["This field may not be null."];
-  }
-
-  if (!formData.job_posting.work_setup) {
-    jobPostingErrors.work_setup = ["This field may not be null."];
-  }
-
-  if (
-    !formData.job_posting.working_site ||
-    formData.job_posting.working_site.trim() === ""
-  ) {
-    jobPostingErrors.working_site = ["This field may not be blank."];
-  }
-
-  if (!formData.job_posting.number_of_vacancies) {
-    jobPostingErrors.number_of_vacancies = ["This field may not be null."];
-  }
-
-  if (!formData.job_posting.min_salary) {
-    jobPostingErrors.min_salary = ["This field may not be null."];
-  }
-
-  if (!formData.job_posting.max_salary) {
-    jobPostingErrors.max_salary = ["This field may not be null."];
-  }
-
-  if (Object.keys(jobPostingErrors).length > 0) {
-    step1Errors.job_posting = jobPostingErrors;
-  }
-
-  if (Object.keys(step1Errors).length > 0) {
-    errors[1] = step1Errors;
-  }
-
-  const step2Errors: ValidationError = {};
-  const descriptionErrors: ValidationError = {};
-
-  if (
-    !formData.job_posting.description ||
-    formData.job_posting.description.trim() === ""
-  ) {
-    descriptionErrors.description = ["This field may not be blank."];
-  }
-
-  if (
-    !formData.job_posting.responsibilities ||
-    formData.job_posting.responsibilities.trim() === ""
-  ) {
-    descriptionErrors.responsibilities = ["This field may not be blank."];
-  }
-
-  if (
-    !formData.job_posting.qualifications ||
-    formData.job_posting.qualifications.trim() === ""
-  ) {
-    descriptionErrors.qualifications = ["This field may not be blank."];
-  }
-
-  if (Object.keys(descriptionErrors).length > 0) {
-    step2Errors.job_posting = descriptionErrors;
-  }
-
-  if (Object.keys(step2Errors).length > 0) {
-    errors[2] = step2Errors;
-  }
-
-  const step4Errors: ValidationError = {};
-
-  if (!formData.pipeline || formData.pipeline.length === 0) {
-    step4Errors.pipeline = ["At least one pipeline step is required."];
-  }
-
-  if (Object.keys(step4Errors).length > 0) {
-    errors[4] = step4Errors;
-  }
-
-  return errors;
-}
-
-/**
- * Maps server validation errors to step-specific errors
- */
-export function mapServerErrorsToSteps(
-  serverErrors: ValidationError
-): StepErrors {
-  const errors: StepErrors = {
-    1: null,
-    2: null,
-    3: null,
-    4: null,
-  };
-
-  const step1Fields = [
-    "client",
-    "education_level",
+  // Validate job posting fields for step 1 (basic details)
+  const jobPostingErrors = validateJobPosting(formData.job_posting);
+  const step1JobPostingFields = [
     "job_title",
     "target_start_date",
     "reason_for_posting",
@@ -162,75 +52,93 @@ export function mapServerErrorsToSteps(
     "max_salary",
   ];
 
-  const step2Fields = ["description", "responsibilities", "qualifications"];
-
-  // Map step 1 errors
-  const step1Errors: ValidationError = {};
-  if (serverErrors.client) {
-    step1Errors.client = serverErrors.client as string[];
-  }
-  if (serverErrors.education_level) {
-    step1Errors.education_level = serverErrors.education_level as string[];
-  }
-  if (
-    serverErrors.job_posting &&
-    typeof serverErrors.job_posting === "object"
-  ) {
-    const jobPostingErrors: ValidationError = {};
-    const jobPosting = serverErrors.job_posting as ValidationError;
-
-    step1Fields.forEach((field) => {
-      if (jobPosting[field]) {
-        jobPostingErrors[field] = jobPosting[field] as string[];
-      }
-    });
-
-    if (Object.keys(jobPostingErrors).length > 0) {
-      step1Errors.job_posting = jobPostingErrors;
+  const step1JobPosting: ValidationError = {};
+  step1JobPostingFields.forEach((field) => {
+    if (jobPostingErrors[field]) {
+      step1JobPosting[field] = jobPostingErrors[field];
     }
+  });
+
+  if (Object.keys(step1JobPosting).length > 0) {
+    step1Errors.job_posting = step1JobPosting;
   }
+
   if (Object.keys(step1Errors).length > 0) {
     errors[1] = step1Errors;
   }
 
-  // Map step 2 errors
-  if (
-    serverErrors.job_posting &&
-    typeof serverErrors.job_posting === "object"
-  ) {
-    const step2Errors: ValidationError = {};
-    const jobPosting = serverErrors.job_posting as ValidationError;
+  // Step 2: Description fields validation
+  const step2Errors: ValidationError = {};
+  const step2Fields = ["description", "responsibilities", "qualifications"];
+  const step2JobPosting: ValidationError = {};
 
-    step2Fields.forEach((field) => {
-      if (jobPosting[field]) {
-        if (!step2Errors.job_posting) {
-          step2Errors.job_posting = {};
-        }
-        (step2Errors.job_posting as ValidationError)[field] = jobPosting[
-          field
-        ] as string[];
-      }
-    });
+  step2Fields.forEach((field) => {
+    if (jobPostingErrors[field]) {
+      step2JobPosting[field] = jobPostingErrors[field];
+    }
+  });
 
-    if (Object.keys(step2Errors).length > 0) {
-      errors[2] = step2Errors;
+  if (Object.keys(step2JobPosting).length > 0) {
+    step2Errors.job_posting = step2JobPosting;
+  }
+
+  if (Object.keys(step2Errors).length > 0) {
+    errors[2] = step2Errors;
+  }
+
+  // Step 4: Pipeline validation
+  const step4Errors: ValidationError = {};
+
+  if (!formData.pipeline || formData.pipeline.length === 0) {
+    step4Errors.pipeline = ["At least one pipeline step is required."];
+  } else {
+    const pipelineErrors = validatePipeline(formData.pipeline);
+    if (pipelineErrors) {
+      step4Errors.pipeline = pipelineErrors;
     }
   }
 
-  // Map step 4 errors
-  if (serverErrors.pipeline) {
-    errors[4] = { pipeline: serverErrors.pipeline as string[] };
+  if (Object.keys(step4Errors).length > 0) {
+    errors[4] = step4Errors;
   }
 
   return errors;
 }
 
 /**
+ * Maps server validation errors to step-specific errors for Position form
+ */
+export function mapServerErrorsToSteps(
+  serverErrors: ValidationError
+): StepErrors {
+  const fieldMapping: { [field: string]: number } = {
+    client: 1,
+    education_level: 1,
+    "job_posting.job_title": 1,
+    "job_posting.target_start_date": 1,
+    "job_posting.reason_for_posting": 1,
+    "job_posting.experience_level": 1,
+    "job_posting.department_name": 1,
+    "job_posting.employment_type": 1,
+    "job_posting.work_setup": 1,
+    "job_posting.working_site": 1,
+    "job_posting.number_of_vacancies": 1,
+    "job_posting.min_salary": 1,
+    "job_posting.max_salary": 1,
+    "job_posting.description": 2,
+    "job_posting.responsibilities": 2,
+    "job_posting.qualifications": 2,
+    pipeline: 4,
+  };
+
+  return mapServerErrors(serverErrors, fieldMapping);
+}
+
+/**
  * Checks if a specific step has errors
  */
 export function hasStepErrors(stepErrors: ValidationError | null): boolean {
-  if (!stepErrors) return false;
-  return Object.keys(stepErrors).length > 0;
+  return checkStepErrors(stepErrors);
 }
 
 /**
@@ -239,17 +147,5 @@ export function hasStepErrors(stepErrors: ValidationError | null): boolean {
 export function getStepErrorSummary(
   stepErrors: ValidationError | null
 ): string {
-  if (!stepErrors) return "";
-
-  let errorCount = 0;
-  const countErrors = (errors: ValidationError | string[]) => {
-    if (Array.isArray(errors)) {
-      errorCount++;
-    } else {
-      Object.values(errors).forEach(countErrors);
-    }
-  };
-
-  countErrors(stepErrors);
-  return errorCount === 1 ? "1 error" : `${errorCount} errors`;
+  return getErrorSummary(stepErrors);
 }

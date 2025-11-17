@@ -49,6 +49,7 @@ export default function PipelineConfiguration({
               key={stage.id}
               stage={stage}
               steps={stageSteps}
+              allSteps={pipelineSteps}
               errors={errors}
               addPipelineStep={addPipelineStep}
               updatePipelineStep={updatePipelineStep}

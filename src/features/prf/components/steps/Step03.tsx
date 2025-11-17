@@ -125,9 +125,33 @@ export const Step03: React.FC<Step03Props> = ({
     (key) => !predefinedSoftware.includes(key)
   );
 
+  // Check if no hardware or software is selected
+  const noHardwareSelected = Object.values(formData.hardware_required).every(
+    (val) => !val
+  );
+  const noSoftwareSelected = Object.values(formData.software_required).every(
+    (val) => !val
+  );
+  const showWarning = noHardwareSelected || noSoftwareSelected;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
       <div className="lg:col-span-2 space-y-6">
+        {showWarning && (
+          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-300 rounded-md">
+            <p className="text-sm font-semibold text-yellow-800 mb-2">
+              ⚠️ Warning:
+            </p>
+            <ul className="text-sm text-yellow-700 list-disc list-inside space-y-1">
+              {noHardwareSelected && (
+                <li>No hardware requirements have been selected</li>
+              )}
+              {noSoftwareSelected && (
+                <li>No software requirements have been selected</li>
+              )}
+            </ul>
+          </div>
+        )}
         {/* Asset Request */}
         <FieldGroup>
           <h2 className="text-blue-700 font-bold text-sm mb-4 border-l-4 border-blue-700 pl-2 uppercase">

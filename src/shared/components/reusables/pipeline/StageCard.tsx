@@ -15,6 +15,7 @@ import type { User } from "@/features/auth/types/auth.types";
 interface StageCardProps {
   stage: PipelineStage;
   steps: PipelineStep[];
+  allSteps: PipelineStep[];
   errors?: any;
   addPipelineStep: (newStep: PipelineStepLocal) => void;
   updatePipelineStep: (id: string | number, data: PipelineStep) => void;
@@ -24,6 +25,7 @@ interface StageCardProps {
 export function StageCard({
   stage,
   steps,
+  allSteps,
   errors,
   addPipelineStep,
   updatePipelineStep,
@@ -142,15 +144,21 @@ export function StageCard({
       </h4>
 
       <div className="space-y-3 mb-4">
-        {steps.map((step, index) => {
+        {steps.map((step) => {
           const stepId =
             (step as PipelineStepInDb).id || (step as PipelineStepLocal).tempId;
+          // Find the global index of this step in the full pipeline array
+          const globalIndex = allSteps.findIndex((s) => {
+            const sId =
+              (s as PipelineStepInDb).id || (s as PipelineStepLocal).tempId;
+            return sId === stepId;
+          });
           return (
             <StepCard
               key={stepId}
               step={step}
               errors={errors}
-              index={index}
+              index={globalIndex}
               onEdit={handleEditStep}
               onDelete={deletePipelineStep}
             />

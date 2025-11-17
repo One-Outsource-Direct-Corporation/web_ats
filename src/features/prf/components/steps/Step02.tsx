@@ -11,8 +11,18 @@ import type { PRFFormData } from "../../types/prf.types";
 import { RichTextEditor } from "@/shared/components/reusables/RichTextEditor";
 import type React from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { Field, FieldGroup, FieldLabel } from "@/shared/components/ui/field";
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+  FieldError,
+} from "@/shared/components/ui/field";
 import { PreviewInfo } from "../PreviewInfo";
+import type { ValidationError } from "../../utils/validateSteps";
+import {
+  getJobPostingError,
+  getFieldError,
+} from "@/shared/utils/formValidation";
 
 interface Step02Props {
   goToNextStep: () => void;
@@ -20,6 +30,7 @@ interface Step02Props {
   step: number;
   formData: PRFFormData;
   updateFormData: React.Dispatch<React.SetStateAction<PRFFormData>>;
+  errors?: ValidationError | null;
 }
 
 export const Step02 = ({
@@ -28,6 +39,7 @@ export const Step02 = ({
   step,
   formData,
   updateFormData,
+  errors,
 }: Step02Props) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
@@ -63,6 +75,11 @@ export const Step02 = ({
                   <SelectItem value="temporary">Temporary</SelectItem>
                 </SelectContent>
               </Select>
+              {getJobPostingError(errors, "employment_type") && (
+                <FieldError>
+                  {getJobPostingError(errors, "employment_type")}
+                </FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Work Setup</FieldLabel>
@@ -87,6 +104,11 @@ export const Step02 = ({
                   <SelectItem value="remote">Remote</SelectItem>
                 </SelectContent>
               </Select>
+              {getJobPostingError(errors, "work_setup") && (
+                <FieldError>
+                  {getJobPostingError(errors, "work_setup")}
+                </FieldError>
+              )}
             </Field>
 
             <Field>
@@ -109,6 +131,9 @@ export const Step02 = ({
                   <SelectItem value="rank_and_file">Rank &amp; File</SelectItem>
                 </SelectContent>
               </Select>
+              {getFieldError(errors, "category") && (
+                <FieldError>{getFieldError(errors, "category")}</FieldError>
+              )}
             </Field>
 
             <Field>
@@ -137,6 +162,11 @@ export const Step02 = ({
                   <SelectItem value="executive">Executive</SelectItem>
                 </SelectContent>
               </Select>
+              {getJobPostingError(errors, "working_site") && (
+                <FieldError>
+                  {getJobPostingError(errors, "working_site")}
+                </FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Working Site</FieldLabel>
@@ -153,9 +183,16 @@ export const Step02 = ({
                   }))
                 }
               />
+              {errors?.job_posting &&
+                typeof errors.job_posting !== "string" &&
+                !Array.isArray(errors.job_posting) &&
+                errors.job_posting.working_site &&
+                Array.isArray(errors.job_posting.working_site) && (
+                  <FieldError>{errors.job_posting.working_site[0]}</FieldError>
+                )}
             </Field>
-            <div className="flex gap-5 items-center">
-              <div>
+            <div className="flex gap-5 items-start">
+              <div className="flex-1">
                 <label className="text-sm font-medium text-gray-700 block mb-1">
                   Work Schedule From
                 </label>
@@ -169,8 +206,12 @@ export const Step02 = ({
                     }))
                   }
                 />
+                {errors?.work_schedule_from &&
+                  Array.isArray(errors.work_schedule_from) && (
+                    <FieldError>{errors.work_schedule_from[0]}</FieldError>
+                  )}
               </div>
-              <div>
+              <div className="flex-1">
                 <label className="text-sm font-medium text-gray-700 block mb-1">
                   Work Schedule To
                 </label>
@@ -184,6 +225,10 @@ export const Step02 = ({
                     }))
                   }
                 />
+                {errors?.work_schedule_to &&
+                  Array.isArray(errors.work_schedule_to) && (
+                    <FieldError>{errors.work_schedule_to[0]}</FieldError>
+                  )}
               </div>
             </div>
           </FieldGroup>
@@ -193,54 +238,75 @@ export const Step02 = ({
           <h2 className="text-[#0056D2] font-bold text-sm mb-4 border-l-4 border-[#0056D2] pl-2 uppercase">
             Job Description
           </h2>
-          <Field>
-            <RichTextEditor
-              title="Description"
-              value={formData.job_posting.description ?? ""}
-              onChange={(value) =>
-                updateFormData((prev) => ({
-                  ...prev,
-                  job_posting: {
-                    ...prev.job_posting,
-                    description: value,
-                  },
-                }))
-              }
-              placeholder="Enter job description"
-            />
-          </Field>
-          <Field>
-            <RichTextEditor
-              title="Responsibilities"
-              value={formData.job_posting.responsibilities ?? ""}
-              onChange={(value) =>
-                updateFormData((prev) => ({
-                  ...prev,
-                  job_posting: {
-                    ...prev.job_posting,
-                    responsibilities: value,
-                  },
-                }))
-              }
-              placeholder="Enter responsibilities"
-            />
-          </Field>
-          <Field>
-            <RichTextEditor
-              title="Qualifications"
-              value={formData.job_posting.qualifications ?? ""}
-              onChange={(value) =>
-                updateFormData((prev) => ({
-                  ...prev,
-                  job_posting: {
-                    ...prev.job_posting,
-                    qualifications: value,
-                  },
-                }))
-              }
-              placeholder="Enter qualifications"
-            />
-          </Field>
+          <div className="space-y-4">
+            <div>
+              <RichTextEditor
+                title="Description"
+                value={formData.job_posting.description ?? ""}
+                onChange={(value) =>
+                  updateFormData((prev) => ({
+                    ...prev,
+                    job_posting: {
+                      ...prev.job_posting,
+                      description: value,
+                    },
+                  }))
+                }
+                placeholder="Enter job description"
+              />
+              {getJobPostingError(errors, "responsibilities") && (
+                <FieldError>
+                  {getJobPostingError(errors, "responsibilities")}
+                </FieldError>
+              )}
+            </div>
+            <div>
+              <RichTextEditor
+                title="Responsibilities"
+                value={formData.job_posting.responsibilities ?? ""}
+                onChange={(value) =>
+                  updateFormData((prev) => ({
+                    ...prev,
+                    job_posting: {
+                      ...prev.job_posting,
+                      responsibilities: value,
+                    },
+                  }))
+                }
+                placeholder="Enter responsibilities"
+              />
+              {errors?.job_posting &&
+                typeof errors.job_posting !== "string" &&
+                !Array.isArray(errors.job_posting) &&
+                errors.job_posting.responsibilities &&
+                Array.isArray(errors.job_posting.responsibilities) && (
+                  <FieldError>
+                    {errors.job_posting.responsibilities[0]}
+                  </FieldError>
+                )}
+            </div>
+            <div>
+              <RichTextEditor
+                title="Qualifications"
+                value={formData.job_posting.qualifications ?? ""}
+                onChange={(value) =>
+                  updateFormData((prev) => ({
+                    ...prev,
+                    job_posting: {
+                      ...prev.job_posting,
+                      qualifications: value,
+                    },
+                  }))
+                }
+                placeholder="Enter qualifications"
+              />
+              {getJobPostingError(errors, "qualifications") && (
+                <FieldError>
+                  {getJobPostingError(errors, "qualifications")}
+                </FieldError>
+              )}
+            </div>
+          </div>
         </FieldGroup>
         {/* Salary Budget */}
         <div>
@@ -265,6 +331,11 @@ export const Step02 = ({
                   }))
                 }
               />
+              {getJobPostingError(errors, "min_salary") && (
+                <FieldError>
+                  {getJobPostingError(errors, "min_salary")}
+                </FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Max Salary</FieldLabel>
@@ -283,6 +354,11 @@ export const Step02 = ({
                   }))
                 }
               />
+              {getJobPostingError(errors, "max_salary") && (
+                <FieldError>
+                  {getJobPostingError(errors, "max_salary")}
+                </FieldError>
+              )}
             </Field>
           </FieldGroup>
         </div>
