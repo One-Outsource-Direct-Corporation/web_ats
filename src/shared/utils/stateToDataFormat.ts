@@ -117,13 +117,97 @@ export function stateToDataFormat<T extends object>(
 
   // Normalize pipeline data, if present
   if ("pipeline" in baseData && Array.isArray(baseData.pipeline)) {
-    baseData.pipeline = baseData.pipeline.map((step: any) => ({
-      ...step,
-      hiring_managers: Array.isArray(step.hiring_managers)
-        ? step.hiring_managers.map((mgr: any) => mgr.id)
-        : [],
-      assessments: step.assessments,
-    }));
+    baseData.pipeline = baseData.pipeline.map((step: any) => {
+      const normalizedStep: any = {
+        ...step,
+        hiring_managers: Array.isArray(step.hiring_managers)
+          ? step.hiring_managers.map((mgr: any) =>
+              typeof mgr === "object" && mgr !== null && "id" in mgr
+                ? mgr.id
+                : mgr
+            )
+          : [],
+        assessments: step.assessments,
+      };
+
+      // Preserve id for existing steps (PipelineStepInDb)
+      if (step.id !== undefined) {
+        normalizedStep.id = step.id;
+      }
+
+      // Remove tempId if present (it's only for React state management)
+      if ("tempId" in normalizedStep) {
+        delete normalizedStep.tempId;
+      }
+
+      return normalizedStep;
+    });
+  }
+
+  // Normalize location data, if present
+  if ("locations" in baseData && Array.isArray(baseData.locations)) {
+    baseData.locations = baseData.locations.map((location: any) => {
+      const normalizedLocation: any = { ...location };
+
+      // If location has a tempId and no id, keep the tempId for backend to ignore
+      if (location.tempId && !location.id) {
+        // Keep tempId - backend will ignore it during creation
+        normalizedLocation.tempId = location.tempId;
+      }
+
+      // Preserve id for existing locations (LocationEntryDb)
+      if (location.id !== undefined) {
+        normalizedLocation.id = location.id;
+      }
+
+      return normalizedLocation;
+    });
+
+    // Normalize batch data and update location references
+    if ("batches" in baseData && Array.isArray(baseData.batches)) {
+      baseData.batches = baseData.batches.map((batch: any) => {
+        const normalizedBatch: any = { ...batch };
+
+        // Preserve id for existing batches (BatchEntryDb)
+        if (batch.id !== undefined) {
+          normalizedBatch.id = batch.id;
+        }
+
+        // Preserve tempId for new batches - backend will ignore it
+        if (batch.tempId && !batch.id) {
+          normalizedBatch.tempId = batch.tempId;
+        }
+
+        // Handle location field - keep it as-is (tempId or ID)
+        if (batch.location !== undefined) {
+          normalizedBatch.location = batch.location;
+        }
+
+        return normalizedBatch;
+      });
+    }
+  } else if ("batches" in baseData && Array.isArray(baseData.batches)) {
+    // Handle batches even if no locations array exists
+    baseData.batches = baseData.batches.map((batch: any) => {
+      const normalizedBatch: any = { ...batch };
+
+      // Preserve id for existing batches (BatchEntryDb)
+      if (batch.id !== undefined) {
+        normalizedBatch.id = batch.id;
+      }
+
+      // Preserve tempId for new batches - backend will ignore it
+      if (batch.tempId && !batch.id) {
+        normalizedBatch.tempId = batch.tempId;
+      }
+
+      // Ensure location field is preserved (it's a FK to LocationEntry)
+      if (batch.location !== undefined) {
+        normalizedBatch.location = batch.location;
+      }
+
+      return normalizedBatch;
+    });
   }
 
   // Normalize questionnaire name if present (can be at root or nested in application_form)
@@ -169,6 +253,8 @@ export function stateToDataFormat<T extends object>(
 // Usage for PositionFormData
 export function stateToDataFormatClient(formData: PositionFormData): FormData {
   console.log("Converting formData to FormData:", formData);
+  console.log("Locations:", formData.locations);
+  console.log("Batches:", formData.batches);
   return stateToDataFormat(formData, { jobPostingField: "job_posting" });
 }
 

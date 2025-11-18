@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Plus, Trash2, Edit, Check, X } from "lucide-react";
@@ -44,6 +44,14 @@ export const BatchManagement = ({
     headcount: 0,
     deployment_date: null,
   });
+
+  // Reset form states when location changes
+  useEffect(() => {
+    setIsAddingNew(false);
+    setEditingBatchId(null);
+    setNewBatch({ name: "", headcount: 0, deployment_date: null });
+    setEditFormData({ name: "", headcount: 0, deployment_date: null });
+  }, [selectedLocationId]);
 
   const handleStartEdit = (batch: BatchEntry) => {
     setEditingBatchId(
@@ -110,6 +118,11 @@ export const BatchManagement = ({
       </div>
     );
   }
+
+  // Filter batches for the selected location
+  const filteredBatches = batches.filter(
+    (batch) => batch.location === selectedLocationId
+  );
 
   return (
     <div className="mb-8">
@@ -207,7 +220,7 @@ export const BatchManagement = ({
                 </td>
               </tr>
             )}
-            {batches.map((batch) => {
+            {filteredBatches.map((batch) => {
               const batchId =
                 (batch as BatchEntryDb).id ?? (batch as BatchEntryLocal).tempId;
               return (
@@ -327,7 +340,7 @@ export const BatchManagement = ({
         </table>
       </div>
 
-      {batches.length === 0 && !isAddingNew && (
+      {filteredBatches.length === 0 && !isAddingNew && (
         <div className="text-center py-8 text-gray-500 border rounded-lg bg-gray-50">
           <p>
             No batches added

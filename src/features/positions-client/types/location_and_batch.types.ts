@@ -11,6 +11,7 @@ export interface LocationEntryLocal extends LocationEntryBase {
 
 export interface LocationEntryDb extends LocationEntryBase {
   id: number;
+  _delete?: boolean;
 }
 
 interface BatchEntryBase {
@@ -26,6 +27,7 @@ export interface BatchEntryLocal extends BatchEntryBase {
 
 export interface BatchEntryDb extends BatchEntryBase {
   id: number;
+  _delete?: boolean;
 }
 
 export type LocationEntry = LocationEntryLocal | LocationEntryDb;

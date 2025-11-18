@@ -89,6 +89,7 @@ export default function Step01({
           onAddBatch={addBatchEntry}
           onUpdateBatch={updateBatchEntry}
           onDeleteBatch={deleteBatchEntry}
+          selectedLocationName={selectedLocation.name}
         />
       )}
     </Card>

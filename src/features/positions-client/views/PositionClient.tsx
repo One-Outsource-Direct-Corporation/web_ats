@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import type {
-  PositionBase,
+  PositionDb,
   PositionFormData,
 } from "../types/create_position.types";
 import { useStepNavigation } from "../hooks/useStepNavigation";
@@ -16,52 +16,21 @@ import Step02 from "../components/steps/Step02";
 import Step03 from "../components/steps/Step03";
 import Step04 from "../components/steps/Step04";
 import { stateToDataFormatClient } from "@/shared/utils/stateToDataFormat";
-import type {
-  ApplicationForm,
-  ApplicationFormType,
-  NonNegotiable,
-} from "../../../shared/types/application_form.types";
-import type { PipelineStep } from "../../../shared/types/pipeline.types";
-import type { ApplicationFormQuestionnaire } from "../types/questionnaire.types";
 import {
   validateSteps,
   mapServerErrorsToSteps,
   hasStepErrors,
 } from "../utils/validateSteps";
+import { usePositionFormData } from "../hooks/usePositionFormData";
 
 interface PositionClientProps {
-  formData: PositionFormData;
-  setFormData: React.Dispatch<React.SetStateAction<PositionFormData>>;
-  pipelineHandler: (updatedPipelines: PipelineStep[]) => void;
-  applicationFormHandler: (
-    field: keyof ApplicationForm,
-    value: ApplicationFormType
-  ) => void;
-  nonNegotiableHandler: (updatedNonNegotiables: NonNegotiable) => void;
-  questionnaireHandler: (
-    updatedQuestionnaire: ApplicationFormQuestionnaire
-  ) => void;
-  handlePositionBaseChange: (
-    fieldName: keyof PositionBase,
-    value: string | number | null
-  ) => void;
-  handleJobPostingChange: (
-    fieldName: keyof PositionFormData["job_posting"],
-    value: string | number | null
-  ) => void;
-  resetFormData: () => void;
+  initialData?: PositionFormData;
+  updateMode?: boolean;
 }
 
 export default function PositionClient({
-  formData,
-  setFormData,
-  applicationFormHandler,
-  nonNegotiableHandler,
-  questionnaireHandler,
-  pipelineHandler,
-  handlePositionBaseChange,
-  handleJobPostingChange,
-  resetFormData,
+  initialData,
+  updateMode,
 }: PositionClientProps) {
   const navigate = useNavigate();
   const {
@@ -76,6 +45,17 @@ export default function PositionClient({
     resetSteps,
     updateStepErrors,
   } = useStepNavigation();
+  const {
+    formData,
+    setFormData,
+    handlePositionBaseChange,
+    handleJobPostingChange,
+    resetFormData,
+    applicationFormHandler,
+    nonNegotiableHandler,
+    questionnaireHandler,
+    pipelineHandler,
+  } = usePositionFormData(initialData);
   const axiosPrivate = useAxiosPrivate();
   const modalHooks = useModalManagement();
 
@@ -106,33 +86,53 @@ export default function PositionClient({
       const formDataObj = stateToDataFormatClient(formData);
 
       try {
-        const response = await axiosPrivate.post(
-          "/api/position/",
-          formDataObj,
-          {
+        let response;
+        if (updateMode) {
+          response = await axiosPrivate.patch(
+            `/api/position/${(formData as PositionDb).job_posting.id}/`,
+            formDataObj,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
+        } else {
+          response = await axiosPrivate.post("/api/position/", formDataObj, {
             headers: {
               "Content-Type": "multipart/form-data",
             },
-          }
-        );
+          });
+        }
 
-        if (response.status === 201) {
+        if (response.status === 200 || response.status === 201) {
+          const successMessage = updateMode
+            ? "Position updated successfully!"
+            : "Position created successfully!";
+
           toast.success(
             <div>
-              Position created successfully!{" "}
-              <button
-                onClick={() => navigate("/")}
-                className="text-blue-600 underline hover:text-blue-800"
-              >
-                View Positions Posted
-              </button>
+              {successMessage}{" "}
+              {!updateMode && (
+                <button
+                  onClick={() => navigate("/")}
+                  className="text-blue-600 underline hover:text-blue-800"
+                >
+                  View Positions Posted
+                </button>
+              )}
             </div>
           );
-          resetFormData();
-          resetSteps();
+
+          if (updateMode) {
+            navigate("/requests");
+          } else {
+            resetFormData();
+            resetSteps();
+          }
         }
       } catch (err: any) {
-        console.error("Position creation error:", err);
+        console.error("Position operation error:", err);
 
         // Map server errors to steps
         if (err.response?.data) {
@@ -151,7 +151,10 @@ export default function PositionClient({
             toast.error("Please fix the errors in the form");
           }
         } else {
-          toast.error("Failed to create position. Please try again.");
+          const errorMessage = updateMode
+            ? "Failed to update position. Please try again."
+            : "Failed to create position. Please try again.";
+          toast.error(errorMessage);
         }
       }
     } else {
@@ -244,7 +247,11 @@ export default function PositionClient({
             className="bg-blue-600 hover:bg-blue-700 text-white"
             onClick={handleNext}
           >
-            {currentStep === 4 ? "Publish Position" : "Next step →"}
+            {currentStep === 4
+              ? updateMode
+                ? "Update Position"
+                : "Publish Position"
+              : "Next step →"}
           </Button>
         </div>
       </div>

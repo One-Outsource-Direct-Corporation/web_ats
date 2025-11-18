@@ -11,19 +11,14 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
-import PRFEditForm from "../components/PRFEditForm";
 import type { AxiosError } from "axios";
 import { formatBackgroundStatus } from "@/shared/utils/formatBackgroundStatus";
-import type {
-  JobPostingResponsePosition,
-  JobPostingResponsePRF,
-} from "@/features/jobs/types/job.types";
 import { usePositionDetail } from "@/shared/hooks/usePositions";
-import PositionEditForm from "../components/PositionEditForm";
 import { useEffect } from "react";
 import PRF from "@/features/prf/views/PRF";
 import type { PRFDb, PRFFormData } from "@/features/prf/types/prf.types";
 import type { PositionDb } from "@/features/positions-client/types/create_position.types";
+import PositionClient from "@/features/positions-client/views/PositionClient";
 
 export default function EditRequestItem() {
   const { type, id } = useParams<{ type: "prf" | "position"; id: string }>();
@@ -169,8 +164,9 @@ export default function EditRequestItem() {
         {type === "prf" ? (
           <PRF initialData={position as PRFFormData} updateMode={true} />
         ) : (
-          <PositionEditForm
-            initialData={position as JobPostingResponsePosition}
+          <PositionClient
+            initialData={position as PositionDb}
+            updateMode={true}
           />
         )}
       </div>
