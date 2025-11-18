@@ -4,6 +4,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Plus, Trash2, Edit, Check, X, Eye } from "lucide-react";
 import type {
   BatchEntry,
+  BatchEntryDb,
   LocationEntry,
   LocationEntryDb,
   LocationEntryLocal,
@@ -232,175 +233,183 @@ export const LocationManagement = ({
                 </td>
               </tr>
             )}
-            {locations.map((location) => {
-              const locId =
-                (location as LocationEntryDb).id ??
-                (location as LocationEntryLocal).tempId;
+            {locations
+              .filter((location) => !(location as LocationEntryDb)._delete)
+              .map((location) => {
+                const locId =
+                  (location as LocationEntryDb).id ??
+                  (location as LocationEntryLocal).tempId;
 
-              const batchHeadcount = batches
-                .filter((batch) => batch.location === locId)
-                .reduce((sum, batch) => sum + (batch.headcount || 0), 0);
+                const batchHeadcount = batches
+                  .filter(
+                    (batch) =>
+                      batch.location === locId &&
+                      !(batch as BatchEntryDb)._delete
+                  )
+                  .reduce((sum, batch) => sum + (batch.headcount || 0), 0);
 
-              const totalHeadcount = location.headcount + batchHeadcount;
+                const totalHeadcount = location.headcount + batchHeadcount;
 
-              return (
-                <tr
-                  key={locId}
-                  className={`border-t hover:bg-gray-50 ${
-                    selectedLocationId === locId ? "bg-blue-100" : ""
-                  }`}
-                >
-                  <td
-                    className="px-4 py-3 cursor-pointer"
-                    onClick={() => onLocationSelect(locId)}
+                return (
+                  <tr
+                    key={locId}
+                    className={`border-t hover:bg-gray-50 ${
+                      selectedLocationId === locId ? "bg-blue-100" : ""
+                    }`}
                   >
-                    {editingLocationId === locId ? (
-                      <Input
-                        value={editFormData.name}
-                        onChange={(e) =>
-                          setEditFormData({
-                            ...editFormData,
-                            name: e.target.value,
-                          })
-                        }
-                        className="w-full"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    ) : (
-                      <span className="font-medium">{location.name}</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    {editingLocationId === locId ? (
-                      <Input
-                        type="number"
-                        min="1"
-                        value={editFormData.headcount}
-                        onChange={(e) =>
-                          setEditFormData({
-                            ...editFormData,
-                            headcount: parseInt(e.target.value) || 0,
-                          })
-                        }
-                        className="w-full"
-                      />
-                    ) : (
-                      <span className="text-gray-600">
-                        {location.headcount}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="text-gray-600">
-                      {location.with_batch ? totalHeadcount : "-"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    {editingLocationId === locId ? (
-                      <Input
-                        type="date"
-                        value={editFormData.deployment_date ?? ""}
-                        onChange={(e) =>
-                          setEditFormData({
-                            ...editFormData,
-                            deployment_date: e.target.value,
-                          })
-                        }
-                        className="w-full"
-                      />
-                    ) : (
-                      <span className="text-gray-600">
-                        {formatDate(location.deployment_date ?? "")}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    {editingLocationId === locId ? (
-                      <Select
-                        value={editFormData.with_batch ? "true" : "false"}
-                        onValueChange={(value) =>
-                          setEditFormData((prev) => ({
-                            ...prev,
-                            with_batch: value === "true",
-                          }))
-                        }
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="With Batch?" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="true">Yes</SelectItem>
-                          <SelectItem value="false">No</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <span className="text-green-600 font-medium">
-                        {location.with_batch ? "Yes" : "No"}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-center gap-2">
+                    <td
+                      className="px-4 py-3 cursor-pointer"
+                      onClick={() => onLocationSelect(locId)}
+                    >
                       {editingLocationId === locId ? (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleSaveEdit(locId)}
-                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                          >
-                            <Check className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={handleCancelEdit}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </>
+                        <Input
+                          value={editFormData.name}
+                          onChange={(e) =>
+                            setEditFormData({
+                              ...editFormData,
+                              name: e.target.value,
+                            })
+                          }
+                          className="w-full"
+                          onClick={(e) => e.stopPropagation()}
+                        />
                       ) : (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleStartEdit(location)}
-                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => onLocationSelect(locId)}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => onDeleteLocation(locId)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </>
+                        <span className="font-medium">{location.name}</span>
                       )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
+                    </td>
+                    <td className="px-4 py-3">
+                      {editingLocationId === locId ? (
+                        <Input
+                          type="number"
+                          min="1"
+                          value={editFormData.headcount}
+                          onChange={(e) =>
+                            setEditFormData({
+                              ...editFormData,
+                              headcount: parseInt(e.target.value) || 0,
+                            })
+                          }
+                          className="w-full"
+                        />
+                      ) : (
+                        <span className="text-gray-600">
+                          {location.headcount}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-gray-600">
+                        {location.with_batch ? totalHeadcount : "-"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {editingLocationId === locId ? (
+                        <Input
+                          type="date"
+                          value={editFormData.deployment_date ?? ""}
+                          onChange={(e) =>
+                            setEditFormData({
+                              ...editFormData,
+                              deployment_date: e.target.value,
+                            })
+                          }
+                          className="w-full"
+                        />
+                      ) : (
+                        <span className="text-gray-600">
+                          {formatDate(location.deployment_date ?? "")}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {editingLocationId === locId ? (
+                        <Select
+                          value={editFormData.with_batch ? "true" : "false"}
+                          onValueChange={(value) =>
+                            setEditFormData((prev) => ({
+                              ...prev,
+                              with_batch: value === "true",
+                            }))
+                          }
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="With Batch?" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="true">Yes</SelectItem>
+                            <SelectItem value="false">No</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <span className="text-green-600 font-medium">
+                          {location.with_batch ? "Yes" : "No"}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-center gap-2">
+                        {editingLocationId === locId ? (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleSaveEdit(locId)}
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                            >
+                              <Check className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={handleCancelEdit}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleStartEdit(location)}
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => onLocationSelect(locId)}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => onDeleteLocation(locId)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
           </tbody>
         </table>
       </div>
 
-      {locations.length === 0 && !isAddingNew && (
-        <div className="text-center py-8 text-gray-500">
-          <p>No locations added yet. Click "Add Location" to get started.</p>
-        </div>
-      )}
+      {locations.filter((location) => !(location as LocationEntryDb)._delete)
+        .length === 0 &&
+        !isAddingNew && (
+          <div className="text-center py-8 text-gray-500">
+            <p>No locations added yet. Click "Add Location" to get started.</p>
+          </div>
+        )}
     </div>
   );
 };

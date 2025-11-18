@@ -3,6 +3,7 @@ import type {
   PipelineStage,
   PipelineStep,
   PipelineStepLocal,
+  PipelineStepInDb,
 } from "../../types/pipeline.types";
 import { StageCard } from "./pipeline/StageCard";
 
@@ -40,9 +41,9 @@ export default function PipelineConfiguration({
           </div>
         )}
         {pipelineStages.map((stage) => {
-          const stageSteps = pipelineSteps.filter(
-            (step) => step.stage === stage.id
-          );
+          const stageSteps = pipelineSteps
+            .filter((step) => step.stage === stage.id)
+            .filter((step) => !(step as PipelineStepInDb)._delete);
 
           return (
             <StageCard

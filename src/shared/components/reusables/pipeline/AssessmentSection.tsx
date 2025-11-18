@@ -145,9 +145,9 @@ export function AssessmentSection({
 
   // Sync with parent assessments and sort by order field
   useEffect(() => {
-    const sortedAssessments = [...assessments].sort(
-      (a, b) => a.order - b.order
-    );
+    const sortedAssessments = [...assessments]
+      .filter((a) => !(a as AssessmentInDb)._delete)
+      .sort((a, b) => a.order - b.order);
     setLocalAssessments(sortedAssessments);
   }, [assessments]);
 

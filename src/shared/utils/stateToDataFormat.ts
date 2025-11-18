@@ -69,6 +69,15 @@ function extractFiles(obj: unknown, prefix = ""): ExtractFilesResult {
           id: (value as { id: number }).id,
         };
       }
+      // Empty object - treat as null (FIX FOR YOUR ISSUE)
+      else if (
+        value &&
+        typeof value === "object" &&
+        !Array.isArray(value) &&
+        Object.keys(value).length === 0
+      ) {
+        (data as Record<string, unknown>)[key] = null;
+      }
       // Array or object - recurse
       else if (typeof value === "object" && value !== null) {
         const result = extractFiles(value, fullKey);
@@ -127,7 +136,22 @@ export function stateToDataFormat<T extends object>(
                 : mgr
             )
           : [],
-        assessments: step.assessments,
+        // IMPORTANT: Normalize assessments within each step
+        assessments: Array.isArray(step.assessments)
+          ? step.assessments.map((assessment: any) => {
+              const normalizedAssessment: any = { ...assessment };
+
+              // Preserve id for existing assessments
+              if (assessment.id !== undefined) {
+                normalizedAssessment.id = assessment.id;
+              }
+
+              // Remove tempId (only for React state)
+              delete normalizedAssessment.tempId;
+
+              return normalizedAssessment;
+            })
+          : [],
       };
 
       // Preserve id for existing steps (PipelineStepInDb)

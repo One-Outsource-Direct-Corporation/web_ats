@@ -111,8 +111,6 @@ export default function useAssessment(params?: UseAssessmentParams) {
     fetchAssessments(1, search, false);
   }, []);
 
-  console.log(assessments);
-
   return {
     assessments,
     loading,

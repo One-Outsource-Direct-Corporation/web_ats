@@ -119,9 +119,10 @@ export const BatchManagement = ({
     );
   }
 
-  // Filter batches for the selected location
+  // Filter batches for the selected location and exclude deleted ones
   const filteredBatches = batches.filter(
-    (batch) => batch.location === selectedLocationId
+    (batch) =>
+      batch.location === selectedLocationId && !(batch as BatchEntryDb)._delete
   );
 
   return (
