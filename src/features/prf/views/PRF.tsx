@@ -128,8 +128,6 @@ export default function PRF({ initialData, updateMode }: PRFProps) {
         });
       }
 
-      console.log(response);
-
       if (response.status === 201) {
         setShowSuccessPopup(true);
         setTimeout(() => {
@@ -150,6 +148,11 @@ export default function PRF({ initialData, updateMode }: PRFProps) {
         const firstErrorStep = Object.keys(serverErrors)
           .map(Number)
           .find((stepNum) => hasStepErrors(serverErrors[stepNum]));
+
+        if (err.response.status === 403) {
+          toast.error("You do not have permission to submit/edit this PRF.");
+          return;
+        }
 
         if (firstErrorStep) {
           setStep(firstErrorStep);

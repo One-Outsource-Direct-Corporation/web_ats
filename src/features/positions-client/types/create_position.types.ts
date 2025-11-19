@@ -1,6 +1,7 @@
 import type { ApplicationFormData } from "../../../shared/types/application_form.types";
 import type { BatchEntry, LocationEntry } from "./location_and_batch.types";
 import type { PipelineStep } from "../../../shared/types/pipeline.types";
+import type { User } from "@/features/auth/types/auth.types";
 
 export interface StepProps {
   number: number;
@@ -27,9 +28,17 @@ export interface JobPosting {
   working_site: string | null;
 }
 
+export interface JobPostingAPIResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: JobPostingDb[] | [];
+}
+
 export interface JobPostingDb extends JobPosting {
   id: number;
   status: string;
+  posted_by_display: User;
   type: "client" | "prf";
   active: boolean;
   published: boolean;

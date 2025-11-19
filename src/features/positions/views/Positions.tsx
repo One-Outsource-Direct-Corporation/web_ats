@@ -10,17 +10,14 @@ export default function Positions() {
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState<{
     type: string;
-    published: string;
   }>({
     type: "all",
-    published: "all",
   });
-  const { positions, loading, error, refetch } = usePositions({
+  const { positions, loading, error } = usePositions({
     status: "active",
     page: currentPage,
-    my_postings: true,
+    my_postings: false,
     type: filters.type,
-    published: filters.published,
   });
 
   useEffect(() => {
@@ -67,11 +64,7 @@ export default function Positions() {
         {!loading && !error && positions && positions.results.length > 0 && (
           <div className="space-y-2">
             {positions.results.map((position) => (
-              <JobListItem
-                key={position.id}
-                posting={position}
-                refetch={refetch}
-              />
+              <JobListItem key={position.id} posting={position} />
             ))}
           </div>
         )}

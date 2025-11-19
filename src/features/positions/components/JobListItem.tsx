@@ -1,30 +1,17 @@
 import { Card } from "@/shared/components/ui/card";
 import { Badge } from "@/shared/components/ui/badge";
-import type { JobPostingResponse } from "@/features/jobs/types/job.types";
 import { getDepartmentColor } from "../utils/departmentColor";
 import DOMPurify from "dompurify";
 import formatName from "@/shared/utils/formatName";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/components/ui/select";
-import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
-import { toast } from "react-toastify";
+import type { JobPostingDb } from "@/features/positions-client/types/create_position.types";
+import { useContext } from "react";
+import { AuthContext } from "@/features/auth/context/AuthContext";
 
-export default function JobListItem({
-  posting,
-  refetch,
-}: {
-  posting: JobPostingResponse;
-  refetch: () => void;
-}) {
-  const axiosPrivate = useAxiosPrivate();
+export default function JobListItem({ posting }: { posting: JobPostingDb }) {
+  const { user } = useContext(AuthContext);
   return (
     <Card className="p-4 shadow-sm hover:shadow-md transition border rounded-md">
-      <div className="flex justify-between items-start gap-4">
+      <div>
         {/* Left section with checkbox and content */}
         <div className="flex items-start gap-4 sm:gap-6 flex-1 min-w-0">
           <div className="flex-1 min-w-0">
@@ -36,16 +23,17 @@ export default function JobListItem({
               <Badge
                 className={`${getDepartmentColor(
                   formatName(
-                    posting.department_name === "other"
-                      ? posting.department_name_other
-                      : posting.department_name
+                    posting.department_name &&
+                      posting.department_name === "other"
+                      ? posting.department_name_other || ""
+                      : posting.department_name || ""
                   )
                 )} text-xs`}
               >
                 {formatName(
                   posting.department_name === "other"
-                    ? posting.department_name_other
-                    : posting.department_name
+                    ? posting.department_name_other || ""
+                    : posting.department_name || ""
                 )}
               </Badge>
 
@@ -57,7 +45,7 @@ export default function JobListItem({
                     : "bg-neutral-700 text-neutral-100"
                 }`}
               >
-                {posting.type_display === "PRF" ? "Internal" : "Client"}
+                {posting.type === "prf" ? "Internal" : "Client"}
               </Badge>
 
               <Badge
@@ -73,62 +61,21 @@ export default function JobListItem({
               >
                 {formatName(posting.status)}
               </Badge>
+
+              <Badge className="text-xs bg-cyan-500 text-white">
+                {user && posting.posted_by_display.id === user.id
+                  ? "You"
+                  : posting.posted_by_display.full_name}
+              </Badge>
             </div>
 
             <div
               className="text-stone-400 text-sm line-clamp-1"
               dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(posting.description),
+                __html: DOMPurify.sanitize(posting.description || ""),
               }}
             />
           </div>
-        </div>
-
-        {/* Right section with publish select */}
-        <div className="flex-shrink-0">
-          <Select
-            value={posting.published.toString()}
-            onValueChange={async (value) => {
-              try {
-                const endpoint =
-                  posting.type === "prf"
-                    ? `/api/prf/${posting.id}/`
-                    : `/api/position/${posting.id}/`;
-                const response = await axiosPrivate.patch(endpoint, {
-                  job_posting: {
-                    published: value === "true",
-                    status: posting.status,
-                  },
-                });
-
-                if (response.status === 200) {
-                  refetch();
-                  toast.success("Position updated successfully");
-                }
-              } catch (error) {
-                console.log(error);
-                toast.error("Failed to update position");
-              }
-            }}
-          >
-            <SelectTrigger
-              className={`w-[120px] h-8 text-xs ${
-                posting.published
-                  ? "bg-green-100 text-green-800 border border-green-200 hover:bg-green-200"
-                  : "bg-gray-100 text-gray-800 border border-gray-200 hover:bg-gray-200"
-              }`}
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="true" className="text-xs">
-                Published
-              </SelectItem>
-              <SelectItem value="false" className="text-xs">
-                Unpublished
-              </SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
     </Card>

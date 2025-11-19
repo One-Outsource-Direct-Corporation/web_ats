@@ -1,7 +1,7 @@
 import type { ApplicationForm } from "@/features/careers/types/job.types";
 import type { User } from "@/features/auth/types/auth.types";
-import type { JobPostingResponse } from "@/features/jobs/types/job.types";
 import type { PipelineStep } from "@/shared/types/pipeline.types";
+import type { JobPostingDb } from "@/features/positions-client/types/create_position.types";
 
 export interface PositionData {
   id: number;
@@ -141,5 +141,5 @@ export interface PositionAPIResponse {
   count: number;
   next: string | null;
   previous: string | null;
-  results: JobPostingResponse[];
+  results: JobPostingDb[];
 }

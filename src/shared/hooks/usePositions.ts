@@ -3,12 +3,12 @@ import { useState, useEffect, useRef } from "react";
 import type { AxiosError, AxiosResponse } from "axios";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import { defaultAxios } from "@/config/axios";
+import type { PRFFormData } from "@/features/prf/types/prf.types";
 import type {
   JobPostingAPIResponse,
-  JobPostingResponsePosition,
-} from "@/features/jobs/types/job.types";
-import type { PRFFormData } from "@/features/prf/types/prf.types";
-import type { PositionFormData } from "@/features/positions-client/types/create_position.types";
+  JobPostingDb,
+  PositionFormData,
+} from "@/features/positions-client/types/create_position.types";
 
 export function usePositions({
   my_postings = false,
@@ -28,7 +28,7 @@ export function usePositions({
         count: number;
         next: string | null;
         previous: string | null;
-        results: JobPostingResponsePosition[];
+        results: JobPostingDb[];
       }
   >({
     count: 0,
