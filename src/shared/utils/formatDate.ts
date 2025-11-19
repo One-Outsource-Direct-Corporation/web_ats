@@ -9,12 +9,12 @@ function formatTimeAMPM(time: string) {
   return `${hour}:${minute.toString().padStart(2, "0")} ${ampm}`;
 }
 
-export function formatDate(dateString: string): string {
+export function formatDate(dateString: string, short?: boolean): string {
   if (!dateString) return "";
   const date = new Date(dateString);
   const options: Intl.DateTimeFormatOptions = {
     year: "numeric",
-    month: "long",
+    month: short ? "short" : "long",
     day: "numeric",
   };
   return date.toLocaleDateString("en-PH", options);

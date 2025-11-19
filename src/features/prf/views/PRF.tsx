@@ -176,15 +176,17 @@ export default function PRF({ initialData, updateMode }: PRFProps) {
               Personnel Requisition Form
             </h1>
           )}
-          <div className="flex justify-between items-center mb-4">
-            <Button
-              variant="outline"
-              className="border-1 border-red-700 text-red-700 text-sm hover:bg-red-700 hover:text-white"
-              onClick={handleCancelRequest}
-            >
-              <MinusCircle className="h-4 w-4" /> Cancel Request
-            </Button>
-          </div>
+          {!updateMode && (
+            <div className="flex justify-between items-center mb-4">
+              <Button
+                variant="outline"
+                className="border-1 border-red-700 text-red-700 text-sm hover:bg-red-700 hover:text-white"
+                onClick={handleCancelRequest}
+              >
+                <MinusCircle className="h-4 w-4" /> Cancel Request
+              </Button>
+            </div>
+          )}
           <div className="flex space-x-0 border border-gray-300 rounded-md overflow-hidden mb-8">
             {[
               "Step 01",

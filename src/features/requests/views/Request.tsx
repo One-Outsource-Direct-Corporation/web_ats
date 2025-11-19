@@ -243,10 +243,10 @@ export default function Request() {
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          {formatDate(item.created_at)}
+                          {formatDate(item.created_at, true)}
                         </td>
                         <td className="px-4 py-3">
-                          {formatDate(item.target_start_date)}
+                          {formatDate(item.target_start_date, true)}
                         </td>
                         <td className="px-4 py-3">
                           <span

@@ -22,7 +22,6 @@ export default function JobListItem({
   refetch: () => void;
 }) {
   const axiosPrivate = useAxiosPrivate();
-  console.log(posting);
   return (
     <Card className="p-4 shadow-sm hover:shadow-md transition border rounded-md">
       <div className="flex justify-between items-start gap-4">
@@ -90,7 +89,6 @@ export default function JobListItem({
           <Select
             value={posting.published.toString()}
             onValueChange={async (value) => {
-              // TODO: Implement publish/unpublish logic
               try {
                 const endpoint =
                   posting.type === "prf"
@@ -102,8 +100,6 @@ export default function JobListItem({
                     status: posting.status,
                   },
                 });
-
-                console.log(response);
 
                 if (response.status === 200) {
                   refetch();

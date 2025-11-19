@@ -75,6 +75,16 @@ export function useAssessmentForm({
               setFilePreview(reader.result as string);
             };
             reader.readAsDataURL(editingAssessment.file.file);
+          } else if (
+            isImage &&
+            typeof editingAssessment.file.file === "string"
+          ) {
+            // Handle DB file URLs by appending backend URL
+            setFilePreview(
+              `${import.meta.env.VITE_BACKEND_URL}${
+                editingAssessment.file.file
+              }`
+            );
           } else {
             setFilePreview(null);
           }
@@ -229,7 +239,9 @@ export function useAssessmentForm({
             fileData.file &&
             typeof fileData.file === "string"
           ) {
-            setFilePreview(fileData.file);
+            setFilePreview(
+              `${import.meta.env.VITE_BACKEND_URL}${fileData.file}`
+            );
           } else {
             setFilePreview(null);
           }
