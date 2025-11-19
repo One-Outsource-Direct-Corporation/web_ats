@@ -2,6 +2,7 @@ import type { PositionFormData } from "../types/create_position.types";
 import {
   validateJobPosting,
   validatePipeline,
+  validateNonNegotiable,
   mapServerErrorsToSteps as mapServerErrors,
   hasStepErrors as checkStepErrors,
   getStepErrorSummary as getErrorSummary,
@@ -86,6 +87,20 @@ export function validateSteps(formData: PositionFormData): StepErrors {
     errors[2] = step2Errors;
   }
 
+  // Step 3: Non-negotiable validation
+  const step3Errors: ValidationError = {};
+  const nonNegotiableErrors = validateNonNegotiable(
+    formData.application_form?.non_negotiable
+  );
+
+  if (Object.keys(nonNegotiableErrors).length > 0) {
+    Object.assign(step3Errors, nonNegotiableErrors);
+  }
+
+  if (Object.keys(step3Errors).length > 0) {
+    errors[3] = step3Errors;
+  }
+
   // Step 4: Pipeline validation
   const step4Errors: ValidationError = {};
 
@@ -128,6 +143,8 @@ export function mapServerErrorsToSteps(
     "job_posting.description": 2,
     "job_posting.responsibilities": 2,
     "job_posting.qualifications": 2,
+    non_negotiable: 3,
+    "application_form.non_negotiable": 3,
     pipeline: 4,
   };
 

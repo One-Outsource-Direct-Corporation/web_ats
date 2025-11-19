@@ -192,7 +192,11 @@ export default function QuestionnaireBase({
               <Input
                 id="questionnaireName"
                 type="text"
-                value={questionnaire.name ?? ""}
+                value={
+                  questionnaire.name === "anonymous"
+                    ? ""
+                    : questionnaire.name ?? ""
+                }
                 onChange={(e) => {
                   handleSetQuestionnaire("name", e.target.value);
                 }}

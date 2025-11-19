@@ -189,6 +189,7 @@ export default function PositionClient({
             applicationFormHandler={applicationFormHandler}
             nonNegotiableHandler={nonNegotiableHandler}
             questionnaireHandler={questionnaireHandler}
+            error={stepErrors[3]}
           />
         );
       case 4:

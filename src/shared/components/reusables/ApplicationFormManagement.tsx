@@ -24,6 +24,8 @@ import type {
 } from "@/shared/types/application_form.types";
 import type { ApplicationFormQuestionnaire } from "@/features/positions-client/types/questionnaire.types";
 
+import type { ValidationError } from "@/shared/utils/formValidation";
+
 interface ApplicationFormManagementProps {
   applicationFormData: ApplicationFormData;
   applicationFormHandler: (
@@ -34,6 +36,7 @@ interface ApplicationFormManagementProps {
   questionnaireHandler: (
     updatedQuestionnaire: ApplicationFormQuestionnaire
   ) => void;
+  validationError?: ValidationError | null;
 }
 
 type FieldKey = keyof ApplicationForm;
@@ -161,6 +164,7 @@ export const ApplicationFormManagement = ({
   applicationFormHandler,
   nonNegotiableHandler,
   questionnaireHandler,
+  validationError,
 }: ApplicationFormManagementProps) => {
   const nonNegotiableFields = new Set<FieldKey>([
     "expected_salary",
@@ -313,10 +317,19 @@ export const ApplicationFormManagement = ({
 
           <Button
             onClick={() => setShowNonNegotiableModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className={`text-white ${
+              validationError?.non_negotiable
+                ? "bg-red-600 hover:bg-red-700"
+                : "bg-blue-600 hover:bg-blue-700"
+            }`}
           >
             <Settings className="w-4 h-4 mr-2" />
             Configure Non-Negotiables
+            {validationError?.non_negotiable && (
+              <span className="ml-2 px-2 py-0.5 bg-white text-red-600 text-xs font-bold rounded-full">
+                !
+              </span>
+            )}
           </Button>
         </div>
         <div>
@@ -453,6 +466,7 @@ export const ApplicationFormManagement = ({
         setNonNegotiableValue={setNonNegotiableValue}
         addCustomNonNegotiable={addNonNegotiable}
         removeNonNegotiable={removeNonNegotiable}
+        validationError={validationError}
       />
     </div>
   );

@@ -169,6 +169,40 @@ export function hasStepErrors(stepErrors: ValidationError | null): boolean {
 }
 
 /**
+ * Validates non-negotiable fields to ensure they have values
+ */
+export function validateNonNegotiable(nonNegotiable: any): ValidationError {
+  const errors: ValidationError = {};
+
+  if (!nonNegotiable || !nonNegotiable.non_negotiable) {
+    return errors;
+  }
+
+  const emptyFields: string[] = [];
+
+  nonNegotiable.non_negotiable.forEach((item: any, index: number) => {
+    if (item.value === "" || item.value === null || item.value === undefined) {
+      // Convert field key to readable label
+      const fieldLabel = item.field
+        .split("_")
+        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+      emptyFields.push(fieldLabel);
+    }
+  });
+
+  if (emptyFields.length > 0) {
+    errors.non_negotiable = [
+      `The following non-negotiable fields must have values: ${emptyFields.join(
+        ", "
+      )}`,
+    ];
+  }
+
+  return errors;
+}
+
+/**
  * Gets a summary of errors for a step
  */
 export function getStepErrorSummary(

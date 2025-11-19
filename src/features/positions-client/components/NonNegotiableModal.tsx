@@ -28,6 +28,8 @@ import {
   DialogDescription,
 } from "@/shared/components/ui/dialog";
 
+import type { ValidationError } from "@/shared/utils/formValidation";
+
 interface NonNegotiableModalProps {
   show: boolean;
   onClose: () => void;
@@ -39,6 +41,7 @@ interface NonNegotiableModalProps {
   ) => void;
   addCustomNonNegotiable: (newNonNegotiable: NonNegotiableBase) => void;
   removeNonNegotiable: (fieldName: string) => void;
+  validationError?: ValidationError | null;
 }
 
 type InputType = "text" | "number" | "boolean";
@@ -95,6 +98,7 @@ export const NonNegotiableModal = ({
   setNonNegotiableValue,
   addCustomNonNegotiable,
   removeNonNegotiable,
+  validationError,
 }: NonNegotiableModalProps) => {
   // State for adding new non-negotiable
   const [showAddForm, setShowAddForm] = useState(false);
@@ -125,6 +129,12 @@ export const NonNegotiableModal = ({
     value: string | number | boolean
   ) => {
     setNonNegotiableValue(fieldKey, value);
+  };
+
+  // Check if a field has an empty value
+  const hasEmptyValue = (fieldKey: string): boolean => {
+    const value = getFieldValue(fieldKey);
+    return value === "" || value === null || value === undefined;
   };
 
   const handleAddNonNegotiable = () => {
@@ -193,6 +203,7 @@ export const NonNegotiableModal = ({
   const renderCustomField = (fieldKey: string) => {
     const inputType = getCustomFieldInputType(fieldKey);
     let fieldValue = getFieldValue(fieldKey);
+    const hasError = hasEmptyValue(fieldKey);
 
     // Convert label from snake_case to Title Case
     const fieldLabel = fieldKey
@@ -201,13 +212,26 @@ export const NonNegotiableModal = ({
       .join(" ");
 
     return (
-      <FieldGroup className="border gap-4 rounded-lg p-4 relative">
+      <FieldGroup
+        className={`border gap-4 rounded-lg p-4 relative ${
+          hasError && validationError?.non_negotiable
+            ? "border-red-500 bg-red-50"
+            : ""
+        }`}
+      >
         <div className="flex justify-between items-start">
           <div>
             <span className="text-xs text-purple-600 font-medium">
               Custom Field
             </span>
-            <h4 className="text-sm font-medium text-gray-800">{fieldLabel}</h4>
+            <h4 className="text-sm font-medium text-gray-800">
+              {fieldLabel}
+              {hasError && validationError?.non_negotiable && (
+                <span className="ml-2 text-xs text-red-600 font-semibold">
+                  * Required
+                </span>
+              )}
+            </h4>
           </div>
           <Button
             variant="ghost"
@@ -225,7 +249,11 @@ export const NonNegotiableModal = ({
             placeholder="Enter required value"
             value={String(fieldValue ?? "")}
             onChange={(e) => handleFieldChange(fieldKey, e.target.value)}
-            className="w-full"
+            className={`w-full ${
+              hasError && validationError?.non_negotiable
+                ? "border-red-500 focus:ring-red-500"
+                : ""
+            }`}
           />
         )}
 
@@ -237,7 +265,11 @@ export const NonNegotiableModal = ({
             onChange={(e) =>
               handleFieldChange(fieldKey, Number(e.target.value))
             }
-            className="w-full"
+            className={`w-full ${
+              hasError && validationError?.non_negotiable
+                ? "border-red-500 focus:ring-red-500"
+                : ""
+            }`}
           />
         )}
 
@@ -293,6 +325,22 @@ export const NonNegotiableModal = ({
           </DialogDescription>
         </DialogHeader>
 
+        {validationError?.non_negotiable && (
+          <div className="bg-red-50 border-l-4 border-red-400 text-red-800 p-4 flex items-start gap-3 rounded-md">
+            <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-sm">Validation Error</p>
+              <p className="text-sm">
+                {Array.isArray(validationError.non_negotiable)
+                  ? validationError.non_negotiable[0]
+                  : typeof validationError.non_negotiable === "string"
+                  ? validationError.non_negotiable
+                  : "Please fill in all non-negotiable fields"}
+              </p>
+            </div>
+          </div>
+        )}
+
         {activeNonNegotiableFields.length === 0 &&
         customNonNegotiableFields.length === 0 ? (
           <div className="text-center py-8">
@@ -315,10 +363,15 @@ export const NonNegotiableModal = ({
                 if (fieldValue === "true") fieldValue = true;
                 if (fieldValue === "false") fieldValue = false;
               }
+              const hasError = hasEmptyValue(fieldKey);
               return (
                 <FieldGroup
                   key={`predefined-${fieldKey}-${field.label}`}
-                  className="border gap-4 rounded-lg p-4 relative"
+                  className={`border gap-4 rounded-lg p-4 relative ${
+                    hasError && validationError?.non_negotiable
+                      ? "border-red-500 bg-red-50"
+                      : ""
+                  }`}
                 >
                   <Field orientation="horizontal" className="justify-between">
                     <div>
@@ -327,6 +380,11 @@ export const NonNegotiableModal = ({
                       </span>
                       <h4 className="text-sm font-medium text-gray-800">
                         {field.label}
+                        {hasError && validationError?.non_negotiable && (
+                          <span className="ml-2 text-xs text-red-600 font-semibold">
+                            * Required
+                          </span>
+                        )}
                       </h4>
                     </div>
                     <Button
@@ -347,7 +405,11 @@ export const NonNegotiableModal = ({
                       onChange={(e) =>
                         handleFieldChange(fieldKey, Number(e.target.value))
                       }
-                      className="w-full"
+                      className={`w-full ${
+                        hasError && validationError?.non_negotiable
+                          ? "border-red-500 focus:ring-red-500"
+                          : ""
+                      }`}
                     />
                   )}
 
@@ -359,7 +421,13 @@ export const NonNegotiableModal = ({
                           handleFieldChange(fieldKey, value)
                         }
                       >
-                        <SelectTrigger className="w-full p-2 border border-gray-300 rounded-md text-sm">
+                        <SelectTrigger
+                          className={`w-full p-2 border rounded-md text-sm ${
+                            hasError && validationError?.non_negotiable
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
+                        >
                           <SelectValue placeholder="Select minimum requirement" />
                         </SelectTrigger>
                         <SelectContent>

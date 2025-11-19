@@ -276,14 +276,10 @@ export function stateToDataFormat<T extends object>(
 
 // Usage for PositionFormData
 export function stateToDataFormatClient(formData: PositionFormData): FormData {
-  console.log("Converting formData to FormData:", formData);
-  console.log("Locations:", formData.locations);
-  console.log("Batches:", formData.batches);
   return stateToDataFormat(formData, { jobPostingField: "job_posting" });
 }
 
 // Usage for PRFFormData
 export function stateToDataFormatPRF(formData: PRFFormData): FormData {
-  console.log(formData);
   return stateToDataFormat(formData, { jobPostingField: "job_posting" });
 }

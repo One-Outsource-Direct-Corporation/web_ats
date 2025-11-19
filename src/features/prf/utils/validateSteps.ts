@@ -2,6 +2,7 @@ import type { PRFFormData } from "../types/prf.types";
 import {
   validateJobPosting,
   validatePipeline,
+  validateNonNegotiable,
   mapServerErrorsToSteps as mapServerErrors,
   hasStepErrors as checkStepErrors,
   getStepErrorSummary as getErrorSummary,
@@ -113,7 +114,20 @@ export function validateSteps(formData: PRFFormData): StepErrors {
   }
 
   // Step 3: Asset Request (no validation, only warnings in UI)
-  // Step 4: Application Form (no validation yet)
+
+  // Step 4: Application Form - Non-negotiable validation
+  const step4Errors: ValidationError = {};
+  const nonNegotiableErrors = validateNonNegotiable(
+    formData.application_form?.non_negotiable
+  );
+
+  if (Object.keys(nonNegotiableErrors).length > 0) {
+    Object.assign(step4Errors, nonNegotiableErrors);
+  }
+
+  if (Object.keys(step4Errors).length > 0) {
+    errors[4] = step4Errors;
+  }
 
   // Step 5: Pipeline validation
   const step5Errors: ValidationError = {};
@@ -159,6 +173,8 @@ export function mapServerErrorsToSteps(
     "job_posting.description": 3,
     "job_posting.responsibilities": 3,
     "job_posting.qualifications": 3,
+    non_negotiable: 4,
+    "application_form.non_negotiable": 4,
     pipeline: 5,
   };
 

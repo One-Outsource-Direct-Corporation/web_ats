@@ -8,6 +8,7 @@ import type {
   ApplicationFormType,
   NonNegotiable,
 } from "@/shared/types/application_form.types";
+import type { ValidationError } from "@/shared/utils/formValidation";
 
 interface Step04Props {
   goToNextStep: () => void;
@@ -21,6 +22,7 @@ interface Step04Props {
   questionnaireHandler: (
     updatedQuestionnaire: ApplicationFormQuestionnaire
   ) => void;
+  errors?: ValidationError | null;
 }
 
 export const Step04 = ({
@@ -30,6 +32,7 @@ export const Step04 = ({
   applicationFormHandler,
   nonNegotiableHandler,
   questionnaireHandler,
+  errors,
 }: Step04Props) => {
   return (
     <div className="space-y-10">
@@ -38,6 +41,7 @@ export const Step04 = ({
         applicationFormHandler={applicationFormHandler}
         nonNegotiableHandler={nonNegotiableHandler}
         questionnaireHandler={questionnaireHandler}
+        validationError={errors}
       />
       <div className="flex justify-between mt-10">
         <Button variant="outline" onClick={goToPreviousStep}>

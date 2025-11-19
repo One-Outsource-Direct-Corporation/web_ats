@@ -269,6 +269,7 @@ export default function PRF({ initialData, updateMode }: PRFProps) {
               applicationFormHandler={applicationFormHandler}
               nonNegotiableHandler={nonNegotiableHandler}
               questionnaireHandler={questionnaireHandler}
+              errors={stepErrors[4]}
             />
           )}
           {step === 5 && (
