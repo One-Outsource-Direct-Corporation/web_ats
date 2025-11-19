@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { StepProps } from "../types/create_position.types";
 import type { StepErrors } from "../utils/validateSteps";
 
-export const useStepNavigation = () => {
+export const useStepNavigation = (updateMode = false) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [stepErrors, setStepErrors] = useState<StepErrors>({
@@ -51,7 +51,11 @@ export const useStepNavigation = () => {
   };
 
   const handleStepClick = (stepNumber: number) => {
-    if (stepNumber <= currentStep || completedSteps.includes(stepNumber)) {
+    if (
+      updateMode ||
+      stepNumber <= currentStep ||
+      completedSteps.includes(stepNumber)
+    ) {
       setCurrentStep(stepNumber);
     }
   };

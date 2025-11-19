@@ -30,6 +30,7 @@ import { CalendarIcon } from "lucide-react";
 import { Calendar } from "@/shared/components/ui/calendar";
 import useClient from "@/features/positions-client/hooks/useClient";
 import { formatDate } from "@/shared/utils/formatDate";
+import ClientAddModal from "./ClientAddModal";
 
 interface BasicDetailsFormProps {
   formData: PositionFormData;
@@ -53,7 +54,7 @@ export const BasicDetailsForm = ({
   handleJobPostingChange,
   errorFields,
 }: BasicDetailsFormProps) => {
-  const { clients, loading, error } = useClient();
+  const { clients, loading, error, refetch } = useClient();
   return (
     <div>
       {/* Basic Details */}
@@ -62,29 +63,34 @@ export const BasicDetailsForm = ({
           <FieldGroup>
             <Field>
               <FieldLabel>Client *</FieldLabel>
-              <Select
-                value={formData.client ? String(formData.client) : ""}
-                onValueChange={(value) =>
-                  onInputChange("client", Number(value))
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select Client" />
-                </SelectTrigger>
-                <SelectContent>
-                  {loading && (
-                    <SelectItem value="loading">Loading...</SelectItem>
-                  )}
-                  {error && (
-                    <SelectItem value="error">Something went wrong!</SelectItem>
-                  )}
-                  {clients.map((client) => (
-                    <SelectItem key={client.id} value={String(client.id)}>
-                      {client.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Field orientation="horizontal">
+                <Select
+                  value={formData.client ? String(formData.client) : ""}
+                  onValueChange={(value) =>
+                    onInputChange("client", Number(value))
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Client" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {loading && (
+                      <SelectItem value="loading">Loading...</SelectItem>
+                    )}
+                    {error && (
+                      <SelectItem value="error">
+                        Something went wrong!
+                      </SelectItem>
+                    )}
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={String(client.id)}>
+                        {client.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <ClientAddModal onClientAdded={refetch} />
+              </Field>
               {errorFields?.client && (
                 <FieldError>{errorFields.client[0]}</FieldError>
               )}

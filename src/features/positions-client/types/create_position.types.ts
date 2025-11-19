@@ -38,13 +38,18 @@ export interface JobPostingDb extends JobPosting {
   updated_at: Date;
 }
 
-export interface Client {
-  id: number;
+export interface ClientBase {
   name: string;
   email: string;
   contact_number: string;
+}
+
+export interface ClientDb extends ClientBase {
+  id: number;
   posted_by: string;
 }
+
+export type Client = ClientDb | ClientBase;
 
 export interface PositionBase {
   client: number | null;

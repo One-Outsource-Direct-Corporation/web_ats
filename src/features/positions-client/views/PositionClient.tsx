@@ -44,7 +44,7 @@ export default function PositionClient({
     getStepTitle,
     resetSteps,
     updateStepErrors,
-  } = useStepNavigation();
+  } = useStepNavigation(updateMode);
   const {
     formData,
     setFormData,
@@ -218,6 +218,7 @@ export default function PositionClient({
           onStepClick={handleStepClick}
           resetForm={resetFormData}
           stepErrors={stepErrors}
+          updateMode={updateMode}
         />
 
         <div className="flex justify-between items-start">

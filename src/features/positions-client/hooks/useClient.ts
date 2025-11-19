@@ -1,13 +1,26 @@
 import { useState, useEffect } from "react";
-import type { Client } from "../types/create_position.types";
+import type { ClientDb } from "../types/create_position.types";
 import type { AxiosError } from "axios";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 
 export default function useClient() {
-  const [clients, setClients] = useState<Client[]>([]);
+  const [clients, setClients] = useState<ClientDb[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<AxiosError | null>(null);
   const axiosPrivate = useAxiosPrivate();
+
+  const fetchClients = async () => {
+    try {
+      setLoading(true);
+      const response = await axiosPrivate.get("api/client");
+      setClients(response.data);
+    } catch (err: AxiosError | any) {
+      console.log(err);
+      setError(err.response?.data?.error || "Failed to fetch clients");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (import.meta.env.VITE_REACT_ENV === "development") {
@@ -31,20 +44,8 @@ export default function useClient() {
       return;
     }
 
-    const fetchClients = async () => {
-      try {
-        const response = await axiosPrivate.get("api/client");
-        setClients(response.data);
-      } catch (err: AxiosError | any) {
-        console.log(err);
-        setError(err.response?.data?.error || "Failed to fetch clients");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchClients();
   }, []);
 
-  return { clients, loading, error };
+  return { clients, loading, error, refetch: fetchClients };
 }

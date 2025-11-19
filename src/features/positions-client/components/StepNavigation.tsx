@@ -22,14 +22,17 @@ interface StepNavigationProps {
   onStepClick: (stepNumber: number) => void;
   resetForm: () => void;
   stepErrors?: StepErrors;
+  updateMode?: boolean;
 }
 
 export const StepNavigation = ({
   steps,
+  currentStep,
   completedSteps,
   onStepClick,
   resetForm,
   stepErrors,
+  updateMode = false,
 }: StepNavigationProps) => {
   const navigate = useNavigate();
 
@@ -47,42 +50,50 @@ export const StepNavigation = ({
             : false;
           const isCompleted = completedSteps.includes(step.number);
           const isActive = step.active;
+          const isClickable =
+            updateMode || step.number <= currentStep || isCompleted;
 
           return (
             <div
               key={step.number}
-              className={`flex items-center gap-2 ${
+              className={`flex items-center gap-2 transition-colors duration-200 ${
                 hasError
                   ? "text-red-600"
                   : isActive
                   ? "text-blue-600"
                   : isCompleted
                   ? "text-green-600"
+                  : updateMode && isClickable
+                  ? "text-blue-400 hover:text-blue-600"
                   : "text-gray-600"
-              } ${isCompleted ? "cursor-pointer" : ""}`}
-              onClick={() => onStepClick(step.number)}
+              } ${isClickable ? "cursor-pointer" : ""}`}
+              onClick={() => isClickable && onStepClick(step.number)}
             >
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors duration-200 ${
                   hasError
                     ? "bg-red-600 text-white"
                     : isActive
                     ? "bg-blue-600 text-white"
                     : isCompleted
                     ? "bg-green-600 text-white"
+                    : updateMode && isClickable
+                    ? "bg-blue-200 text-blue-800 hover:bg-blue-300 hover:text-blue-900"
                     : "bg-gray-300 text-gray-600"
                 }`}
               >
                 {step.number}
               </div>
               <span
-                className={`text-sm font-medium ${
+                className={`text-sm font-medium transition-colors duration-200 ${
                   hasError
                     ? "text-red-600"
                     : isActive
                     ? "text-blue-600"
                     : isCompleted
                     ? "text-green-600"
+                    : updateMode && isClickable
+                    ? "text-blue-500 hover:text-blue-700"
                     : "text-gray-600"
                 }`}
               >
