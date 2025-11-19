@@ -32,6 +32,7 @@ export const BatchManagement = ({
     name: "",
     headcount: 0,
     deployment_date: null,
+    district: "",
   });
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [editingBatchId, setEditingBatchId] = useState<string | number | null>(
@@ -43,14 +44,25 @@ export const BatchManagement = ({
     name: "",
     headcount: 0,
     deployment_date: null,
+    district: "",
   });
 
   // Reset form states when location changes
   useEffect(() => {
     setIsAddingNew(false);
     setEditingBatchId(null);
-    setNewBatch({ name: "", headcount: 0, deployment_date: null });
-    setEditFormData({ name: "", headcount: 0, deployment_date: null });
+    setNewBatch({
+      name: "",
+      headcount: 0,
+      deployment_date: null,
+      district: "",
+    });
+    setEditFormData({
+      name: "",
+      headcount: 0,
+      deployment_date: null,
+      district: "",
+    });
   }, [selectedLocationId]);
 
   const handleStartEdit = (batch: BatchEntry) => {
@@ -61,6 +73,7 @@ export const BatchManagement = ({
       name: batch.name,
       headcount: batch.headcount,
       deployment_date: batch.deployment_date || null,
+      district: batch.district,
     });
   };
 
@@ -75,13 +88,23 @@ export const BatchManagement = ({
       else onUpdateBatch(id, { ...editFormData, id } as BatchEntryDb);
 
       setEditingBatchId(null);
-      setEditFormData({ name: "", headcount: 0, deployment_date: null });
+      setEditFormData({
+        name: "",
+        headcount: 0,
+        deployment_date: null,
+        district: "",
+      });
     }
   };
 
   const handleCancelEdit = () => {
     setEditingBatchId(null);
-    setEditFormData({ name: "", headcount: 0, deployment_date: null });
+    setEditFormData({
+      name: "",
+      headcount: 0,
+      deployment_date: null,
+      district: "",
+    });
   };
 
   const handleAddNewBatch = () => {
@@ -96,13 +119,23 @@ export const BatchManagement = ({
         tempId: `tmp-${Date.now()}`,
         location: selectedLocationId,
       });
-      setNewBatch({ name: "", headcount: 0, deployment_date: null });
+      setNewBatch({
+        name: "",
+        headcount: 0,
+        deployment_date: null,
+        district: "",
+      });
       setIsAddingNew(false);
     }
   };
 
   const handleCancelAdd = () => {
-    setNewBatch({ name: "", headcount: 0, deployment_date: null });
+    setNewBatch({
+      name: "",
+      headcount: 0,
+      deployment_date: null,
+      district: "",
+    });
     setIsAddingNew(false);
   };
 
@@ -147,6 +180,7 @@ export const BatchManagement = ({
           <thead className="bg-blue-600 text-white">
             <tr>
               <th className="px-4 py-3 text-left">Batch Name</th>
+              <th className="px-4 py-3 text-left">District</th>
               <th className="px-4 py-3 text-left">Headcount</th>
               <th className="px-4 py-3 text-left">Deployment Date</th>
               <th className="px-4 py-3 text-center">Actions</th>
@@ -161,6 +195,16 @@ export const BatchManagement = ({
                     value={newBatch.name}
                     onChange={(e) =>
                       setNewBatch({ ...newBatch, name: e.target.value })
+                    }
+                    className="w-full"
+                  />
+                </td>
+                <td className="px-4 py-3">
+                  <Input
+                    placeholder="Enter district"
+                    value={newBatch.district}
+                    onChange={(e) =>
+                      setNewBatch({ ...newBatch, district: e.target.value })
                     }
                     className="w-full"
                   />
@@ -240,6 +284,23 @@ export const BatchManagement = ({
                       />
                     ) : (
                       <span className="font-medium">{batch.name}</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {editingBatchId === batchId ? (
+                      <Input
+                        placeholder="Enter district"
+                        value={editFormData.district}
+                        onChange={(e) =>
+                          setEditFormData({
+                            ...editFormData,
+                            district: e.target.value,
+                          })
+                        }
+                        className="w-full"
+                      />
+                    ) : (
+                      <span className="text-gray-600">{batch.district}</span>
                     )}
                   </td>
                   <td className="px-4 py-3">

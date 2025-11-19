@@ -141,128 +141,134 @@ export function SectionList({
       </div>
       <div className="space-y-4">
         {sections.length > 0 ? (
-          sections.map((section) => (
-            <div
-              key={getIdSection(section)}
-              className="bg-white rounded-lg border border-gray-200"
-            >
-              <div className="bg-white rounded-lg border border-gray-200 flex items-center justify-between px-4 py-3">
-                {editingSectionId === getIdSection(section) ? (
-                  <div className="flex items-center gap-2 flex-1">
-                    <Input
-                      type="text"
-                      value={editingSectionName}
-                      onChange={(e) => setEditingSectionName(e.target.value)}
-                      className="flex-1"
-                      placeholder="Section name"
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={() => handleSaveEditSection(section)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      Save
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={handleCancelEditSection}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    <span className="font-medium text-gray-900 text-base">
-                      {section.name}
-                    </span>
-                    <div className="flex gap-2">
-                      <AddEditQuestionModal
-                        onSave={(question) =>
-                          handleAddQuestion(section, question)
-                        }
+          sections
+            .filter((section) => !(section as SectionDb)._delete)
+            .map((section) => (
+              <div
+                key={getIdSection(section)}
+                className="bg-white rounded-lg border border-gray-200 overflow-hidden"
+              >
+                <div className="bg-white flex items-center justify-between px-4 py-3">
+                  {editingSectionId === getIdSection(section) ? (
+                    <div className="flex items-center gap-2 flex-1">
+                      <Input
+                        type="text"
+                        value={editingSectionName}
+                        onChange={(e) => setEditingSectionName(e.target.value)}
+                        className="flex-1"
+                        placeholder="Section name"
                       />
                       <Button
-                        variant="ghost"
                         type="button"
-                        className="p-2 text-blue-600 hover:text-blue-800"
-                        onClick={() => handleEditSectionClick(section)}
+                        size="sm"
+                        onClick={() => handleSaveEditSection(section)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
                       >
-                        <Pencil className="w-4 h-4" />
+                        Save
                       </Button>
                       <Button
-                        variant="ghost"
                         type="button"
-                        className="p-2 text-red-500 hover:text-red-700"
-                        onClick={() => handleDeleteSectionClick(section)}
+                        size="sm"
+                        variant="outline"
+                        onClick={handleCancelEditSection}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        Cancel
                       </Button>
                     </div>
-                  </>
+                  ) : (
+                    <>
+                      <span className="font-medium text-gray-900 text-base">
+                        {section.name}
+                      </span>
+                      <div className="flex gap-2">
+                        <AddEditQuestionModal
+                          onSave={(question) =>
+                            handleAddQuestion(section, question)
+                          }
+                        />
+                        <Button
+                          variant="ghost"
+                          type="button"
+                          className="p-2 text-blue-600 hover:text-blue-800"
+                          onClick={() => handleEditSectionClick(section)}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          type="button"
+                          className="p-2 text-red-500 hover:text-red-700"
+                          onClick={() => handleDeleteSectionClick(section)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+                {section.questionnaires.filter(
+                  (q) => !(q as QuestionnaireDb)._delete
+                ).length > 0 && (
+                  <div className="px-4 py-3 border-t border-gray-200">
+                    <div className="space-y-2">
+                      {section.questionnaires
+                        .filter((q) => !(q as QuestionnaireDb)._delete)
+                        .map((question) => (
+                          <div
+                            key={getIdQuestion(question)}
+                            className="flex items-center justify-between p-2rounded"
+                          >
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                {question.question}
+                              </p>
+                              {question.description && (
+                                <p className="text-xs text-gray-500">
+                                  {question.description}
+                                </p>
+                              )}
+                              <p className="text-xs text-gray-400">
+                                {question.question_type}
+                              </p>
+                            </div>
+                            <div className="flex gap-1">
+                              <AddEditQuestionModal
+                                question={question}
+                                onSave={(updatedQuestion) =>
+                                  handleEditQuestion(
+                                    section,
+                                    getIdQuestion(question),
+                                    updatedQuestion
+                                  )
+                                }
+                                onDelete={() =>
+                                  handleDeleteQuestion(
+                                    section,
+                                    getIdQuestion(question)
+                                  )
+                                }
+                              />
+                              <Button
+                                variant="ghost"
+                                type="button"
+                                className="p-1 text-red-500 hover:text-red-700"
+                                onClick={() =>
+                                  handleDeleteQuestion(
+                                    section,
+                                    getIdQuestion(question)
+                                  )
+                                }
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
                 )}
               </div>
-              {section.questionnaires.length > 0 && (
-                <div className="px-4 py-3 border-t border-gray-200">
-                  <div className="space-y-2">
-                    {section.questionnaires.map((question) => (
-                      <div
-                        key={getIdQuestion(question)}
-                        className="flex items-center justify-between p-2 bg-gray-50 rounded"
-                      >
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">
-                            {question.name}
-                          </p>
-                          {question.description && (
-                            <p className="text-xs text-gray-500">
-                              {question.description}
-                            </p>
-                          )}
-                          <p className="text-xs text-gray-400">
-                            {question.type}
-                          </p>
-                        </div>
-                        <div className="flex gap-1">
-                          <AddEditQuestionModal
-                            question={question}
-                            onSave={(updatedQuestion) =>
-                              handleEditQuestion(
-                                section,
-                                getIdQuestion(question),
-                                updatedQuestion
-                              )
-                            }
-                            onDelete={() =>
-                              handleDeleteQuestion(
-                                section,
-                                getIdQuestion(question)
-                              )
-                            }
-                          />
-                          <Button
-                            variant="ghost"
-                            type="button"
-                            className="p-1 text-red-500 hover:text-red-700"
-                            onClick={() =>
-                              handleDeleteQuestion(
-                                section,
-                                getIdQuestion(question)
-                              )
-                            }
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))
+            ))
         ) : (
           <div className="text-sm text-gray-500 text-center">
             No sections added yet.

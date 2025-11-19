@@ -1,6 +1,6 @@
 interface LocationEntryBase {
   name: string;
-  headcount: number;
+  headcount: number | null;
   deployment_date: string | null;
   with_batch: boolean;
 }
@@ -17,6 +17,7 @@ export interface LocationEntryDb extends LocationEntryBase {
 interface BatchEntryBase {
   location: number | string;
   name: string;
+  district: string;
   headcount: number;
   deployment_date: string | null;
 }

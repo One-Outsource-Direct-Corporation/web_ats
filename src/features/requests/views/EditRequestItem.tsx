@@ -31,7 +31,8 @@ export default function EditRequestItem() {
   });
 
   useEffect(() => {
-    document.title = type === "prf" ? "Edit PRF" : "Edit Position";
+    document.title =
+      type === "prf" ? "Edit Internal" : "Edit Client" + " Position";
   }, [type]);
 
   if (!position || loading) {
@@ -68,7 +69,7 @@ export default function EditRequestItem() {
           </Button>
           <div className="mt-4">
             <h1 className="text-3xl font-bold text-gray-800">
-              Edit {type === "prf" ? "PRF" : "Position"}
+              Edit {type === "prf" ? "Internal" : "Client"} Position
             </h1>
             <p className="text-gray-600">
               {position.job_posting.job_title} • ID:{" "}
@@ -160,7 +161,7 @@ export default function EditRequestItem() {
       </div>
 
       {/* Form Content */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
+      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
         {type === "prf" ? (
           <PRF initialData={position as PRFFormData} updateMode={true} />
         ) : (

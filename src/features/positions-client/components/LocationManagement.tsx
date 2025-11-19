@@ -100,8 +100,19 @@ export const LocationManagement = ({
   };
 
   const handleAddNewLocation = () => {
-    if (newLocation.name.trim() && newLocation.deployment_date) {
-      onAddLocation({ ...newLocation, tempId: `tmp-${Date.now()}` });
+    if (
+      newLocation.name.trim() &&
+      (newLocation.with_batch || newLocation.deployment_date)
+    ) {
+      const locationToAdd = {
+        ...newLocation,
+        tempId: `tmp-${Date.now()}`,
+        headcount: newLocation.with_batch ? null : newLocation.headcount,
+        deployment_date: newLocation.with_batch
+          ? null
+          : newLocation.deployment_date,
+      };
+      onAddLocation(locationToAdd);
       setNewLocation({
         name: "",
         headcount: 0,
@@ -141,7 +152,6 @@ export const LocationManagement = ({
           <thead className="bg-blue-600 text-white">
             <tr>
               <th className="px-4 py-3 text-left">Location</th>
-              <th className="px-4 py-3 text-left">Headcount</th>
               <th className="px-4 py-3 text-left">Total Headcount</th>
               <th className="px-4 py-3 text-left">Deployment Date</th>
               <th className="px-4 py-3 text-left">With Batch?</th>
@@ -162,45 +172,55 @@ export const LocationManagement = ({
                   />
                 </td>
                 <td className="px-4 py-3">
-                  <Input
-                    placeholder="Enter headcount"
-                    type="number"
-                    min="1"
-                    value={newLocation.headcount || ""}
-                    onChange={(e) =>
-                      setNewLocation({
-                        ...newLocation,
-                        headcount: parseInt(e.target.value) || 0,
-                      })
-                    }
-                    className="w-full"
-                  />
+                  {newLocation.with_batch ? (
+                    <span className="text-gray-600">-</span>
+                  ) : (
+                    <Input
+                      placeholder="Enter headcount"
+                      type="number"
+                      min="1"
+                      value={newLocation.headcount || ""}
+                      onChange={(e) =>
+                        setNewLocation({
+                          ...newLocation,
+                          headcount: parseInt(e.target.value) || 0,
+                        })
+                      }
+                      className="w-full"
+                    />
+                  )}
                 </td>
                 <td className="px-4 py-3">
-                  <span className="text-gray-600">-</span>
-                </td>
-                <td className="px-4 py-3">
-                  <Input
-                    type="date"
-                    value={newLocation.deployment_date ?? ""}
-                    onChange={(e) =>
-                      setNewLocation({
-                        ...newLocation,
-                        deployment_date: e.target.value ? e.target.value : null,
-                      })
-                    }
-                    className="w-full"
-                  />
+                  {newLocation.with_batch ? (
+                    <span className="text-gray-600">-</span>
+                  ) : (
+                    <Input
+                      type="date"
+                      value={newLocation.deployment_date ?? ""}
+                      onChange={(e) =>
+                        setNewLocation({
+                          ...newLocation,
+                          deployment_date: e.target.value
+                            ? e.target.value
+                            : null,
+                        })
+                      }
+                      className="w-full"
+                    />
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   <Select
                     value={newLocation.with_batch ? "true" : "false"}
-                    onValueChange={(value) =>
+                    onValueChange={(value) => {
+                      const isBatch = value === "true";
                       setNewLocation((prev) => ({
                         ...prev,
-                        with_batch: value === "true",
-                      }))
-                    }
+                        with_batch: isBatch,
+                        headcount: isBatch ? null : prev.headcount,
+                        deployment_date: isBatch ? null : prev.deployment_date,
+                      }));
+                    }}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="With Batch?" />
@@ -248,7 +268,12 @@ export const LocationManagement = ({
                   )
                   .reduce((sum, batch) => sum + (batch.headcount || 0), 0);
 
-                const totalHeadcount = location.headcount + batchHeadcount;
+                let totalHeadcount;
+                if (location.with_batch) {
+                  totalHeadcount = batchHeadcount;
+                } else {
+                  totalHeadcount = (location.headcount ?? 0) + batchHeadcount;
+                }
 
                 return (
                   <tr
@@ -279,45 +304,48 @@ export const LocationManagement = ({
                     </td>
                     <td className="px-4 py-3">
                       {editingLocationId === locId ? (
-                        <Input
-                          type="number"
-                          min="1"
-                          value={editFormData.headcount}
-                          onChange={(e) =>
-                            setEditFormData({
-                              ...editFormData,
-                              headcount: parseInt(e.target.value) || 0,
-                            })
-                          }
-                          className="w-full"
-                        />
+                        editFormData.with_batch ? (
+                          <span className="text-gray-600">-</span>
+                        ) : (
+                          <Input
+                            type="number"
+                            min="1"
+                            value={editFormData.headcount ?? 0}
+                            onChange={(e) =>
+                              setEditFormData({
+                                ...editFormData,
+                                headcount: parseInt(e.target.value) || 0,
+                              })
+                            }
+                            className="w-full"
+                          />
+                        )
                       ) : (
-                        <span className="text-gray-600">
-                          {location.headcount}
-                        </span>
+                        <span className="text-gray-600">{totalHeadcount}</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-gray-600">
-                        {location.with_batch ? totalHeadcount : "-"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
                       {editingLocationId === locId ? (
-                        <Input
-                          type="date"
-                          value={editFormData.deployment_date ?? ""}
-                          onChange={(e) =>
-                            setEditFormData({
-                              ...editFormData,
-                              deployment_date: e.target.value,
-                            })
-                          }
-                          className="w-full"
-                        />
+                        editFormData.with_batch ? (
+                          <span className="text-gray-600">-</span>
+                        ) : (
+                          <Input
+                            type="date"
+                            value={editFormData.deployment_date ?? ""}
+                            onChange={(e) =>
+                              setEditFormData({
+                                ...editFormData,
+                                deployment_date: e.target.value,
+                              })
+                            }
+                            className="w-full"
+                          />
+                        )
                       ) : (
                         <span className="text-gray-600">
-                          {formatDate(location.deployment_date ?? "")}
+                          {location.deployment_date
+                            ? formatDate(location.deployment_date)
+                            : "-"}
                         </span>
                       )}
                     </td>
@@ -325,12 +353,17 @@ export const LocationManagement = ({
                       {editingLocationId === locId ? (
                         <Select
                           value={editFormData.with_batch ? "true" : "false"}
-                          onValueChange={(value) =>
+                          onValueChange={(value) => {
+                            const isBatch = value === "true";
                             setEditFormData((prev) => ({
                               ...prev,
-                              with_batch: value === "true",
-                            }))
-                          }
+                              with_batch: isBatch,
+                              headcount: isBatch ? null : prev.headcount,
+                              deployment_date: isBatch
+                                ? null
+                                : prev.deployment_date,
+                            }));
+                          }}
                         >
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder="With Batch?" />

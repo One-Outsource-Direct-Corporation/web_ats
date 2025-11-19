@@ -30,9 +30,9 @@ export interface SectionLocal extends SectionBase {
 export type Section = SectionLocal | SectionDb;
 
 export interface QuestionnaireBase {
-  name: string;
+  question: string;
   description?: string;
-  type: "Multiple Choice" | "Checkboxes" | "Text Entry" | "Paragraph";
+  question_type: "Multiple Choice" | "Checkboxes" | "Text Entry" | "Paragraph";
   options?: QuestionOption[];
   parameter?: string;
 }

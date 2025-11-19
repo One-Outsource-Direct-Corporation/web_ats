@@ -84,6 +84,7 @@ export default function PositionClient({
       }
 
       const formDataObj = stateToDataFormatClient(formData);
+      // return;
 
       try {
         let response;

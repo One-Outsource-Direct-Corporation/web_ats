@@ -29,6 +29,8 @@ import type {
   ApplicationFormQuestionnaireDb,
   SectionLocal,
   SectionDb,
+  QuestionnaireDb,
+  QuestionnaireLocal,
 } from "../../types/questionnaire.types";
 
 interface QuestionnaireBaseProps {
@@ -79,10 +81,24 @@ export default function QuestionnaireBase({
   function handleDeleteSection(id: number | string) {
     let updatedSections;
     if (typeof id === "number") {
-      // Persisted section: set _delete flag
+      // Persisted section: set _delete flag and cascade to all questionnaires
       updatedSections = questionnaire.sections.map((sec) => {
         if ((sec as SectionDb).id === id) {
-          return { ...sec, _delete: true };
+          const questionnairesWithDelete = sec.questionnaires
+            .map((q) => {
+              // Only mark DB questionnaires with _delete, remove local ones
+              if ((q as QuestionnaireDb).id) {
+                return { ...q, _delete: true };
+              }
+              return q;
+            })
+            .filter((q) => !(q as QuestionnaireLocal).tempId);
+
+          return {
+            ...sec,
+            _delete: true,
+            questionnaires: questionnairesWithDelete,
+          };
         }
         return sec;
       });

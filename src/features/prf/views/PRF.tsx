@@ -35,7 +35,7 @@ interface PRFProps {
 export default function PRF({ initialData, updateMode }: PRFProps) {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [maxStepVisited, setMaxStepVisited] = useState(1);
+  const [maxStepVisited, setMaxStepVisited] = useState(updateMode ? 6 : 1);
   const [showCancelConfirmDialog, setShowCancelConfirmDialog] = useState(false);
   const [showSubmitConfirmDialog, setShowSubmitConfirmDialog] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
@@ -169,11 +169,13 @@ export default function PRF({ initialData, updateMode }: PRFProps) {
   return (
     <>
       <SuccessPopup show={showSuccessPopup} />
-      <div className="min-h-screen bg-white p-6 pt-[100px]">
+      <div className="min-h-screen bg-white p-6">
         <div className="mx-auto max-w-7xl space-y-4">
-          <h1 className="text-lg font-bold text-gray-800 mb-6">
-            Personnel Requisition Form
-          </h1>
+          {!updateMode && (
+            <h1 className="text-lg font-bold text-gray-800 mb-6">
+              Personnel Requisition Form
+            </h1>
+          )}
           <div className="flex justify-between items-center mb-4">
             <Button
               variant="outline"
@@ -195,6 +197,8 @@ export default function PRF({ initialData, updateMode }: PRFProps) {
               const stepNumber = i + 1;
               const hasError =
                 stepErrors[stepNumber] && hasStepErrors(stepErrors[stepNumber]);
+              const isClickable =
+                stepNumber <= maxStepVisited && stepNumber !== step;
               return (
                 <div
                   key={i}
@@ -203,16 +207,18 @@ export default function PRF({ initialData, updateMode }: PRFProps) {
                       ? "bg-red-600 text-white"
                       : stepNumber === step
                       ? "bg-[#0056D2] text-white"
+                      : isClickable
+                      ? "bg-blue-50 text-blue-600"
                       : "bg-white text-gray-500"
                   } ${
-                    stepNumber <= maxStepVisited && stepNumber !== step
+                    isClickable
                       ? hasError
                         ? "cursor-pointer hover:bg-red-700"
-                        : "cursor-pointer hover:bg-gray-100"
+                        : "cursor-pointer hover:bg-blue-100"
                       : ""
                   }`}
                   onClick={() => {
-                    if (stepNumber <= maxStepVisited && stepNumber !== step) {
+                    if (isClickable) {
                       setStep(stepNumber);
                     }
                   }}
