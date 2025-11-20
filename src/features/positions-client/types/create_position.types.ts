@@ -76,6 +76,7 @@ export interface Position extends PositionBase {
 export interface PositionDb extends Omit<Position, "job_posting"> {
   id: number;
   job_posting: JobPostingDb;
+  client_display: string;
   posted_by: string;
   created_at: Date;
   updated_at: Date;

@@ -2,9 +2,8 @@ import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import FilterBar from "../components/FilterBar";
 import JobListItem from "../components/JobListItem";
 import { usePositions } from "../../../shared/hooks/usePositions";
-import { Button } from "@/shared/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import PageIndicator from "@/shared/components/reusables/PageIndicator";
 
 export default function Positions() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -70,27 +69,12 @@ export default function Positions() {
         )}
         {/* Pagination */}
         {!loading && !error && positions && positions.results.length > 0 && (
-          <div className="flex justify-center items-center mt-4 space-x-4">
-            <Button
-              variant="ghost"
-              onClick={handlePrevPage}
-              disabled={!positions.previous}
-              className="text-gray-600 hover:bg-gray-900 hover:text-gray-50"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="text-sm text-gray-50 rounded-md bg-gray-900 p-2 px-4">
-              {currentPage}
-            </span>
-            <Button
-              variant="ghost"
-              onClick={handleNextPage}
-              disabled={!positions.next}
-              className="text-gray-600 hover:bg-gray-900 hover:text-gray-50"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
+          <PageIndicator
+            positions={positions}
+            currentPage={currentPage}
+            handleNextPage={handleNextPage}
+            handlePrevPage={handlePrevPage}
+          />
         )}
       </div>
     </section>

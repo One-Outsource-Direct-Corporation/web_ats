@@ -7,23 +7,21 @@ import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import DOMPurify from "dompurify";
 import formatName from "@/shared/utils/formatName";
 import { usePositionDetail } from "@/shared/hooks/usePositions";
-import type { JobPostingResponsePosition } from "@/features/jobs/types/job.types";
 
 export default function CareerDescription() {
   const navigate = useNavigate();
   const params = useParams();
-  const {
-    position: jobDetail,
-    loading,
-    error,
-  } = usePositionDetail({ id: Number(params.jobId), non_admin: true });
-  console.log("Job Detail from Hook:", jobDetail);
+  const { position, loading, error } = usePositionDetail({
+    id: Number(params.jobId),
+    non_admin: true,
+  });
+  console.log("Position from Hook:", position);
 
   useEffect(() => {
-    document.title = jobDetail?.job_title
-      ? `${jobDetail.job_title}`
+    document.title = position?.job_posting.job_title
+      ? `${position.job_posting.job_title}`
       : "Career Details";
-  }, [jobDetail?.job_title]);
+  }, [position?.job_posting.job_title]);
 
   if (loading) {
     return <LoadingComponent />;
@@ -66,31 +64,31 @@ export default function CareerDescription() {
           {/* Job Title with Icon */}
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-2xl font-bold text-gray-900">
-              {jobDetail?.job_title}
+              {position?.job_posting.job_title}
             </h1>
           </div>
 
           {/* Department and Role */}
-          {jobDetail?.department_name && (
+          {position?.job_posting.department_name && (
             <div className="text-gray-600 mb-6 ml-9">
-              {formatName(jobDetail.department_name)}{" "}
-              {jobDetail.type === "client" && (
-                <>
-                  • {(jobDetail as JobPostingResponsePosition).client_display}
-                </>
-              )}
+              {position.job_posting.department_name === "other"
+                ? position.job_posting.department_name_other ?? ""
+                : formatName(position.job_posting.department_name)}{" "}
+              {"type" in position.job_posting &&
+                position.job_posting.type === "client" &&
+                "client_display" in position &&
+                position.client_display && <>• {position.client_display}</>}
             </div>
           )}
 
           {/* Action Buttons */}
           <div className="flex gap-4 ml-9 flex-wrap">
-            {" "}
             {/* Added flex-wrap for responsiveness */}
             <Button
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
               onClick={() => {
-                if (jobDetail) {
-                  return navigate(`/careers/${jobDetail.id}/apply`);
+                if (position && "id" in position) {
+                  navigate(`/careers/${position.id}/apply`);
                 }
               }}
             >
@@ -114,30 +112,31 @@ export default function CareerDescription() {
             <div className="flex flex-col items-center">
               <h3 className="font-bold text-gray-900 mb-2">Work Type</h3>
               <p className="text-gray-600">
-                {jobDetail?.employment_type &&
-                  formatName(jobDetail.employment_type)}
+                {position?.job_posting.employment_type &&
+                  formatName(position.job_posting.employment_type)}
               </p>
             </div>
             <div className="flex flex-col items-center">
               <h3 className="font-bold text-gray-900 mb-2">Work Setup</h3>
               <p className="text-gray-600">
-                {jobDetail?.work_setup && formatName(jobDetail.work_setup)}
+                {position?.job_posting.work_setup &&
+                  formatName(position.job_posting.work_setup)}
               </p>
             </div>
             <div className="flex flex-col items-center">
               <h3 className="font-bold text-gray-900 mb-2">Department</h3>
               <p className="text-gray-600">
-                {jobDetail?.department_name === "others"
-                  ? formatName(jobDetail.department_name_other)
-                  : jobDetail?.department_name &&
-                    formatName(jobDetail.department_name)}
+                {position?.job_posting.department_name === "other"
+                  ? formatName(position.job_posting.department_name_other ?? "")
+                  : position?.job_posting.department_name &&
+                    formatName(position.job_posting.department_name)}
               </p>
             </div>
           </div>
         </div>
 
         {/* Job Summary */}
-        {jobDetail?.description && (
+        {position?.job_posting.description && (
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-1 h-6 bg-blue-600 rounded-full"></div>
@@ -149,14 +148,14 @@ export default function CareerDescription() {
             <div
               className="text-gray-700 mb-4 preview-content"
               dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(jobDetail?.description),
+                __html: DOMPurify.sanitize(position.job_posting.description),
               }}
             />
           </div>
         )}
 
         {/* Responsibilities */}
-        {jobDetail?.responsibilities && (
+        {position?.job_posting.responsibilities && (
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-1 h-6 bg-blue-600 rounded-full"></div>
@@ -167,14 +166,16 @@ export default function CareerDescription() {
             <div
               className="text-gray-700 text-sm mb-4 preview-content"
               dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(jobDetail.responsibilities),
+                __html: DOMPurify.sanitize(
+                  position.job_posting.responsibilities
+                ),
               }}
             />
           </div>
         )}
 
         {/* Qualifications */}
-        {jobDetail?.qualifications && (
+        {position?.job_posting.qualifications && (
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-1 h-6 bg-blue-600 rounded-full"></div>
@@ -185,7 +186,7 @@ export default function CareerDescription() {
             <div
               className="text-gray-700 text-sm mb-4 preview-content"
               dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(jobDetail.qualifications),
+                __html: DOMPurify.sanitize(position.job_posting.qualifications),
               }}
             />
           </div>

@@ -1,23 +1,20 @@
-import type { JobPostingAPIResponse } from "@/features/jobs/types/job.types";
+import type { JobPostingAPIResponse } from "@/features/positions-client/types/create_position.types";
 import { Button } from "../ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PageIndicator {
-  loading: boolean;
-  errror: any;
+  // loading: boolean;
+  // error: any;
   positions: JobPostingAPIResponse | null;
   currentPage: number;
-  onPageChange: (newPage: number) => void;
+  // onPageChange: (newPage: number) => void;
   handlePrevPage: () => void;
   handleNextPage: () => void;
 }
 
 export default function PageIndicator({
-  loading,
-  error,
   positions,
   currentPage,
-  onPageChange,
   handlePrevPage,
   handleNextPage,
 }: PageIndicator) {
