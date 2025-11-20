@@ -6,6 +6,7 @@ import formatName from "@/shared/utils/formatName";
 import type { JobPostingDb } from "@/features/positions-client/types/create_position.types";
 import { useContext } from "react";
 import { AuthContext } from "@/features/auth/context/AuthContext";
+import { formatDepartmentName } from "@/shared/utils/formatDepartmentName";
 
 export default function JobListItem({ posting }: { posting: JobPostingDb }) {
   const { user } = useContext(AuthContext);
@@ -22,19 +23,14 @@ export default function JobListItem({ posting }: { posting: JobPostingDb }) {
 
               <Badge
                 className={`${getDepartmentColor(
-                  formatName(
-                    posting.department_name &&
-                      posting.department_name === "other"
-                      ? posting.department_name_other || ""
-                      : posting.department_name || ""
-                  )
+                  posting.department_name && posting.department_name === "other"
+                    ? posting.department_name_other || ""
+                    : formatDepartmentName(posting.department_name ?? "")
                 )} text-xs`}
               >
-                {formatName(
-                  posting.department_name === "other"
-                    ? posting.department_name_other || ""
-                    : posting.department_name || ""
-                )}
+                {posting.department_name === "other"
+                  ? posting.department_name_other || ""
+                  : formatDepartmentName(posting.department_name ?? "")}
               </Badge>
 
               <Badge

@@ -22,6 +22,7 @@ import {
   hasStepErrors,
 } from "../utils/validateSteps";
 import { usePositionFormData } from "../hooks/usePositionFormData";
+import type { AxiosError } from "axios";
 
 interface PositionClientProps {
   initialData?: PositionFormData;
@@ -60,9 +61,7 @@ export default function PositionClient({
   const modalHooks = useModalManagement();
 
   const handleNext = async () => {
-    // Only validate on final submission (step 4)
     if (currentStep === 4) {
-      // Validate all steps before submitting
       const allErrors = validateSteps(formData);
       const hasAnyErrors = Object.values(allErrors).some((error) =>
         hasStepErrors(error)
@@ -72,7 +71,6 @@ export default function PositionClient({
         toast.error("Please fix all errors before publishing the position");
         updateStepErrors(allErrors);
 
-        // Find the first step with errors and navigate to it
         const firstErrorStep = Object.keys(allErrors)
           .map(Number)
           .find((step) => hasStepErrors(allErrors[step]));
@@ -84,7 +82,6 @@ export default function PositionClient({
       }
 
       const formDataObj = stateToDataFormatClient(formData);
-      // return;
 
       try {
         let response;
@@ -132,15 +129,18 @@ export default function PositionClient({
             resetSteps();
           }
         }
-      } catch (err: any) {
+      } catch (err: AxiosError | any) {
         console.error("Position operation error:", err);
 
-        // Map server errors to steps
+        if (err.status === 403) {
+          toast.error("You do not have permission to perform this action.");
+          return;
+        }
+
         if (err.response?.data) {
           const serverErrors = mapServerErrorsToSteps(err.response.data);
           updateStepErrors(serverErrors);
 
-          // Find the first step with errors and navigate to it
           const firstErrorStep = Object.keys(serverErrors)
             .map(Number)
             .find((step) => hasStepErrors(serverErrors[step]));

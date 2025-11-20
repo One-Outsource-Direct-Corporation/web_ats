@@ -40,11 +40,13 @@ export interface JobPostingDb extends JobPosting {
   status: string;
   posted_by_display: User;
   type: "client" | "prf";
+  type_display: "Client" | "PRF";
+  target_start_date: string;
   active: boolean;
   published: boolean;
   posted_by: number;
-  created_at: Date;
-  updated_at: Date;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ClientBase {

@@ -17,6 +17,9 @@ import {
 } from "@/shared/components/ui/select.tsx";
 import { User, Users2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useContext } from "react";
+import { AuthContext } from "@/features/auth/context/AuthContext";
+
 function FilterBar({
   filters,
   setFilters,
@@ -37,6 +40,7 @@ function FilterBar({
   }) => void;
 }) {
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
 
   return (
     <div className="flex flex-wrap justify-between items-center gap-4">
@@ -173,17 +177,19 @@ function FilterBar({
               </div>
 
               {/* Client */}
-              <div
-                className="flex flex-col items-center space-y-2 cursor-pointer group"
-                onClick={() => navigate("/positions/create-new-position")}
-              >
-                <div className="w-16 h-16 rounded-full border border-gray-500 text-gray-600 group-hover:border-blue-500 group-hover:text-blue-500 flex items-center justify-center">
-                  <Users2 className="w-6 h-6" />
+              {user?.department === "operations-rpo" && (
+                <div
+                  className="flex flex-col items-center space-y-2 cursor-pointer group"
+                  onClick={() => navigate("/positions/create-new-position")}
+                >
+                  <div className="w-16 h-16 rounded-full border border-gray-500 text-gray-600 group-hover:border-blue-500 group-hover:text-blue-500 flex items-center justify-center">
+                    <Users2 className="w-6 h-6" />
+                  </div>
+                  <span className="text-sm text-gray-600 group-hover:text-blue-500 font-medium">
+                    Client
+                  </span>
                 </div>
-                <span className="text-sm text-gray-600 group-hover:text-blue-500 font-medium">
-                  Client
-                </span>
-              </div>
+              )}
             </div>
           </DialogContent>
         </Dialog>
