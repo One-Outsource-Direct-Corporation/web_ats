@@ -175,6 +175,8 @@ export function usePositionDetail({
     }
   };
 
+  console.log(position);
+
   useEffect(() => {
     fetchPositionDetail();
   }, [id]);

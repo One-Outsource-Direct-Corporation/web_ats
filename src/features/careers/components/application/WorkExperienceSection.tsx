@@ -5,20 +5,23 @@ import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
 import { X } from "lucide-react";
 import type { EducationWorkFormData } from "../../types/application_form.types";
 import { Field, FieldLabel, FieldSet } from "@/shared/components/ui/field";
+import type { ApplicationFormBase } from "@/shared/types/application_form.types";
 
 interface WorkExperienceSectionProps {
   formData: EducationWorkFormData;
   onInputChange: (field: string, value: string) => void;
   onAddExperience: () => void;
   onRemoveExperience: (index: number) => void;
+  applicationForm: ApplicationFormBase;
 }
 
-export const WorkExperienceSection: React.FC<WorkExperienceSectionProps> = ({
+export function WorkExperienceSection({
   formData,
   onInputChange,
   onAddExperience,
   onRemoveExperience,
-}) => {
+  applicationForm,
+}: WorkExperienceSectionProps) {
   return (
     <div>
       <h2 className="text-xl font-bold text-gray-900 mb-4">Work Experience</h2>
@@ -30,12 +33,15 @@ export const WorkExperienceSection: React.FC<WorkExperienceSectionProps> = ({
             value={formData.hasWorkExperience}
             onValueChange={(value) => onInputChange("hasWorkExperience", value)}
             className="flex gap-6 mt-2"
+            disabled={applicationForm.work_experience === "disabled"}
+            required={applicationForm.work_experience === "required"}
           >
             <div className="flex items-center space-x-2">
               <RadioGroupItem
                 value="yes"
                 id="experience-yes"
                 className="text-blue-500 border-blue-500 [&_svg]:fill-blue-500"
+                disabled={applicationForm.work_experience === "disabled"}
               />
               <Label
                 htmlFor="experience-yes"
@@ -49,6 +55,7 @@ export const WorkExperienceSection: React.FC<WorkExperienceSectionProps> = ({
                 value="no"
                 id="onsite-no"
                 className="text-blue-500 border-blue-500 [&_svg]:fill-blue-500"
+                disabled={applicationForm.work_experience === "disabled"}
               />
               <Label htmlFor="onsite-no" className="cursor-pointer font-normal">
                 No
@@ -74,6 +81,8 @@ export const WorkExperienceSection: React.FC<WorkExperienceSectionProps> = ({
                     onInputChange("currentJobTitle", e.target.value)
                   }
                   placeholder="Software Developer"
+                  disabled={applicationForm.work_experience === "disabled"}
+                  required={applicationForm.work_experience === "required"}
                 />
               </Field>
 
@@ -86,6 +95,8 @@ export const WorkExperienceSection: React.FC<WorkExperienceSectionProps> = ({
                     onInputChange("currentCompany", e.target.value)
                   }
                   placeholder="Tech Solutions Inc."
+                  disabled={applicationForm.work_experience === "disabled"}
+                  required={applicationForm.work_experience === "required"}
                 />
               </Field>
 
@@ -102,6 +113,8 @@ export const WorkExperienceSection: React.FC<WorkExperienceSectionProps> = ({
                   }
                   placeholder="3"
                   min="0"
+                  disabled={applicationForm.work_experience === "disabled"}
+                  required={applicationForm.work_experience === "required"}
                 />
               </Field>
 
@@ -157,4 +170,4 @@ export const WorkExperienceSection: React.FC<WorkExperienceSectionProps> = ({
       </FieldSet>
     </div>
   );
-};
+}

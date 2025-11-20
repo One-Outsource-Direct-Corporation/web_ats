@@ -1,6 +1,7 @@
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import type { PersonalFormData } from "../../types/application_form.types";
+import type { ApplicationFormBase } from "@/shared/types/application_form.types";
 
 interface AddressInfoSectionProps {
   formData: PersonalFormData;
@@ -8,14 +9,15 @@ interface AddressInfoSectionProps {
     field: keyof PersonalFormData,
     value: string | number | null
   ) => void;
+  applicationForm: ApplicationFormBase;
   errors?: { [key in keyof PersonalFormData]?: string };
 }
 
-export const AddressInfoSection: React.FC<AddressInfoSectionProps> = ({
+export function AddressInfoSection({
   formData,
   onInputChange,
-  errors = {},
-}) => {
+  applicationForm,
+}: AddressInfoSectionProps) {
   return (
     <div>
       <h2 className="text-xl font-bold text-gray-900 mb-4">
@@ -30,6 +32,8 @@ export const AddressInfoSection: React.FC<AddressInfoSectionProps> = ({
             value={formData.addressLine1 ?? ""}
             onChange={(e) => onInputChange("addressLine1", e.target.value)}
             placeholder="123 Main Street, Barangay San Antonio"
+            disabled={applicationForm.address === "disabled"}
+            required={applicationForm.address === "required"}
           />
         </div>
 
@@ -40,6 +44,8 @@ export const AddressInfoSection: React.FC<AddressInfoSectionProps> = ({
             value={formData.city ?? ""}
             onChange={(e) => onInputChange("city", e.target.value)}
             placeholder="Makati City"
+            disabled={applicationForm.address === "disabled"}
+            required={applicationForm.address === "required"}
           />
         </div>
 
@@ -50,6 +56,8 @@ export const AddressInfoSection: React.FC<AddressInfoSectionProps> = ({
             value={formData.district ?? ""}
             onChange={(e) => onInputChange("district", e.target.value)}
             placeholder="Metro Manila"
+            disabled={applicationForm.address === "disabled"}
+            required={applicationForm.address === "required"}
           />
         </div>
 
@@ -60,6 +68,8 @@ export const AddressInfoSection: React.FC<AddressInfoSectionProps> = ({
             value={formData.postalCode ?? ""}
             onChange={(e) => onInputChange("postalCode", e.target.value)}
             placeholder="1203"
+            disabled={applicationForm.address === "disabled"}
+            required={applicationForm.address === "required"}
           />
         </div>
 
@@ -68,11 +78,13 @@ export const AddressInfoSection: React.FC<AddressInfoSectionProps> = ({
           <Input
             id="country"
             value={formData.country ?? ""}
-            onChange={(e) => onInputChange("country", Number(e.target.value))}
+            onChange={(e) => onInputChange("country", e.target.value)}
             placeholder="Philippines"
+            disabled={applicationForm.address === "disabled"}
+            required={applicationForm.address === "required"}
           />
         </div>
       </div>
     </div>
   );
-};
+}

@@ -12,16 +12,18 @@ import { Calendar } from "@/shared/components/ui/calendar";
 import { Button } from "@/shared/components/ui/button";
 import { useState } from "react";
 import { Field, FieldLabel, FieldSet } from "@/shared/components/ui/field";
+import type { ApplicationFormBase } from "@/shared/types/application_form.types";
 
 interface JobDetailsSectionProps {
   formData: JobDetailsFormData;
   onInputChange: (field: string, value: string | number | File | null) => void;
-  // errors?: {[key in keyof JobDetailsFormData]?: string | number | File | null};
+  applicationForm: ApplicationFormBase;
 }
 
 export const JobDetailsSection = ({
   formData,
   onInputChange,
+  applicationForm,
 }: JobDetailsSectionProps) => {
   const [open, setOpen] = useState(false);
   return (
@@ -29,21 +31,6 @@ export const JobDetailsSection = ({
       <h2 className="text-xl font-bold text-gray-900 mb-4">Job Details</h2>
 
       <FieldSet>
-        <Field>
-          <FieldLabel htmlFor="positionApplyingFor">
-            Position Applying For
-          </FieldLabel>
-          <Input
-            id="positionApplyingFor"
-            value={formData.positionApplyingFor ?? ""}
-            onChange={(e) =>
-              onInputChange("positionApplyingFor", e.target.value)
-            }
-            placeholder="Enter position"
-            disabled={true}
-          />
-        </Field>
-
         <Field>
           <FieldLabel htmlFor="expectedSalary">Expected Salary</FieldLabel>
           <Input
@@ -55,6 +42,8 @@ export const JobDetailsSection = ({
               onInputChange("expectedSalary", Number(e.target.value))
             }
             placeholder="Enter expected salary"
+            disabled={applicationForm.expected_salary === "disabled"}
+            required={applicationForm.expected_salary === "required"}
           />
         </Field>
 
@@ -66,12 +55,15 @@ export const JobDetailsSection = ({
               onInputChange("willingToWorkOnsite", value)
             }
             className="flex gap-6 mt-2"
+            disabled={applicationForm.willing_to_work_onsite === "disabled"}
+            required={applicationForm.willing_to_work_onsite === "required"}
           >
             <div className="flex items-center space-x-2">
               <RadioGroupItem
                 value="yes"
                 id="onsite-yes"
                 className="text-blue-500 border-blue-500 [&_svg]:fill-blue-500"
+                disabled={applicationForm.willing_to_work_onsite === "disabled"}
               />
               <Label
                 htmlFor="onsite-yes"
@@ -85,6 +77,7 @@ export const JobDetailsSection = ({
                 value="no"
                 id="onsite-no"
                 className="text-blue-500 border-blue-500 [&_svg]:fill-blue-500"
+                disabled={applicationForm.willing_to_work_onsite === "disabled"}
               />
               <Label htmlFor="onsite-no" className="cursor-pointer font-normal">
                 No
@@ -106,6 +99,8 @@ export const JobDetailsSection = ({
               }
               className="hidden"
               id="photo-upload"
+              disabled={applicationForm.photo_2x2 === "disabled"}
+              required={applicationForm.photo_2x2 === "required"}
             />
             <label htmlFor="photo-upload" className="cursor-pointer">
               <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
@@ -129,6 +124,8 @@ export const JobDetailsSection = ({
               }
               className="hidden"
               id="medical-upload"
+              disabled={applicationForm.upload_med_cert === "disabled"}
+              required={applicationForm.upload_med_cert === "required"}
             />
             <label htmlFor="medical-upload" className="cursor-pointer">
               <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
@@ -157,6 +154,10 @@ export const JobDetailsSection = ({
                     variant="outline"
                     id="date-picker"
                     className="w-32 justify-between font-normal"
+                    disabled={
+                      applicationForm.preferred_interview_schedule ===
+                      "disabled"
+                    }
                   >
                     {formData.interviewSchedule
                       ? new Date(
@@ -198,6 +199,12 @@ export const JobDetailsSection = ({
                 step="1"
                 defaultValue="10:30:00"
                 className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                disabled={
+                  applicationForm.preferred_interview_schedule === "disabled"
+                }
+                required={
+                  applicationForm.preferred_interview_schedule === "required"
+                }
               />
             </div>
           </div>

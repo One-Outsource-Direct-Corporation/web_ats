@@ -17,6 +17,7 @@ import {
   FieldLabel,
   FieldSet,
 } from "@/shared/components/ui/field";
+import type { ApplicationFormBase } from "@/shared/types/application_form.types";
 
 interface AcknowledgementSectionProps {
   formData: AcknowledgementFormData;
@@ -24,12 +25,14 @@ interface AcknowledgementSectionProps {
     field: keyof AcknowledgementFormData,
     value: string | boolean | File | null
   ) => void;
+  applicationForm: ApplicationFormBase;
 }
 
-export const AcknowledgementSection: React.FC<AcknowledgementSectionProps> = ({
+export function AcknowledgementSection({
   formData,
   onInputChange,
-}) => {
+  applicationForm,
+}: AcknowledgementSectionProps) {
   const sigCanvasRef = useRef<SignatureCanvas>(null);
 
   const handleClearSignature = () => {
@@ -59,6 +62,8 @@ export const AcknowledgementSection: React.FC<AcknowledgementSectionProps> = ({
           <Select
             value={formData.howDidYouLearn ?? ""}
             onValueChange={(value) => onInputChange("howDidYouLearn", value)}
+            disabled={applicationForm.how_did_you_hear_about_us === "disabled"}
+            required={applicationForm.how_did_you_hear_about_us === "required"}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select an option" />
@@ -81,6 +86,8 @@ export const AcknowledgementSection: React.FC<AcknowledgementSectionProps> = ({
               onInputChange("certificationAccepted", checked === true)
             }
             className="data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white dark:data-[state=checked]:border-blue-700 dark:data-[state=checked]:bg-blue-700"
+            disabled={applicationForm.agreement === "disabled"}
+            required={applicationForm.agreement === "required"}
           />
           <FieldLabel
             htmlFor="certification"
@@ -145,6 +152,8 @@ export const AcknowledgementSection: React.FC<AcknowledgementSectionProps> = ({
                   }
                   className="hidden"
                   id="signature-upload"
+                  disabled={applicationForm.signature === "disabled"}
+                  required={applicationForm.signature === "required"}
                 />
                 <label htmlFor="signature-upload" className="cursor-pointer">
                   <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
@@ -165,4 +174,4 @@ export const AcknowledgementSection: React.FC<AcknowledgementSectionProps> = ({
       </FieldSet>
     </div>
   );
-};
+}

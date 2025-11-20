@@ -1,7 +1,7 @@
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import type { PersonalFormData } from "../../types/application_form.types";
-// import type { ApplicationForm } from "../../types/job";
+import type { ApplicationFormBase } from "@/shared/types/application_form.types";
 
 interface ContactInfoSectionProps {
   formData: PersonalFormData;
@@ -9,15 +9,15 @@ interface ContactInfoSectionProps {
     field: keyof PersonalFormData,
     value: string | number | null
   ) => void;
-  // applicationForm: ApplicationForm;
+  applicationForm: ApplicationFormBase;
   errors?: { [key in keyof PersonalFormData]?: string };
 }
 
-export const ContactInfoSection: React.FC<ContactInfoSectionProps> = ({
+export function ContactInfoSection({
   formData,
   onInputChange,
-  errors = {},
-}) => {
+  applicationForm,
+}: ContactInfoSectionProps) {
   return (
     <div>
       <h2 className="text-xl font-bold text-gray-900 mb-4">
@@ -32,6 +32,8 @@ export const ContactInfoSection: React.FC<ContactInfoSectionProps> = ({
             value={formData.primaryContact ?? ""}
             onChange={(e) => onInputChange("primaryContact", e.target.value)}
             placeholder="+63 912 345 6789"
+            disabled={applicationForm.primary_contact_number === "disabled"}
+            required={applicationForm.primary_contact_number === "required"}
           />
         </div>
 
@@ -42,6 +44,8 @@ export const ContactInfoSection: React.FC<ContactInfoSectionProps> = ({
             value={formData.secondaryContact ?? ""}
             onChange={(e) => onInputChange("secondaryContact", e.target.value)}
             placeholder="+63 987 654 3210"
+            disabled={applicationForm.secondary_contact_number === "disabled"}
+            required={applicationForm.secondary_contact_number === "required"}
           />
         </div>
 
@@ -53,6 +57,8 @@ export const ContactInfoSection: React.FC<ContactInfoSectionProps> = ({
             value={formData.email ?? ""}
             onChange={(e) => onInputChange("email", e.target.value)}
             placeholder="your.email@example.com"
+            disabled={applicationForm.email === "disabled"}
+            required={applicationForm.email === "required"}
           />
         </div>
 
@@ -63,9 +69,11 @@ export const ContactInfoSection: React.FC<ContactInfoSectionProps> = ({
             value={formData.linkedinProfile ?? ""}
             onChange={(e) => onInputChange("linkedinProfile", e.target.value)}
             placeholder="https://linkedin.com/in/yourprofile"
+            disabled={applicationForm.linkedin_profile === "disabled"}
+            required={applicationForm.linkedin_profile === "required"}
           />
         </div>
       </div>
     </div>
   );
-};
+}

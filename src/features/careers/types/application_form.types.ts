@@ -15,7 +15,6 @@ export interface PersonalFormData {
 }
 
 export interface JobDetailsFormData {
-  positionApplyingFor: string | null;
   expectedSalary: number | null;
   willingToWorkOnsite: string | null;
   photo: File | null;

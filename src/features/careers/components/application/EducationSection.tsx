@@ -8,15 +8,18 @@ import {
 } from "@/shared/components/ui/select";
 import type { EducationWorkFormData } from "../../types/application_form.types";
 import { Field, FieldLabel, FieldSet } from "@/shared/components/ui/field";
+import type { ApplicationFormBase } from "@/shared/types/application_form.types";
 
 interface EducationSectionProps {
   formData: EducationWorkFormData;
   onInputChange: (field: string, value: string) => void;
+  applicationForm: ApplicationFormBase;
 }
 
 export const EducationSection = ({
   formData,
   onInputChange,
+  applicationForm,
 }: EducationSectionProps) => {
   return (
     <div>
@@ -32,6 +35,8 @@ export const EducationSection = ({
           <Select
             value={formData.highestEducation ?? ""}
             onValueChange={(value) => onInputChange("highestEducation", value)}
+            disabled={applicationForm.education_attained === "disabled"}
+            required={applicationForm.education_attained === "required"}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select education level" />
@@ -56,6 +61,8 @@ export const EducationSection = ({
             placeholder="2020"
             min="1950"
             max={new Date().getFullYear()}
+            disabled={applicationForm.year_graduated === "disabled"}
+            required={applicationForm.year_graduated === "required"}
           />
         </Field>
 
@@ -68,6 +75,8 @@ export const EducationSection = ({
             value={formData.institution ?? ""}
             onChange={(e) => onInputChange("institution", e.target.value)}
             placeholder="University of the Philippines"
+            disabled={applicationForm.university === "disabled"}
+            required={applicationForm.university === "required"}
           />
         </Field>
 
@@ -78,6 +87,8 @@ export const EducationSection = ({
             value={formData.program ?? ""}
             onChange={(e) => onInputChange("program", e.target.value)}
             placeholder="Bachelor of Science in Computer Science"
+            disabled={applicationForm.course === "disabled"}
+            required={applicationForm.course === "required"}
           />
         </Field>
       </FieldSet>

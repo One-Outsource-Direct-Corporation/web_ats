@@ -14,6 +14,8 @@ import Step01 from "../components/steps/Step01";
 import Step02 from "../components/steps/Step02";
 import Step03 from "../components/steps/Step03";
 import Step04 from "../components/steps/Step04";
+import type { PRFDb } from "@/features/prf/types/prf.types";
+import type { PositionDb } from "@/features/positions-client/types/create_position.types";
 
 export default function CareersApply() {
   const params = useParams();
@@ -35,7 +37,7 @@ export default function CareersApply() {
     handleInputAcknowledgement,
     goToNextStage,
     goToPreviousStage,
-  } = useApplicationForm(jobDetail?.job_title);
+  } = useApplicationForm(jobDetail?.job_posting.job_title ?? "");
 
   // Wrapper functions to handle type compatibility
   const handleJobDetailsChange = (
@@ -77,9 +79,9 @@ export default function CareersApply() {
 
   useEffect(() => {
     document.title = jobDetail
-      ? `Apply - ${jobDetail.job_title}`
+      ? `Apply - ${jobDetail.job_posting.job_title}`
       : "Careers Apply";
-  }, [jobDetail?.job_title]);
+  }, [jobDetail?.job_posting.job_title]);
 
   const handleDocumentModalClose = () => {
     setShowUploadModal(false);
@@ -103,15 +105,19 @@ export default function CareersApply() {
 
   const handleBackToJobDescription = useCallback(() => {
     if (jobDetail) {
-      navigate(`/careers/${jobDetail.id}`);
+      navigate(
+        `/careers/${
+          ((jobDetail as PRFDb) || (jobDetail as PositionDb)).job_posting.id
+        }`
+      );
     }
   }, [jobDetail, navigate]);
-
-  console.log(jobDetail);
 
   if (loading) {
     return <LoadingComponent />;
   }
+
+  console.log(jobDetail);
 
   if (error) {
     return (
@@ -162,7 +168,7 @@ export default function CareersApply() {
       <ApplicationSidebar
         currentStage={currentStage}
         onLogoClick={handleLogoClick}
-        jobTitle={jobDetail.job_title || ""}
+        jobTitle={jobDetail.job_posting.job_title || ""}
       />
 
       <section className="flex-1 flex flex-col overflow-y-auto h-screen pb-20">
@@ -174,6 +180,7 @@ export default function CareersApply() {
           {currentStage === 1 && (
             <Step01
               formData={formData.personalInfo}
+              applicationForm={jobDetail.application_form.application_form}
               onInputChange={handleInputPersonalInfo}
               acceptTerms={acceptTerms}
               onAcceptTermsChange={setAcceptTerms}
@@ -183,18 +190,21 @@ export default function CareersApply() {
             <Step02
               formData={formData.jobDetails}
               onInputChange={handleJobDetailsChange}
+              applicationForm={jobDetail.application_form.application_form}
             />
           )}
           {currentStage === 3 && (
             <Step03
               formData={formData.educationWork}
               onInputChange={handleEducationWorkChange}
+              applicationForm={jobDetail.application_form.application_form}
             />
           )}
           {currentStage === 4 && (
             <Step04
               formData={formData.acknowledgement}
               onInputChange={handleAcknowledgementChange}
+              applicationForm={jobDetail.application_form.application_form}
             />
           )}
         </div>

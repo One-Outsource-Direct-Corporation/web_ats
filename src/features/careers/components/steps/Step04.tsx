@@ -7,10 +7,19 @@ interface Step04Props {
     field: keyof AcknowledgementFormData,
     value: string | boolean | File | null
   ) => void;
+  applicationForm: any;
 }
 
-export default function Step04({ formData, onInputChange }: Step04Props) {
+export default function Step04({
+  formData,
+  onInputChange,
+  applicationForm,
+}: Step04Props) {
   return (
-    <AcknowledgementSection formData={formData} onInputChange={onInputChange} />
+    <AcknowledgementSection
+      formData={formData}
+      onInputChange={onInputChange}
+      applicationForm={applicationForm}
+    />
   );
 }

@@ -88,7 +88,7 @@ export default function CareerDescription() {
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
               onClick={() => {
                 if (position && "id" in position) {
-                  navigate(`/careers/${position.id}/apply`);
+                  navigate(`/careers/${position.job_posting.id}/apply`);
                 }
               }}
             >

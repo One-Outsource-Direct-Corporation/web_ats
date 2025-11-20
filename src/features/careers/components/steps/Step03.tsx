@@ -4,6 +4,7 @@ import type {
   EducationWorkFormData,
   WorkExperienceEntry,
 } from "../../types/application_form.types";
+import type { ApplicationFormBase } from "@/shared/types/application_form.types";
 
 interface Step03Props {
   formData: EducationWorkFormData;
@@ -11,9 +12,14 @@ interface Step03Props {
     field: string,
     value: string | number | null | WorkExperienceEntry[]
   ) => void;
+  applicationForm: ApplicationFormBase;
 }
 
-export default function Step03({ formData, onInputChange }: Step03Props) {
+export default function Step03({
+  formData,
+  onInputChange,
+  applicationForm,
+}: Step03Props) {
   function handleAddExperience() {
     if (formData && formData.workExperience !== null) {
       const newExperience: WorkExperienceEntry = {
@@ -45,9 +51,14 @@ export default function Step03({ formData, onInputChange }: Step03Props) {
 
   return (
     <div className="space-y-6">
-      <EducationSection formData={formData} onInputChange={onInputChange} />
+      <EducationSection
+        formData={formData}
+        onInputChange={onInputChange}
+        applicationForm={applicationForm}
+      />
       <WorkExperienceSection
         formData={formData}
+        applicationForm={applicationForm}
         onInputChange={onInputChange}
         onAddExperience={handleAddExperience}
         onRemoveExperience={handleRemoveExperience}
