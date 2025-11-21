@@ -1,193 +1,164 @@
-import React, { useState } from "react";
-import type { PRF } from "../types/prfTypes";
+import { useState } from "react";
+import type { PRFFormData } from "../types/prf.types";
 import formatName from "@/shared/utils/formatName";
+import DOMPurify from "dompurify";
+import { formatDepartmentName } from "@/shared/utils/formatDepartmentName";
+import { formatTime } from "@/shared/utils/formatDate";
 
 interface PreviewInfoProps {
   step: number;
-  formData: PRF;
+  formData: PRFFormData;
 }
 
-export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
+export const PreviewInfo = ({ step, formData }: PreviewInfoProps) => {
   const [showMore, setShowMore] = useState(false);
 
-  const selectedAssessments = Object.entries(formData.assessment_types)
-    .filter(([, selected]) => selected)
-    .map(([type]) => {
-      const typeMap: { [key: string]: string } = {
-        technical: "Technical Test",
-        language: "Language Proficiency Test",
-        cognitive: "Cognitive Test",
-        personality: "Personality Test",
-        behavioral: "Behavioral Test",
-        cultural: "Cultural Test",
-      };
-      return typeMap[type];
-    });
-
-  // Get selected hardware
   const selectedHardware = Object.entries(formData.hardware_required)
     .filter(([, selected]) => selected)
     .map(([hardware]) => hardware.charAt(0).toUpperCase() + hardware.slice(1));
 
-  // Get selected software
   const selectedSoftware = Object.entries(formData.software_required)
     .filter(([, selected]) => selected)
     .map(([software]) => software);
 
-  const displaySalary = formData.is_salary_range
-    ? `${formData.min_salary || "N/A"} - ${formData.max_salary || "N/A"}`
-    : formData.salary_budget || "Not specified";
-
-  const displayWorkSchedule =
-    formData.work_schedule_from && formData.work_schedule_to
-      ? `${formData.work_schedule_from} - ${formData.work_schedule_to}`
-      : "Not specified";
-
   return (
     <div className="border rounded-md p-4 bg-white text-sm h-fit sticky top-28 space-y-4">
-      {step !== 4 && (
+      {step !== 1 && step !== 6 && (
         <>
           <div className="space-y-2">
-            <h2 className="text-[#0056D2] font-bold text-sm border-l-4 border-[#0056D2] pl-2 uppercase">
+            <h2 className="text-blue-700 font-bold text-sm border-l-4 border-blue-700 pl-2 uppercase">
               POSITION INFORMATION
             </h2>
             <p>
               <strong>Job Title:</strong>{" "}
-              {formData.job_title || "Not specified"}
+              {formData.job_posting.job_title || "Not specified"}
             </p>
             <p>
               <strong>Target Start Date:</strong>{" "}
-              {formData.target_start_date || "Not specified"}
+              {formData.job_posting.target_start_date || "Not specified"}
             </p>
             <p>
               <strong>Number of Vacancies:</strong>{" "}
-              {formData.number_of_vacancies || "Not specified"}
+              {formData.job_posting.number_of_vacancies || "Not specified"}
             </p>
             <p>
               <strong>Reason for Posting Position:</strong>{" "}
-              {formData.reason_for_posting === "Other"
-                ? formData.other_reason_for_posting
-                : formData.reason_for_posting || "Not specified"}
+              {formData.job_posting.reason_for_posting === "Other"
+                ? formData.job_posting.other_reason_for_posting
+                : formData.job_posting.reason_for_posting || "Not specified"}
             </p>
           </div>
           <div className="space-y-2">
-            <h2 className="text-[#0056D2] font-bold text-sm border-l-4 border-[#0056D2] pl-2 uppercase">
+            <h2 className="text-blue-700 font-bold text-sm border-l-4 border-blue-700 pl-2 uppercase">
               DEPARTMENT INFORMATION
             </h2>
             <p>
               <strong>Business Unit:</strong>{" "}
-              {formData.business_unit || "Not specified"}
-            </p>
-            <p>
-              <strong>Levels of Interview:</strong> {formData.interview_levels}
+              {formData.business_unit?.toUpperCase() || "Not specified"}
             </p>
             <p>
               <strong>Department Name:</strong>{" "}
-              {formData.department || "Not specified"}
+              {formatDepartmentName(
+                formData.job_posting.department_name ?? ""
+              ) || "Not specified"}
             </p>
             <p>
               <strong>Immediate Supervisor:</strong>{" "}
-              {formData.immediate_supervisor_display || "Not specified"}
+              {formData.immediate_supervisor || "Not specified"}
             </p>
           </div>
-          {step >= 2 && (
+          {step >= 2 && step < 6 && (
             <>
               <div className="space-y-2">
-                <h2 className="text-[#0056D2] font-bold text-sm border-l-4 border-[#0056D2] pl-2 uppercase">
+                <h2 className="text-blue-700 font-bold text-sm border-l-4 border-blue-700 pl-2 uppercase">
                   JOB DETAILS
                 </h2>
                 <p>
                   <strong>Employment Type:</strong>{" "}
-                  {(formData.employment_type &&
-                    formatName(formData.employment_type)) ||
+                  {(formData.job_posting.employment_type &&
+                    formatName(formData.job_posting.employment_type)) ||
                     "Not specified"}
                 </p>
                 <p>
                   <strong>Work Setup:</strong>{" "}
-                  {(formData.work_setup && formatName(formData.work_setup)) ||
+                  {(formData.job_posting.work_setup &&
+                    formatName(formData.job_posting.work_setup)) ||
                     "Not specified"}
                 </p>
                 <p>
                   <strong>Category:</strong>{" "}
-                  {formData.category || "Not specified"}
+                  {formatName(formData.category ?? "") || "Not specified"}
                 </p>
                 <p>
-                  <strong>Subcategory:</strong>{" "}
-                  {formData.position || "Not specified"}
+                  <strong>Experience Level:</strong>{" "}
+                  {formatName(formData.job_posting.experience_level ?? "") ||
+                    "Not specified"}
                 </p>
                 <p>
                   <strong>Working Site:</strong>{" "}
-                  {formData.working_site || "Not specified"}
+                  {formData.job_posting.working_site || "Not specified"}
                 </p>
                 <p>
-                  <strong>Working Schedule:</strong> {displayWorkSchedule}
+                  <strong>Working Schedule:</strong>{" "}
+                  {formatTime(
+                    formData.work_schedule_from ?? "",
+                    formData.work_schedule_to ?? ""
+                  ) || "Not specified"}
                 </p>
               </div>
               <div className="space-y-2">
-                <h2 className="text-[#0056D2] font-bold text-sm border-l-4 border-[#0056D2] pl-2 uppercase">
+                <h2 className="text-blue-700 font-bold text-sm border-l-4 border-blue-700 pl-2 uppercase">
                   JOB DESCRIPTION
                 </h2>
-                <p>
-                  {formData.description ||
-                    "Job description not provided yet..."}
-                </p>
               </div>
               {showMore && (
                 <>
                   <div className="space-y-2">
+                    <h3 className="font-semibold text-sm">Description:</h3>
+                    <div
+                      className="text-gray-700 mb-4 preview-content"
+                      dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(
+                          formData.job_posting?.description || ""
+                        ),
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <h3 className="font-semibold text-sm">
                       Key Responsibilities:
                     </h3>
-                    <p className="text-sm">
-                      {formData.responsibilities ||
-                        "Responsibilities not specified yet..."}
-                    </p>
+                    <div
+                      className="text-gray-700 mb-4 preview-content"
+                      dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(
+                          formData.job_posting?.responsibilities || ""
+                        ),
+                      }}
+                    />
                   </div>
                   <div className="space-y-2">
                     <h3 className="font-semibold text-sm">Qualifications:</h3>
-                    <p className="text-sm">
-                      {formData.qualifications ||
-                        "Qualifications not specified yet..."}
-                    </p>
+                    <div
+                      className="text-gray-700 mb-4 preview-content"
+                      dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(
+                          formData.job_posting?.qualifications || ""
+                        ),
+                      }}
+                    />
                   </div>
                   <div className="space-y-2">
-                    <h3 className="font-semibold text-sm">Non-Negotiables:</h3>
-                    <p className="text-sm">
-                      {formData.non_negotiables ||
-                        "Non-negotiables not specified yet..."}
-                    </p>
-                  </div>
-                  {step === 3 && (
-                    <div className="space-y-2">
-                      <h2 className="text-[#0056D2] font-bold text-sm border-l-4 border-[#0056D2] pl-2 uppercase">
-                        ASSESSMENTS
-                      </h2>
-                      <p>
-                        <strong>Assessment Required:</strong>{" "}
-                        {formData.assessment_required}
-                      </p>
-                      {selectedAssessments.length > 0 && (
-                        <ul className="list-disc list-inside space-y-1">
-                          {selectedAssessments.map((assessment, index) => (
-                            <li key={index}>{assessment}</li>
-                          ))}
-                          {formData.other_assessment && (
-                            <li>{formData.other_assessment}</li>
-                          )}
-                        </ul>
-                      )}
-                    </div>
-                  )}
-                  <div className="space-y-2">
-                    <h2 className="text-[#0056D2] font-bold text-sm border-l-4 border-[#0056D2] pl-2 uppercase">
+                    <h2 className="text-blue-700 font-bold text-sm border-l-4 border-blue-700 pl-2 uppercase">
                       SALARY BUDGET
                     </h2>
                     <p className="font-semibold text-gray-800">
-                      {displaySalary}
+                      {formData.job_posting.min_salary} -{" "}
+                      {formData.job_posting.max_salary}
                     </p>
                   </div>
                   <div className="space-y-2">
-                    <h2 className="text-[#0056D2] font-bold text-sm border-l-4 border-[#0056D2] pl-2 uppercase">
+                    <h2 className="text-blue-700 font-bold text-sm border-l-4 border-blue-700 pl-2 uppercase">
                       ASSET REQUEST
                     </h2>
                     {selectedHardware.length > 0 && (
@@ -209,7 +180,7 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
                         </p>
                         <ul className="list-disc list-inside space-y-1">
                           {selectedSoftware.map((software, index) => (
-                            <li key={index}>{software}</li>
+                            <li key={index}>{formatName(software)}</li>
                           ))}
                         </ul>
                       </>
@@ -224,7 +195,7 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
                 </>
               )}
               <div
-                className="text-[#0056D2] text-sm mt-2 cursor-pointer"
+                className="text-blue-700 text-sm mt-2 cursor-pointer"
                 onClick={() => setShowMore(!showMore)}
               >
                 {showMore ? "▲ See less" : "▼ See more"}
@@ -233,9 +204,9 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
           )}
         </>
       )}
-      {step === 4 && (
+      {step === 6 && (
         <div className="space-y-6">
-          <h2 className="text-[#0056D2] font-bold text-sm border-l-4 border-[#0056D2] pl-2 uppercase">
+          <h2 className="text-blue-700 font-bold text-sm border-l-4 border-blue-700 pl-2 uppercase">
             APPROVAL
           </h2>
           {[1, 2, 3].map((stepNumber, i) => {
@@ -300,7 +271,12 @@ export const PreviewInfo: React.FC<PreviewInfoProps> = ({ step, formData }) => {
                     </label>
                     <input
                       type="text"
-                      value={displaySalary}
+                      value={
+                        formData.job_posting.min_salary &&
+                        formData.job_posting.max_salary
+                          ? `${formData.job_posting.min_salary} - ${formData.job_posting.max_salary}`
+                          : `No budget allocated`
+                      }
                       disabled
                       className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm text-gray-500 bg-white"
                     />

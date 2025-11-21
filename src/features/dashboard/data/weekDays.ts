@@ -1,4 +1,4 @@
-import type { WeekDay } from "../types/upcomingEvents.types";
+import type { WeekDay } from "../types/upcoming_events.types";
 
 export const weekDays: WeekDay[] = [
   {

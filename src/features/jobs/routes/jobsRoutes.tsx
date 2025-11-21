@@ -1,5 +1,6 @@
 import JobDetails from "../views/JobDetails";
 import Job from "../views/Job";
+import JobWeeklyView from "../views/JobWeeklyView";
 import { applicantsRoutes } from "@/features/applicants/routes/applicantsRoutes";
 
 export const jobsRoutes = [
@@ -13,6 +14,10 @@ export const jobsRoutes = [
       {
         path: ":jobtitle",
         element: <JobDetails />,
+      },
+      {
+        path: ":jobtitle/weekly",
+        element: <JobWeeklyView />,
       },
       ...applicantsRoutes,
     ],

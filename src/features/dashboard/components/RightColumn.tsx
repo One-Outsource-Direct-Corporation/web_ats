@@ -1,6 +1,6 @@
 import { MetricsSection } from "./MetricsSection";
 import { InterviewsSection } from "./InterviewsSection";
-import type { Metric, InterviewDay } from "../types/upcomingEvents.types";
+import type { Metric, InterviewDay } from "../types/upcoming_events.types";
 
 interface RightColumnProps {
   metrics: Metric[];

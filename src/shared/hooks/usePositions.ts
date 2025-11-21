@@ -3,22 +3,39 @@ import { useState, useEffect, useRef } from "react";
 import type { AxiosError, AxiosResponse } from "axios";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import { defaultAxios } from "@/config/axios";
+import type { PRFFormData } from "@/features/prf/types/prf.types";
 import type {
   JobPostingAPIResponse,
-  JobPostingResponsePosition,
-  JobPostingResponsePRF,
-} from "@/features/jobs/types/jobTypes";
+  JobPostingDb,
+  PositionFormData,
+} from "@/features/positions-client/types/create_position.types";
 
 export function usePositions({
-  no_active = false,
-  page = 1,
-  status = "",
   my_postings = false,
+  page = 1,
+  type = "",
+  status = "",
+  employment_type = "",
+  work_setup = "",
+  order_by = "",
+  published = "false",
+  no_active = false,
   non_admin = false,
 }) {
-  const [positions, setPositions] = useState<JobPostingAPIResponse | null>(
-    null
-  );
+  const [positions, setPositions] = useState<
+    | JobPostingAPIResponse
+    | {
+        count: number;
+        next: string | null;
+        previous: string | null;
+        results: JobPostingDb[];
+      }
+  >({
+    count: 0,
+    next: null,
+    previous: null,
+    results: [],
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const axiosPrivate = useAxiosPrivate();
@@ -34,15 +51,40 @@ export function usePositions({
       setError(null);
       let response: AxiosResponse<JobPostingAPIResponse>;
       if (non_admin) {
-        response = await defaultAxios.get(
-          `/api/job/?no_active=${no_active}&page=${page}&status=${status}`,
-          { signal: controllerRef.current.signal }
-        );
+        const queryParams = [
+          no_active ? `no_active=${no_active}` : "",
+          page ? `page=${page}` : "",
+          status ? `status=${status}` : "",
+          type ? `type=${type}` : "",
+          employment_type ? `employment_type=${employment_type}` : "",
+          work_setup ? `work_setup=${work_setup}` : "",
+          order_by ? `order_by=${order_by}` : "",
+          published ? `published=${published}` : "",
+        ]
+          .filter(Boolean)
+          .join("&");
+
+        response = await defaultAxios.get(`/api/job/?${queryParams}`, {
+          signal: controllerRef.current.signal,
+        });
       } else {
-        response = await axiosPrivate.get(
-          `/api/job/?my_postings=${my_postings}&no_active=${no_active}&page=${page}&status=${status}`,
-          { signal: controllerRef.current.signal }
-        );
+        const queryParams = [
+          my_postings ? `my_postings=${my_postings}` : "",
+          no_active ? `no_active=${no_active}` : "",
+          page ? `page=${page}` : "",
+          status ? `status=${status}` : "",
+          type ? `type=${type}` : "",
+          employment_type ? `employment_type=${employment_type}` : "",
+          work_setup ? `work_setup=${work_setup}` : "",
+          order_by ? `order_by=${order_by}` : "",
+          published ? `published=${published}` : "",
+        ]
+          .filter(Boolean)
+          .join("&");
+
+        response = await axiosPrivate.get(`/api/job/?${queryParams}`, {
+          signal: controllerRef.current.signal,
+        });
       }
 
       setPositions(response.data);
@@ -51,14 +93,30 @@ export function usePositions({
       console.log(err);
       if (err.code === "ERR_CANCELED") return;
       setError(err.response?.data?.detail || "An error occurred");
-      setPositions(null);
+      setPositions({
+        count: 0,
+        next: null,
+        previous: null,
+        results: [],
+      });
       setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchPositions();
-  }, [page]);
+  }, [
+    page,
+    type,
+    status,
+    employment_type,
+    work_setup,
+    order_by,
+    my_postings,
+    published,
+    no_active,
+    non_admin,
+  ]);
 
   return {
     positions,
@@ -76,35 +134,37 @@ export function usePositionDetail({
   non_admin: boolean;
 }) {
   const [position, setPosition] = useState<
-    JobPostingResponsePRF | JobPostingResponsePosition | null
+    PRFFormData | PositionFormData | null
   >(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<AxiosError | any>(null);
   const axiosPrivate = useAxiosPrivate();
-  // const controller = new AbortController();
+  const controllerRef = useRef<AbortController | null>(null);
 
   const fetchPositionDetail = async () => {
+    if (controllerRef.current) {
+      controllerRef.current.abort();
+    }
+    controllerRef.current = new AbortController();
     try {
       setLoading(true);
       setError(null);
-      let response: AxiosResponse<
-        JobPostingResponsePRF | JobPostingResponsePosition
-      >;
+      let response: AxiosResponse<PRFFormData | PositionFormData>;
 
       if (non_admin) {
-        response = await axiosPrivate.get(`/api/job/${id}/`, {
-          // signal: controller.signal,
+        response = await defaultAxios.get(`/api/job/${id}/`, {
+          signal: controllerRef.current.signal,
         });
       } else {
-        response = await defaultAxios.get(`/api/job/${id}/`, {
-          // signal: controller.signal,
+        response = await axiosPrivate.get(`/api/job/${id}/`, {
+          signal: controllerRef.current.signal,
         });
       }
 
-      console.log(response.data);
       setPosition(response.data);
     } catch (err: AxiosError | any) {
-      console.log(err);
+      console.error(err);
+      if (err.code === "ERR_CANCELED") return;
       setError(
         err.response?.data?.error ||
           err.response?.data?.detail ||
@@ -115,12 +175,10 @@ export function usePositionDetail({
     }
   };
 
+  console.log(position);
+
   useEffect(() => {
     fetchPositionDetail();
-
-    return () => {
-      // controller.abort();
-    };
   }, [id]);
 
   return {

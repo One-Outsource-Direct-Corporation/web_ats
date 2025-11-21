@@ -6,12 +6,12 @@ interface DataPrivacySectionProps {
   onAcceptTermsChange: (accepted: boolean) => void;
 }
 
-export const DataPrivacySection: React.FC<DataPrivacySectionProps> = ({
+export const DataPrivacySection = ({
   acceptTerms,
   onAcceptTermsChange,
-}) => {
+}: DataPrivacySectionProps) => {
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
+    <div>
       <div className="flex items-center gap-3 mb-4">
         <div className="w-1 h-6 bg-blue-600 rounded-full"></div>
         <h2 className="text-lg font-semibold text-gray-900">Data Privacy</h2>
@@ -33,6 +33,7 @@ export const DataPrivacySection: React.FC<DataPrivacySectionProps> = ({
           id="terms"
           checked={acceptTerms}
           onCheckedChange={(checked) => onAcceptTermsChange(checked as boolean)}
+          className="data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white dark:data-[state=checked]:border-blue-700 dark:data-[state=checked]:bg-blue-700"
         />
         <Label
           htmlFor="terms"

@@ -6,7 +6,7 @@ import {
   TooltipContent,
 } from "@/shared/components/ui/tooltip";
 import { Trash2, Archive, Pause, RotateCcw, Unlock } from "lucide-react";
-import type { TabType } from "../types/positionTypes";
+import type { TabType } from "../types/position.types";
 import { getBulkActions } from "../utils/positionsUtils";
 
 interface BulkActionsProps {

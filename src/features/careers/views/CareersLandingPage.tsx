@@ -36,17 +36,28 @@ export default function CareersLandingPage() {
     status: "active",
     non_admin: true,
   });
-  console.log("Fetched Job Listings:", positions);
+
+  let content = null;
 
   if (loading) {
-    return <LoadingComponent />;
+    content = <LoadingComponent />;
   }
 
   if (error) {
-    return (
+    content = (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-red-500">Error loading job listing</p>
+        <p className="text-red-500 font-semibold">{error}</p>
       </div>
+    );
+  }
+
+  if (positions && !loading && !error) {
+    content = (
+      <JobList
+        jobs={
+          positions || { count: 0, next: null, previous: null, results: [] }
+        }
+      />
     );
   }
 
@@ -76,11 +87,7 @@ export default function CareersLandingPage() {
           />
 
           {/* Job Cards */}
-          <JobList
-            jobs={
-              positions || { count: 0, next: null, previous: null, results: [] }
-            }
-          />
+          {content}
         </div>
 
         {/* Footer */}

@@ -1,6 +1,6 @@
 import { CalendarSection } from "./CalendarSection";
 import { RecruitmentSection } from "./RecruitmentSection";
-import type { StatusType } from "../types/upcomingEvents.types";
+import type { StatusType } from "../types/upcoming_events.types";
 
 interface LeftColumnProps {
   getStatusColor: (status: StatusType) => string;

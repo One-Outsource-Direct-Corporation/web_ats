@@ -9,16 +9,13 @@ import { useApplicationForm } from "../hooks/useApplicationForm";
 import { ApplicationSidebar } from "../components/application/ApplicationSidebar";
 import { ApplicationHeader } from "../components/application/ApplicationHeader";
 import { ApplicationFooter } from "../components/application/ApplicationFooter";
-import { MobileProgressBar } from "../components/application/MobileProgressBar";
-import { DataPrivacySection } from "../components/application/DataPrivacySection";
-import { PersonalInfoSection } from "../components/application/PersonalInfoSection";
-import { ContactInfoSection } from "../components/application/ContactInfoSection";
-import { AddressInfoSection } from "../components/application/AddressInfoSection";
-import { JobDetailsSection } from "../components/application/JobDetailsSection";
-import { EducationSection } from "../components/application/EducationSection";
-import { WorkExperienceSection } from "../components/application/WorkExperienceSection";
-import { AcknowledgementSection } from "../components/application/AcknowledgementSection";
 import { ApplicationCompleteModal } from "../components/application/ApplicationCompleteModal";
+import Step01 from "../components/steps/Step01";
+import Step02 from "../components/steps/Step02";
+import Step03 from "../components/steps/Step03";
+import Step04 from "../components/steps/Step04";
+import type { PRFDb } from "@/features/prf/types/prf.types";
+import type { PositionDb } from "@/features/positions-client/types/create_position.types";
 
 export default function CareersApply() {
   const params = useParams();
@@ -28,29 +25,44 @@ export default function CareersApply() {
 
   const [showUploadModal, setShowUploadModal] = useState(true);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
-  const [trackingCode, setTrackingCode] = useState("");
-  const [errorMessage, setErrorMessage] = useState({});
 
   const {
     formData,
-    stage2Data,
-    stage3Data,
-    stage4Data,
     currentStage,
     acceptTerms,
     setAcceptTerms,
-    handlePersonalInfoChange,
-    handleJobDetailsChange,
-    handleEducationWorkChange,
-    handleAcknowledgementChange,
-    handleAddWorkExperience,
-    handleRemoveWorkExperience,
-    handleDocumentsUploaded,
+    handleInputPersonalInfo,
+    handleInputJobDetails,
+    handleInputEducationWork,
+    handleInputAcknowledgement,
     goToNextStage,
     goToPreviousStage,
-    saveFormState,
-    clearFormState,
-  } = useApplicationForm(jobDetail?.job_title);
+  } = useApplicationForm(jobDetail?.job_posting.job_title ?? "");
+
+  // Wrapper functions to handle type compatibility
+  const handleJobDetailsChange = (
+    field: string,
+    value: string | number | File | null
+  ) => {
+    handleInputJobDetails(field as keyof typeof formData.jobDetails, value);
+  };
+
+  const handleEducationWorkChange = (
+    field: string,
+    value: string | number | null | any
+  ) => {
+    handleInputEducationWork(
+      field as keyof typeof formData.educationWork,
+      value
+    );
+  };
+
+  const handleAcknowledgementChange = (
+    field: keyof typeof formData.acknowledgement,
+    value: string | boolean | File | null
+  ) => {
+    handleInputAcknowledgement(field, value as string | boolean | null);
+  };
 
   // Prevent body scroll when modals are open
   useEffect(() => {
@@ -67,208 +79,16 @@ export default function CareersApply() {
 
   useEffect(() => {
     document.title = jobDetail
-      ? `Apply - ${jobDetail.job_title}`
+      ? `Apply - ${jobDetail.job_posting.job_title}`
       : "Careers Apply";
-  }, [jobDetail?.job_title]);
+  }, [jobDetail?.job_posting.job_title]);
 
   const handleDocumentModalClose = () => {
     setShowUploadModal(false);
   };
 
   const handleDocumentsUploadComplete = (resumeData: any) => {
-    handleDocumentsUploaded(resumeData);
     setShowUploadModal(false);
-  };
-
-  const handleNext = () => {
-    // Validate current stage before proceeding
-    if (!validateCurrentStage()) {
-      return;
-    }
-
-    if (currentStage < 4) {
-      goToNextStage();
-    } else {
-      // Generate tracking code and submit
-      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-      setTrackingCode(code);
-      setShowCompletionModal(true);
-      clearFormState();
-    }
-  };
-
-  const validateCurrentStage = () => {
-    const applicationForm = jobDetail?.application_form;
-    const errors: any = {};
-
-    switch (currentStage) {
-      case 1:
-        // Check data privacy acceptance
-        if (!acceptTerms) {
-          errors.acceptTerms =
-            "Please accept the data privacy terms to continue.";
-        }
-
-        // Validate personal information
-        if (applicationForm?.name === "required") {
-          if (!formData.firstName.trim() || !formData.lastName.trim()) {
-            errors.name = "Please fill in your first and last name.";
-          }
-        }
-
-        if (applicationForm?.birth_date === "required") {
-          if (!formData.birthday) {
-            errors.birthday = "Please select your birthday.";
-          }
-        }
-
-        if (applicationForm?.gender === "required") {
-          if (!formData.gender) {
-            errors.gender = "Please select your gender.";
-          }
-        }
-
-        // Validate contact information
-        if (applicationForm?.primary_contact_number === "required") {
-          if (!formData.primaryContact.trim()) {
-            errors.primaryContact =
-              "Please provide your primary contact number.";
-          }
-        }
-
-        if (applicationForm?.email === "required") {
-          if (!formData.email.trim()) {
-            errors.email = "Please provide your email address.";
-          }
-        }
-
-        // Validate address if enabled
-        if (applicationForm?.address !== "disabled") {
-          if (applicationForm?.address === "required") {
-            if (
-              !formData.addressLine1.trim() ||
-              !formData.city.trim() ||
-              !formData.district.trim() ||
-              !formData.postalCode.trim() ||
-              !formData.country.trim()
-            ) {
-              errors.address = "Please fill in all address fields.";
-            }
-          }
-        }
-        break;
-
-      case 2:
-        // Validate job details
-        if (!stage2Data.positionApplyingFor.trim()) {
-          errors.positionApplyingFor =
-            "Please specify the position you're applying for.";
-        }
-
-        // Check if photo is required
-        if (applicationForm?.photo_2x2 === "required") {
-          if (!stage2Data.photo) {
-            errors.photo = "Please upload your 2x2 photo.";
-          }
-        }
-
-        // Check if medical certificate is required
-        if (applicationForm?.upload_med_cert === "required") {
-          if (!stage2Data.medicalCertificate) {
-            errors.medicalCertificate =
-              "Please upload your medical certificate.";
-          }
-        }
-
-        // Check if expected salary is required
-        if (applicationForm?.expected_salary === "required") {
-          if (!stage2Data.expectedSalary.trim()) {
-            errors.expectedSalary = "Please specify your expected salary.";
-          }
-        }
-
-        // Check if willing to work onsite is required
-        if (applicationForm?.willing_to_work_onsite === "required") {
-          if (!stage2Data.willingToWorkOnsite) {
-            errors.willingToWorkOnsite =
-              "Please specify if you're willing to work onsite.";
-          }
-        }
-
-        // Check if preferred interview schedule is required
-        if (applicationForm?.preferred_interview_schedule === "required") {
-          if (!stage2Data.interviewSchedule.trim()) {
-            errors.interviewSchedule =
-              "Please specify your preferred interview schedule.";
-          }
-        }
-        break;
-
-      case 3:
-        // Validate education
-        if (applicationForm?.education_attained === "required") {
-          if (!stage3Data.highestEducation) {
-            errors.highestEducation =
-              "Please specify your highest education attained.";
-          }
-        }
-
-        if (applicationForm?.year_graduated === "required") {
-          if (!stage3Data.yearGraduated) {
-            errors.yearGraduated = "Please specify your year of graduation.";
-          }
-        }
-
-        if (applicationForm?.university === "required") {
-          if (!stage3Data.institution) {
-            errors.institution = "Please specify your educational institution.";
-          }
-        }
-
-        if (applicationForm?.course === "required") {
-          if (!stage3Data.program) {
-            errors.program = "Please specify your course/program.";
-          }
-        }
-
-        // Validate work experience if enabled
-        if (
-          applicationForm?.work_experience &&
-          applicationForm?.work_experience !== "disabled"
-        ) {
-          if (applicationForm?.work_experience === "required") {
-            if (
-              stage3Data.hasWorkExperience === "yes" &&
-              stage3Data.workExperience.length === 0
-            ) {
-              errors.workExperience =
-                "Please add at least one work experience entry.";
-            }
-          }
-        }
-        break;
-
-      case 4:
-        // Check certification acceptance
-        if (!stage4Data.certificationAccepted) {
-          errors.certificationAccepted =
-            "Please accept the certification and acknowledgement.";
-        }
-
-        // Validate signature
-        if (!stage4Data.signature) {
-          errors.signature =
-            "Please provide your signature (either by typing or uploading).";
-        }
-        break;
-    }
-
-    setErrorMessage(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleBack = () => {
-    goToPreviousStage();
   };
 
   const handleBackToHome = () => {
@@ -285,16 +105,19 @@ export default function CareersApply() {
 
   const handleBackToJobDescription = useCallback(() => {
     if (jobDetail) {
-      saveFormState();
-      navigate(`/careers/${jobDetail.id}`);
+      navigate(
+        `/careers/${
+          ((jobDetail as PRFDb) || (jobDetail as PositionDb)).job_posting.id
+        }`
+      );
     }
-  }, [jobDetail, saveFormState, navigate]);
-
-  console.log(jobDetail);
+  }, [jobDetail, navigate]);
 
   if (loading) {
     return <LoadingComponent />;
   }
+
+  console.log(jobDetail);
 
   if (error) {
     return (
@@ -342,121 +165,62 @@ export default function CareersApply() {
         </div>
       )}
 
-      {/* Mobile Navigation Bar */}
-      <MobileProgressBar
-        currentStage={currentStage}
-        jobTitle={jobDetail.job_title || ""}
-        onLogoClick={handleLogoClick}
-      />
-
-      {/* Desktop Sidebar */}
       <ApplicationSidebar
         currentStage={currentStage}
         onLogoClick={handleLogoClick}
+        jobTitle={jobDetail.job_posting.job_title || ""}
       />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-y-auto h-screen pb-20">
-        {/* Desktop Header */}
+      <section className="flex-1 flex flex-col overflow-y-auto h-screen pb-20">
         <ApplicationHeader
           job={jobDetail}
           onViewJobDescription={handleBackToJobDescription}
         />
-
-        {/* Form Content */}
         <div className="flex-1 p-4 lg:p-8">
-          {/* Stage 1 - Applicant Information */}
           {currentStage === 1 && (
-            <div className="max-w-4xl mx-auto space-y-8">
-              <DataPrivacySection
-                acceptTerms={acceptTerms}
-                onAcceptTermsChange={setAcceptTerms}
-              />
-              <PersonalInfoSection
-                formData={formData}
-                onInputChange={handlePersonalInfoChange}
-                applicationForm={jobDetail?.application_form}
-                errors={errorMessage}
-              />
-              <ContactInfoSection
-                formData={formData}
-                onInputChange={handlePersonalInfoChange}
-                applicationForm={jobDetail?.application_form}
-                errors={errorMessage}
-              />
-              {jobDetail?.application_form?.address !== "disabled" && (
-                <AddressInfoSection
-                  formData={formData}
-                  onInputChange={handlePersonalInfoChange}
-                  errors={errorMessage}
-                />
-              )}
-            </div>
+            <Step01
+              formData={formData.personalInfo}
+              applicationForm={jobDetail.application_form.application_form}
+              onInputChange={handleInputPersonalInfo}
+              acceptTerms={acceptTerms}
+              onAcceptTermsChange={setAcceptTerms}
+            />
           )}
-
-          {/* Stage 2 - Job Details */}
           {currentStage === 2 && (
-            <div className="max-w-4xl mx-auto space-y-8">
-              <JobDetailsSection
-                data={stage2Data}
-                onChange={handleJobDetailsChange}
-                applicationForm={jobDetail?.application_form}
-                errors={errorMessage}
-              />
-            </div>
+            <Step02
+              formData={formData.jobDetails}
+              onInputChange={handleJobDetailsChange}
+              applicationForm={jobDetail.application_form.application_form}
+            />
           )}
-
-          {/* Stage 3 - Work and Education */}
           {currentStage === 3 && (
-            <div className="max-w-4xl mx-auto space-y-8">
-              <EducationSection
-                data={stage3Data}
-                onChange={handleEducationWorkChange}
-                applicationForm={jobDetail?.application_form}
-                errors={errorMessage}
-              />
-              {jobDetail?.application_form?.work_experience && (
-                <WorkExperienceSection
-                  data={stage3Data}
-                  onChange={handleEducationWorkChange}
-                  onAddExperience={handleAddWorkExperience}
-                  onRemoveExperience={handleRemoveWorkExperience}
-                  errors={errorMessage}
-                />
-              )}
-            </div>
+            <Step03
+              formData={formData.educationWork}
+              onInputChange={handleEducationWorkChange}
+              applicationForm={jobDetail.application_form.application_form}
+            />
           )}
-
-          {/* Stage 4 - Acknowledgement */}
           {currentStage === 4 && (
-            <div className="max-w-4xl mx-auto space-y-8">
-              <AcknowledgementSection
-                data={stage4Data}
-                onChange={handleAcknowledgementChange}
-                applicationForm={jobDetail?.application_form}
-                errors={errorMessage}
-              />
-            </div>
+            <Step04
+              formData={formData.acknowledgement}
+              onInputChange={handleAcknowledgementChange}
+              applicationForm={jobDetail.application_form.application_form}
+            />
           )}
         </div>
-      </div>
+      </section>
 
       {/* Fixed Footer for Navigation Buttons */}
       <ApplicationFooter
         currentStage={currentStage}
-        acceptTerms={acceptTerms}
-        certificationAccepted={stage4Data.certificationAccepted}
-        onBack={handleBack}
-        onNext={handleNext}
+        formData={formData}
+        onBack={() => currentStage > 1 && goToPreviousStage()}
+        onNext={() => currentStage < 4 && goToNextStage()}
       />
 
       {/* Application Complete Modal */}
       {showCompletionModal && (
-        <ApplicationCompleteModal
-          trackingCode={trackingCode}
-          onBackToHome={handleBackToHome}
-          onTrackApplication={handleTrackApplication}
-        />
+        <ApplicationCompleteModal onTrackApplication={handleTrackApplication} />
       )}
     </div>
   );

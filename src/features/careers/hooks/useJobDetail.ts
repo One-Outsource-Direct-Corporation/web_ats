@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { defaultAxios } from "@/config/axios";
-import type { JobData } from "../types/job";
 import type { AxiosError } from "axios";
+import type { PRFFormData } from "@/features/prf/types/prf.types";
+import type { PositionFormData } from "@/features/positions-client/types/create_position.types";
 
 export const useJobDetail = (jobId: string | undefined) => {
-  const [jobDetail, setJobDetail] = useState<JobData | null>(null);
+  const [jobDetail, setJobDetail] = useState<
+    PRFFormData | PositionFormData | null
+  >(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 

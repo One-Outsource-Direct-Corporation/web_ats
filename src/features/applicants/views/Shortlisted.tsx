@@ -25,13 +25,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table.tsx";
-import { Badge } from "@/components/ui/badge.tsx";
-import { Calendar } from "@/components/ui/calendar.tsx";
+} from "@/shared/components/ui/table.tsx";
+import { Badge } from "@/shared/components/ui/badge.tsx";
+import { Calendar } from "@/shared/components/ui/calendar.tsx";
 import { ArrowLeft, Search, MoreHorizontal } from "lucide-react";
-import { Navbar } from "@/components/reusables/Navbar.tsx";
+import { Navbar } from "@/shared/components/reusables/Navbar.tsx";
 
-// Sample applicant data
 const applicants = [
   {
     id: "001",

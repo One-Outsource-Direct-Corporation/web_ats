@@ -1,10 +1,10 @@
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import { usePositions } from "@/shared/hooks/usePositions";
-import formatDate from "@/shared/utils/formatDate";
+import { formatDate } from "@/shared/utils/formatDate";
 import formatName from "@/shared/utils/formatName";
 import FilterBar from "../components/FilterBar";
 import { Checkbox } from "@/shared/components/ui/checkbox";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/shared/components/ui/button";
 import {
   Ellipsis,
@@ -32,19 +32,34 @@ interface SelectedItem {
 export default function Request() {
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [filters, setFilters] = useState({
+    type: "all",
+    status: "all",
+    employment_type: "all",
+    work_setup: "all",
+    order_by: "desc",
+  });
   const { positions, loading, error, refetch } = usePositions({
-    no_active: true,
-    page: currentPage,
     my_postings: true,
+    page: currentPage,
+    type: filters.type,
+    status: filters.status,
+    employment_type: filters.employment_type,
+    work_setup: filters.work_setup,
+    order_by: filters.order_by,
+    published: "",
   });
   const selectAll = positions
     ? positions.results.length > 0 &&
       selectedItems.length === positions.results.length
     : false;
+
   const axiosPrivate = useAxiosPrivate();
   const navigate = useNavigate();
 
-  console.log(positions);
+  useEffect(() => {
+    document.title = "Requests - OODC ATS";
+  }, []);
 
   // Handle select all checkbox
   const handleSelectAll = useCallback(
@@ -78,24 +93,36 @@ export default function Request() {
   // Handle delete action
   const handleDelete = useCallback(async () => {
     if (selectedItems.length === 0) return;
+
     try {
       const ids = selectedItems.map((item) => item.id);
-
       const data = { ids };
 
-      const response = await axiosPrivate.delete("/api/job/bulk-delete/", {
+      await axiosPrivate.delete("/api/job/bulk-delete/", {
         data,
       });
 
-      console.log(response);
-
+      toast.success(`Successfully deleted ${ids.length} item(s)`);
       setSelectedItems([]);
-      await refetch();
-    } catch (error) {
+
+      // Check if current page will be empty after deletion
+      const remainingItemsOnCurrentPage = positions.results.filter(
+        (item) => !ids.includes(item.id)
+      );
+
+      if (remainingItemsOnCurrentPage.length === 0 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      } else {
+        await refetch();
+      }
+    } catch (error: any) {
       console.error("Error deleting items:", error);
-      toast.error("Failed to delete some items. Please try again.");
+      toast.error(
+        error?.response?.data?.detail ||
+          "Failed to delete some items. Please try again."
+      );
     }
-  }, [selectedItems]);
+  }, [selectedItems, currentPage, positions.results, axiosPrivate, refetch]);
 
   // Handle page change
   const handleNextPage = useCallback(() => {
@@ -130,7 +157,7 @@ export default function Request() {
           <p className="text-lg text-gray-700">
             Handles hiring requests and approvals
           </p>
-          <FilterBar />
+          <FilterBar filters={filters} setFilters={setFilters} />
         </div>
       </div>
 
@@ -144,6 +171,7 @@ export default function Request() {
               <tr>
                 <th className="px-4 py-3 w-12">
                   <Checkbox
+                    className="data-[state=checked]:bg-blue-700 data-[state=checked]:border-blue-700"
                     checked={selectAll}
                     onCheckedChange={handleSelectAll}
                   />
@@ -151,6 +179,7 @@ export default function Request() {
                 <th className="px-4 py-3">Position Title</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Date Requested</th>
+                <th className="px-4 py-3">Target Start Date</th>
                 <th className="px-4 py-3">Type</th>
                 <th className="px-4 py-3 text-center w-32">Pipeline</th>
                 <th className="px-4 py-3 text-center">Actions</th>
@@ -194,6 +223,7 @@ export default function Request() {
                       >
                         <td className="px-4 py-3">
                           <Checkbox
+                            className="data-[state=checked]:bg-blue-700 data-[state=checked]:border-blue-700"
                             checked={isSelected}
                             onCheckedChange={(checked) =>
                               handleItemSelect(item.id, checked as boolean)
@@ -213,7 +243,10 @@ export default function Request() {
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          {formatDate(item.created_at)}
+                          {formatDate(item.created_at, true)}
+                        </td>
+                        <td className="px-4 py-3">
+                          {formatDate(item.target_start_date, true)}
                         </td>
                         <td className="px-4 py-3">
                           <span
@@ -223,7 +256,9 @@ export default function Request() {
                                 : "bg-neutral-700 text-neutral-100"
                             }`}
                           >
-                            {item.type_display}
+                            {item.type_display === "PRF"
+                              ? "Internal"
+                              : "Client"}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-center">

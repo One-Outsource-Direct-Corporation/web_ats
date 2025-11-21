@@ -2,84 +2,27 @@ import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import FilterBar from "../components/FilterBar";
 import JobListItem from "../components/JobListItem";
 import { usePositions } from "../../../shared/hooks/usePositions";
-import { Button } from "@/shared/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import PageIndicator from "@/shared/components/reusables/PageIndicator";
 
 export default function Positions() {
   const [currentPage, setCurrentPage] = useState(1);
+  const [filters, setFilters] = useState<{
+    type: string;
+  }>({
+    type: "all",
+  });
   const { positions, loading, error } = usePositions({
     status: "active",
     page: currentPage,
-    my_postings: true,
+    my_postings: false,
+    type: filters.type,
   });
 
-  // To do: Bring back the tabs functionality
+  useEffect(() => {
+    document.title = "Positions - OODC ATS";
+  }, []);
 
-  // const handleBulkAction = (action: string) => {
-  //   switch (action) {
-  //     case "delete":
-  //       openDialog({
-  //         title: "Move to Deleted",
-  //         description:
-  //           "Do you want to send the selected position/s to the Deleted tab?",
-  //         onConfirm: handleMoveToDeleted,
-  //         confirmLabel: "Yes",
-  //         cancelLabel: "No",
-  //         destructive: true,
-  //       });
-  //       break;
-  //     case "open":
-  //       openDialog({
-  //         title: "Open Positions",
-  //         description: "Do you want to open this position/s?",
-  //         onConfirm: handleOpenPositions,
-  //         confirmLabel: "Yes",
-  //         cancelLabel: "No",
-  //       });
-  //       break;
-  //     case "hold":
-  //       openDialog({
-  //         title: "Hold Positions",
-  //         description: "Do you want to put this position/s on hold?",
-  //         onConfirm: handleHoldPositions,
-  //         confirmLabel: "Yes",
-  //         cancelLabel: "No",
-  //       });
-  //       break;
-  //     case "archive":
-  //       openDialog({
-  //         title: "Archive Positions",
-  //         description: "Do you want to archive this position/s?",
-  //         onConfirm: handleArchivePositions,
-  //         confirmLabel: "Yes",
-  //         cancelLabel: "No",
-  //       });
-  //       break;
-  //     case "restore":
-  //       openDialog({
-  //         title: "Restore Positions",
-  //         description: "Do you want to restore the selected position/s?",
-  //         onConfirm: handleRestorePositions,
-  //         confirmLabel: "Yes",
-  //         cancelLabel: "No",
-  //       });
-  //       break;
-  //     case "delete-permanent":
-  //       openDialog({
-  //         title: "Delete Permanently",
-  //         description:
-  //           "This action cannot be undone. Are you sure you want to permanently delete the selected position/s?",
-  //         onConfirm: handleDeletePermanently,
-  //         confirmLabel: "Delete Permanently",
-  //         cancelLabel: "Cancel",
-  //         destructive: true,
-  //       });
-  //       break;
-  //   }
-  // };
-
-  // Handle page change
   const handleNextPage = useCallback(() => {
     if (positions?.next) {
       setCurrentPage((prev) => prev + 1);
@@ -100,7 +43,7 @@ export default function Positions() {
           <p className="text-lg text-gray-700">
             Manages job openings and related information
           </p>
-          <FilterBar />
+          <FilterBar filters={filters} setFilters={setFilters} />
         </div>
       </div>
 
@@ -126,27 +69,12 @@ export default function Positions() {
         )}
         {/* Pagination */}
         {!loading && !error && positions && positions.results.length > 0 && (
-          <div className="flex justify-center items-center mt-4 space-x-4">
-            <Button
-              variant="ghost"
-              onClick={handlePrevPage}
-              disabled={!positions.previous}
-              className="text-gray-600 hover:bg-gray-900 hover:text-gray-50"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="text-sm text-gray-50 rounded-md bg-gray-900 p-2 px-4">
-              {currentPage}
-            </span>
-            <Button
-              variant="ghost"
-              onClick={handleNextPage}
-              disabled={!positions.next}
-              className="text-gray-600 hover:bg-gray-900 hover:text-gray-50"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
+          <PageIndicator
+            positions={positions}
+            currentPage={currentPage}
+            handleNextPage={handleNextPage}
+            handlePrevPage={handlePrevPage}
+          />
         )}
       </div>
     </section>

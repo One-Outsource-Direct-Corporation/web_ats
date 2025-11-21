@@ -1,5 +1,4 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { ArrowLeft } from "lucide-react";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
@@ -12,90 +11,35 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
-import type { PRFResponse } from "@/features/prf/types/prfTypes";
-import type { PositionData } from "@/features/positions/types/positionTypes";
-import PRFEditForm from "../components/PRFEditForm";
-import PositionEditForm from "../components/PositionEditForm";
 import type { AxiosError } from "axios";
 import { formatBackgroundStatus } from "@/shared/utils/formatBackgroundStatus";
-import type {
-  JobPostingResponsePosition,
-  JobPostingResponsePRF,
-} from "@/features/jobs/types/jobTypes";
-import { formatForJSON } from "@/shared/utils/formatName";
-
-type EditItem = JobPostingResponsePRF | JobPostingResponsePosition;
+import { usePositionDetail } from "@/shared/hooks/usePositions";
+import { useEffect } from "react";
+import PRF from "@/features/prf/views/PRF";
+import type { PRFDb, PRFFormData } from "@/features/prf/types/prf.types";
+import type { PositionDb } from "@/features/positions-client/types/create_position.types";
+import PositionClient from "@/features/positions-client/views/PositionClient";
 
 export default function EditRequestItem() {
   const { type, id } = useParams<{ type: "prf" | "position"; id: string }>();
   const navigate = useNavigate();
   const axiosPrivate = useAxiosPrivate();
 
-  const [item, setItem] = useState<EditItem | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { position, loading, error, refetch } = usePositionDetail({
+    id: id ? Number(id) : undefined,
+    non_admin: false,
+  });
 
   useEffect(() => {
-    if (!type || !id) {
-      setError("Invalid parameters");
-      setLoading(false);
-      return;
-    }
+    document.title =
+      type === "prf" ? "Edit Internal" : "Edit Client" + " Position";
+  }, [type]);
 
-    const fetchItem = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // const endpoint = type === "prf" ? `/api/prf/${id}/` : `/api/job/${id}/`;
-        const response = await axiosPrivate.get<EditItem>(`/api/job/${id}/`);
-
-        console.log(response.data);
-
-        setItem(response.data);
-      } catch (err: any) {
-        console.error("Error fetching item:", err);
-        setError("Failed to load item. Please try again.");
-        toast.error("Failed to load item");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchItem();
-  }, [type, id, axiosPrivate]);
-
-  // Handle form submission
-  const handleSave = async (formData: EditItem) => {
-    if (!type || !id) return;
-
-    try {
-      setSaving(true);
-
-      const endpoint = type === "prf" ? `/api/prf/${id}/` : `/api/job/${id}/`;
-      console.log(formData);
-
-      return;
-      await axiosPrivate.patch<EditItem>(endpoint, formData);
-
-      toast.success(
-        `${type === "prf" ? "PRF" : "Position"} updated successfully`
-      );
-      navigate("/requests");
-    } catch (err: any) {
-      console.error("Error saving item:", err);
-      toast.error("Failed to save changes. Please try again.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (loading) {
-    return <LoadingComponent />;
+  if (!position || loading) {
+    return <LoadingComponent message="Loading Data" />;
   }
 
-  if (error || !item || !type) {
+  if (error || !type) {
     return (
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="text-center">
@@ -114,7 +58,7 @@ export default function EditRequestItem() {
     <div className="max-w-7xl mx-auto px-6 py-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
+        <div className="gap-4">
           <Button
             onClick={() => navigate("/requests")}
             variant="outline"
@@ -123,36 +67,33 @@ export default function EditRequestItem() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
-          <div>
+          <div className="mt-4">
             <h1 className="text-3xl font-bold text-gray-800">
-              Edit {type === "prf" ? "PRF" : "Position"}
+              Edit {type === "prf" ? "Internal" : "Client"} Position
             </h1>
             <p className="text-gray-600">
-              {item.job_title} • ID: {item.id}
+              {position.job_posting.job_title} • ID:{" "}
+              {((position as PRFDb) || (position as PositionDb)).job_posting.id}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <Select
-            value={item.status}
+            value={
+              ((position as PRFDb) || (position as PositionDb)).job_posting
+                .status
+            }
             onValueChange={async (
               value: "draft" | "pending" | "active" | "closed" | "cancelled"
             ) => {
               try {
                 const endpoint =
-                  type === "prf" ? `/api/prf/${id}/` : `/api/job/${id}/`;
+                  type === "prf" ? `/api/prf/${id}/` : `/api/position/${id}/`;
                 await axiosPrivate.patch(endpoint, {
                   job_posting: { status: value },
                 });
-                setItem((prev) =>
-                  prev
-                    ? {
-                        ...prev,
-                        status: value,
-                      }
-                    : null
-                );
+                refetch(); // Refetch to update the position data
                 toast.success("Status updated successfully");
               } catch (err: AxiosError | any) {
                 console.error("Error updating status:", err);
@@ -164,7 +105,8 @@ export default function EditRequestItem() {
           >
             <SelectTrigger
               className={`w-32 rounded-4xl border-0 font-semibold ${formatBackgroundStatus(
-                item.status
+                ((position as PRFDb) || (position as PositionDb)).job_posting
+                  .status
               )}`}
             >
               <SelectValue />
@@ -177,24 +119,56 @@ export default function EditRequestItem() {
               <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
+          {((position as PRFDb) || (position as PositionDb)).job_posting
+            .status === "active" && (
+            <Select
+              value={(
+                (position as PRFDb) || (position as PositionDb)
+              ).job_posting.published.toString()}
+              onValueChange={async (value: "true" | "false") => {
+                try {
+                  const endpoint =
+                    type === "prf" ? `/api/prf/${id}/` : `/api/position/${id}/`;
+                  const response = await axiosPrivate.patch(endpoint, {
+                    job_posting: {
+                      published: value === "true",
+                      status: ((position as PRFDb) || (position as PositionDb))
+                        .job_posting.status,
+                    },
+                  });
+                  console.log(response);
+                  refetch();
+                  toast.success("Published status updated successfully");
+                } catch (err: AxiosError | any) {
+                  console.error("Error updating published status:", err);
+                  toast.error(
+                    err.response?.data?.detail ||
+                      "Failed to update published status"
+                  );
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Published" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="true">Published</SelectItem>
+                <SelectItem value="false">Unpublished</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
 
       {/* Form Content */}
-      <div className="bg-white rounded-lg shadow-sm border">
+      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
         {type === "prf" ? (
-          <PRFEditForm
-            initialData={item as JobPostingResponsePRF}
-            onSave={handleSave}
-            saving={saving}
-          />
+          <PRF initialData={position as PRFFormData} updateMode={true} />
         ) : (
-          // <PositionEditForm
-          //   initialData={item as PositionData}
-          //   onSave={handleSave}
-          //   saving={saving}
-          // />
-          <>Position editing not yet implemented.</>
+          <PositionClient
+            initialData={position as PositionDb}
+            updateMode={true}
+          />
         )}
       </div>
     </div>

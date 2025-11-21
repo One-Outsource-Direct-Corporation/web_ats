@@ -1,5 +1,8 @@
 import { useState } from "react";
-import type { LocationEntry, BatchEntry } from "../types/createPosition";
+import type {
+  LocationEntry,
+  BatchEntry,
+} from "../../positions-client/types/create_position.types";
 
 const initialLocations: LocationEntry[] = [
   {

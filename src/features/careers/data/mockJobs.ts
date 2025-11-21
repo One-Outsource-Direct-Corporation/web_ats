@@ -6,7 +6,7 @@ import {
   MapPinned,
   FolderIcon as FolderCode,
 } from "lucide-react";
-import type { JobData } from "../types/job";
+import type { JobData } from "../types/job.types";
 
 export const mockJobsData: JobData[] = [
   {

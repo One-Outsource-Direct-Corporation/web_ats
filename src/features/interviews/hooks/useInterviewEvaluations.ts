@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { InterviewEvaluation } from "../types/InterviewEvaluation";
+import type { InterviewEvaluation } from "../types/interview_evaluation.types";
 import { getInterviewEvaluations } from "../services/interviewService";
 
 export function useInterviewEvaluations(applicantId: string) {

@@ -6,7 +6,7 @@ import type {
   FormData,
   LocationEntry,
   BatchEntry,
-} from "../types/createPosition";
+} from "../../positions-client/types/create_position.types";
 
 interface DetailsStepProps {
   formData: FormData;

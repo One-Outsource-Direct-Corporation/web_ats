@@ -7,16 +7,16 @@
 // }
 
 export interface User {
-  id: string;
+  id: number;
   full_name: string;
   email: string;
   first_name: string;
-  middle_name: string;
+  middle_name: string | null;
   last_name: string;
   business_unit: string;
   department: string;
   role: string;
-  access: string;
+  // access: string;
 }
 
 export interface AuthState {

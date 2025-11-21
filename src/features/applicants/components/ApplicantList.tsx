@@ -1,4 +1,4 @@
-import type { Applicant } from "../types/Applicant";
+import type { Applicant } from "../types/applicant.types";
 import { Badge } from "@/shared/components/ui/badge.tsx";
 import { Link } from "react-router-dom";
 

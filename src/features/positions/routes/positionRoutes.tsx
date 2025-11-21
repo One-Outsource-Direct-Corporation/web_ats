@@ -1,5 +1,5 @@
 import Positions from "../views/Positions";
-import CreateNewPosition from "../views/CreateNewPosition";
+import CreateNewPosition from "../../positions-client/views/CreateNewPosition";
 
 export const positionRoutes = [
   {

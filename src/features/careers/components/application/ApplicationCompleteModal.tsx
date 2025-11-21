@@ -1,14 +1,14 @@
 import { Button } from "@/shared/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface ApplicationCompleteModalProps {
-  trackingCode: string;
-  onBackToHome: () => void;
   onTrackApplication: () => void;
 }
 
 export const ApplicationCompleteModal: React.FC<
   ApplicationCompleteModalProps
-> = ({ trackingCode, onBackToHome, onTrackApplication }) => {
+> = ({ onTrackApplication }) => {
+  const navigate = useNavigate();
   return (
     <div className="fixed inset-0 bg-gray-900/65 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 text-center max-h-[90vh] overflow-y-auto">
@@ -21,13 +21,14 @@ export const ApplicationCompleteModal: React.FC<
           application's progress through the Track Application section. We're
           excited to have you on this journey!
         </p>
+        {/* TODO: Brincg back the tracking code after submission */}
         <div className="bg-blue-50 p-3 rounded-lg mb-6">
           <p className="text-sm text-gray-600 mb-1">Your tracking code:</p>
-          <p className="text-lg font-bold text-blue-600">{trackingCode}</p>
+          <p className="text-lg font-bold text-blue-600">303030</p>
         </div>
         <div className="flex gap-3">
           <Button
-            onClick={onBackToHome}
+            onClick={() => navigate("/", { replace: true })}
             className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
           >
             Back to Home

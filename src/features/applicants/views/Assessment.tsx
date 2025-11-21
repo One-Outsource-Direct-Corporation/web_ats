@@ -26,7 +26,7 @@ import { Calendar } from "@/shared/components/ui/calendar.tsx";
 import { ArrowLeft, Search, MoreHorizontal } from "lucide-react";
 import { Navbar } from "@/shared/components/reusables/Navbar.tsx";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import ExamForm from "@/shared/pages/Exam-Form.tsx";
+import ExamForm from "./Exam-Form.tsx";
 
 // Sample applicant data with status
 const applicants = [

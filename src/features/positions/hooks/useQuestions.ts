@@ -1,5 +1,8 @@
 import { useState } from "react";
-import type { Question, SavedQuestionnaire } from "../types/createPosition";
+import type {
+  Question,
+  SavedQuestionnaire,
+} from "../../positions-client/types/create_position.types";
 
 export function useQuestions() {
   const [showAddQuestionModal, setShowAddQuestionModal] = useState(false);

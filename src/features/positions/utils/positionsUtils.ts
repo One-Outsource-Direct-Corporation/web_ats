@@ -3,7 +3,7 @@ import type {
   PublishedSubTabType,
   PositionsData,
   JobPosting,
-} from "../types/positionTypes";
+} from "../types/position.types";
 
 /**
  * Get the formatted tab title for display

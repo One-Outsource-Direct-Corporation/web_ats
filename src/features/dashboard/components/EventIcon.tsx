@@ -1,5 +1,5 @@
 import { Phone, NotebookPen, ClipboardList } from "lucide-react";
-import type { EventType } from "../types/upcomingEvents.types";
+import type { EventType } from "../types/upcoming_events.types";
 
 export function getEventIcon(type: EventType) {
   switch (type) {

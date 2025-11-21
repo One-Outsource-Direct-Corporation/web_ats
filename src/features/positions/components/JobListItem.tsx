@@ -1,102 +1,78 @@
 import { Card } from "@/shared/components/ui/card";
 import { Badge } from "@/shared/components/ui/badge";
-import type { JobPostingResponse } from "@/features/jobs/types/jobTypes";
 import { getDepartmentColor } from "../utils/departmentColor";
 import DOMPurify from "dompurify";
 import formatName from "@/shared/utils/formatName";
+import type { JobPostingDb } from "@/features/positions-client/types/create_position.types";
+import { useContext } from "react";
+import { AuthContext } from "@/features/auth/context/AuthContext";
+import { formatDepartmentName } from "@/shared/utils/formatDepartmentName";
 
-export default function JobListItem({
-  posting,
-}: {
-  posting: JobPostingResponse;
-}) {
-  // const handleCheckboxChange = () => {
-  //   onSelectionChange(toggleItemSelection(selected, index));
-  // };
-
-  // const handleEdit = () => {
-  //   if (onEdit) {
-  //     onEdit(posting);
-  //   } else {
-  //     navigate("/positions/create-new-position");
-  //   }
-  // };
-
-  // const renderActionButton = () => {
-  //   if (selected.length > 0) return null;
-
-  //   switch (currentTab) {
-  //     case "drafts":
-  //     case "closed":
-  //       return (
-  //         <Button
-  //           variant="ghost"
-  //           size="sm"
-  //           className="text-blue-600 hover:underline text-sm flex items-center gap-1"
-  //           onClick={handleEdit}
-  //         >
-  //           <Pencil className="w-4 h-4" />
-  //           Edit
-  //         </Button>
-  //       );
-  //     case "published":
-  //       return (
-  //         <div className="flex items-center gap-2 cursor-pointer">
-  //           <ExternalLink className="w-4 h-4 text-gray-500 hover:text-blue-600" />
-  //         </div>
-  //       );
-  //     default:
-  //       return null;
-  //   }
-  // };
-
+export default function JobListItem({ posting }: { posting: JobPostingDb }) {
+  const { user } = useContext(AuthContext);
   return (
     <Card className="p-4 shadow-sm hover:shadow-md transition border rounded-md">
-      <div className="flex justify-between items-start">
-        <div className="flex items-start gap-4 sm:gap-6">
-          <div className="pt-1">
-            <input
-              type="checkbox"
-              className="mt-1 w-4 h-4 bg-white border-2 border-gray-400 rounded focus:ring-2 focus:ring-blue-500 checked:bg-blue-600 checked:border-blue-600 appearance-none relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-white checked:after:text-xs checked:after:font-bold"
-              // checked={isItemSelected(selected, index)}
-              // onChange={handleCheckboxChange}
-            />
-          </div>
+      <div>
+        {/* Left section with checkbox and content */}
+        <div className="flex items-start gap-4 sm:gap-6 flex-1 min-w-0">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap mb-2">
               <h3 className="text-base font-semibold text-gray-800">
                 {posting.job_title}
               </h3>
 
               <Badge
                 className={`${getDepartmentColor(
-                  formatName(posting.department_name)
+                  posting.department_name && posting.department_name === "other"
+                    ? posting.department_name_other || ""
+                    : formatDepartmentName(posting.department_name ?? "")
                 )} text-xs`}
               >
-                {formatName(posting.department_name)}
+                {posting.department_name === "other"
+                  ? posting.department_name_other || ""
+                  : formatDepartmentName(posting.department_name ?? "")}
               </Badge>
-              <Badge variant="default" className="text-xs">
-                {posting.type_display}
+
+              <Badge
+                variant="default"
+                className={`text-xs ${
+                  posting.type === "prf"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-neutral-700 text-neutral-100"
+                }`}
+              >
+                {posting.type === "prf" ? "Internal" : "Client"}
               </Badge>
-              {
-                // To do: restore badge for deleted positions
-                /* {currentTab === "deleted" && (
-                <Badge variant="destructive" className="text-xs">
-                  Deleted
-                </Badge>
-              )} */
-              }
+
+              <Badge
+                className={`text-xs ${
+                  posting.status === "active"
+                    ? "bg-blue-100 text-blue-800 border-blue-200"
+                    : posting.status === "draft"
+                    ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                    : posting.status === "closed"
+                    ? "bg-red-100 text-red-800 border-red-200"
+                    : "bg-gray-100 text-gray-800 border-gray-200"
+                }`}
+              >
+                {formatName(posting.status)}
+              </Badge>
+
+              <Badge className="text-xs bg-cyan-500 text-white">
+                {user && posting.posted_by_display.id === user.id
+                  ? "You"
+                  : posting.posted_by_display.full_name}
+              </Badge>
             </div>
 
             <div
-              className="text-stone-400 text-sm line-clamp-1 w-[80%]"
+              className="text-stone-400 text-sm line-clamp-1"
               dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(posting.description),
+                __html: DOMPurify.sanitize(posting.description || ""),
               }}
             />
           </div>
         </div>
-        {/* {renderActionButton()} */}
       </div>
     </Card>
   );

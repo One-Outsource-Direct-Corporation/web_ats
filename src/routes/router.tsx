@@ -9,7 +9,7 @@ import { libraryRoutes } from "@/features/library/routes/libraryRoutes";
 import { dashboardRoutes } from "@/features/dashboard/routes/dashboardRoutes";
 import ProtectedRoutes from "@/features/auth/components/ProtectedRoutes";
 import Login from "@/features/auth/views/Login";
-import PersistLogin from "@/shared/pages/PersistLogin";
+import PersistLogin from "@/features/auth/components/PersistLogin";
 import { careersRoutes } from "@/features/careers/routes/careersRoute";
 import { requestRoutes } from "@/features/requests/routes/requestRoutes";
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { Applicant } from "../types/Applicant";
+import type { Applicant } from "../types/applicant.types";
 import { getApplicants } from "../services/applicantService";
 
 export function useApplicants() {
