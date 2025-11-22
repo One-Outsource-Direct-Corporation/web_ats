@@ -17,6 +17,7 @@ export default function Positions() {
     page: currentPage,
     my_postings: false,
     type: filters.type,
+    published: "true",
   });
 
   useEffect(() => {

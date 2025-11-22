@@ -98,7 +98,9 @@ export default function EditRequestItem() {
               } catch (err: AxiosError | any) {
                 console.error("Error updating status:", err);
                 toast.error(
-                  err.response?.data?.detail || "Failed to update status"
+                  err.response?.data?.detail ||
+                    err.response?.data?.status ||
+                    "Failed to update status"
                 );
               }
             }}
@@ -143,6 +145,7 @@ export default function EditRequestItem() {
                   console.error("Error updating published status:", err);
                   toast.error(
                     err.response?.data?.detail ||
+                      err.response?.data?.status ||
                       "Failed to update published status"
                   );
                 }

@@ -290,6 +290,7 @@ export default function PRF({ initialData, updateMode }: PRFProps) {
               formData={formData}
               step={step}
               handleSubmit={handleSubmit}
+              updateMode={updateMode}
             />
           )}
         </div>

@@ -1,49 +1,139 @@
 import type { ApproverDb } from "@/features/positions-client/types/create_position.types";
 import formatMoney from "@/shared/utils/formatMoney";
-import type { PRFFormData } from "../types/prf.types";
+import type { PRFDb, PRFFormData } from "../types/prf.types";
 import formatName from "@/shared/utils/formatName";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
+import { Button } from "@/shared/components/ui/button";
+import { Textarea } from "@/shared/components/ui/textarea";
+import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
+import { toast } from "react-toastify";
 
 interface ApproverProps {
   approvers: ApproverDb[];
   formData: PRFFormData;
+  onUpdate?: () => void;
 }
 
-const getStatusButton = (status: string) => {
-  switch (status.toLowerCase()) {
-    case "approved":
-      return (
-        <button className="text-green-600 bg-green-100 px-3 py-1 text-xs rounded cursor-default">
-          Approved
-        </button>
-      );
-    case "rejected":
-      return (
-        <button className="text-red-600 bg-red-100 px-3 py-1 text-xs rounded cursor-default">
-          Rejected
-        </button>
-      );
-    case "pending":
-    default:
-      return (
-        <div className="flex gap-2">
-          <button className="text-red-600 bg-red-100 px-3 py-1 text-xs rounded hover:bg-red-200">
-            Reject
-          </button>
-          <button className="text-green-600 bg-green-100 px-3 py-1 text-xs rounded hover:bg-green-200">
-            Approve
-          </button>
-        </div>
-      );
-  }
-};
+interface ApproverState {
+  status: string;
+  comment: string;
+}
 
-export default function Approver({ approvers, formData }: ApproverProps) {
+export default function Approver({
+  approvers,
+  formData,
+  onUpdate,
+}: ApproverProps) {
   const { user } = useAuth();
+  const axiosPrivate = useAxiosPrivate();
+
+  const [approverStates, setApproverStates] = useState<
+    Record<number, ApproverState>
+  >(
+    approvers.reduce(
+      (acc, approver) => ({
+        ...acc,
+        [approver.id]: {
+          status: approver.status,
+          comment: approver.comment || "",
+        },
+      }),
+      {}
+    )
+  );
+
+  const [updatingApprovers, setUpdatingApprovers] = useState<Set<number>>(
+    new Set()
+  );
+
+  const handleStatusChange = (approverId: number, status: string) => {
+    setApproverStates((prev) => ({
+      ...prev,
+      [approverId]: {
+        ...prev[approverId],
+        status,
+      },
+    }));
+  };
+
+  const handleCommentChange = (approverId: number, comment: string) => {
+    setApproverStates((prev) => ({
+      ...prev,
+      [approverId]: {
+        ...prev[approverId],
+        comment,
+      },
+    }));
+  };
+
+  const handleUpdateApproval = async (approverId: number) => {
+    try {
+      setUpdatingApprovers((prev) => new Set(prev).add(approverId));
+
+      const state = approverStates[approverId];
+      await axiosPrivate.patch(
+        `/api/prf/approval/${(formData as PRFDb).job_posting.id}/`,
+        {
+          approver_id: approverId,
+          status: state.status,
+          comment: state.comment,
+        }
+      );
+
+      toast.success("Approval updated successfully");
+      if (onUpdate) {
+        onUpdate();
+      }
+    } catch (error: any) {
+      console.error("Error updating approval:", error);
+      toast.error(error?.response?.data?.detail || "Failed to update approval");
+    } finally {
+      setUpdatingApprovers((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(approverId);
+        return newSet;
+      });
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "approved":
+        return "bg-green-600 text-white";
+      case "rejected":
+        return "bg-red-600 text-white";
+      case "pending":
+      default:
+        return "bg-blue-600 text-white";
+    }
+  };
+
+  const hasChanges = (approverId: number) => {
+    const approver = approvers.find((a) => a.id === approverId);
+    const state = approverStates[approverId];
+    if (!approver || !state) return false;
+
+    return (
+      approver.status !== state.status ||
+      (approver.comment || "") !== state.comment
+    );
+  };
   return (
     <div className="space-y-6">
       {approvers.map((approver, index) => {
         const isLast = index === approvers.length - 1;
+        const state = approverStates[approver.id];
+        const isCurrentUser = approver.approving_manager.id === user?.id;
+        const isUpdating = updatingApprovers.has(approver.id);
+        const canUpdate = isCurrentUser && hasChanges(approver.id);
 
         return (
           <div key={approver.id} className="relative flex gap-4">
@@ -55,37 +145,59 @@ export default function Approver({ approvers, formData }: ApproverProps) {
               )}
               {/* Circle */}
               <div
-                className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                  approver.status.toLowerCase() === "approved"
-                    ? "bg-green-600 text-white"
-                    : approver.status.toLowerCase() === "rejected"
-                    ? "bg-red-600 text-white"
-                    : "bg-blue-600 text-white"
-                }`}
+                className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${getStatusColor(
+                  state?.status || approver.status
+                )}`}
               >
                 {index + 1}
               </div>
             </div>
             {/* Right Content */}
             <div className="border rounded-lg p-4 bg-white shadow space-y-4 flex-1">
-              {/* Header with title & buttons */}
-              <div className="flex justify-between items-start">
-                <div>
+              {/* Header with title & status dropdown */}
+              <div className="flex justify-between items-start gap-4">
+                <div className="flex-1">
                   <p className="font-semibold text-sm">
                     {formatName(approver.approving_manager.role)} Review
                   </p>
                   <p className="text-xs text-gray-500">
-                    Status: {approver.status}
+                    Approver: {approver.approving_manager.full_name}
                   </p>
                 </div>
-                {approver.approving_manager.id === user?.id &&
-                  getStatusButton(approver.status)}
+                {isCurrentUser && (
+                  <div className="flex flex-col gap-2">
+                    <Select
+                      value={state?.status}
+                      onValueChange={(value) =>
+                        handleStatusChange(approver.id, value)
+                      }
+                    >
+                      <SelectTrigger className="w-32 h-8 text-xs">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="approved">Approved</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {!isCurrentUser && (
+                  <span
+                    className={`px-3 py-1 text-xs rounded font-medium ${
+                      state?.status.toLowerCase() === "approved"
+                        ? "bg-green-100 text-green-700"
+                        : state?.status.toLowerCase() === "rejected"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-blue-100 text-blue-700"
+                    }`}
+                  >
+                    {formatName(state?.status || approver.status)}
+                  </span>
+                )}
               </div>
-              {/* Approver */}
-              <p className="text-sm text-gray-500">
-                <strong>{formatName(approver.approving_manager.role)}:</strong>{" "}
-                {approver.approving_manager.full_name}
-              </p>
+
               {/* Budget Allocation */}
               <div>
                 <label className="text-sm font-semibold block mb-1">
@@ -102,23 +214,43 @@ export default function Approver({ approvers, formData }: ApproverProps) {
                       : "No budget allocated"
                   }
                   disabled
-                  className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm text-gray-500 bg-white"
+                  className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm text-gray-700 bg-gray-50"
                 />
               </div>
+
               {/* Comments */}
               <div>
                 <label className="text-sm font-semibold block mb-1">
                   Comments
                 </label>
-                <textarea
+                <Textarea
                   rows={4}
-                  disabled={approver.status.toLowerCase() !== "pending"}
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-500 bg-white resize-none"
-                  value={approver.comment ?? ""}
-                  placeholder="No comment"
-                  readOnly={approver.approving_manager.id !== user?.id}
+                  disabled={!isCurrentUser}
+                  className="w-full text-sm resize-none"
+                  value={state?.comment || ""}
+                  onChange={(e) =>
+                    handleCommentChange(approver.id, e.target.value)
+                  }
+                  placeholder={
+                    isCurrentUser ? "Add your comments here..." : "No comment"
+                  }
                 />
               </div>
+
+              {/* Update Button */}
+              {isCurrentUser && (
+                <div className="flex justify-end">
+                  <Button
+                    onClick={() => handleUpdateApproval(approver.id)}
+                    disabled={!canUpdate || isUpdating}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    size="sm"
+                  >
+                    {isUpdating ? "Updating..." : "Update Approval"}
+                  </Button>
+                </div>
+              )}
+
               {/* Timestamps */}
               {approver.status.toLowerCase() !== "pending" && (
                 <div className="text-xs text-gray-400">

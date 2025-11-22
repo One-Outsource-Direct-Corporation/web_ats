@@ -61,7 +61,7 @@ export const useUsersByDepartment = ({
   return { users, loading, error, refetch: fetchUsers };
 };
 
-export const useUsers = ({ position }: { position?: string }) => {
+export const useUsers = ({ position = "" }: { position?: string }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);

@@ -129,8 +129,8 @@ export function stateToDataFormat<T extends object>(
     baseData.pipeline = baseData.pipeline.map((step: any) => {
       const normalizedStep: any = {
         ...step,
-        hiring_managers: Array.isArray(step.hiring_managers)
-          ? step.hiring_managers.map((mgr: any) =>
+        human_resources: Array.isArray(step.human_resources)
+          ? step.human_resources.map((mgr: any) =>
               typeof mgr === "object" && mgr !== null && "id" in mgr
                 ? mgr.id
                 : mgr
