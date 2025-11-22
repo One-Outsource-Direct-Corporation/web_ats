@@ -4,6 +4,7 @@ import formatName from "@/shared/utils/formatName";
 import DOMPurify from "dompurify";
 import { formatDepartmentName } from "@/shared/utils/formatDepartmentName";
 import { formatTime } from "@/shared/utils/formatDate";
+import Approver from "./Approver";
 
 interface PreviewInfoProps {
   step: number;
@@ -23,7 +24,7 @@ export const PreviewInfo = ({ step, formData }: PreviewInfoProps) => {
 
   return (
     <div className="border rounded-md p-4 bg-white text-sm h-fit sticky top-28 space-y-4">
-      {step !== 1 && step !== 6 && (
+      {step > 1 && step < 6 && (
         <>
           <div className="space-y-2">
             <h2 className="text-blue-700 font-bold text-sm border-l-4 border-blue-700 pl-2 uppercase">
@@ -204,112 +205,11 @@ export const PreviewInfo = ({ step, formData }: PreviewInfoProps) => {
           )}
         </>
       )}
-      {step === 6 && (
-        <div className="space-y-6">
-          <h2 className="text-blue-700 font-bold text-sm border-l-4 border-blue-700 pl-2 uppercase">
-            APPROVAL
-          </h2>
-          {[1, 2, 3].map((stepNumber, i) => {
-            const titles = [
-              {
-                title: "HR Manager Review",
-                subtitle: "Initial review and budget allocation",
-                label: "HR Manager",
-              },
-              {
-                title: "Finance Approval",
-                subtitle: "Budget verification",
-                label: "Finance Manager",
-              },
-              {
-                title: "Final Approval",
-                subtitle: "Final approval before position opens",
-                label: "General Manager",
-              },
-            ];
-            const isLast = i === 2;
-            const { title, subtitle, label } = titles[i];
-
-            return (
-              <div key={i} className="relative flex gap-4">
-                {/* Left Timeline */}
-                <div className="flex flex-col items-center w-6">
-                  {/* Line */}
-                  {!isLast && (
-                    <div className="absolute top-6 left-[11px] h-full w-px bg-blue-200 z-0" />
-                  )}
-                  {/* Circle */}
-                  <div className="relative z-10 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
-                    {stepNumber}
-                  </div>
-                </div>
-                {/* Right Content */}
-                <div className="border rounded-lg p-4 bg-white shadow space-y-4 flex-1">
-                  {/* Header with title & buttons */}
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-semibold text-sm">{title}</p>
-                      <p className="text-xs text-gray-500">{subtitle}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button className="text-red-600 bg-red-100 px-3 py-1 text-xs rounded">
-                        Reject
-                      </button>
-                      <button className="text-green-600 bg-green-100 px-3 py-1 text-xs rounded">
-                        Approve
-                      </button>
-                    </div>
-                  </div>
-                  {/* Approver */}
-                  <p className="text-sm text-gray-500">
-                    <strong>{label}:</strong> Mr. Carlos Garcia
-                  </p>
-                  {/* Budget Allocation */}
-                  <div>
-                    <label className="text-sm font-semibold block mb-1">
-                      Budget Allocation
-                    </label>
-                    <input
-                      type="text"
-                      value={
-                        formData.job_posting.min_salary &&
-                        formData.job_posting.max_salary
-                          ? `${formData.job_posting.min_salary} - ${formData.job_posting.max_salary}`
-                          : `No budget allocated`
-                      }
-                      disabled
-                      className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm text-gray-500 bg-white"
-                    />
-                  </div>
-                  {/* Comments */}
-                  <div>
-                    <label className="text-sm font-semibold block mb-1">
-                      Comments
-                    </label>
-                    <textarea
-                      rows={4}
-                      disabled
-                      className="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-500 bg-white resize-none"
-                      defaultValue={
-                        stepNumber === 1
-                          ? "Approved. Please confirm final budget availability with Finance before proceeding with recruitment."
-                          : "Add your review comments..."
-                      }
-                    />
-                  </div>
-                  {/* Edit Button */}
-                  {stepNumber === 1 && (
-                    <div>
-                      <button className="px-3 py-1 text-xs rounded bg-gray-100 text-blue-600 hover:bg-gray-200">
-                        Edit
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+      {step === 6 && isPRFDb(formData) && formData.job_posting.approver && (
+        <Approver
+          approvers={formData.job_posting.approver}
+          formData={formData}
+        />
       )}
     </div>
   );
