@@ -35,10 +35,20 @@ export interface JobPostingAPIResponse {
   results: JobPostingDb[] | [];
 }
 
+export interface ApproverDb {
+  id: number;
+  approving_manager: User;
+  comment: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface JobPostingDb extends JobPosting {
   id: number;
   status: string;
   posted_by_display: User;
+  approver: ApproverDb[];
   type: "client" | "prf";
   type_display: "Client" | "PRF";
   target_start_date: string;

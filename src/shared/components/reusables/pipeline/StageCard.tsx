@@ -39,7 +39,7 @@ export function StageCard({
       order: 0,
       stage: 0,
       reminder: "",
-      hiring_managers: [],
+      human_resources: [],
       assessments: [],
     }
   );
@@ -63,7 +63,7 @@ export function StageCard({
       order: 0,
       stage: 0,
       reminder: "",
-      hiring_managers: [],
+      human_resources: [],
       assessments: [],
     });
   }
@@ -85,7 +85,7 @@ export function StageCard({
       order: step.order,
       stage: step.stage,
       reminder: step.reminder,
-      hiring_managers: step.hiring_managers,
+      human_resources: step.human_resources,
       assessments: step.assessments,
     });
     setOpenDialogs((prev) => ({ ...prev, [stage.id]: true }));

@@ -131,7 +131,7 @@ export function usePositionDetail({
   non_admin = false,
 }: {
   id: number | undefined;
-  non_admin: boolean;
+  non_admin?: boolean;
 }) {
   const [position, setPosition] = useState<
     PRFFormData | PositionFormData | null

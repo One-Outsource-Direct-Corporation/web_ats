@@ -45,9 +45,13 @@ export const canAccessRoute = (
 ): boolean => {
   if (!role) return false;
 
-  // Restricted managers can only access positions
+  // Restricted managers can only access base path, positions, and requests
   if (isRestrictedManager(role)) {
-    return route.startsWith("/positions");
+    return (
+      route === "/" ||
+      route.startsWith("/positions") ||
+      route.startsWith("/requests")
+    );
   }
 
   // All other roles have full access

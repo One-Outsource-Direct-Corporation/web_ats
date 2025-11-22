@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { PRFFormData } from "../types/prf.types";
+import type { PRFDb, PRFFormData } from "../types/prf.types";
 import formatName from "@/shared/utils/formatName";
 import DOMPurify from "dompurify";
 import { formatDepartmentName } from "@/shared/utils/formatDepartmentName";
@@ -65,7 +65,9 @@ export const PreviewInfo = ({ step, formData }: PreviewInfoProps) => {
             </p>
             <p>
               <strong>Immediate Supervisor:</strong>{" "}
-              {formData.immediate_supervisor || "Not specified"}
+              {formData.immediate_supervisor
+                ? formData.immediate_supervisor_display?.full_name
+                : "Not specified"}
             </p>
           </div>
           {step >= 2 && step < 6 && (
@@ -205,9 +207,9 @@ export const PreviewInfo = ({ step, formData }: PreviewInfoProps) => {
           )}
         </>
       )}
-      {step === 6 && isPRFDb(formData) && formData.job_posting.approver && (
+      {step === 6 && (formData as PRFDb).job_posting.approver && (
         <Approver
-          approvers={formData.job_posting.approver}
+          approvers={(formData as PRFDb).job_posting.approver}
           formData={formData}
         />
       )}

@@ -15,27 +15,27 @@ import { Trash2, Plus, X, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import type { User } from "@/features/auth/types/auth.types";
 
-interface HiringManagerMemberProps {
-  hiringManagers: User[] | [];
-  handleHiringManagerSelection: (manager: User) => void;
+interface HumanResourcesProps {
+  humanResources: User[] | [];
+  handleHumanResourcesSelection: (manager: User) => void;
 }
 
-export function HiringManagerMember({
-  hiringManagers,
-  handleHiringManagerSelection,
-}: HiringManagerMemberProps) {
-  const [showViewHiringManager, setShowViewHiringManager] = useState(false);
+export function HumanResourcesMember({
+  humanResources,
+  handleHumanResourcesSelection,
+}: HumanResourcesProps) {
+  const [showViewHumanResources, setShowViewHumanResources] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
-  const { users } = useUsers({ position: "hiring_manager" });
+  const { users } = useUsers({ position: "human_resources" });
 
-  const handleToggleViewHiringManager = () => {
-    setShowViewHiringManager((prev) => !prev);
+  const handleToggleViewHumanResources = () => {
+    setShowViewHumanResources((prev) => !prev);
   };
 
   // Filter users by role and search value
   const filteredUsers = users
-    .filter((user) => user.role === "hiring_manager")
+    .filter((user) => user.role === "human_resources")
     .filter((user) =>
       user.full_name.toLowerCase().includes(searchValue.toLowerCase())
     );
@@ -44,17 +44,17 @@ export function HiringManagerMember({
     <div>
       <div className="flex items-center justify-between mb-2">
         <label className="text-sm font-medium text-gray-700">
-          Hiring Manager
+          Human Resources
         </label>
         <Button
           type="button"
           variant="ghost"
           size="sm"
           className="text-blue-600 hover:text-blue-700"
-          onClick={handleToggleViewHiringManager}
+          onClick={handleToggleViewHumanResources}
         >
-          View Hiring Manager{" "}
-          {showViewHiringManager ? (
+          View Human Resources{" "}
+          {showViewHumanResources ? (
             <ChevronUp className="h-4 w-4 ml-1" />
           ) : (
             <ChevronDown className="h-4 w-4 ml-1" />
@@ -63,7 +63,7 @@ export function HiringManagerMember({
       </div>
 
       <Input
-        placeholder="Search hiring manager name"
+        placeholder="Search human resources name"
         value={searchValue}
         onChange={(e) => setSearchValue(e.target.value)}
         className="mb-3"
@@ -79,19 +79,19 @@ export function HiringManagerMember({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {hiringManagers.length === 0 ? (
+            {humanResources.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={3}
                   className="text-center text-gray-500 py-8"
                 >
-                  No hiring manager selected
+                  No human resources selected
                 </TableCell>
               </TableRow>
             ) : (
               filteredUsers
                 .filter((manager) =>
-                  hiringManagers.some((hm) => hm.id === manager.id)
+                  humanResources.some((hm) => hm.id === manager.id)
                 )
                 .map((manager) => (
                   <TableRow key={manager.id}>
@@ -103,7 +103,7 @@ export function HiringManagerMember({
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-red-600"
-                        onClick={() => handleHiringManagerSelection(manager)}
+                        onClick={() => handleHumanResourcesSelection(manager)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -115,8 +115,8 @@ export function HiringManagerMember({
         </Table>
       </div>
 
-      {/* View Hiring Manager Expanded List */}
-      {showViewHiringManager && (
+      {/* View Human Resources Expanded List */}
+      {showViewHumanResources && (
         <div className="mt-3 border rounded-lg overflow-hidden bg-blue-50">
           <div className="bg-blue-600 text-white p-3">
             <h4 className="font-semibold">Pipeline Stages</h4>
@@ -135,7 +135,7 @@ export function HiringManagerMember({
             </TableHeader>
             <TableBody>
               {filteredUsers.map((manager) => {
-                const isSelected = hiringManagers.some(
+                const isSelected = humanResources.some(
                   (hm) => hm.id === manager.id
                 );
                 return (
@@ -161,7 +161,7 @@ export function HiringManagerMember({
                               ? "text-red-600 hover:text-red-700"
                               : "text-blue-600 hover:text-blue-700"
                           }`}
-                          onClick={() => handleHiringManagerSelection(manager)}
+                          onClick={() => handleHumanResourcesSelection(manager)}
                         >
                           {isSelected ? (
                             <X className="h-4 w-4" />

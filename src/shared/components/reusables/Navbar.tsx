@@ -33,11 +33,12 @@ function isActivePath(basePath: string) {
   );
 }
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { toast } from "react-toastify";
 import type { AxiosError } from "axios";
 import { useLogout } from "@/features/auth/hooks/useLogout";
+import { getAccessibleRoutes } from "@/features/auth/utils/rolePermissions";
 
 export function Navbar() {
   const location = useLocation();
@@ -47,7 +48,7 @@ export function Navbar() {
   const { user } = useAuth();
   const { logout } = useLogout();
 
-  const routes = [
+  const allRoutes = [
     {
       path: "/dashboard",
       label: "Dashboard",
@@ -74,6 +75,14 @@ export function Navbar() {
       icon: Library,
     },
   ];
+
+  // Get filtered routes based on user role
+  const routes = useMemo(() => {
+    const accessibleRoutes = getAccessibleRoutes(user?.role);
+    return allRoutes.filter((route) =>
+      accessibleRoutes.some((ar) => ar.path === route.path)
+    );
+  }, [user?.role]);
 
   const handleLogout = async () => {
     try {

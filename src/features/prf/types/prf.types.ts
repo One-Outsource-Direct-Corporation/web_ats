@@ -1,3 +1,4 @@
+import type { User } from "@/features/auth/types/auth.types";
 import type {
   JobPosting,
   JobPostingDb,
@@ -21,6 +22,7 @@ export interface PRFHiringManagerResponse {
 export interface PRFBase {
   business_unit: string | null;
   immediate_supervisor: number | null;
+  immediate_supervisor_display: User | null;
   category: string | null;
   work_schedule_from: string | null;
   work_schedule_to: string | null;
@@ -37,6 +39,7 @@ export interface PRF extends PRFBase {
 export interface PRFDb extends Omit<PRF, "job_posting"> {
   id: number;
   job_posting: JobPostingDb;
+  immediate_supervisor_display: User | null;
   posted_by: string;
   created_at: Date;
   updated_at: Date;
