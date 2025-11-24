@@ -25,6 +25,7 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
 import { formatBackgroundStatus } from "@/shared/utils/formatBackgroundStatus";
+import { ApprovalPipelineDropdown } from "../components/ApprovalPipelineDropdown";
 
 interface SelectedItem {
   id: number;
@@ -50,6 +51,7 @@ export default function Request({ manager = false }: { manager?: boolean }) {
     order_by: filters.order_by,
     published: "",
   });
+
   const selectAll = positions
     ? positions.results.length > 0 &&
       selectedItems.length === positions.results.length
@@ -267,13 +269,17 @@ export default function Request({ manager = false }: { manager?: boolean }) {
                           </span>
                         </td>
                         <td className="px-4 py-3 text-center">
-                          {item.status === "pending" ? (
-                            <span className="text-gray-400">—</span>
+                          {item.type === "prf" ? (
+                            item.approver && item.approver.length > 0 ? (
+                              <ApprovalPipelineDropdown
+                                approvers={item.approver}
+                              />
+                            ) : (
+                              <span className="text-gray-500 text-xs">
+                                No Approver
+                              </span>
+                            )
                           ) : (
-                            // Bring back when approval pipeline is available
-                            // <ApprovalPipelineDropdown
-                            //   pipeline={item.approvalPipeline}
-                            // />
                             <span className="text-gray-400">—</span>
                           )}
                         </td>

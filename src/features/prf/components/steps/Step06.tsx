@@ -20,7 +20,6 @@ export const Step06 = ({
   handleSubmit,
   updateMode,
 }: Step06Props) => {
-  // Preview all entered data and submit
   return (
     <div className="gap-8 mt-6 text-gray-800 space-y-6">
       <div className="lg:col-span-2 space-y-10">
