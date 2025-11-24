@@ -79,6 +79,14 @@ export default function EditRequestItem() {
         </div>
 
         <div className="flex items-center gap-2">
+          {((position as PRFDb) || (position as PositionDb)).approval_status
+            ?.is_fully_approved &&
+            ((position as PRFDb) || (position as PositionDb)).job_posting
+              .status !== "active" && (
+              <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-200">
+                Ready to Activate
+              </span>
+            )}
           <Select
             value={
               ((position as PRFDb) || (position as PositionDb)).job_posting
@@ -93,13 +101,13 @@ export default function EditRequestItem() {
                 await axiosPrivate.patch(endpoint, {
                   job_posting: { status: value },
                 });
-                refetch(); // Refetch to update the position data
+                refetch();
                 toast.success("Status updated successfully");
               } catch (err: AxiosError | any) {
                 console.error("Error updating status:", err);
                 toast.error(
                   err.response?.data?.detail ||
-                    err.response?.data?.status ||
+                    err.response?.data?.error ||
                     "Failed to update status"
                 );
               }

@@ -33,7 +33,7 @@ export function ApprovalPipelineDropdown({
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="center">
-        <div className="bg-white rounded-lg shadow-lg">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="px-4 py-3 border-b">
             <h3 className="font-semibold text-sm">Approval Pipeline</h3>
           </div>

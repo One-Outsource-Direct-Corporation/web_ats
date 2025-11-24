@@ -45,7 +45,7 @@ export const Step06 = ({
       ) : (
         <Approver
           formData={formData}
-          approvers={(formData as PRFDb).job_posting.approver}
+          approvers={(formData as PRFDb).approving_managers}
         />
       )}
     </div>

@@ -1,5 +1,7 @@
 import type { User } from "@/features/auth/types/auth.types";
 import type {
+  ApprovalStatusDb,
+  ApproverDb,
   JobPosting,
   JobPostingDb,
 } from "@/features/positions-client/types/create_position.types";
@@ -40,6 +42,8 @@ export interface PRFDb extends Omit<PRF, "job_posting"> {
   id: number;
   job_posting: JobPostingDb;
   immediate_supervisor_display: User | null;
+  approving_managers: ApproverDb[];
+  approval_status: ApprovalStatusDb;
   posted_by: string;
   created_at: Date;
   updated_at: Date;

@@ -26,6 +26,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { formatBackgroundStatus } from "@/shared/utils/formatBackgroundStatus";
 import { ApprovalPipelineDropdown } from "../components/ApprovalPipelineDropdown";
+import type { JobPostingDbWithApprovers } from "@/features/positions-client/types/create_position.types";
 
 interface SelectedItem {
   id: number;
@@ -51,7 +52,6 @@ export default function Request({ manager = false }: { manager?: boolean }) {
     order_by: filters.order_by,
     published: "",
   });
-
   const selectAll = positions
     ? positions.results.length > 0 &&
       selectedItems.length === positions.results.length
@@ -270,9 +270,15 @@ export default function Request({ manager = false }: { manager?: boolean }) {
                         </td>
                         <td className="px-4 py-3 text-center">
                           {item.type === "prf" ? (
-                            item.approver && item.approver.length > 0 ? (
+                            (item as JobPostingDbWithApprovers)
+                              .approving_managers &&
+                            (item as JobPostingDbWithApprovers)
+                              .approving_managers.length > 0 ? (
                               <ApprovalPipelineDropdown
-                                approvers={item.approver}
+                                approvers={
+                                  (item as JobPostingDbWithApprovers)
+                                    .approving_managers
+                                }
                               />
                             ) : (
                               <span className="text-gray-500 text-xs">

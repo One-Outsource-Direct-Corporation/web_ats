@@ -35,6 +35,8 @@ export default function Approver({
   const { user } = useAuth();
   const axiosPrivate = useAxiosPrivate();
 
+  console.log(approvers);
+
   const [approverStates, setApproverStates] = useState<
     Record<number, ApproverState>
   >(

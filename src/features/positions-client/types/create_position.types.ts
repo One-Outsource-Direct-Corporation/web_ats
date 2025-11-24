@@ -26,6 +26,7 @@ export interface JobPosting {
   responsibilities: string | null;
   qualifications: string | null;
   working_site: string | null;
+  approving_manager?: ApproverDb[];
 }
 
 export interface JobPostingAPIResponse {
@@ -44,11 +45,16 @@ export interface ApproverDb {
   updated_at: string;
 }
 
+export interface ApprovalStatusDb {
+  approved_count: number;
+  is_fully_approved: boolean;
+  required_count: number;
+}
+
 export interface JobPostingDb extends JobPosting {
   id: number;
   status: string;
   posted_by_display: User;
-  approver: ApproverDb[];
   type: "client" | "prf";
   type_display: "Client" | "PRF";
   target_start_date: string;
@@ -57,6 +63,10 @@ export interface JobPostingDb extends JobPosting {
   posted_by: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface JobPostingDbWithApprovers extends JobPostingDb {
+  approving_managers: ApproverDb[];
 }
 
 export interface ClientBase {
