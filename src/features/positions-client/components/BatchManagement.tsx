@@ -1,13 +1,21 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
-import { Plus, Trash2, Edit, Check, X } from "lucide-react";
+import { Plus, Trash2, Edit, Check, X, CalendarIcon } from "lucide-react";
 import type {
   BatchEntry,
   BatchEntryDb,
   BatchEntryLocal,
 } from "../types/location_and_batch.types";
 import { formatDate } from "@/shared/utils/formatDate";
+import { Calendar } from "@/shared/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/shared/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 interface BatchManagementProps {
   batches: BatchEntry[];
@@ -225,23 +233,43 @@ export const BatchManagement = ({
                   />
                 </td>
                 <td className="px-4 py-3">
-                  <Input
-                    type="date"
-                    value={
-                      newBatch.deployment_date
-                        ? new Date(newBatch.deployment_date)
-                            .toISOString()
-                            .split("T")[0]
-                        : ""
-                    }
-                    onChange={(e) =>
-                      setNewBatch({
-                        ...newBatch,
-                        deployment_date: e.target.value ? e.target.value : null,
-                      })
-                    }
-                    className="w-full"
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !newBatch.deployment_date && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {newBatch.deployment_date ? (
+                          format(new Date(newBatch.deployment_date), "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={
+                          newBatch.deployment_date
+                            ? new Date(newBatch.deployment_date)
+                            : undefined
+                        }
+                        onSelect={(date) =>
+                          setNewBatch({
+                            ...newBatch,
+                            deployment_date: date
+                              ? format(date, "yyyy-MM-dd")
+                              : null,
+                          })
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-center gap-2">
@@ -323,25 +351,47 @@ export const BatchManagement = ({
                   </td>
                   <td className="px-4 py-3">
                     {editingBatchId === batchId ? (
-                      <Input
-                        type="date"
-                        value={
-                          editFormData.deployment_date
-                            ? new Date(editFormData.deployment_date)
-                                .toISOString()
-                                .split("T")[0]
-                            : ""
-                        }
-                        onChange={(e) =>
-                          setEditFormData({
-                            ...editFormData,
-                            deployment_date: e.target.value
-                              ? e.target.value
-                              : null,
-                          })
-                        }
-                        className="w-full"
-                      />
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !editFormData.deployment_date &&
+                                "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {editFormData.deployment_date ? (
+                              format(
+                                new Date(editFormData.deployment_date),
+                                "PPP"
+                              )
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={
+                              editFormData.deployment_date
+                                ? new Date(editFormData.deployment_date)
+                                : undefined
+                            }
+                            onSelect={(date) =>
+                              setEditFormData({
+                                ...editFormData,
+                                deployment_date: date
+                                  ? format(date, "yyyy-MM-dd")
+                                  : null,
+                              })
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
                     ) : (
                       <span className="text-gray-600">
                         {formatDate(

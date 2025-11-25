@@ -51,7 +51,9 @@ export default function Request({ manager = false }: { manager?: boolean }) {
     work_setup: filters.work_setup,
     order_by: filters.order_by,
     published: "",
+    exclude_draft: manager ? true : false,
   });
+
   const selectAll = positions
     ? positions.results.length > 0 &&
       selectedItems.length === positions.results.length
@@ -263,9 +265,7 @@ export default function Request({ manager = false }: { manager?: boolean }) {
                                 : "bg-neutral-700 text-neutral-100"
                             }`}
                           >
-                            {item.type_display === "PRF"
-                              ? "Internal"
-                              : "Client"}
+                            {item.type === "prf" ? "Internal" : "Client"}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-center">

@@ -118,8 +118,31 @@ export function stateToDataFormat<T extends object>(
         assessments: Array.isArray(step.assessments)
           ? step.assessments.map((assessment: any) => {
               const normalizedAssessment: any = { ...assessment };
+
               if (assessment.id !== undefined)
                 normalizedAssessment.id = assessment.id;
+
+              /* 
+                Backend Handling for Assessment Files:
+                1. New File: 'file' is a File object. It will be extracted to request.FILES. 
+                   JSON 'file' field will be null. Backend creates new file.
+                2. Existing/Template File: 'file' is { id: ... }. 
+                   JSON 'file' field will be { id: ... }. Backend links existing file.
+                3. No File: 'file' is null.
+              */
+              if (
+                normalizedAssessment.file &&
+                !(normalizedAssessment.file instanceof File)
+              ) {
+                if (normalizedAssessment.file.id) {
+                  normalizedAssessment.file = {
+                    id: normalizedAssessment.file.id,
+                  };
+                } else {
+                  normalizedAssessment.file = null;
+                }
+              }
+
               delete normalizedAssessment.tempId;
               return normalizedAssessment;
             })
@@ -194,6 +217,7 @@ export function stateToDataFormat<T extends object>(
     baseData.batches_input = baseData.batches;
     delete baseData.batches;
   }
+  console.log("Base Data:", baseData);
 
   const { data: jsonData, files } = extractFiles(baseData);
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
-import { Plus, Trash2, Edit, Check, X, Eye } from "lucide-react";
+import { Plus, Trash2, Edit, Check, X, Eye, CalendarIcon } from "lucide-react";
 import type {
   BatchEntry,
   BatchEntryDb,
@@ -17,6 +17,14 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import { formatDate } from "@/shared/utils/formatDate";
+import { Calendar } from "@/shared/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/shared/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 interface LocationManagementProps {
   locations: LocationEntry[];
@@ -194,19 +202,44 @@ export const LocationManagement = ({
                   {newLocation.with_batch ? (
                     <span className="text-gray-600">-</span>
                   ) : (
-                    <Input
-                      type="date"
-                      value={newLocation.deployment_date ?? ""}
-                      onChange={(e) =>
-                        setNewLocation({
-                          ...newLocation,
-                          deployment_date: e.target.value
-                            ? e.target.value
-                            : null,
-                        })
-                      }
-                      className="w-full"
-                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !newLocation.deployment_date &&
+                              "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {newLocation.deployment_date ? (
+                            format(new Date(newLocation.deployment_date), "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={
+                            newLocation.deployment_date
+                              ? new Date(newLocation.deployment_date)
+                              : undefined
+                          }
+                          onSelect={(date) =>
+                            setNewLocation({
+                              ...newLocation,
+                              deployment_date: date
+                                ? format(date, "yyyy-MM-dd")
+                                : null,
+                            })
+                          }
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                   )}
                 </td>
                 <td className="px-4 py-3">
@@ -329,17 +362,47 @@ export const LocationManagement = ({
                         editFormData.with_batch ? (
                           <span className="text-gray-600">-</span>
                         ) : (
-                          <Input
-                            type="date"
-                            value={editFormData.deployment_date ?? ""}
-                            onChange={(e) =>
-                              setEditFormData({
-                                ...editFormData,
-                                deployment_date: e.target.value,
-                              })
-                            }
-                            className="w-full"
-                          />
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full justify-start text-left font-normal",
+                                  !editFormData.deployment_date &&
+                                    "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {editFormData.deployment_date ? (
+                                  format(
+                                    new Date(editFormData.deployment_date),
+                                    "PPP"
+                                  )
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                              <Calendar
+                                mode="single"
+                                selected={
+                                  editFormData.deployment_date
+                                    ? new Date(editFormData.deployment_date)
+                                    : undefined
+                                }
+                                onSelect={(date) =>
+                                  setEditFormData({
+                                    ...editFormData,
+                                    deployment_date: date
+                                      ? format(date, "yyyy-MM-dd")
+                                      : null,
+                                  })
+                                }
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
                         )
                       ) : (
                         <span className="text-gray-600">

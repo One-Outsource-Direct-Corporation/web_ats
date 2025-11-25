@@ -32,7 +32,7 @@ export type Section = SectionLocal | SectionDb;
 export interface QuestionnaireBase {
   question: string;
   description?: string;
-  question_type: "Multiple Choice" | "Checkboxes" | "Text Entry" | "Paragraph";
+  type: "Multiple Choice" | "Checkboxes" | "Text Entry" | "Paragraph";
   options?: QuestionOption[];
   parameter?: string;
 }

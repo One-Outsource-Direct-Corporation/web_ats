@@ -33,7 +33,6 @@ export default function CareersLandingPage() {
   };
 
   const { positions, loading, error } = usePositions({
-    status: "active",
     non_admin: true,
   });
 

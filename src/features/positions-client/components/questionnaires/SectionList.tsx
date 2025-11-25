@@ -115,6 +115,8 @@ export function SectionList({
     onDeleteSection(getIdSection(section));
   }
 
+  console.log(sections);
+
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-4">
@@ -209,14 +211,14 @@ export function SectionList({
                 {section.questionnaires.filter(
                   (q) => !(q as QuestionnaireDb)._delete
                 ).length > 0 && (
-                  <div className="px-4 py-3 border-t border-gray-200">
+                  <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
                     <div className="space-y-2">
                       {section.questionnaires
                         .filter((q) => !(q as QuestionnaireDb)._delete)
                         .map((question) => (
                           <div
                             key={getIdQuestion(question)}
-                            className="flex items-center justify-between p-2rounded"
+                            className="flex items-center justify-between p-3 rounded-md bg-white border border-gray-200 shadow-sm"
                           >
                             <div>
                               <p className="text-sm font-medium text-gray-900">
@@ -228,7 +230,7 @@ export function SectionList({
                                 </p>
                               )}
                               <p className="text-xs text-gray-400">
-                                {question.question_type}
+                                {question.type}
                               </p>
                             </div>
                             <div className="flex gap-1">

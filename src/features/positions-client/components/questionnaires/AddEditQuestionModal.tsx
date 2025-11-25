@@ -38,7 +38,7 @@ interface AddEditQuestionModalProps {
 const defaultForm: QuestionnaireBase = {
   question: "",
   description: "",
-  question_type: "Multiple Choice",
+  type: "Multiple Choice",
   parameter: undefined,
   options: undefined,
 };
@@ -58,7 +58,7 @@ export function AddEditQuestionModal({
       setQuestionForm({
         question: question.question,
         description: question.description || "",
-        question_type: question.question_type,
+        type: question.type,
         parameter: question.parameter,
         options: question.options,
       });
@@ -118,15 +118,14 @@ export function AddEditQuestionModal({
       ...(isEdit && question ? question : { tempId: `temp-${Date.now()}` }),
       question: questionForm.question,
       description: questionForm.description || undefined,
-      question_type: questionForm.question_type,
+      type: questionForm.type,
       options:
-        questionForm.question_type === "Multiple Choice" ||
-        questionForm.question_type === "Checkboxes"
+        questionForm.type === "Multiple Choice" ||
+        questionForm.type === "Checkboxes"
           ? questionForm.options?.filter((opt) => opt.value.trim() !== "")
           : undefined,
       parameter:
-        questionForm.question_type === "Text Entry" ||
-        questionForm.question_type === "Paragraph"
+        questionForm.type === "Text Entry" || questionForm.type === "Paragraph"
           ? questionForm.parameter
           : undefined,
     };
@@ -144,6 +143,8 @@ export function AddEditQuestionModal({
       }
     }
   };
+
+  console.log(questionForm);
 
   return (
     <Dialog open={showDialog} onOpenChange={setShowDialog}>
@@ -195,14 +196,14 @@ export function AddEditQuestionModal({
           <Field>
             <FieldLabel>Question Type</FieldLabel>
             <Select
-              value={questionForm.question_type}
+              value={questionForm.type}
               onValueChange={(
                 value:
                   | "Multiple Choice"
                   | "Checkboxes"
                   | "Text Entry"
                   | "Paragraph"
-              ) => handleFormChange("question_type", value)}
+              ) => handleFormChange("type", value)}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select question type" />
@@ -216,8 +217,8 @@ export function AddEditQuestionModal({
             </Select>
           </Field>
 
-          {(questionForm.question_type === "Multiple Choice" ||
-            questionForm.question_type === "Checkboxes") && (
+          {(questionForm.type === "Multiple Choice" ||
+            questionForm.type === "Checkboxes") && (
             <FieldGroup>
               <FieldLabel>Options</FieldLabel>
               <FieldGroup className="grid grid-cols-1 gap-2">
@@ -285,8 +286,8 @@ export function AddEditQuestionModal({
               </Button>
             </FieldGroup>
           )}
-          {(questionForm.question_type === "Text Entry" ||
-            questionForm.question_type === "Paragraph") && (
+          {(questionForm.type === "Text Entry" ||
+            questionForm.type === "Paragraph") && (
             <Field>
               <FieldLabel className="block text-base font-medium text-gray-800">
                 Parameter Value
@@ -297,7 +298,7 @@ export function AddEditQuestionModal({
                 onChange={(e) => handleFormChange("parameter", e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-md text-base"
                 placeholder={
-                  questionForm.question_type === "Paragraph"
+                  questionForm.type === "Paragraph"
                     ? "Enter parameter value (e.g., essay, long answer)"
                     : "Enter parameter value"
                 }

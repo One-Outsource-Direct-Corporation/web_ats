@@ -21,6 +21,7 @@ export function usePositions({
   published = "false",
   no_active = false,
   non_admin = false,
+  exclude_draft = false,
 }) {
   const [positions, setPositions] = useState<
     | JobPostingAPIResponse
@@ -60,6 +61,7 @@ export function usePositions({
           work_setup ? `work_setup=${work_setup}` : "",
           order_by ? `order_by=${order_by}` : "",
           published ? `published=${published}` : "",
+          exclude_draft ? `exclude_draft=${exclude_draft}` : "",
         ]
           .filter(Boolean)
           .join("&");
@@ -78,6 +80,7 @@ export function usePositions({
           work_setup ? `work_setup=${work_setup}` : "",
           order_by ? `order_by=${order_by}` : "",
           published ? `published=${published}` : "",
+          exclude_draft ? `exclude_draft=${exclude_draft}` : "",
         ]
           .filter(Boolean)
           .join("&");

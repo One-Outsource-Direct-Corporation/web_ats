@@ -10,12 +10,12 @@ export default function ManagersView() {
     id: Number(params.positionId),
   });
 
-  console.log(params);
+  console.log(position);
 
   const approvers =
     position && "type" in (position as PRFDb).job_posting
       ? (position as PRFDb).job_posting.type === "prf"
-        ? (position as PRFDb).job_posting.approver
+        ? (position as PRFDb).approving_managers
         : []
       : [];
 

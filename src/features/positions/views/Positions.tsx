@@ -50,7 +50,7 @@ export default function Positions() {
 
       {/* Main content section */}
       {loading && <LoadingComponent />}
-      <div className="max-w-7xl mx-auto w-full my-5 px-6">
+      <div className="max-w-7xl mx-auto w-full mt-5 px-6">
         {error && (
           <div className="text-red-600 text-center">
             Error loading positions
