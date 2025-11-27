@@ -137,6 +137,11 @@ export default function PositionClient({
           return;
         }
 
+        if (err.response?.data?.error) {
+          toast.error(err.response.data.error);
+          return;
+        }
+
         if (err.response?.data) {
           const serverErrors = mapServerErrorsToSteps(err.response.data);
           updateStepErrors(serverErrors);
