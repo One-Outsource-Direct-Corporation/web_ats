@@ -127,7 +127,7 @@ export const testData = (): PositionFormData => ({
           questionnaires: [
             {
               tempId: "temp-1762933776009",
-              name: "123",
+              question: "123",
               description: "123",
               type: "Paragraph",
               parameter: "123",
@@ -146,7 +146,7 @@ export const testData = (): PositionFormData => ({
       order: 1,
       stage: 1,
       reminder: "2025-11-26T15:55",
-      hiring_managers: [],
+      human_resources: [],
       assessments: [],
       tempId: "tmp-1762933870971",
     },
@@ -167,6 +167,7 @@ export const testData = (): PositionFormData => ({
       deployment_date: "2025-11-27",
       tempId: "tmp-1762933739785",
       location: "tmp-1762933731892",
+      district: "Makati",
     },
   ],
 });

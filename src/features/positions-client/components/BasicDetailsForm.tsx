@@ -355,7 +355,8 @@ export const BasicDetailsForm = ({
                 <SelectContent>
                   <SelectItem value="new_position">New Position</SelectItem>
                   <SelectItem value="replacement">Replacement</SelectItem>
-                  <SelectItem value="others">Others, Please Specify</SelectItem>
+                  <SelectItem value="reliver">Reliver</SelectItem>
+                  <SelectItem value="other">Others, Please Specify</SelectItem>
                 </SelectContent>
               </Select>
               {errorFields?.job_posting?.reason_for_posting && (
@@ -364,7 +365,7 @@ export const BasicDetailsForm = ({
                 </FieldError>
               )}
             </Field>
-            {formData.job_posting.reason_for_posting === "others" && (
+            {formData.job_posting.reason_for_posting === "other" && (
               <Field>
                 <FieldLabel>Please Specify *</FieldLabel>
                 <Input
