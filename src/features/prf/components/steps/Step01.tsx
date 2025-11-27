@@ -173,10 +173,10 @@ export const Step01 = ({
                   <SelectValue placeholder="Select a reason" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="New Position">New position</SelectItem>
-                  <SelectItem value="Replacement">Replacement</SelectItem>
-                  <SelectItem value="Reliver">Reliver</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
+                  <SelectItem value="new_position">New position</SelectItem>
+                  <SelectItem value="replacement">Replacement</SelectItem>
+                  <SelectItem value="reliver">Reliver</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
               {getJobPostingError(errors, "reason_for_posting") && (

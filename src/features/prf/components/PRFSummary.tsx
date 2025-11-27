@@ -80,7 +80,7 @@ export default function PRFSummary({ formData }: PRFSummaryProps) {
               <span className="text-gray-900 text-right max-w-xs">
                 {formData.job_posting.reason_for_posting === "Other"
                   ? formData.job_posting.other_reason_for_posting
-                  : formData.job_posting.reason_for_posting}
+                  : formatName(formData.job_posting.reason_for_posting || "")}
               </span>
             </div>
           </div>
