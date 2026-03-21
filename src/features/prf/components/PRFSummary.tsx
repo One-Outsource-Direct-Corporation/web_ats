@@ -105,7 +105,7 @@ export default function PRFSummary({ formData }: PRFSummaryProps) {
               <span className="text-gray-600 font-medium">Department</span>
               <span className="text-gray-900">
                 {formatDepartmentName(
-                  formData.job_posting.department_name ?? ""
+                  formData.job_posting.department_name ?? "",
                 )}
               </span>
             </div>
@@ -176,8 +176,8 @@ export default function PRFSummary({ formData }: PRFSummaryProps) {
             <div className="text-gray-900 flex items-center gap-1">
               <Clock className="h-4 w-4" />
               {formatTime(
-                formData.work_schedule_from ?? "",
-                formData.work_schedule_to ?? ""
+                formData.job_posting.work_schedule_from ?? "",
+                formData.job_posting.work_schedule_to ?? "",
               ) || "Not specified"}
             </div>
           </div>
@@ -199,7 +199,7 @@ export default function PRFSummary({ formData }: PRFSummaryProps) {
               className="text-gray-700 text-sm leading-relaxed preview-content"
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize(
-                  formData.job_posting?.description || ""
+                  formData.job_posting?.description || "",
                 ),
               }}
             />
@@ -210,7 +210,7 @@ export default function PRFSummary({ formData }: PRFSummaryProps) {
               className="text-gray-700 text-sm leading-relaxed preview-content"
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize(
-                  formData.job_posting?.responsibilities || ""
+                  formData.job_posting?.responsibilities || "",
                 ),
               }}
             />
@@ -221,7 +221,7 @@ export default function PRFSummary({ formData }: PRFSummaryProps) {
               className="text-gray-700 text-sm leading-relaxed preview-content"
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize(
-                  formData.job_posting?.qualifications || ""
+                  formData.job_posting?.qualifications || "",
                 ),
               }}
             />

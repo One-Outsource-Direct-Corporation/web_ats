@@ -1,7 +1,7 @@
 import type { ApplicationForm } from "@/features/careers/types/job.types";
 import type { User } from "@/features/auth/types/auth.types";
 import type { PipelineStep } from "@/shared/types/pipeline.types";
-import type { JobPostingDb } from "@/features/positions-client/types/create_position.types";
+import type { JobPostingResponse } from "@/features/external_posting/types/externalPosting.types";
 
 export interface PositionData {
   id: number;
@@ -110,7 +110,7 @@ export interface PositionsActions {
       | TabType
       | "publishedInternal"
       | "publishedExternal"
-      | "published"
+      | "published",
   ) => void;
   handleTabChange: (value: string) => void;
 }
@@ -141,5 +141,5 @@ export interface PositionAPIResponse {
   count: number;
   next: string | null;
   previous: string | null;
-  results: JobPostingDb[];
+  results: JobPostingResponse[];
 }

@@ -10,7 +10,7 @@ import {
   SelectItem,
 } from "@/shared/components/ui/select.tsx";
 import { useEffect, useState } from "react";
-import { useJobs } from "@/features/jobs/hooks/useJobs";
+import { useJobs, useJobsQuery } from "@/features/jobs/hooks/useJobs";
 import type { Job } from "@/features/jobs/types/job.types";
 
 const statusColor: Record<string, string> = {
@@ -36,6 +36,7 @@ function getStatusCircle(status?: string) {
 export default function Job() {
   const navigate = useNavigate();
   const jobs = useJobs();
+  const { isLoading, isError } = useJobsQuery();
   const [selectedJobTitle, setSelectedJobTitle] = useState<string>("");
   const [dynamicLink, setDynamicLink] = useState<string>("");
 
@@ -129,7 +130,19 @@ export default function Job() {
                 </tr>
               </thead>
               <tbody>
-                {jobs.length === 0 ? (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-6 text-gray-400">
+                      Loading jobs...
+                    </td>
+                  </tr>
+                ) : isError ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-6 text-red-500">
+                      Failed to load jobs.
+                    </td>
+                  </tr>
+                ) : jobs.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="text-center py-6 text-gray-400">
                       No jobs found.

@@ -4,7 +4,7 @@ import {
   PopoverTrigger,
 } from "@/shared/components/ui/popover";
 import { CheckCircle, Clock } from "lucide-react";
-import type { ApproverDb } from "@/features/positions-client/types/create_position.types";
+import type { ApproverDb } from "@/features/external_posting/types/externalPosting.types";
 import formatName from "@/shared/utils/formatName";
 
 interface ApprovalPipelineDropdownProps {

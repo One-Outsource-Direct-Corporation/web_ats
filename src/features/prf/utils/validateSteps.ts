@@ -65,10 +65,6 @@ export function validateSteps(formData: PRFFormData): StepErrors {
     errors[1] = step1Errors;
   }
 
-  if (Object.keys(step1Errors).length > 0) {
-    errors[1] = step1Errors;
-  }
-
   // Step 2: Job Posting Basic Details validation
   const step2Errors: ValidationError = {};
 
@@ -77,20 +73,13 @@ export function validateSteps(formData: PRFFormData): StepErrors {
     step2Errors.category = ["This field may not be null."];
   }
 
-  // Validate work_schedule (in Step 2 UI)
-  if (!formData.work_schedule_from) {
-    step2Errors.work_schedule_from = ["This field may not be null."];
-  }
-
-  if (!formData.work_schedule_to) {
-    step2Errors.work_schedule_to = ["This field may not be null."];
-  }
-
   const step2JobPostingFields = [
     "experience_level",
     "employment_type",
     "work_setup",
     "working_site",
+    "work_schedule_from",
+    "work_schedule_to",
     "description",
     "responsibilities",
     "qualifications",
@@ -118,7 +107,7 @@ export function validateSteps(formData: PRFFormData): StepErrors {
   // Step 4: Application Form - Non-negotiable validation
   const step4Errors: ValidationError = {};
   const nonNegotiableErrors = validateNonNegotiable(
-    formData.application_form?.non_negotiable
+    formData.application_form?.non_negotiable,
   );
 
   if (Object.keys(nonNegotiableErrors).length > 0) {
@@ -152,13 +141,11 @@ export function validateSteps(formData: PRFFormData): StepErrors {
  * Maps server validation errors to step-specific errors for PRF form
  */
 export function mapServerErrorsToSteps(
-  serverErrors: ValidationError
+  serverErrors: ValidationError,
 ): StepErrors {
   const fieldMapping: { [field: string]: number } = {
     business_unit: 1,
     category: 1,
-    work_schedule_from: 1,
-    work_schedule_to: 1,
     "job_posting.job_title": 2,
     "job_posting.target_start_date": 2,
     "job_posting.reason_for_posting": 2,
@@ -167,6 +154,8 @@ export function mapServerErrorsToSteps(
     "job_posting.employment_type": 2,
     "job_posting.work_setup": 2,
     "job_posting.working_site": 2,
+    "job_posting.work_schedule_from": 2,
+    "job_posting.work_schedule_to": 2,
     "job_posting.number_of_vacancies": 2,
     "job_posting.min_salary": 2,
     "job_posting.max_salary": 2,
@@ -192,7 +181,7 @@ export function hasStepErrors(stepErrors: ValidationError | null): boolean {
  * Gets a summary of errors for a step
  */
 export function getStepErrorSummary(
-  stepErrors: ValidationError | null
+  stepErrors: ValidationError | null,
 ): string {
   return getErrorSummary(stepErrors);
 }

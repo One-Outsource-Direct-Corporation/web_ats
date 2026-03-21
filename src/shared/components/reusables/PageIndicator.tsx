@@ -1,11 +1,11 @@
-import type { JobPostingAPIResponse } from "@/features/positions-client/types/create_position.types";
+import type { JobPostingListResponse } from "@/features/external_posting/types/externalPosting.types";
 import { Button } from "../ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PageIndicator {
   // loading: boolean;
   // error: any;
-  positions: JobPostingAPIResponse | null;
+  positions: JobPostingListResponse | null;
   currentPage: number;
   // onPageChange: (newPage: number) => void;
   handlePrevPage: () => void;

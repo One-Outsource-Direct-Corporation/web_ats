@@ -1,5 +1,5 @@
 import Positions from "../views/Positions";
-import CreateNewPosition from "../../positions-client/views/CreateNewPosition";
+import CreateExternalPosting from "../../external_posting/views/CreateExternalPosting";
 
 export const positionRoutes = [
   {
@@ -11,7 +11,7 @@ export const positionRoutes = [
       },
       {
         path: "create-new-position",
-        element: <CreateNewPosition />,
+        element: <CreateExternalPosting />,
       },
     ],
   },

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { calculateDaysAgo } from "../utils/filterJobs";
 import DOMPurify from "dompurify";
 import formatName from "@/shared/utils/formatName";
-import type { JobPostingResponse } from "@/features/jobs/types/job.types";
+import type { JobPostingResponse } from "@/features/external_posting/types/externalPosting.types";
 
 export const JobCard = ({ job }: { job: JobPostingResponse }) => {
   //   const IconComponent = job.icon;
@@ -29,7 +29,7 @@ export const JobCard = ({ job }: { job: JobPostingResponse }) => {
         <div
           className="text-gray-700 text-sm mb-4 line-clamp-3"
           dangerouslySetInnerHTML={{
-            __html: DOMPurify.sanitize(job.description),
+            __html: DOMPurify.sanitize(job.description ?? ""),
           }}
         />
       </div>

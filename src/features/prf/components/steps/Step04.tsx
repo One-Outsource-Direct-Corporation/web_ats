@@ -2,7 +2,7 @@ import { Button } from "@/shared/components/ui/button";
 import type { PRFFormData } from "../../types/prf.types";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { ApplicationFormManagement } from "@/shared/components/reusables/ApplicationFormManagement";
-import type { ApplicationFormQuestionnaire } from "@/features/positions-client/types/questionnaire.types";
+import type { ApplicationFormQuestionnaire } from "@/features/external_posting/types/questionnaire.types";
 import type {
   ApplicationForm,
   ApplicationFormType,
@@ -16,11 +16,11 @@ interface Step04Props {
   formData: PRFFormData;
   applicationFormHandler: (
     field: keyof ApplicationForm,
-    value: ApplicationFormType
+    value: ApplicationFormType,
   ) => void;
   nonNegotiableHandler: (updatedNonNegotiables: NonNegotiable) => void;
   questionnaireHandler: (
-    updatedQuestionnaire: ApplicationFormQuestionnaire
+    updatedQuestionnaire: ApplicationFormQuestionnaire,
   ) => void;
   errors?: ValidationError | null;
 }

@@ -1,6 +1,6 @@
-import type { ApproverDb } from "@/features/positions-client/types/create_position.types";
+import type { ApproverDb } from "@/features/external_posting/types/externalPosting.types";
 import formatMoney from "@/shared/utils/formatMoney";
-import type { PRFDb, PRFFormData } from "../types/prf.types";
+import type { PRFFormData, PRFResponse } from "../types/prf.types";
 import formatName from "@/shared/utils/formatName";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useState } from "react";
@@ -15,6 +15,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Textarea } from "@/shared/components/ui/textarea";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import { toast } from "react-toastify";
+import { isAxiosError } from "axios";
 
 interface ApproverProps {
   approvers: ApproverDb[];
@@ -35,8 +36,6 @@ export default function Approver({
   const { user } = useAuth();
   const axiosPrivate = useAxiosPrivate();
 
-  console.log(approvers);
-
   const [approverStates, setApproverStates] = useState<
     Record<number, ApproverState>
   >(
@@ -48,12 +47,12 @@ export default function Approver({
           comment: approver.comment || "",
         },
       }),
-      {}
-    )
+      {},
+    ),
   );
 
   const [updatingApprovers, setUpdatingApprovers] = useState<Set<number>>(
-    new Set()
+    new Set(),
   );
 
   const handleStatusChange = (approverId: number, status: string) => {
@@ -82,21 +81,25 @@ export default function Approver({
 
       const state = approverStates[approverId];
       await axiosPrivate.patch(
-        `/api/prf/approval/${(formData as PRFDb).job_posting.id}/`,
+        `/api/prf/approval/${(formData as PRFResponse).job_posting.id}/`,
         {
           approver_id: approverId,
           status: state.status,
           comment: state.comment,
-        }
+        },
       );
 
       toast.success("Approval updated successfully");
       if (onUpdate) {
         onUpdate();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error updating approval:", error);
-      toast.error(error?.response?.data?.detail || "Failed to update approval");
+      const errorMessage =
+        isAxiosError<{ detail?: string }>(error) && error.response?.data?.detail
+          ? error.response.data.detail
+          : "Failed to update approval";
+      toast.error(errorMessage);
     } finally {
       setUpdatingApprovers((prev) => {
         const newSet = new Set(prev);
@@ -148,7 +151,7 @@ export default function Approver({
               {/* Circle */}
               <div
                 className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${getStatusColor(
-                  state?.status || approver.status
+                  state?.status || approver.status,
                 )}`}
               >
                 {index + 1}
@@ -191,8 +194,8 @@ export default function Approver({
                       state?.status.toLowerCase() === "approved"
                         ? "bg-green-100 text-green-700"
                         : state?.status.toLowerCase() === "rejected"
-                        ? "bg-red-100 text-red-700"
-                        : "bg-blue-100 text-blue-700"
+                          ? "bg-red-100 text-red-700"
+                          : "bg-blue-100 text-blue-700"
                     }`}
                   >
                     {formatName(state?.status || approver.status)}
@@ -211,7 +214,7 @@ export default function Approver({
                     formData.job_posting.min_salary &&
                     formData.job_posting.max_salary
                       ? `${formatMoney(
-                          formData.job_posting.min_salary
+                          formData.job_posting.min_salary,
                         )} - ${formatMoney(formData.job_posting.max_salary)}`
                       : "No budget allocated"
                   }

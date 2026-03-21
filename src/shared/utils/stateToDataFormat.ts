@@ -1,6 +1,6 @@
 import DOMPurify from "dompurify";
 import { formatDateYYYYMMDD } from "./formatDate";
-import type { PositionFormData } from "@/features/positions-client/types/create_position.types";
+import type { PositionFormData } from "@/features/external_posting/types/externalPosting.types";
 import type { PRFFormData } from "@/features/prf/types/prf.types";
 
 type ExtractedFiles = Record<string, File>;

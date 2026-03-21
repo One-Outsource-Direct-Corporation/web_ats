@@ -2,7 +2,7 @@ import { useState } from "react";
 import type {
   LocationEntry,
   BatchEntry,
-} from "../../positions-client/types/create_position.types";
+} from "../../external_posting/types/externalPosting.types";
 
 const initialLocations: LocationEntry[] = [
   {

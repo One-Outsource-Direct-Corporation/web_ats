@@ -2,7 +2,7 @@ import { useState } from "react";
 import type {
   FormData,
   FormFieldStatuses,
-} from "../../positions-client/types/create_position.types";
+} from "../../external_posting/types/externalPosting.types";
 
 const initialFormData: FormData = {
   job_title: "",

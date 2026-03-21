@@ -16,6 +16,7 @@ export interface User {
   business_unit: string;
   department: string;
   role: string;
+  is_staff: boolean;
   // access: string;
 }
 
@@ -29,9 +30,9 @@ export interface LoginCredentials {
 }
 
 export interface AuthResponse {
-  message: string;
+  detail?: string;
+  authenticated?: boolean;
   user: User;
-  access: string;
 }
 
 export interface AuthContextType extends AuthState {

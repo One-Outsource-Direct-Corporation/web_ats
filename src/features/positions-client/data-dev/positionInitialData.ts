@@ -20,6 +20,8 @@ export const getDefaultFormData = (): PositionFormData => ({
     responsibilities: null,
     qualifications: null,
     working_site: null,
+    work_schedule_from: null,
+    work_schedule_to: null,
   },
   application_form: {
     application_form: {
@@ -73,6 +75,8 @@ export const testData = (): PositionFormData => ({
     responsibilities: "<p>qweqwe</p>",
     qualifications: "<p>qweqwe</p>",
     working_site: "123123",
+    work_schedule_from: "08:00",
+    work_schedule_to: "17:00",
   },
   application_form: {
     application_form: {

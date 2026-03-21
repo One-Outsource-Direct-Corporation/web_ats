@@ -26,7 +26,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { formatBackgroundStatus } from "@/shared/utils/formatBackgroundStatus";
 import { ApprovalPipelineDropdown } from "../components/ApprovalPipelineDropdown";
-import type { JobPostingDbWithApprovers } from "@/features/positions-client/types/create_position.types";
+import type { JobPostingDbWithApprovers } from "@/features/external_posting/types/externalPosting.types";
 
 interface SelectedItem {
   id: number;

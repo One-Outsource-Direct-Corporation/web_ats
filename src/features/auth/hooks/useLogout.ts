@@ -1,9 +1,10 @@
 import { defaultAxios } from "@/config/axios";
 import { useAuth } from "./useAuth";
 import { useCallback } from "react";
+import { clearAllAuthStorage } from "../utils/authStorage";
 
 export const useLogout = () => {
-  const { setUser } = useAuth();
+  const { setUser, setPersist, setIsAuth } = useAuth();
 
   const logout = useCallback(async () => {
     try {
@@ -12,10 +13,11 @@ export const useLogout = () => {
       console.error("Logout failed:", error);
     } finally {
       setUser(null);
-      localStorage.removeItem("persist");
-      localStorage.removeItem("isAuth");
+      setIsAuth(false);
+      setPersist(false);
+      clearAllAuthStorage();
     }
-  }, []);
+  }, [setIsAuth, setPersist, setUser]);
 
   return { logout };
 };

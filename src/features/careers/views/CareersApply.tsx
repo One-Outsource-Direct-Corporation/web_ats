@@ -14,8 +14,8 @@ import Step01 from "../components/steps/Step01";
 import Step02 from "../components/steps/Step02";
 import Step03 from "../components/steps/Step03";
 import Step04 from "../components/steps/Step04";
-import type { PRFDb } from "@/features/prf/types/prf.types";
-import type { PositionDb } from "@/features/positions-client/types/create_position.types";
+import type { PRFResponse } from "@/features/prf/types/prf.types";
+import type { PositionResponse } from "@/features/external_posting/types/externalPosting.types";
 
 export default function CareersApply() {
   const params = useParams();
@@ -42,24 +42,24 @@ export default function CareersApply() {
   // Wrapper functions to handle type compatibility
   const handleJobDetailsChange = (
     field: string,
-    value: string | number | File | null
+    value: string | number | File | null,
   ) => {
     handleInputJobDetails(field as keyof typeof formData.jobDetails, value);
   };
 
   const handleEducationWorkChange = (
     field: string,
-    value: string | number | null | any
+    value: string | number | null | any,
   ) => {
     handleInputEducationWork(
       field as keyof typeof formData.educationWork,
-      value
+      value,
     );
   };
 
   const handleAcknowledgementChange = (
     field: keyof typeof formData.acknowledgement,
-    value: string | boolean | File | null
+    value: string | boolean | File | null,
   ) => {
     handleInputAcknowledgement(field, value as string | boolean | null);
   };
@@ -105,11 +105,8 @@ export default function CareersApply() {
 
   const handleBackToJobDescription = useCallback(() => {
     if (jobDetail) {
-      navigate(
-        `/careers/${
-          ((jobDetail as PRFDb) || (jobDetail as PositionDb)).job_posting.id
-        }`
-      );
+      const jobDetailResponse = jobDetail as PRFResponse | PositionResponse;
+      navigate(`/careers/${jobDetailResponse.job_posting.id}`);
     }
   }, [jobDetail, navigate]);
 

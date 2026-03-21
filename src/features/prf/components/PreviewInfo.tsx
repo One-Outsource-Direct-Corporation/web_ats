@@ -60,7 +60,7 @@ export const PreviewInfo = ({ step, formData }: PreviewInfoProps) => {
               <p>
                 <strong>Department Name:</strong>{" "}
                 {formatDepartmentName(
-                  formData.job_posting.department_name ?? ""
+                  formData.job_posting.department_name ?? "",
                 ) || "Not specified"}
               </p>
               <p>
@@ -104,8 +104,8 @@ export const PreviewInfo = ({ step, formData }: PreviewInfoProps) => {
                   <p>
                     <strong>Working Schedule:</strong>{" "}
                     {formatTime(
-                      formData.work_schedule_from ?? "",
-                      formData.work_schedule_to ?? ""
+                      formData.job_posting.work_schedule_from ?? "",
+                      formData.job_posting.work_schedule_to ?? "",
                     ) || "Not specified"}
                   </p>
                 </div>
@@ -122,7 +122,7 @@ export const PreviewInfo = ({ step, formData }: PreviewInfoProps) => {
                         className="text-gray-700 mb-4 preview-content"
                         dangerouslySetInnerHTML={{
                           __html: DOMPurify.sanitize(
-                            formData.job_posting?.description || ""
+                            formData.job_posting?.description || "",
                           ),
                         }}
                       />
@@ -135,7 +135,7 @@ export const PreviewInfo = ({ step, formData }: PreviewInfoProps) => {
                         className="text-gray-700 mb-4 preview-content"
                         dangerouslySetInnerHTML={{
                           __html: DOMPurify.sanitize(
-                            formData.job_posting?.responsibilities || ""
+                            formData.job_posting?.responsibilities || "",
                           ),
                         }}
                       />
@@ -146,7 +146,7 @@ export const PreviewInfo = ({ step, formData }: PreviewInfoProps) => {
                         className="text-gray-700 mb-4 preview-content"
                         dangerouslySetInnerHTML={{
                           __html: DOMPurify.sanitize(
-                            formData.job_posting?.qualifications || ""
+                            formData.job_posting?.qualifications || "",
                           ),
                         }}
                       />

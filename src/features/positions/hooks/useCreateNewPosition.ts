@@ -4,7 +4,7 @@ import type {
   StepConfig,
   TeamMember,
   TimePickerValues,
-} from "../../positions-client/types/create_position.types";
+} from "../../external_posting/types/externalPosting.types";
 
 import { useFormData } from "./useFormData";
 import { useLocationsBatches } from "./useLocationsBatches";

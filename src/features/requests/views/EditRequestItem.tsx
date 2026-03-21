@@ -16,10 +16,17 @@ import { formatBackgroundStatus } from "@/shared/utils/formatBackgroundStatus";
 import { usePositionDetail } from "@/shared/hooks/usePositions";
 import { useEffect } from "react";
 import PRF from "@/features/prf/views/PRF";
-import type { PRFDb, PRFFormData } from "@/features/prf/types/prf.types";
-import type { PositionDb } from "@/features/positions-client/types/create_position.types";
-import PositionClient from "@/features/positions-client/views/PositionClient";
+import type { PRFFormData, PRFResponse } from "@/features/prf/types/prf.types";
+import type {
+  PositionResponse,
+  PositionFormData,
+} from "@/features/external_posting/types/externalPosting.types";
+import PositionClient from "@/features/external_posting/views/PositionClient";
 
+type EditablePosition = PRFResponse | PositionResponse;
+
+const isPrfResponse = (value: EditablePosition): value is PRFResponse =>
+  "approval_status" in value;
 export default function EditRequestItem() {
   const { type, id } = useParams<{ type: "prf" | "position"; id: string }>();
   const navigate = useNavigate();
@@ -38,6 +45,10 @@ export default function EditRequestItem() {
   if (!position || loading) {
     return <LoadingComponent message="Loading Data" />;
   }
+
+  const editablePosition = position as EditablePosition;
+  const jobPosting = editablePosition.job_posting;
+  const isPrf = isPrfResponse(editablePosition);
 
   if (error || !type) {
     return (
@@ -72,28 +83,23 @@ export default function EditRequestItem() {
               Edit {type === "prf" ? "Internal" : "Client"} Position
             </h1>
             <p className="text-gray-600">
-              {position.job_posting.job_title} • ID:{" "}
-              {((position as PRFDb) || (position as PositionDb)).job_posting.id}
+              {position.job_posting.job_title} • ID: {jobPosting.id}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          {((position as PRFDb) || (position as PositionDb)).approval_status
-            ?.is_fully_approved &&
-            ((position as PRFDb) || (position as PositionDb)).job_posting
-              .status !== "active" && (
+          {isPrf &&
+            editablePosition.approval_status?.is_fully_approved &&
+            jobPosting.status !== "active" && (
               <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-200">
                 Ready to Activate
               </span>
             )}
           <Select
-            value={
-              ((position as PRFDb) || (position as PositionDb)).job_posting
-                .status
-            }
+            value={jobPosting.status}
             onValueChange={async (
-              value: "draft" | "pending" | "active" | "closed" | "cancelled"
+              value: "draft" | "pending" | "active" | "closed" | "cancelled",
             ) => {
               try {
                 const endpoint =
@@ -108,15 +114,14 @@ export default function EditRequestItem() {
                 toast.error(
                   err.response?.data?.detail ||
                     err.response?.data?.error ||
-                    "Failed to update status"
+                    "Failed to update status",
                 );
               }
             }}
           >
             <SelectTrigger
               className={`w-32 rounded-4xl border-0 font-semibold ${formatBackgroundStatus(
-                ((position as PRFDb) || (position as PositionDb)).job_posting
-                  .status
+                jobPosting.status,
               )}`}
             >
               <SelectValue />
@@ -129,12 +134,9 @@ export default function EditRequestItem() {
               <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
-          {((position as PRFDb) || (position as PositionDb)).job_posting
-            .status === "active" && (
+          {jobPosting.status === "active" && (
             <Select
-              value={(
-                (position as PRFDb) || (position as PositionDb)
-              ).job_posting.published.toString()}
+              value={jobPosting.published.toString()}
               onValueChange={async (value: "true" | "false") => {
                 try {
                   const endpoint =
@@ -142,8 +144,7 @@ export default function EditRequestItem() {
                   const response = await axiosPrivate.patch(endpoint, {
                     job_posting: {
                       published: value === "true",
-                      status: ((position as PRFDb) || (position as PositionDb))
-                        .job_posting.status,
+                      status: jobPosting.status,
                     },
                   });
                   console.log(response);
@@ -154,7 +155,7 @@ export default function EditRequestItem() {
                   toast.error(
                     err.response?.data?.detail ||
                       err.response?.data?.status ||
-                      "Failed to update published status"
+                      "Failed to update published status",
                   );
                 }
               }}
@@ -174,10 +175,13 @@ export default function EditRequestItem() {
       {/* Form Content */}
       <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
         {type === "prf" ? (
-          <PRF initialData={position as PRFFormData} updateMode={true} />
+          <PRF
+            initialData={editablePosition as PRFFormData}
+            updateMode={true}
+          />
         ) : (
           <PositionClient
-            initialData={position as PositionDb}
+            initialData={editablePosition as PositionFormData}
             updateMode={true}
           />
         )}

@@ -1,5 +1,5 @@
 import { Button } from "@/shared/components/ui/button";
-import type { PRFDb, PRFFormData } from "../../types/prf.types";
+import type { PRFFormData, PRFResponse } from "../../types/prf.types";
 import { ArrowLeft } from "lucide-react";
 import { PreviewInfo } from "../PreviewInfo";
 import PRFSummary from "../PRFSummary";
@@ -45,7 +45,7 @@ export const Step06 = ({
       ) : (
         <Approver
           formData={formData}
-          approvers={(formData as PRFDb).approving_managers}
+          approvers={(formData as PRFResponse).approving_managers}
         />
       )}
     </div>
