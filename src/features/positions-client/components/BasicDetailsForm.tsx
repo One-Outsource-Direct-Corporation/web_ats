@@ -28,21 +28,26 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { CalendarIcon } from "lucide-react";
 import { Calendar } from "@/shared/components/ui/calendar";
-import useClient from "@/features/positions-client/hooks/useClient";
+import { useExternalPostingClientsQuery } from "@/features/external_posting/hooks/useExternalPostingClientsQuery";
 import { formatDate } from "@/shared/utils/formatDate";
 import ClientAddModal from "./ClientAddModal";
+import type { ValidationError } from "../utils/validateSteps";
+import {
+  getFieldError,
+  getJobPostingError,
+} from "@/shared/utils/formValidation";
 
 interface BasicDetailsFormProps {
   formData: PositionFormData;
   onInputChange: (
     field: keyof PositionBase,
-    value: string | number | null
+    value: string | number | null,
   ) => void;
   handleJobPostingChange: (
     fieldName: keyof PositionFormData["job_posting"],
-    value: string | number | null
+    value: string | number | null,
   ) => void;
-  errorFields: any;
+  errorFields: ValidationError | null;
 }
 
 // To do: Optimize the function on onChange, it is laggy
@@ -54,7 +59,11 @@ export const BasicDetailsForm = ({
   handleJobPostingChange,
   errorFields,
 }: BasicDetailsFormProps) => {
-  const { clients, loading, error, refetch } = useClient();
+  const { clients, loading, error, refetch } = useExternalPostingClientsQuery();
+
+  const getRootError = (field: string) => getFieldError(errorFields, field);
+  const getJobError = (field: string) => getJobPostingError(errorFields, field);
+
   return (
     <div>
       {/* Basic Details */}
@@ -91,8 +100,8 @@ export const BasicDetailsForm = ({
                 </Select>
                 <ClientAddModal onClientAdded={refetch} />
               </Field>
-              {errorFields?.client && (
-                <FieldError>{errorFields.client[0]}</FieldError>
+              {getRootError("client") && (
+                <FieldError>{getRootError("client")}</FieldError>
               )}
               <FieldError></FieldError>
             </Field>
@@ -106,8 +115,8 @@ export const BasicDetailsForm = ({
                 }
                 placeholder="Enter job title"
               />
-              {errorFields?.job_posting?.job_title && (
-                <FieldError>{errorFields.job_posting.job_title[0]}</FieldError>
+              {getJobError("job_title") && (
+                <FieldError>{getJobError("job_title")}</FieldError>
               )}
             </Field>
             <Field>
@@ -146,10 +155,8 @@ export const BasicDetailsForm = ({
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
-              {errorFields?.job_posting?.department_name && (
-                <FieldError>
-                  {errorFields.job_posting.department_name[0]}
-                </FieldError>
+              {getJobError("department_name") && (
+                <FieldError>{getJobError("department_name")}</FieldError>
               )}
             </Field>
 
@@ -162,7 +169,7 @@ export const BasicDetailsForm = ({
                   onChange={(e) =>
                     handleJobPostingChange(
                       "department_name_other",
-                      e.target.value
+                      e.target.value,
                     )
                   }
                 />
@@ -188,10 +195,8 @@ export const BasicDetailsForm = ({
                   <SelectItem value="temporary">Temporary</SelectItem>
                 </SelectContent>
               </Select>
-              {errorFields?.job_posting?.employment_type && (
-                <FieldError>
-                  {errorFields.job_posting.employment_type[0]}
-                </FieldError>
+              {getJobError("employment_type") && (
+                <FieldError>{getJobError("employment_type")}</FieldError>
               )}
             </Field>
             <Field>
@@ -211,8 +216,8 @@ export const BasicDetailsForm = ({
                   <SelectItem value="hybrid">Hybrid</SelectItem>
                 </SelectContent>
               </Select>
-              {errorFields?.job_posting?.work_setup && (
-                <FieldError>{errorFields.job_posting.work_setup[0]}</FieldError>
+              {getJobError("work_setup") && (
+                <FieldError>{getJobError("work_setup")}</FieldError>
               )}
             </Field>
             <Field>
@@ -225,10 +230,34 @@ export const BasicDetailsForm = ({
                 }
                 placeholder="Enter working site"
               />
-              {errorFields?.job_posting?.working_site && (
-                <FieldError>
-                  {errorFields.job_posting.working_site[0]}
-                </FieldError>
+              {getJobError("working_site") && (
+                <FieldError>{getJobError("working_site")}</FieldError>
+              )}
+            </Field>
+            <Field>
+              <FieldLabel>Work Schedule From *</FieldLabel>
+              <Input
+                type="time"
+                value={formData.job_posting.work_schedule_from ?? ""}
+                onChange={(e) =>
+                  handleJobPostingChange("work_schedule_from", e.target.value)
+                }
+              />
+              {getJobError("work_schedule_from") && (
+                <FieldError>{getJobError("work_schedule_from")}</FieldError>
+              )}
+            </Field>
+            <Field>
+              <FieldLabel>Work Schedule To *</FieldLabel>
+              <Input
+                type="time"
+                value={formData.job_posting.work_schedule_to ?? ""}
+                onChange={(e) =>
+                  handleJobPostingChange("work_schedule_to", e.target.value)
+                }
+              />
+              {getJobError("work_schedule_to") && (
+                <FieldError>{getJobError("work_schedule_to")}</FieldError>
               )}
             </Field>
           </FieldGroup>
@@ -255,8 +284,8 @@ export const BasicDetailsForm = ({
                   <SelectItem value="doctorate">Doctorate</SelectItem>
                 </SelectContent>
               </Select>
-              {errorFields?.education_level && (
-                <FieldError>{errorFields.education_level[0]}</FieldError>
+              {getRootError("education_level") && (
+                <FieldError>{getRootError("education_level")}</FieldError>
               )}
             </Field>
             <Field>
@@ -279,10 +308,8 @@ export const BasicDetailsForm = ({
                   <SelectItem value="executive">Executive</SelectItem>
                 </SelectContent>
               </Select>
-              {errorFields?.job_posting?.experience_level && (
-                <FieldError>
-                  {errorFields.job_posting.experience_level[0]}
-                </FieldError>
+              {getJobError("experience_level") && (
+                <FieldError>{getJobError("experience_level")}</FieldError>
               )}
             </Field>
             <Field>
@@ -293,16 +320,14 @@ export const BasicDetailsForm = ({
                 onChange={(e) =>
                   handleJobPostingChange(
                     "number_of_vacancies",
-                    Number(e.target.value)
+                    Number(e.target.value),
                   )
                 }
                 placeholder="Enter number of positions"
                 min={0}
               />
-              {errorFields?.job_posting?.number_of_vacancies && (
-                <FieldError>
-                  {errorFields.job_posting.number_of_vacancies[0]}
-                </FieldError>
+              {getJobError("number_of_vacancies") && (
+                <FieldError>{getJobError("number_of_vacancies")}</FieldError>
               )}
             </Field>
             <Field>
@@ -329,16 +354,14 @@ export const BasicDetailsForm = ({
                     onSelect={(date) =>
                       handleJobPostingChange(
                         "target_start_date",
-                        date ? formatDate(date.toLocaleDateString()) : null
+                        date ? formatDate(date.toLocaleDateString()) : null,
                       )
                     }
                   />
                 </PopoverContent>
               </Popover>
-              {errorFields?.job_posting?.target_start_date && (
-                <FieldError>
-                  {errorFields.job_posting.target_start_date[0]}
-                </FieldError>
+              {getJobError("target_start_date") && (
+                <FieldError>{getJobError("target_start_date")}</FieldError>
               )}
             </Field>
             <Field>
@@ -355,16 +378,15 @@ export const BasicDetailsForm = ({
                 <SelectContent>
                   <SelectItem value="new_position">New Position</SelectItem>
                   <SelectItem value="replacement">Replacement</SelectItem>
-                  <SelectItem value="others">Others, Please Specify</SelectItem>
+                  <SelectItem value="reliver">Reliver</SelectItem>
+                  <SelectItem value="other">Others, Please Specify</SelectItem>
                 </SelectContent>
               </Select>
-              {errorFields?.job_posting?.reason_for_posting && (
-                <FieldError>
-                  {errorFields.job_posting.reason_for_posting[0]}
-                </FieldError>
+              {getJobError("reason_for_posting") && (
+                <FieldError>{getJobError("reason_for_posting")}</FieldError>
               )}
             </Field>
-            {formData.job_posting.reason_for_posting === "others" && (
+            {formData.job_posting.reason_for_posting === "other" && (
               <Field>
                 <FieldLabel>Please Specify *</FieldLabel>
                 <Input
@@ -373,7 +395,7 @@ export const BasicDetailsForm = ({
                   onChange={(e) =>
                     handleJobPostingChange(
                       "other_reason_for_posting",
-                      e.target.value
+                      e.target.value,
                     )
                   }
                   placeholder="Enter reason for hire"
@@ -402,8 +424,8 @@ export const BasicDetailsForm = ({
                 }
                 placeholder="Minimum salary"
               />
-              {errorFields?.job_posting?.min_salary && (
-                <FieldError>{errorFields.job_posting.min_salary[0]}</FieldError>
+              {getJobError("min_salary") && (
+                <FieldError>{getJobError("min_salary")}</FieldError>
               )}
             </Field>
             <Field>
@@ -416,8 +438,8 @@ export const BasicDetailsForm = ({
                 }
                 placeholder="Maximum salary"
               />
-              {errorFields?.job_posting?.max_salary && (
-                <FieldError>{errorFields.job_posting.max_salary[0]}</FieldError>
+              {getJobError("max_salary") && (
+                <FieldError>{getJobError("max_salary")}</FieldError>
               )}
             </Field>
           </FieldGroup>

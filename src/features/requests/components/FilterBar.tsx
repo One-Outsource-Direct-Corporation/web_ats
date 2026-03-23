@@ -177,7 +177,7 @@ function FilterBar({
               </div>
 
               {/* Client */}
-              {user?.department === "operations-rpo" && (
+              {(user?.department === "operations-rpo" || user?.is_staff) && (
                 <div
                   className="flex flex-col items-center space-y-2 cursor-pointer group"
                   onClick={() => navigate("/positions/create-new-position")}

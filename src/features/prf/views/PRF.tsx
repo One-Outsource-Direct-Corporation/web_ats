@@ -9,23 +9,14 @@ import {
   SubmitConfirmModal,
   SuccessPopup,
 } from "../components/PRFModal";
-
-import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
-import type { AxiosError } from "axios";
-import { toast } from "react-toastify";
 import { useState } from "react";
-import { stateToDataFormatPRF } from "@/shared/utils/stateToDataFormat";
 import { MinusCircle } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import Step05 from "../components/steps/Step05";
 import { Step06 } from "../components/steps/Step06";
-import type { PRFDb, PRFFormData } from "../types/prf.types";
-import {
-  validateSteps,
-  mapServerErrorsToSteps,
-  hasStepErrors,
-  type StepErrors,
-} from "../utils/validateSteps";
+import type { PRFFormData } from "../types/prf.types";
+import { hasStepErrors, type StepErrors } from "../utils/validateSteps";
+import { usePrfSubmissionFlow } from "../hooks/usePrfSubmissionFlow";
 
 interface PRFProps {
   initialData?: PRFFormData;
@@ -49,8 +40,20 @@ export default function PRF({ initialData, updateMode }: PRFProps) {
     questionnaireHandler,
     pipelineHandler,
   } = usePRFForm(initialData);
-
-  const axiosPrivate = useAxiosPrivate();
+  const { validateBeforeSubmit, confirmSubmit } = usePrfSubmissionFlow({
+    updateMode,
+    currentStep: step,
+    onSetStepErrors: setStepErrors,
+    onSetStep: setStep,
+    onSetMaxStepVisited: setMaxStepVisited,
+    onSuccess: () => {
+      setShowSuccessPopup(true);
+      setTimeout(() => {
+        setShowSuccessPopup(false);
+        navigate("/requests");
+      }, 1500);
+    },
+  });
 
   const goToNextStep = () => {
     setStep((prev) => {
@@ -77,26 +80,7 @@ export default function PRF({ initialData, updateMode }: PRFProps) {
   };
 
   const handleSubmit = () => {
-    // Validate all steps before submitting
-    const allErrors = validateSteps(formData);
-    const hasAnyErrors = Object.values(allErrors).some((error) =>
-      hasStepErrors(error)
-    );
-
-    if (hasAnyErrors) {
-      toast.error("Please fix all errors before submitting the PRF");
-      setStepErrors(allErrors);
-
-      // Find the first step with errors and navigate to it
-      const firstErrorStep = Object.keys(allErrors)
-        .map(Number)
-        .find((stepNum) => hasStepErrors(allErrors[stepNum]));
-
-      if (firstErrorStep && firstErrorStep !== step) {
-        setStep(firstErrorStep);
-        setMaxStepVisited((currentMax) => Math.max(currentMax, firstErrorStep));
-      }
-      console.log(allErrors);
+    if (!validateBeforeSubmit(formData)) {
       return;
     }
 
@@ -105,68 +89,7 @@ export default function PRF({ initialData, updateMode }: PRFProps) {
 
   const handleConfirmSubmit = async () => {
     setShowSubmitConfirmDialog(false);
-
-    const formDataObj = stateToDataFormatPRF(formData);
-
-    try {
-      let response;
-      if (updateMode) {
-        response = await axiosPrivate.patch(
-          `/api/prf/${(formData as PRFDb).job_posting.id}/`,
-          formDataObj,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-      } else {
-        response = await axiosPrivate.post("/api/prf/", formDataObj, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-      }
-
-      if (response.status === 201) {
-        setShowSuccessPopup(true);
-        setTimeout(() => {
-          setShowSuccessPopup(false);
-          navigate("/requests");
-        }, 1500);
-        toast.success("PRF submitted successfully!");
-      }
-    } catch (err: AxiosError | any) {
-      console.error("Error submitting PRF:", err);
-
-      // Map server errors to steps
-      if (err.response?.data) {
-        const serverErrors = mapServerErrorsToSteps(err.response.data);
-        setStepErrors(serverErrors);
-
-        // Find the first step with errors and navigate to it
-        const firstErrorStep = Object.keys(serverErrors)
-          .map(Number)
-          .find((stepNum) => hasStepErrors(serverErrors[stepNum]));
-
-        if (err.response.status === 403) {
-          toast.error("You do not have permission to submit/edit this PRF.");
-          return;
-        }
-
-        if (firstErrorStep) {
-          setStep(firstErrorStep);
-          setMaxStepVisited((currentMax) =>
-            Math.max(currentMax, firstErrorStep)
-          );
-          toast.error(`Please fix the errors in Step ${firstErrorStep}`);
-        } else {
-          toast.error("Please fix the errors in the form");
-        }
-      } else {
-        toast.error("Failed to submit PRF. Please try again.");
-      }
-    }
+    await confirmSubmit(formData);
   };
 
   return (
@@ -211,10 +134,10 @@ export default function PRF({ initialData, updateMode }: PRFProps) {
                     hasError
                       ? "bg-red-600 text-white"
                       : stepNumber === step
-                      ? "bg-[#0056D2] text-white"
-                      : isClickable
-                      ? "bg-blue-50 text-blue-600"
-                      : "bg-white text-gray-500"
+                        ? "bg-[#0056D2] text-white"
+                        : isClickable
+                          ? "bg-blue-50 text-blue-600"
+                          : "bg-white text-gray-500"
                   } ${
                     isClickable
                       ? hasError
@@ -290,6 +213,7 @@ export default function PRF({ initialData, updateMode }: PRFProps) {
               formData={formData}
               step={step}
               handleSubmit={handleSubmit}
+              updateMode={updateMode}
             />
           )}
         </div>

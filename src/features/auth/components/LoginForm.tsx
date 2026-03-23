@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Button } from "@/shared/components/ui/button";
@@ -6,11 +6,10 @@ import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { useAuth } from "../hooks/useAuth";
 import { toast } from "react-toastify";
-import type { AxiosError } from "axios";
 import { defaultAxios } from "@/config/axios";
 
 const LoginForm: React.FC = () => {
-  const { setUser, persist, setPersist } = useAuth();
+  const { setUser, persist, setPersist, setIsAuth } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,21 +25,23 @@ const LoginForm: React.FC = () => {
         { email, password },
         {
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
 
       if (response.status === 200) {
         toast.dismiss();
-        const obj = response.data.user;
-        obj.access = response.data.access;
         toast.success("Login successful!");
-        setUser(obj);
-        localStorage.setItem("isAuth", "true");
+        setUser(response.data.user);
+        setIsAuth(true);
       }
-    } catch (err: any | AxiosError) {
+    } catch (err: unknown) {
+      const axiosLikeError = err as {
+        response?: { data?: { detail?: string } };
+      };
+
       toast.error(
-        err.response?.data?.detail ||
-          "Login failed. Please check your credentials."
+        axiosLikeError.response?.data?.detail ||
+          "Login failed. Please check your credentials.",
       );
     } finally {
       setIsLoading(false);
@@ -50,10 +51,6 @@ const LoginForm: React.FC = () => {
   const togglePersist = () => {
     setPersist((prev) => !prev);
   };
-
-  useEffect(() => {
-    localStorage.setItem("persist", JSON.stringify(persist));
-  }, [persist]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-10">

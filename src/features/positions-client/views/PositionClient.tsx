@@ -1,12 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import type {
-  PositionDb,
-  PositionFormData,
-} from "../types/create_position.types";
+import type { PositionFormData } from "../types/create_position.types";
 import { useStepNavigation } from "../hooks/useStepNavigation";
 import { useModalManagement } from "../hooks/useModalManagement";
-import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
-import { toast } from "react-toastify";
 import { PreviewModal } from "../components/Modals";
 import { StepNavigation } from "../components/StepNavigation";
 import { Button } from "@/shared/components/ui/button";
@@ -15,14 +10,8 @@ import Step01 from "../components/steps/Step01";
 import Step02 from "../components/steps/Step02";
 import Step03 from "../components/steps/Step03";
 import Step04 from "../components/steps/Step04";
-import { stateToDataFormatClient } from "@/shared/utils/stateToDataFormat";
-import {
-  validateSteps,
-  mapServerErrorsToSteps,
-  hasStepErrors,
-} from "../utils/validateSteps";
 import { usePositionFormData } from "../hooks/usePositionFormData";
-import type { AxiosError } from "axios";
+import { usePositionSubmissionFlow } from "../hooks/usePositionSubmissionFlow";
 
 interface PositionClientProps {
   initialData?: PositionFormData;
@@ -57,108 +46,23 @@ export default function PositionClient({
     questionnaireHandler,
     pipelineHandler,
   } = usePositionFormData(initialData);
-  const axiosPrivate = useAxiosPrivate();
   const modalHooks = useModalManagement();
+  const { submitCurrentStep } = usePositionSubmissionFlow({
+    updateMode,
+    currentStep,
+    onUpdateStepErrors: updateStepErrors,
+    onNavigateToStep: handleStepClick,
+    onUpdateSuccess: () => navigate("/requests"),
+    onCreateSuccess: () => {
+      resetFormData();
+      resetSteps();
+    },
+  });
 
   const handleNext = async () => {
-    if (currentStep === 4) {
-      const allErrors = validateSteps(formData);
-      const hasAnyErrors = Object.values(allErrors).some((error) =>
-        hasStepErrors(error)
-      );
+    const { didSubmit } = await submitCurrentStep(formData);
 
-      if (hasAnyErrors) {
-        toast.error("Please fix all errors before publishing the position");
-        updateStepErrors(allErrors);
-
-        const firstErrorStep = Object.keys(allErrors)
-          .map(Number)
-          .find((step) => hasStepErrors(allErrors[step]));
-
-        if (firstErrorStep && firstErrorStep !== currentStep) {
-          handleStepClick(firstErrorStep);
-        }
-        return;
-      }
-
-      const formDataObj = stateToDataFormatClient(formData);
-
-      try {
-        let response;
-        if (updateMode) {
-          response = await axiosPrivate.patch(
-            `/api/position/${(formData as PositionDb).job_posting.id}/`,
-            formDataObj,
-            {
-              headers: {
-                "Content-Type": "multipart/form-data",
-              },
-            }
-          );
-        } else {
-          response = await axiosPrivate.post("/api/position/", formDataObj, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          });
-        }
-
-        if (response.status === 200 || response.status === 201) {
-          const successMessage = updateMode
-            ? "Position updated successfully!"
-            : "Position created successfully!";
-
-          toast.success(
-            <div>
-              {successMessage}{" "}
-              {!updateMode && (
-                <button
-                  onClick={() => navigate("/")}
-                  className="text-blue-600 underline hover:text-blue-800"
-                >
-                  View Positions Posted
-                </button>
-              )}
-            </div>
-          );
-
-          if (updateMode) {
-            navigate("/requests");
-          } else {
-            resetFormData();
-            resetSteps();
-          }
-        }
-      } catch (err: AxiosError | any) {
-        console.error("Position operation error:", err);
-
-        if (err.status === 403) {
-          toast.error("You do not have permission to perform this action.");
-          return;
-        }
-
-        if (err.response?.data) {
-          const serverErrors = mapServerErrorsToSteps(err.response.data);
-          updateStepErrors(serverErrors);
-
-          const firstErrorStep = Object.keys(serverErrors)
-            .map(Number)
-            .find((step) => hasStepErrors(serverErrors[step]));
-
-          if (firstErrorStep) {
-            handleStepClick(firstErrorStep);
-            toast.error(`Please fix the errors in Step ${firstErrorStep}`);
-          } else {
-            toast.error("Please fix the errors in the form");
-          }
-        } else {
-          const errorMessage = updateMode
-            ? "Failed to update position. Please try again."
-            : "Failed to create position. Please try again.";
-          toast.error(errorMessage);
-        }
-      }
-    } else {
+    if (!didSubmit) {
       stepHandleNext();
     }
   };

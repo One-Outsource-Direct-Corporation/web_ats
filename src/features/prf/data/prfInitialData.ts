@@ -20,6 +20,8 @@ export default function initialDataPrf(user?: User): PRFFormData {
       responsibilities: null,
       qualifications: null,
       working_site: null,
+      work_schedule_from: null,
+      work_schedule_to: null,
     },
     application_form: {
       application_form: {
@@ -52,8 +54,6 @@ export default function initialDataPrf(user?: User): PRFFormData {
     business_unit: user?.business_unit || null,
     immediate_supervisor: null,
     category: null,
-    work_schedule_from: null,
-    work_schedule_to: null,
     hardware_required: {},
     software_required: {},
   };
@@ -64,8 +64,6 @@ export function testData(): PRFFormData {
     business_unit: "oodc",
     immediate_supervisor: null,
     category: "supervisory",
-    work_schedule_from: "08:16",
-    work_schedule_to: "20:16",
     hardware_required: {
       headset: true,
       desktop: true,
@@ -97,6 +95,8 @@ export function testData(): PRFFormData {
       responsibilities: "<p>qwertyu</p>",
       qualifications: "<p>qwertyu</p>",
       working_site: "Makati City",
+      work_schedule_from: "08:16",
+      work_schedule_to: "20:16",
     },
     application_form: {
       application_form: {

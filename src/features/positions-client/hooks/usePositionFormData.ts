@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type {
   PositionFormData,
   PositionBase,
@@ -11,18 +11,30 @@ import type {
 import type { PipelineStep } from "../../../shared/types/pipeline.types";
 import type { ApplicationFormQuestionnaire } from "../types/questionnaire.types";
 import { getDefaultFormData, testData } from "../data-dev/positionInitialData";
+import { positionDraftLocalStore } from "../services/position-draft.local-store";
+import { questionnaireLocalStore } from "../services/questionnaire.local-store";
 
 export const usePositionFormData = (initialData?: PositionFormData) => {
-  const [formData, setFormData] = useState<PositionFormData>(
-    initialData ||
-      (import.meta.env.VITE_REACT_ENV === "development"
-        ? testData()
-        : getDefaultFormData())
-  );
+  const shouldUseDraft = import.meta.env.VITE_REACT_ENV !== "development";
+
+  const [formData, setFormData] = useState<PositionFormData>(() => {
+    if (initialData) return initialData;
+
+    if (shouldUseDraft) {
+      const savedDraft = positionDraftLocalStore.getDraft();
+      if (savedDraft?.data) {
+        return savedDraft.data;
+      }
+    }
+
+    return import.meta.env.VITE_REACT_ENV === "development"
+      ? testData()
+      : getDefaultFormData();
+  });
 
   function handlePositionBaseChange(
     field: keyof PositionBase,
-    value: string | number | null
+    value: string | number | null,
   ) {
     setFormData((prev: PositionFormData) => ({
       ...prev,
@@ -32,7 +44,7 @@ export const usePositionFormData = (initialData?: PositionFormData) => {
 
   function handleJobPostingChange(
     fieldName: keyof PositionFormData["job_posting"],
-    value: string | number | null
+    value: string | number | null,
   ) {
     setFormData((prev: PositionFormData) => ({
       ...prev,
@@ -45,6 +57,9 @@ export const usePositionFormData = (initialData?: PositionFormData) => {
 
   function resetFormData() {
     setFormData(getDefaultFormData());
+    if (shouldUseDraft) {
+      positionDraftLocalStore.clearDraft();
+    }
   }
 
   function pipelineHandler(updatedPipelines: PipelineStep[]) {
@@ -56,7 +71,7 @@ export const usePositionFormData = (initialData?: PositionFormData) => {
 
   function applicationFormHandler(
     field: keyof ApplicationForm,
-    value: ApplicationFormType
+    value: ApplicationFormType,
   ) {
     setFormData((prev) => ({
       ...prev,
@@ -81,7 +96,7 @@ export const usePositionFormData = (initialData?: PositionFormData) => {
   }
 
   function questionnaireHandler(
-    updatedQuestionnaire: ApplicationFormQuestionnaire
+    updatedQuestionnaire: ApplicationFormQuestionnaire,
   ) {
     setFormData((prev) => ({
       ...prev,
@@ -90,7 +105,16 @@ export const usePositionFormData = (initialData?: PositionFormData) => {
         questionnaire: updatedQuestionnaire,
       },
     }));
+
+    if (shouldUseDraft) {
+      questionnaireLocalStore.saveDraft(updatedQuestionnaire);
+    }
   }
+
+  useEffect(() => {
+    if (!shouldUseDraft || initialData) return;
+    positionDraftLocalStore.saveDraft(formData);
+  }, [formData, shouldUseDraft, initialData]);
 
   return {
     formData,

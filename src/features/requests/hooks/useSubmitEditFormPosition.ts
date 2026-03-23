@@ -1,16 +1,20 @@
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
-import type { JobPostingResponsePosition } from "@/features/jobs/types/job.types";
 import { formatForJSON } from "@/shared/utils/formatName";
 import type { AxiosError } from "axios";
 import DOMPurify from "dompurify";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { requestService } from "@/features/requests/services/request.service";
+import type {
+  PositionEditFormState,
+  UpdatePositionPayload,
+} from "@/features/requests/types/request-payload.types";
 
 export default function useSubmitEditFormPosition({
   formData,
 }: {
-  formData: JobPostingResponsePosition;
+  formData: PositionEditFormState;
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<any>(null);
@@ -30,7 +34,7 @@ export default function useSubmitEditFormPosition({
         return stripped || "";
       };
 
-      const data = {
+      const payload: UpdatePositionPayload = {
         client: formData.client,
         education_level: formData.education_level,
         experience_level: formData.experience_level,
@@ -57,9 +61,10 @@ export default function useSubmitEditFormPosition({
         pipeline: [...formData.pipeline],
       };
 
-      const response = await axiosPrivate.patch(
-        `/api/position/${formData.id}/`,
-        data
+      const response = await requestService.updatePosition(
+        { id: formData.id },
+        payload,
+        { httpClient: axiosPrivate },
       );
 
       if (response.status === 200) {

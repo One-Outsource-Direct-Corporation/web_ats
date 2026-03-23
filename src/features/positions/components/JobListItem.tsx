@@ -3,12 +3,16 @@ import { Badge } from "@/shared/components/ui/badge";
 import { getDepartmentColor } from "../utils/departmentColor";
 import DOMPurify from "dompurify";
 import formatName from "@/shared/utils/formatName";
-import type { JobPostingDb } from "@/features/positions-client/types/create_position.types";
+import type { JobPostingResponse } from "@/features/external_posting/types/externalPosting.types";
 import { useContext } from "react";
 import { AuthContext } from "@/features/auth/context/AuthContext";
 import { formatDepartmentName } from "@/shared/utils/formatDepartmentName";
 
-export default function JobListItem({ posting }: { posting: JobPostingDb }) {
+export default function JobListItem({
+  posting,
+}: {
+  posting: JobPostingResponse;
+}) {
   const { user } = useContext(AuthContext);
   return (
     <Card className="p-4 shadow-sm hover:shadow-md transition border rounded-md">
@@ -25,7 +29,7 @@ export default function JobListItem({ posting }: { posting: JobPostingDb }) {
                 className={`${getDepartmentColor(
                   posting.department_name && posting.department_name === "other"
                     ? posting.department_name_other || ""
-                    : formatDepartmentName(posting.department_name ?? "")
+                    : formatDepartmentName(posting.department_name ?? ""),
                 )} text-xs`}
               >
                 {posting.department_name === "other"
@@ -49,10 +53,10 @@ export default function JobListItem({ posting }: { posting: JobPostingDb }) {
                   posting.status === "active"
                     ? "bg-blue-100 text-blue-800 border-blue-200"
                     : posting.status === "draft"
-                    ? "bg-yellow-100 text-yellow-800 border-yellow-200"
-                    : posting.status === "closed"
-                    ? "bg-red-100 text-red-800 border-red-200"
-                    : "bg-gray-100 text-gray-800 border-gray-200"
+                      ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                      : posting.status === "closed"
+                        ? "bg-red-100 text-red-800 border-red-200"
+                        : "bg-gray-100 text-gray-800 border-gray-200"
                 }`}
               >
                 {formatName(posting.status)}

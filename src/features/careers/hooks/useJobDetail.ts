@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { defaultAxios } from "@/config/axios";
 import type { AxiosError } from "axios";
 import type { PRFFormData } from "@/features/prf/types/prf.types";
-import type { PositionFormData } from "@/features/positions-client/types/create_position.types";
+import type { PositionFormData } from "@/features/external_posting/types/externalPosting.types";
+import { careersService } from "@/features/careers/services/careers.service";
 
 export const useJobDetail = (jobId: string | undefined) => {
   const [jobDetail, setJobDetail] = useState<
@@ -16,8 +16,8 @@ export const useJobDetail = (jobId: string | undefined) => {
       if (!jobId) return;
 
       try {
-        const response = await defaultAxios.get(`/api/job/${jobId}/`);
-        setJobDetail(response.data);
+        const response = await careersService.getJobDetailResponse({ jobId });
+        setJobDetail(response);
       } catch (err: AxiosError | any) {
         console.log(err);
         setError(err.response?.data?.error || "An error occurred");

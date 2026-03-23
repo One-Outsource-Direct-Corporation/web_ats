@@ -2,7 +2,7 @@ import { useState } from "react";
 import type {
   Question,
   SavedQuestionnaire,
-} from "../../positions-client/types/create_position.types";
+} from "../../external_posting/types/externalPosting.types";
 
 export function useQuestions() {
   const [showAddQuestionModal, setShowAddQuestionModal] = useState(false);

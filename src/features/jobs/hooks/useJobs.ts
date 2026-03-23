@@ -1,22 +1,26 @@
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { Job } from "@/features/jobs/types/job.types";
-import { getJobs } from "../services/jobService";
+import { getJobsResponse } from "../services/jobService";
+import { queryKeys } from "@/shared/query-keys";
+
+export function useJobsQuery() {
+  return useQuery({
+    queryKey: queryKeys.jobs.listing(),
+    queryFn: getJobsResponse,
+  });
+}
 
 export function useJobs() {
-  const [jobs, setJobs] = useState<Job[]>([]);
-  useEffect(() => {
-    getJobs().then(setJobs);
-  }, []);
-  return jobs;
+  const { data } = useJobsQuery();
+  return data ?? [];
 }
 
 export function useJobByTitle(title?: string): Job | undefined {
-  const [job, setJob] = useState<Job | undefined>(undefined);
-  useEffect(() => {
-    if (!title) return;
-    getJobs().then((jobs) => {
-      setJob(jobs.find((j) => j.title === title));
-    });
-  }, [title]);
-  return job;
+  const jobs = useJobs();
+
+  return useMemo(() => {
+    if (!title) return undefined;
+    return jobs.find((job) => job.title === title);
+  }, [jobs, title]);
 }

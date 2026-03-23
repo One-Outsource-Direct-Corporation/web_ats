@@ -198,18 +198,22 @@ export const Step02 = ({
                 </label>
                 <Input
                   type="time"
-                  value={formData.work_schedule_from ?? ""}
+                  value={formData.job_posting.work_schedule_from ?? ""}
                   onChange={(e) =>
                     updateFormData((prev) => ({
                       ...prev,
-                      work_schedule_from: e.target.value,
+                      job_posting: {
+                        ...prev.job_posting,
+                        work_schedule_from: e.target.value,
+                      },
                     }))
                   }
                 />
-                {errors?.work_schedule_from &&
-                  Array.isArray(errors.work_schedule_from) && (
-                    <FieldError>{errors.work_schedule_from[0]}</FieldError>
-                  )}
+                {getJobPostingError(errors, "work_schedule_from") && (
+                  <FieldError>
+                    {getJobPostingError(errors, "work_schedule_from")}
+                  </FieldError>
+                )}
               </div>
               <div className="flex-1">
                 <label className="text-sm font-medium text-gray-700 block mb-1">
@@ -217,18 +221,22 @@ export const Step02 = ({
                 </label>
                 <Input
                   type="time"
-                  value={formData.work_schedule_to ?? ""}
+                  value={formData.job_posting.work_schedule_to ?? ""}
                   onChange={(e) =>
                     updateFormData((prev) => ({
                       ...prev,
-                      work_schedule_to: e.target.value,
+                      job_posting: {
+                        ...prev.job_posting,
+                        work_schedule_to: e.target.value,
+                      },
                     }))
                   }
                 />
-                {errors?.work_schedule_to &&
-                  Array.isArray(errors.work_schedule_to) && (
-                    <FieldError>{errors.work_schedule_to[0]}</FieldError>
-                  )}
+                {getJobPostingError(errors, "work_schedule_to") && (
+                  <FieldError>
+                    {getJobPostingError(errors, "work_schedule_to")}
+                  </FieldError>
+                )}
               </div>
             </div>
           </FieldGroup>

@@ -49,7 +49,7 @@ export const Step01 = ({
   const { users, loading } = useUsersByDepartment({
     business_unit: formData.business_unit?.toLowerCase() || "",
     department_name: formData.job_posting.department_name?.toLowerCase() || "",
-    include: "hiring_manager",
+    include: "human_resources",
   });
 
   const handleReasonForPostingChange = (value: string) => {
@@ -173,10 +173,10 @@ export const Step01 = ({
                   <SelectValue placeholder="Select a reason" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="New Position">New position</SelectItem>
-                  <SelectItem value="Replacement">Replacement</SelectItem>
-                  <SelectItem value="Reliver">Reliver</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
+                  <SelectItem value="new_position">New position</SelectItem>
+                  <SelectItem value="replacement">Replacement</SelectItem>
+                  <SelectItem value="reliver">Reliver</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
               {getJobPostingError(errors, "reason_for_posting") && (
@@ -264,7 +264,7 @@ export const Step01 = ({
                       // department_display: formatDepartmentName(value),
                     },
                     immediate_supervisor: null,
-                    // immediate_supervisor_display: null,
+                    immediate_supervisor_display: null,
                   }))
                 }
               >
@@ -323,6 +323,11 @@ export const Step01 = ({
                     ...prev,
                     immediate_supervisor:
                       value === "no-supervisor" ? null : Number(value),
+                    immediate_supervisor_display:
+                      value === "no-supervisor"
+                        ? null
+                        : users.find((usr: User) => usr.id === Number(value)) ||
+                          null,
                   }))
                 }
               >

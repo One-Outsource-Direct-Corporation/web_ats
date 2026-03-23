@@ -19,7 +19,7 @@ import type {
 } from "@/shared/types/pipeline.types";
 import { ProcessTypeSelect } from "./ProcessTypeSelect";
 import { AssessmentSection } from "./AssessmentSection";
-import { HiringManagerMember } from "./HiringManagerMember";
+import { HumanResourcesMember } from "./HumanResourcesMember";
 import { StageActionTemplate } from "./StageActionTemplate";
 import { Field, FieldGroup, FieldLabel } from "../../ui/field";
 import { Textarea } from "../../ui/textarea";
@@ -127,16 +127,14 @@ export function AddStepFormDialog({
             />
           </Field>
 
-          <HiringManagerMember
-            hiringManagers={stepData.hiring_managers}
-            handleHiringManagerSelection={(manager) => {
+          <HumanResourcesMember
+            humanResources={stepData.human_resources}
+            handleHumanResourcesSelection={(hr) => {
               onStepDataChange(
-                "hiring_managers",
-                stepData.hiring_managers?.some((hm) => hm.id === manager.id)
-                  ? stepData.hiring_managers.filter(
-                      (hm) => hm.id !== manager.id
-                    )
-                  : [...stepData.hiring_managers, manager]
+                "human_resources",
+                stepData.human_resources?.some((hm) => hm.id === hr.id)
+                  ? stepData.human_resources.filter((hm) => hm.id !== hr.id)
+                  : [...stepData.human_resources, hr]
               );
             }}
           />

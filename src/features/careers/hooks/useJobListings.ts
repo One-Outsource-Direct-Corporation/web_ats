@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { defaultAxios } from "@/config/axios";
 import type { AxiosError } from "axios";
 import type { JobData } from "../types/job.types";
+import { careersService } from "@/features/careers/services/careers.service";
 
 export const useJobListings = () => {
   const [jobListings, setJobListings] = useState<JobData[]>([]);
@@ -12,8 +12,8 @@ export const useJobListings = () => {
     const fetchJobListings = async () => {
       try {
         setLoading(true);
-        const response = await defaultAxios.get("/api/job/");
-        setJobListings(response.data);
+        const response = await careersService.getJobListingsResponse();
+        setJobListings(response);
       } catch (err: AxiosError | any) {
         console.log(err);
         setError(err);

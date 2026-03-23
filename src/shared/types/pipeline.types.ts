@@ -49,7 +49,7 @@ interface PipelineStepBase {
   order: number;
   stage: number;
   reminder: string;
-  hiring_managers: User[] | [];
+  human_resources: User[] | [];
   assessments: Assessment[];
 }
 

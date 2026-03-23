@@ -1,16 +1,20 @@
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
-import type { JobPostingResponsePRF } from "@/features/jobs/types/job.types";
 import { formatForJSON } from "@/shared/utils/formatName";
 import type { AxiosError } from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import DOMPurify from "dompurify";
+import { requestService } from "@/features/requests/services/request.service";
+import type {
+  PrfEditFormState,
+  UpdatePrfPayload,
+} from "@/features/requests/types/request-payload.types";
 
 export default function useSubmitEditForm({
   formData,
 }: {
-  formData: JobPostingResponsePRF;
+  formData: PrfEditFormState;
 }) {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: any }>({});
@@ -30,7 +34,7 @@ export default function useSubmitEditForm({
       return stripped || "";
     };
 
-    const data = {
+    const payload: UpdatePrfPayload = {
       job_posting: {
         job_title: formData.job_title,
         target_start_date: formData.target_start_date,
@@ -54,10 +58,10 @@ export default function useSubmitEditForm({
       business_unit: formData.business_unit.toLowerCase(),
       immediate_supervisor: formData.immediate_supervisor,
       hiring_managers: formData.hiring_managers.filter(
-        (hm: number) => hm !== 0
+        (hm: number) => hm !== 0,
       ),
       interview_levels: formData.hiring_managers.filter(
-        (hm: number) => hm !== 0
+        (hm: number) => hm !== 0,
       ).length,
       category: formData.category,
       position: formData.position,
@@ -69,17 +73,17 @@ export default function useSubmitEditForm({
       other_assessment: Array.isArray(formData.other_assessment)
         ? formData.other_assessment.map((item: string) => formatForJSON(item))
         : (formData.other_assessment as string)
-        ? (formData.other_assessment as string)
-            .split(",")
-            .map((item: string) => formatForJSON(item.trim()))
-        : [],
+          ? (formData.other_assessment as string)
+              .split(",")
+              .map((item: string) => formatForJSON(item.trim()))
+          : [],
       assessment_types: formData.assessment_types.map(
         (item: { id: number; name: string }) => {
           if (item.id === 0) {
             return { name: formatForJSON(item.name) };
           }
           return { id: item.id, name: formatForJSON(item.name) };
-        }
+        },
       ),
       hardware_requirements: formData.hardware_requirements.map(
         (item: { id: number; name: string }) => {
@@ -87,7 +91,7 @@ export default function useSubmitEditForm({
             return { name: formatForJSON(item.name) };
           }
           return { id: item.id, name: formatForJSON(item.name) };
-        }
+        },
       ),
       software_requirements: formData.software_requirements.map(
         (item: { id: number; name: string }) => {
@@ -95,13 +99,14 @@ export default function useSubmitEditForm({
             return { name: formatForJSON(item.name) };
           }
           return { id: item.id, name: formatForJSON(item.name) };
-        }
+        },
       ),
     };
     try {
-      const response = await axiosPrivate.patch(
-        `/api/prf/${formData.id}/`,
-        data
+      const response = await requestService.updatePrf(
+        { id: formData.id },
+        payload,
+        { httpClient: axiosPrivate },
       );
 
       if (response.status === 200) {

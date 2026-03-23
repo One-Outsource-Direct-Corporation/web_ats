@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 
-import type { AxiosError, AxiosResponse } from "axios";
+import type { AxiosError } from "axios";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
-import { defaultAxios } from "@/config/axios";
 import type { PRFFormData } from "@/features/prf/types/prf.types";
 import type {
-  JobPostingAPIResponse,
-  JobPostingDb,
+  JobPostingListResponse,
+  JobPostingResponse,
   PositionFormData,
-} from "@/features/positions-client/types/create_position.types";
+} from "@/features/external_posting/types/externalPosting.types";
+import { positionService } from "@/features/external_posting/services/externalPosting.service";
 
 export function usePositions({
   my_postings = false,
@@ -21,14 +21,15 @@ export function usePositions({
   published = "false",
   no_active = false,
   non_admin = false,
+  exclude_draft = false,
 }) {
   const [positions, setPositions] = useState<
-    | JobPostingAPIResponse
+    | JobPostingListResponse
     | {
         count: number;
         next: string | null;
         previous: string | null;
-        results: JobPostingDb[];
+        results: JobPostingResponse[];
       }
   >({
     count: 0,
@@ -49,45 +50,46 @@ export function usePositions({
     try {
       setLoading(true);
       setError(null);
-      let response: AxiosResponse<JobPostingAPIResponse>;
+      let response: JobPostingListResponse;
       if (non_admin) {
-        const queryParams = [
-          no_active ? `no_active=${no_active}` : "",
-          page ? `page=${page}` : "",
-          status ? `status=${status}` : "",
-          type ? `type=${type}` : "",
-          employment_type ? `employment_type=${employment_type}` : "",
-          work_setup ? `work_setup=${work_setup}` : "",
-          order_by ? `order_by=${order_by}` : "",
-          published ? `published=${published}` : "",
-        ]
-          .filter(Boolean)
-          .join("&");
-
-        response = await defaultAxios.get(`/api/job/?${queryParams}`, {
-          signal: controllerRef.current.signal,
-        });
+        response = await positionService.getPositionsResponse(
+          {
+            no_active,
+            page,
+            status,
+            type,
+            employment_type,
+            work_setup,
+            order_by,
+            published,
+            exclude_draft,
+          },
+          {
+            signal: controllerRef.current.signal,
+          },
+        );
       } else {
-        const queryParams = [
-          my_postings ? `my_postings=${my_postings}` : "",
-          no_active ? `no_active=${no_active}` : "",
-          page ? `page=${page}` : "",
-          status ? `status=${status}` : "",
-          type ? `type=${type}` : "",
-          employment_type ? `employment_type=${employment_type}` : "",
-          work_setup ? `work_setup=${work_setup}` : "",
-          order_by ? `order_by=${order_by}` : "",
-          published ? `published=${published}` : "",
-        ]
-          .filter(Boolean)
-          .join("&");
-
-        response = await axiosPrivate.get(`/api/job/?${queryParams}`, {
-          signal: controllerRef.current.signal,
-        });
+        response = await positionService.getPositionsResponse(
+          {
+            my_postings,
+            no_active,
+            page,
+            status,
+            type,
+            employment_type,
+            work_setup,
+            order_by,
+            published,
+            exclude_draft,
+          },
+          {
+            httpClient: axiosPrivate,
+            signal: controllerRef.current.signal,
+          },
+        );
       }
 
-      setPositions(response.data);
+      setPositions(response);
       setLoading(false);
     } catch (err: AxiosError | any) {
       console.log(err);
@@ -131,7 +133,7 @@ export function usePositionDetail({
   non_admin = false,
 }: {
   id: number | undefined;
-  non_admin: boolean;
+  non_admin?: boolean;
 }) {
   const [position, setPosition] = useState<
     PRFFormData | PositionFormData | null
@@ -149,26 +151,28 @@ export function usePositionDetail({
     try {
       setLoading(true);
       setError(null);
-      let response: AxiosResponse<PRFFormData | PositionFormData>;
 
-      if (non_admin) {
-        response = await defaultAxios.get(`/api/job/${id}/`, {
-          signal: controllerRef.current.signal,
-        });
-      } else {
-        response = await axiosPrivate.get(`/api/job/${id}/`, {
-          signal: controllerRef.current.signal,
-        });
+      if (!id) {
+        setPosition(null);
+        return;
       }
 
-      setPosition(response.data);
+      const response = await positionService.getPositionDetailResponse(
+        { id },
+        {
+          httpClient: non_admin ? undefined : axiosPrivate,
+          signal: controllerRef.current.signal,
+        },
+      );
+
+      setPosition(response);
     } catch (err: AxiosError | any) {
       console.error(err);
       if (err.code === "ERR_CANCELED") return;
       setError(
         err.response?.data?.error ||
           err.response?.data?.detail ||
-          "An error occurred"
+          "An error occurred",
       );
     } finally {
       setLoading(false);

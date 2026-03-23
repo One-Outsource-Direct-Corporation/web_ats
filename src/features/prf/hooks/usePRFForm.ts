@@ -6,7 +6,7 @@ import type {
   ApplicationFormType,
   NonNegotiable,
 } from "@/shared/types/application_form.types";
-import type { ApplicationFormQuestionnaire } from "@/features/positions-client/types/questionnaire.types";
+import type { ApplicationFormQuestionnaire } from "@/features/external_posting/types/questionnaire.types";
 import initialDataPrf, { testData } from "../data/prfInitialData";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 
@@ -17,8 +17,8 @@ export function usePRFForm(initialData?: PRFFormData) {
       (import.meta.env.VITE_REACT_ENV === "development"
         ? testData()
         : user
-        ? initialDataPrf(user)
-        : initialDataPrf())
+          ? initialDataPrf(user)
+          : initialDataPrf()),
   );
 
   function pipelineHandler(updatedPipelines: PipelineStep[]) {
@@ -30,7 +30,7 @@ export function usePRFForm(initialData?: PRFFormData) {
 
   function applicationFormHandler(
     field: keyof ApplicationForm,
-    value: ApplicationFormType
+    value: ApplicationFormType,
   ) {
     setFormData((prev) => ({
       ...prev,
@@ -55,7 +55,7 @@ export function usePRFForm(initialData?: PRFFormData) {
   }
 
   function questionnaireHandler(
-    updatedQuestionnaire: ApplicationFormQuestionnaire
+    updatedQuestionnaire: ApplicationFormQuestionnaire,
   ) {
     setFormData((prev) => ({
       ...prev,
@@ -66,10 +66,6 @@ export function usePRFForm(initialData?: PRFFormData) {
     }));
   }
 
-  function resetData() {
-    setFormData(user ? initialDataPrf(user) : initialDataPrf());
-  }
-
   return {
     formData,
     setFormData,
@@ -77,6 +73,5 @@ export function usePRFForm(initialData?: PRFFormData) {
     applicationFormHandler,
     nonNegotiableHandler,
     questionnaireHandler,
-    resetData,
   };
 }

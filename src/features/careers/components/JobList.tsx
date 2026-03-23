@@ -1,8 +1,8 @@
 import { JobCard } from "./JobCard";
-import type { JobPostingAPIResponse } from "@/features/jobs/types/job.types";
+import type { JobPostingListResponse } from "@/features/external_posting/types/externalPosting.types";
 
 interface JobListProps {
-  jobs: JobPostingAPIResponse;
+  jobs: JobPostingListResponse;
 }
 
 export const JobList: React.FC<JobListProps> = ({ jobs }) => {

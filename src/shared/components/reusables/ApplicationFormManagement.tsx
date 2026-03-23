@@ -8,11 +8,11 @@ import {
   TableRow,
 } from "@/shared/components/ui/table";
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
-import { FormFieldRadioButton } from "../../../features/positions-client/components/FormFieldRadioButton";
+import { FormFieldRadioButton } from "@/features/external_posting/components/FormFieldRadioButton";
 import { useState } from "react";
 import { Checkbox } from "../ui/checkbox";
-import QuestionnaireBase from "@/features/positions-client/components/questionnaires/QuestionnaireBase";
-import { NonNegotiableModal } from "@/features/positions-client/components/NonNegotiableModal";
+import QuestionnaireBase from "@/features/external_posting/components/questionnaires/QuestionnaireBase";
+import { NonNegotiableModal } from "@/features/external_posting/components/NonNegotiableModal";
 import { Button } from "@/shared/components/ui/button";
 import { Settings } from "lucide-react";
 import type {
@@ -22,7 +22,7 @@ import type {
   NonNegotiable,
   NonNegotiableBase,
 } from "@/shared/types/application_form.types";
-import type { ApplicationFormQuestionnaire } from "@/features/positions-client/types/questionnaire.types";
+import type { ApplicationFormQuestionnaire } from "@/features/external_posting/types/questionnaire.types";
 
 import type { ValidationError } from "@/shared/utils/formValidation";
 
@@ -30,11 +30,11 @@ interface ApplicationFormManagementProps {
   applicationFormData: ApplicationFormData;
   applicationFormHandler: (
     field: keyof ApplicationForm,
-    value: ApplicationFormType
+    value: ApplicationFormType,
   ) => void;
   nonNegotiableHandler: (updatedNonNegotiables: NonNegotiable) => void;
   questionnaireHandler: (
-    updatedQuestionnaire: ApplicationFormQuestionnaire
+    updatedQuestionnaire: ApplicationFormQuestionnaire,
   ) => void;
   validationError?: ValidationError | null;
 }
@@ -109,7 +109,7 @@ const FieldRow = ({
   fieldValue: string;
   setFormData: (
     fieldName: keyof ApplicationForm,
-    status: ApplicationFormType
+    status: ApplicationFormType,
   ) => void;
   hasNonNegotiable?: boolean;
   isNonNegotiable?: (fieldName: string) => boolean;
@@ -182,7 +182,7 @@ export const ApplicationFormManagement = ({
   // Check if a field is marked as non-negotiable
   const isNonNegotiable = (fieldName: string): boolean => {
     return applicationFormData.non_negotiable.non_negotiable.some(
-      (nn) => nn.field === fieldName
+      (nn) => nn.field === fieldName,
     );
   };
 
@@ -197,7 +197,7 @@ export const ApplicationFormManagement = ({
     if (isCurrentlyNonNegotiable) {
       // Remove from non-negotiables
       updatedNonNegotiables = currentNonNegotiables.filter(
-        (nn) => nn.field !== fieldName
+        (nn) => nn.field !== fieldName,
       );
     } else {
       // Add to non-negotiables with default value
@@ -220,7 +220,7 @@ export const ApplicationFormManagement = ({
   // Update non-negotiable value
   const setNonNegotiableValue = (
     fieldName: string,
-    value: string | number | boolean
+    value: string | number | boolean,
   ) => {
     const updatedNonNegotiables =
       applicationFormData.non_negotiable.non_negotiable.map((nn) => {
@@ -244,7 +244,7 @@ export const ApplicationFormManagement = ({
   const removeNonNegotiable = (fieldName: string) => {
     const updatedNonNegotiables =
       applicationFormData.non_negotiable.non_negotiable.filter(
-        (nn) => nn.field !== fieldName
+        (nn) => nn.field !== fieldName,
       );
     const updatedNonNegotiable: NonNegotiable = {
       ...applicationFormData.non_negotiable,
