@@ -1,27 +1,19 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { PositionFormData } from "@/features/external_posting/types/externalPosting.types";
-import {
-  useExternalPostingStepNavigation,
-} from "@/features/external_posting/hooks/useExternalPostingStepNavigation";
-import {
-  useExternalPostingModalManagement,
-} from "@/features/external_posting/hooks/useExternalPostingModalManagement";
-import {
-  useExternalPostingFormData,
-} from "@/features/external_posting/hooks/useExternalPostingFormData";
-import {
-  useExternalPostingSubmissionFlow,
-} from "@/features/external_posting/hooks/useExternalPostingSubmissionFlow";
+import { Eye } from "lucide-react";
 import {
   PreviewModal,
-  StepNavigation,
   Step01,
   Step02,
   Step03,
   Step04,
-} from "@/features/external_posting/components/externalPostingForm.components";
+  StepNavigation,
+  type PositionFormData,
+  useExternalPostingFormData,
+  useExternalPostingStepNavigation,
+  useExternalPostingSubmissionFlow,
+} from "@/features/external_posting";
 import { Button } from "@/shared/components/ui/button";
-import { Eye } from "lucide-react";
 
 interface ExternalPostingFormProps {
   initialData?: PositionFormData;
@@ -57,7 +49,7 @@ export default function ExternalPostingForm(props: ExternalPostingFormProps) {
     pipelineHandler,
   } = useExternalPostingFormData(initialData);
 
-  const modalHooks = useExternalPostingModalManagement();
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
   const { submitCurrentStep } = useExternalPostingSubmissionFlow({
     updateMode,
@@ -73,7 +65,6 @@ export default function ExternalPostingForm(props: ExternalPostingFormProps) {
 
   const handleNext = async () => {
     const { didSubmit } = await submitCurrentStep(formData);
-
     if (!didSubmit) {
       stepHandleNext();
     }
@@ -128,7 +119,7 @@ export default function ExternalPostingForm(props: ExternalPostingFormProps) {
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <span>External Posting</span>
           <span>/</span>
-          <span>Create New Position</span>
+          <span>{updateMode ? "Edit Position" : "Create New Position"}</span>
         </div>
 
         <StepNavigation
@@ -141,15 +132,15 @@ export default function ExternalPostingForm(props: ExternalPostingFormProps) {
           updateMode={updateMode}
         />
 
-        <div className="flex justify-between items-start">
+        <div className="flex items-start justify-between">
           <h2 className="text-3xl font-bold text-gray-800">{getStepTitle()}</h2>
           <Button
             variant="outline"
-            className="text-blue-600 border-blue-600 bg-transparent hover:bg-blue-600 hover:text-white"
-            onClick={() => modalHooks.setShowPreview(true)}
+            className="border-blue-600 bg-transparent text-blue-600 hover:bg-blue-600 hover:text-white"
+            onClick={() => setIsPreviewModalOpen(true)}
             disabled={currentStep >= 4}
           >
-            <Eye className="w-4 h-4 mr-2" />
+            <Eye className="mr-2 h-4 w-4" />
             Preview
           </Button>
         </div>
@@ -159,14 +150,14 @@ export default function ExternalPostingForm(props: ExternalPostingFormProps) {
         <div className="flex justify-between">
           <Button
             variant="outline"
-            className="text-gray-600 bg-transparent"
+            className="bg-transparent text-gray-600"
             onClick={handleBack}
             disabled={currentStep === 1}
           >
             ← Back
           </Button>
           <Button
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="bg-blue-600 text-white hover:bg-blue-700"
             onClick={handleNext}
           >
             {currentStep === 4
@@ -179,8 +170,8 @@ export default function ExternalPostingForm(props: ExternalPostingFormProps) {
       </div>
 
       <PreviewModal
-        show={modalHooks.showPreview}
-        onClose={() => modalHooks.setShowPreview(false)}
+        show={isPreviewModalOpen}
+        onClose={() => setIsPreviewModalOpen(false)}
         formData={formData}
         currentStep={currentStep}
       />

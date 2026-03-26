@@ -1,5 +1,4 @@
 import Positions from "../views/Positions";
-import CreateExternalPosting from "../../external_posting/views/CreateExternalPosting";
 
 export const positionRoutes = [
   {
@@ -9,10 +8,10 @@ export const positionRoutes = [
         index: true,
         element: <Positions />,
       },
-      {
-        path: "create-new-position",
-        element: <CreateExternalPosting />,
-      },
+      // {
+      //   path: "create-new-position",
+      //   element: <CreateExternalPosting />,
+      // },
     ],
   },
 ];

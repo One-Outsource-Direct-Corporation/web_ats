@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { calculateDaysAgo } from "../utils/filterJobs";
 import DOMPurify from "dompurify";
 import formatName from "@/shared/utils/formatName";
-import type { JobPostingResponse } from "@/features/external_posting/types/externalPosting.types";
+import type { JobPostingResponse } from "@/features/external_posting";
 
 export const JobCard = ({ job }: { job: JobPostingResponse }) => {
   //   const IconComponent = job.icon;

@@ -4,7 +4,7 @@ import {
   PopoverTrigger,
 } from "@/shared/components/ui/popover";
 import { CheckCircle, Clock } from "lucide-react";
-import type { ApproverDb } from "@/features/external_posting/types/externalPosting.types";
+import type { ApproverDb } from "@/features/external_posting";
 import formatName from "@/shared/utils/formatName";
 
 interface ApprovalPipelineDropdownProps {
@@ -19,10 +19,10 @@ export function ApprovalPipelineDropdown({
   }
 
   const approvedCount = approvers.filter(
-    (a) => a.status.toLowerCase() === "approved"
+    (a) => a.status.toLowerCase() === "approved",
   ).length;
   const pendingCount = approvers.filter(
-    (a) => a.status.toLowerCase() === "pending"
+    (a) => a.status.toLowerCase() === "pending",
   ).length;
 
   return (
@@ -65,8 +65,8 @@ export function ApprovalPipelineDropdown({
                         isApproved
                           ? "text-green-700"
                           : isPending
-                          ? "text-orange-600"
-                          : "text-red-700"
+                            ? "text-orange-600"
+                            : "text-red-700"
                       }`}
                     >
                       {isApproved && "Approved by "}

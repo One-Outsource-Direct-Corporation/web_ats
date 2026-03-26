@@ -1,6 +1,6 @@
 import DOMPurify from "dompurify";
 import { formatDateYYYYMMDD } from "./formatDate";
-import type { PositionFormData } from "@/features/external_posting/types/externalPosting.types";
+import type { PositionFormData } from "@/features/external_posting";
 import type { PRFFormData } from "@/features/prf/types/prf.types";
 
 type ExtractedFiles = Record<string, File>;
@@ -83,13 +83,13 @@ export function stateToDataFormat<T extends object>(
   options: {
     jobPostingField?: keyof T;
     customFields?: (data: T) => Partial<T>;
-  } = {}
+  } = {},
 ): FormData {
   let baseData = { ...formData } as any;
 
   if (options.jobPostingField && baseData[options.jobPostingField as string]) {
     baseData[options.jobPostingField as string] = formatJobPosting(
-      baseData[options.jobPostingField as string]
+      baseData[options.jobPostingField as string],
     );
   }
 
@@ -103,7 +103,7 @@ export function stateToDataFormat<T extends object>(
         ? step.human_resources.map((mgr: any) =>
             typeof mgr === "object" && mgr !== null && "id" in mgr
               ? mgr.id
-              : mgr
+              : mgr,
           )
         : [];
 
@@ -217,7 +217,6 @@ export function stateToDataFormat<T extends object>(
     baseData.batches_input = baseData.batches;
     delete baseData.batches;
   }
-  console.log("Base Data:", baseData);
 
   const { data: jsonData, files } = extractFiles(baseData);
 

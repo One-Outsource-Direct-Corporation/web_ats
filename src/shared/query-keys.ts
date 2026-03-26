@@ -6,7 +6,6 @@ export const queryKeys = {
   externalPosting: {
     all: ["external_posting"] as const,
     listing: () => [...queryKeys.externalPosting.all, "listing"] as const,
-    clients: () => [...queryKeys.externalPosting.all, "clients"] as const,
     detail: (id: number | string) =>
       [...queryKeys.externalPosting.all, "detail", id] as const,
   },
@@ -29,6 +28,7 @@ export const queryKeys = {
         params.email ?? "",
         params.include ?? "",
       ] as const,
-    detail: (id: number | string) => [...queryKeys.prf.all, "detail", id] as const,
+    detail: (id: number | string) =>
+      [...queryKeys.prf.all, "detail", id] as const,
   },
 } as const;

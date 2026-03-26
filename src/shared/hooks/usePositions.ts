@@ -7,8 +7,8 @@ import type {
   JobPostingListResponse,
   JobPostingResponse,
   PositionFormData,
-} from "@/features/external_posting/types/externalPosting.types";
-import { positionService } from "@/features/external_posting/services/externalPosting.service";
+} from "@/features/external_posting";
+import { positionService } from "@/features/external_posting";
 
 export function usePositions({
   my_postings = false,

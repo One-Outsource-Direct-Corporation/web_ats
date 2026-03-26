@@ -10,7 +10,7 @@ import type {
 } from "@/shared/types/application_form.types";
 import type { PipelineStep } from "@/shared/types/pipeline.types";
 import type { ApplicationFormQuestionnaire } from "../types/questionnaire.types";
-import { getDefaultFormData, testData } from "../data/positionInitialData";
+import { getDefaultFormData, testData } from "../utils/positionInitialData";
 import { positionDraftLocalStore } from "../services/positionDraft.local-store";
 import { questionnaireLocalStore } from "../services/questionnaire.local-store";
 
@@ -34,7 +34,7 @@ export const useExternalPostingFormData = (initialData?: PositionFormData) => {
 
   function handlePositionBaseChange(
     field: keyof PositionBase,
-    value: string | number | null
+    value: string | number | null,
   ) {
     setFormData((prev: PositionFormData) => ({
       ...prev,
@@ -44,7 +44,7 @@ export const useExternalPostingFormData = (initialData?: PositionFormData) => {
 
   function handleJobPostingChange(
     fieldName: keyof PositionFormData["job_posting"],
-    value: string | number | null
+    value: string | number | null,
   ) {
     setFormData((prev: PositionFormData) => ({
       ...prev,
@@ -71,7 +71,7 @@ export const useExternalPostingFormData = (initialData?: PositionFormData) => {
 
   function applicationFormHandler(
     field: keyof ApplicationForm,
-    value: ApplicationFormType
+    value: ApplicationFormType,
   ) {
     setFormData((prev) => ({
       ...prev,
@@ -95,7 +95,9 @@ export const useExternalPostingFormData = (initialData?: PositionFormData) => {
     }));
   }
 
-  function questionnaireHandler(updatedQuestionnaire: ApplicationFormQuestionnaire) {
+  function questionnaireHandler(
+    updatedQuestionnaire: ApplicationFormQuestionnaire,
+  ) {
     setFormData((prev) => ({
       ...prev,
       application_form: {

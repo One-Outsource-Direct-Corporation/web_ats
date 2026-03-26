@@ -1,7 +1,14 @@
 import type { ApplicationFormData } from "@/shared/types/application_form.types";
 import type { PipelineStep } from "@/shared/types/pipeline.types";
 import type { User } from "@/features/auth/types/auth.types";
-import type { BatchEntry, LocationEntry } from "./locationAndBatch.types";
+import type { BatchEntry } from "@/features/batch/types/batch.types";
+import type { LocationEntry } from "@/features/location/types/location.types";
+export type {
+  Client,
+  ClientBase,
+  ClientResponse,
+  CreateClientPayload,
+} from "@/features/client/types/client.types";
 
 export interface StepProps {
   number: number;
@@ -85,21 +92,6 @@ export interface JobPostingDb extends JobPosting {
 export interface JobPostingDbWithApprovers extends JobPostingDb {
   approving_managers: ApproverDb[];
 }
-
-export interface ClientBase {
-  name: string;
-  email: string;
-  contact_number: string;
-}
-
-export interface ClientDb extends ClientBase {
-  id: number;
-  posted_by: string;
-}
-
-export type ClientResponse = ClientDb;
-export type CreateClientPayload = ClientBase;
-export type Client = ClientDb | ClientBase;
 
 export interface PositionBase {
   client: number | null;

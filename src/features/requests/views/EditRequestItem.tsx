@@ -20,8 +20,8 @@ import type { PRFFormData, PRFResponse } from "@/features/prf/types/prf.types";
 import type {
   PositionResponse,
   PositionFormData,
-} from "@/features/external_posting/types/externalPosting.types";
-import PositionClient from "@/features/external_posting/views/PositionClient";
+} from "@/features/external_posting";
+import ExternalPostingForm from "@/Pages/ExternalPostingForm";
 
 type EditablePosition = PRFResponse | PositionResponse;
 
@@ -180,7 +180,7 @@ export default function EditRequestItem() {
             updateMode={true}
           />
         ) : (
-          <PositionClient
+          <ExternalPostingForm
             initialData={editablePosition as PositionFormData}
             updateMode={true}
           />

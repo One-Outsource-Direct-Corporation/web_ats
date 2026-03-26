@@ -1,6 +1,6 @@
 import { Button } from "@/shared/components/ui/button";
 import type { PRFFormData } from "@/features/prf/types/prf.types";
-import type { PositionFormData } from "@/features/external_posting/types/externalPosting.types";
+import type { PositionFormData } from "@/features/external_posting";
 
 interface ApplicationHeaderProps {
   job: PRFFormData | PositionFormData;

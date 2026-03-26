@@ -3,12 +3,14 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Plus, Trash2, Edit, Check, X, Eye, CalendarIcon } from "lucide-react";
 import type {
-  BatchEntry,
-  BatchEntryDb,
   LocationEntry,
   LocationEntryDb,
   LocationEntryLocal,
-} from "../types/locationAndBatch.types";
+} from "../types/location.types";
+import type {
+  BatchEntry as BatchEntryFromBatch,
+  BatchEntryDb as BatchEntryDbFromBatch,
+} from "@/features/batch/types/batch.types";
 import {
   Select,
   SelectContent,
@@ -28,7 +30,7 @@ import { format } from "date-fns";
 
 interface LocationManagementProps {
   locations: LocationEntry[];
-  batches: BatchEntry[];
+  batches: BatchEntryFromBatch[];
   selectedLocationId: string | number | null;
   onLocationSelect: (id: string | number) => void;
   onAddLocation: (location: LocationEntryLocal) => void;
@@ -76,7 +78,7 @@ export const LocationManagement = ({
     setEditingLocationId(
       (location as LocationEntryDb).id ??
         (location as LocationEntryLocal).tempId ??
-        null
+        null,
     );
   };
 
@@ -209,7 +211,7 @@ export const LocationManagement = ({
                           className={cn(
                             "w-full justify-start text-left font-normal",
                             !newLocation.deployment_date &&
-                              "text-muted-foreground"
+                              "text-muted-foreground",
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
@@ -297,7 +299,7 @@ export const LocationManagement = ({
                   .filter(
                     (batch) =>
                       batch.location === locId &&
-                      !(batch as BatchEntryDb)._delete
+                      !(batch as BatchEntryDbFromBatch)._delete,
                   )
                   .reduce((sum, batch) => sum + (batch.headcount || 0), 0);
 
@@ -369,14 +371,14 @@ export const LocationManagement = ({
                                 className={cn(
                                   "w-full justify-start text-left font-normal",
                                   !editFormData.deployment_date &&
-                                    "text-muted-foreground"
+                                    "text-muted-foreground",
                                 )}
                               >
                                 <CalendarIcon className="mr-2 h-4 w-4" />
                                 {editFormData.deployment_date ? (
                                   format(
                                     new Date(editFormData.deployment_date),
-                                    "PPP"
+                                    "PPP",
                                   )
                                 ) : (
                                   <span>Pick a date</span>

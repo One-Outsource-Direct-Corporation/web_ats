@@ -1,4 +1,4 @@
-import type { JobPostingListResponse } from "@/features/external_posting/types/externalPosting.types";
+import type { JobPostingListResponse } from "@/features/external_posting";
 import { Button } from "../ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 

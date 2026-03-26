@@ -6,7 +6,7 @@ import type {
   BatchEntry,
   BatchEntryDb,
   BatchEntryLocal,
-} from "../types/locationAndBatch.types";
+} from "../types/batch.types";
 import { formatDate } from "@/shared/utils/formatDate";
 import { Calendar } from "@/shared/components/ui/calendar";
 import {
@@ -44,7 +44,7 @@ export const BatchManagement = ({
   });
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [editingBatchId, setEditingBatchId] = useState<string | number | null>(
-    null
+    null,
   );
   const [editFormData, setEditFormData] = useState<
     Omit<BatchEntry, "id" | "tempId" | "location">
@@ -75,7 +75,7 @@ export const BatchManagement = ({
 
   const handleStartEdit = (batch: BatchEntry) => {
     setEditingBatchId(
-      (batch as BatchEntryLocal).tempId ?? (batch as BatchEntryDb).id
+      (batch as BatchEntryLocal).tempId ?? (batch as BatchEntryDb).id,
     );
     setEditFormData({
       name: batch.name,
@@ -163,7 +163,7 @@ export const BatchManagement = ({
   // Filter batches for the selected location and exclude deleted ones
   const filteredBatches = batches.filter(
     (batch) =>
-      batch.location === selectedLocationId && !(batch as BatchEntryDb)._delete
+      batch.location === selectedLocationId && !(batch as BatchEntryDb)._delete,
   );
 
   return (
@@ -239,7 +239,7 @@ export const BatchManagement = ({
                         variant={"outline"}
                         className={cn(
                           "w-full justify-start text-left font-normal",
-                          !newBatch.deployment_date && "text-muted-foreground"
+                          !newBatch.deployment_date && "text-muted-foreground",
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
@@ -358,14 +358,14 @@ export const BatchManagement = ({
                             className={cn(
                               "w-full justify-start text-left font-normal",
                               !editFormData.deployment_date &&
-                                "text-muted-foreground"
+                                "text-muted-foreground",
                             )}
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {editFormData.deployment_date ? (
                               format(
                                 new Date(editFormData.deployment_date),
-                                "PPP"
+                                "PPP",
                               )
                             ) : (
                               <span>Pick a date</span>
@@ -397,7 +397,7 @@ export const BatchManagement = ({
                         {formatDate(
                           batch.deployment_date
                             ? batch.deployment_date.split("T")[0]
-                            : ""
+                            : "",
                         )}
                       </span>
                     )}

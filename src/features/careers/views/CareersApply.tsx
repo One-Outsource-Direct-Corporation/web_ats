@@ -15,7 +15,7 @@ import Step02 from "../components/steps/Step02";
 import Step03 from "../components/steps/Step03";
 import Step04 from "../components/steps/Step04";
 import type { PRFResponse } from "@/features/prf/types/prf.types";
-import type { PositionResponse } from "@/features/external_posting/types/externalPosting.types";
+import type { PositionResponse } from "@/features/external_posting";
 
 export default function CareersApply() {
   const params = useParams();

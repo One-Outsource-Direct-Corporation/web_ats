@@ -1,4 +1,4 @@
-import type { ApplicationFormQuestionnaire } from "@/features/external_posting/types/questionnaire.types";
+import type { ApplicationFormQuestionnaire } from "@/features/external_posting";
 
 const QUESTIONNAIRE_DRAFT_STORAGE_KEY =
   "external-posting:questionnaire-draft:v1";

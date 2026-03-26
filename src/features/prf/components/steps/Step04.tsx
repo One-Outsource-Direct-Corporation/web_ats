@@ -2,7 +2,7 @@ import { Button } from "@/shared/components/ui/button";
 import type { PRFFormData } from "../../types/prf.types";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { ApplicationFormManagement } from "@/shared/components/reusables/ApplicationFormManagement";
-import type { ApplicationFormQuestionnaire } from "@/features/external_posting/types/questionnaire.types";
+import type { ApplicationFormQuestionnaire } from "@/features/external_posting";
 import type {
   ApplicationForm,
   ApplicationFormType,

@@ -1,17 +1,23 @@
 import { useQuery } from "@tanstack/react-query";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
-import { externalPostingService } from "@/features/external_posting/services/externalPosting.service";
-import { queryKeys } from "@/shared/query-keys";
+import { clientService } from "@/features/client/services/client.service";
 
-export function useExternalPostingClientsQuery() {
+const clientListQueryKeys = {
+  all: ["client", "list"] as const,
+};
+
+export function useClientListQuery() {
   const axiosPrivate = useAxiosPrivate();
 
   const query = useQuery({
-    queryKey: queryKeys.externalPosting.clients(),
+    queryKey: clientListQueryKeys.all,
     queryFn: () =>
-      externalPostingService.getClientsResponse({
-        httpClient: axiosPrivate,
-      }),
+      clientService.getAllClientsResponse(
+        {},
+        {
+          httpClient: axiosPrivate,
+        },
+      ),
   });
 
   return {

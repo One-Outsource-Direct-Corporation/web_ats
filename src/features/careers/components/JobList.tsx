@@ -1,5 +1,5 @@
 import { JobCard } from "./JobCard";
-import type { JobPostingListResponse } from "@/features/external_posting/types/externalPosting.types";
+import type { JobPostingListResponse } from "@/features/external_posting";
 
 interface JobListProps {
   jobs: JobPostingListResponse;

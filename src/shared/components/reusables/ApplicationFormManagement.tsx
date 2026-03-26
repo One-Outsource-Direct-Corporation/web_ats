@@ -8,11 +8,14 @@ import {
   TableRow,
 } from "@/shared/components/ui/table";
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
-import { FormFieldRadioButton } from "@/features/external_posting/components/FormFieldRadioButton";
+import {
+  FormFieldRadioButton,
+  NonNegotiableModal,
+  QuestionnaireBase,
+  type ApplicationFormQuestionnaire,
+} from "@/features/external_posting";
 import { useState } from "react";
 import { Checkbox } from "../ui/checkbox";
-import QuestionnaireBase from "@/features/external_posting/components/questionnaires/QuestionnaireBase";
-import { NonNegotiableModal } from "@/features/external_posting/components/NonNegotiableModal";
 import { Button } from "@/shared/components/ui/button";
 import { Settings } from "lucide-react";
 import type {
@@ -22,7 +25,6 @@ import type {
   NonNegotiable,
   NonNegotiableBase,
 } from "@/shared/types/application_form.types";
-import type { ApplicationFormQuestionnaire } from "@/features/external_posting/types/questionnaire.types";
 
 import type { ValidationError } from "@/shared/utils/formValidation";
 

@@ -1,7 +1,7 @@
 import type { ApplicationForm } from "@/features/careers/types/job.types";
 import type { User } from "@/features/auth/types/auth.types";
 import type { PipelineStep } from "@/shared/types/pipeline.types";
-import type { JobPostingResponse } from "@/features/external_posting/types/externalPosting.types";
+import type { JobPostingResponse } from "@/features/external_posting";
 
 export interface PositionData {
   id: number;

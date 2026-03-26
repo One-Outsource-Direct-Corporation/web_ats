@@ -1,4 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import { LoaderCircle, PlusCircle, PlusIcon } from "lucide-react";
+import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
+import { validateEmail } from "@/shared/utils/validators";
 import { Button } from "@/shared/components/ui/button";
 import {
   Dialog,
@@ -17,11 +21,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@radix-ui/react-dialog";
-import { LoaderCircle, PlusCircle, PlusIcon } from "lucide-react";
-import { type ClientBase } from "../types/externalPosting.types";
-import { validateEmail } from "@/shared/utils/validators";
-import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
-import { toast } from "react-toastify";
+import type { ClientBase } from "@/features/client/types/client.types";
 
 export default function ClientAddModal({
   onClientAdded,
@@ -29,7 +29,7 @@ export default function ClientAddModal({
   onClientAdded?: () => void;
 }) {
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [open, setOpen] = useState(false);
   const [clientForm, setClientForm] = useState<ClientBase>({
     name: "",
@@ -37,7 +37,9 @@ export default function ClientAddModal({
     contact_number: "",
   });
 
-  function resetForm() {
+  const axiosPrivate = useAxiosPrivate();
+
+  const resetForm = () => {
     setClientForm({
       name: "",
       email: "",
@@ -45,43 +47,41 @@ export default function ClientAddModal({
     });
     setErrors({});
     setOpen(false);
-  }
-
-  const axiosPrivate = useAxiosPrivate();
+  };
 
   useEffect(() => {
-    if (open) {
-      setClientForm({
-        name: "",
-        email: "",
-        contact_number: "",
-      });
-      setErrors({});
+    if (!open) {
+      return;
     }
+
+    setClientForm({
+      name: "",
+      email: "",
+      contact_number: "",
+    });
+    setErrors({});
   }, [open]);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    console.log("Submitting form:", clientForm);
-
     setErrors({});
-    const errorsForm: { [key: string]: string } = {};
+    const formErrors: Record<string, string> = {};
 
-    if (clientForm.name.trim() === "") {
-      errorsForm.name = "Client name is required";
+    if (!clientForm.name.trim()) {
+      formErrors.name = "Client name is required";
     }
 
     if (!validateEmail(clientForm.email)) {
-      errorsForm.email = "Client email is invalid";
+      formErrors.email = "Client email is invalid";
     }
 
-    if (clientForm.contact_number.trim() === "") {
-      errorsForm.contact_number = "Contact number is required";
+    if (!clientForm.contact_number.trim()) {
+      formErrors.contact_number = "Contact number is required";
     }
 
-    if (Object.keys(errorsForm).length > 0) {
-      setErrors(errorsForm);
+    if (Object.keys(formErrors).length > 0) {
+      setErrors(formErrors);
       return;
     }
 
@@ -94,13 +94,13 @@ export default function ClientAddModal({
         toast.success("Client added successfully");
         onClientAdded?.();
       }
-    } catch (err: unknown) {
-      console.error("Error adding client:", err);
+    } catch (error) {
+      console.error("Error adding client:", error);
       toast.error("Failed to add client. Please try again.");
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -124,8 +124,8 @@ export default function ClientAddModal({
                 name="name"
                 placeholder="Enter client name"
                 value={clientForm.name}
-                onChange={(e) =>
-                  setClientForm({ ...clientForm, name: e.target.value })
+                onChange={(event) =>
+                  setClientForm({ ...clientForm, name: event.target.value })
                 }
               />
               {errors.name && <FieldError>{errors.name}</FieldError>}
@@ -138,8 +138,8 @@ export default function ClientAddModal({
                 name="email"
                 placeholder="Enter client email"
                 value={clientForm.email}
-                onChange={(e) =>
-                  setClientForm({ ...clientForm, email: e.target.value })
+                onChange={(event) =>
+                  setClientForm({ ...clientForm, email: event.target.value })
                 }
               />
               {errors.email && <FieldError>{errors.email}</FieldError>}
@@ -153,10 +153,10 @@ export default function ClientAddModal({
                 placeholder="Enter contact number"
                 maxLength={11}
                 value={clientForm.contact_number}
-                onChange={(e) =>
+                onChange={(event) =>
                   setClientForm({
                     ...clientForm,
-                    contact_number: e.target.value,
+                    contact_number: event.target.value,
                   })
                 }
               />
@@ -172,9 +172,7 @@ export default function ClientAddModal({
             disabled={loading}
           >
             {loading ? (
-              <>
-                <LoaderCircle className="w-4 h-4 animate-spin" />
-              </>
+              <LoaderCircle className="w-4 h-4 animate-spin" />
             ) : (
               <>
                 <PlusIcon className="w-4 h-4" /> Add Client

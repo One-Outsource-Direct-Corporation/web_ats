@@ -4,7 +4,7 @@ import type {
   ApproverDb,
   JobPosting,
   JobPostingDb,
-} from "@/features/external_posting/types/externalPosting.types";
+} from "@/features/external_posting";
 import type { ApplicationFormData } from "@/shared/types/application_form.types";
 import type { PipelineStep } from "@/shared/types/pipeline.types";
 

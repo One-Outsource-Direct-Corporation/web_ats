@@ -1,5 +1,5 @@
 import { defaultAxios } from "@/config/axios";
-import type { PositionFormData } from "@/features/external_posting/types/externalPosting.types";
+import type { PositionFormData } from "@/features/external_posting";
 import type { PRFFormData } from "@/features/prf/types/prf.types";
 import type { JobData } from "@/features/careers/types/job.types";
 

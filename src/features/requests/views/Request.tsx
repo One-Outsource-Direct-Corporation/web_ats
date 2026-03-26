@@ -26,7 +26,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { formatBackgroundStatus } from "@/shared/utils/formatBackgroundStatus";
 import { ApprovalPipelineDropdown } from "../components/ApprovalPipelineDropdown";
-import type { JobPostingDbWithApprovers } from "@/features/external_posting/types/externalPosting.types";
+import type { JobPostingDbWithApprovers } from "@/features/external_posting";
 
 interface SelectedItem {
   id: number;
@@ -81,7 +81,7 @@ export default function Request({ manager = false }: { manager?: boolean }) {
         setSelectedItems([]);
       }
     },
-    [positions]
+    [positions],
   );
 
   // Handle individual checkbox
@@ -112,7 +112,7 @@ export default function Request({ manager = false }: { manager?: boolean }) {
 
       // Check if current page will be empty after deletion
       const remainingItemsOnCurrentPage = positions.results.filter(
-        (item) => !ids.includes(item.id)
+        (item) => !ids.includes(item.id),
       );
 
       if (remainingItemsOnCurrentPage.length === 0 && currentPage > 1) {
@@ -124,7 +124,7 @@ export default function Request({ manager = false }: { manager?: boolean }) {
       console.error("Error deleting items:", error);
       toast.error(
         error?.response?.data?.detail ||
-          "Failed to delete some items. Please try again."
+          "Failed to delete some items. Please try again.",
       );
     }
   }, [selectedItems, currentPage, positions.results, axiosPrivate, refetch]);
@@ -220,7 +220,7 @@ export default function Request({ manager = false }: { manager?: boolean }) {
                 <>
                   {positions.results.map((item) => {
                     const isSelected = selectedItems.some(
-                      (selected) => selected.id === item.id
+                      (selected) => selected.id === item.id,
                     );
 
                     return (
@@ -245,7 +245,7 @@ export default function Request({ manager = false }: { manager?: boolean }) {
                         <td className="px-4 py-3">
                           <span
                             className={`text-xs px-2 py-1 whitespace-nowrap rounded-full font-medium ${formatBackgroundStatus(
-                              item.status
+                              item.status,
                             )}`}
                           >
                             {formatName(item.status)}
@@ -318,7 +318,7 @@ export default function Request({ manager = false }: { manager?: boolean }) {
                                     className="flex items-center gap-2 cursor-pointer"
                                     onClick={() =>
                                       navigate(
-                                        `/requests/edit/${item.type}/${item.id}`
+                                        `/requests/edit/${item.type}/${item.id}`,
                                       )
                                     }
                                   >

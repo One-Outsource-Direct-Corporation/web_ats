@@ -3,7 +3,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { getDepartmentColor } from "../utils/departmentColor";
 import DOMPurify from "dompurify";
 import formatName from "@/shared/utils/formatName";
-import type { JobPostingResponse } from "@/features/external_posting/types/externalPosting.types";
+import type { JobPostingResponse } from "@/features/external_posting";
 import { useContext } from "react";
 import { AuthContext } from "@/features/auth/context/AuthContext";
 import { formatDepartmentName } from "@/shared/utils/formatDepartmentName";

@@ -6,7 +6,7 @@ import type {
   ApplicationFormType,
   NonNegotiable,
 } from "@/shared/types/application_form.types";
-import type { ApplicationFormQuestionnaire } from "@/features/external_posting/types/questionnaire.types";
+import type { ApplicationFormQuestionnaire } from "@/features/external_posting";
 import initialDataPrf, { testData } from "../data/prfInitialData";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 

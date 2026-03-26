@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { AxiosError } from "axios";
 import type { PRFFormData } from "@/features/prf/types/prf.types";
-import type { PositionFormData } from "@/features/external_posting/types/externalPosting.types";
+import type { PositionFormData } from "@/features/external_posting";
 import { careersService } from "@/features/careers/services/careers.service";
 
 export const useJobDetail = (jobId: string | undefined) => {
