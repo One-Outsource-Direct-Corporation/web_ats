@@ -31,4 +31,14 @@ export const queryKeys = {
     detail: (id: number | string) =>
       [...queryKeys.prf.all, "detail", id] as const,
   },
+  applicationFormQuestionnaire: {
+    all: ["application_form_questionnaire"] as const,
+    templates: (search: string = "", pageSize: number = 10) =>
+      [
+        ...queryKeys.applicationFormQuestionnaire.all,
+        "templates",
+        search,
+        pageSize,
+      ] as const,
+  },
 } as const;

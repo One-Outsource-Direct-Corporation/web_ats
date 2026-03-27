@@ -15,14 +15,24 @@ import {
   FieldSet,
 } from "@/shared/components/ui/field";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/shared/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/shared/components/ui/command";
 import { SectionList } from "./SectionList";
 import { Input } from "@/shared/components/ui/input";
+import { useQuestionnaireTemplatesQuery } from "@/features/application_form_questionnaire";
+import type { QuestionnaireTemplate } from "@/features/application_form_questionnaire";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type {
   Section,
   ApplicationFormQuestionnaire,
@@ -45,9 +55,45 @@ export default function QuestionnaireBase({
   onQuestionnaireChange,
 }: QuestionnaireBaseProps) {
   const [showDialog, setShowDialog] = useState(false);
+  const [templateOpen, setTemplateOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | undefined>(
     undefined,
   );
+  const { templates, loading, hasMore, loadMore, handleSearch } =
+    useQuestionnaireTemplatesQuery({ pageSize: 10 });
+
+  function normalizeTemplateToSections(
+    template: QuestionnaireTemplate,
+  ): Section[] {
+    return template.sections.map((section) => ({
+      tempId: `temp-section-${Date.now()}-${section.id}`,
+      name: section.name,
+      questionnaires: section.questionnaires.map((question) => ({
+        tempId: `temp-question-${Date.now()}-${question.id}`,
+        question: question.question,
+        description: question.description,
+        question_type: question.question_type,
+        options: question.options,
+        parameter: question.parameter,
+      })),
+    }));
+  }
+
+  function handleTemplateSelect(templateId: string) {
+    const template = templates.find((item) => String(item.id) === templateId);
+    if (!template) {
+      return;
+    }
+
+    setSelectedTemplate(templateId);
+    setTemplateOpen(false);
+    onQuestionnaireChange?.({
+      ...questionnaire,
+      name: template.name,
+      template: false,
+      sections: normalizeTemplateToSections(template),
+    });
+  }
 
   function handleSetQuestionnaire(
     field: keyof ApplicationFormQuestionnaire,
@@ -129,19 +175,88 @@ export default function QuestionnaireBase({
         </p>
 
         <Field className="mb-4">
-          <Select
-            value={selectedTemplate}
-            onValueChange={(value) => setSelectedTemplate(value)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select Templates" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="template1">Template 1</SelectItem>
-              <SelectItem value="template2">Template 2</SelectItem>
-              <SelectItem value="template3">Template 3</SelectItem>
-            </SelectContent>
-          </Select>
+          <Popover open={templateOpen} onOpenChange={setTemplateOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={templateOpen}
+                className="w-full justify-between"
+              >
+                {selectedTemplate
+                  ? (templates.find(
+                      (template) => String(template.id) === selectedTemplate,
+                    )?.name ?? "Browse Templates")
+                  : "Browse Templates"}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0">
+              <Command shouldFilter={false}>
+                <CommandInput
+                  placeholder="Search templates..."
+                  className="h-9"
+                  onValueChange={handleSearch}
+                />
+                <CommandList
+                  onScroll={(event) => {
+                    const target = event.currentTarget;
+                    if (
+                      target.scrollHeight - target.scrollTop <=
+                        target.clientHeight + 100 &&
+                      hasMore &&
+                      !loading
+                    ) {
+                      loadMore();
+                    }
+                  }}
+                  className="max-h-[300px] overflow-y-auto"
+                >
+                  <CommandEmpty>
+                    {loading ? "Loading..." : "No template found."}
+                  </CommandEmpty>
+                  <CommandGroup>
+                    {templates.map((template) => {
+                      const templateId = String(template.id);
+                      return (
+                        <CommandItem
+                          key={template.id}
+                          value={templateId}
+                          onSelect={() => handleTemplateSelect(templateId)}
+                        >
+                          <span className="font-medium">{template.name}</span>
+                          <Check
+                            className={cn(
+                              "ml-auto h-4 w-4",
+                              selectedTemplate === templateId
+                                ? "opacity-100"
+                                : "opacity-0",
+                            )}
+                          />
+                        </CommandItem>
+                      );
+                    })}
+                    {hasMore && !loading && (
+                      <CommandItem
+                        disabled
+                        className="justify-center text-sm text-gray-500"
+                      >
+                        Scroll for more...
+                      </CommandItem>
+                    )}
+                    {loading && (
+                      <CommandItem
+                        disabled
+                        className="justify-center text-sm text-gray-500"
+                      >
+                        Loading more...
+                      </CommandItem>
+                    )}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </Field>
 
         <FieldSet className="flex flex-row items-center gap-2 mb-4">

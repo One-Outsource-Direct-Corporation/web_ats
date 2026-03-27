@@ -1,4 +1,5 @@
 import type { PositionFormData } from "../types/externalPosting.types";
+import { QuestionType } from "../types/questionnaire.types";
 
 export const getDefaultFormData = (): PositionFormData => ({
   client: null,
@@ -133,7 +134,7 @@ export const testData = (): PositionFormData => ({
               tempId: "temp-1762933776009",
               question: "123",
               description: "123",
-              type: "Paragraph",
+              question_type: QuestionType.PARAGRAPH,
               parameter: "123",
             },
           ],

@@ -1,4 +1,5 @@
 import type { User } from "@/features/auth/types/auth.types";
+import { QuestionType } from "@/features/external_posting";
 import type { PRFFormData } from "../types/prf.types";
 
 export default function initialDataPrf(user?: User): PRFFormData {
@@ -147,8 +148,8 @@ export function testData(): PRFFormData {
             questionnaires: [
               {
                 tempId: "temp-1763079155675",
-                name: "Bombaclats",
-                type: "Checkboxes",
+                question: "Bombaclats",
+                question_type: QuestionType.CHECKBOXES,
                 options: [
                   {
                     value: "Testes",

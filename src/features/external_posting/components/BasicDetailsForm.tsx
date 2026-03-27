@@ -74,6 +74,16 @@ export const BasicDetailsForm = ({
   handleJobPostingChange,
   errorFields,
 }: BasicDetailsFormProps) => {
+  const parseNullableNumber = (value: string): number | null => {
+    const trimmedValue = value.trim();
+    if (!trimmedValue) {
+      return null;
+    }
+
+    const parsedValue = Number(trimmedValue);
+    return Number.isNaN(parsedValue) ? null : parsedValue;
+  };
+
   const [clientPickerOpen, setClientPickerOpen] = useState(false);
   const [departmentPickerOpen, setDepartmentPickerOpen] = useState(false);
   const {
@@ -102,7 +112,25 @@ export const BasicDetailsForm = ({
     (department) => department.name === formData.job_posting.department_name,
   );
 
-  const getRootError = (field: string) => getFieldError(errorFields, field);
+  const getRootError = (field: string) => {
+    const rootError = getFieldError(errorFields, field);
+
+    // Step-level errors can remain stale until the next full submit cycle.
+    // Hide "required" errors when a valid value is already selected.
+    if (field === "client" && formData.client !== null) {
+      return undefined;
+    }
+
+    if (
+      field === "education_level" &&
+      typeof formData.education_level === "string" &&
+      formData.education_level.trim().length > 0
+    ) {
+      return undefined;
+    }
+
+    return rootError;
+  };
   const getJobError = (field: string) => getJobPostingError(errorFields, field);
 
   return (
@@ -463,9 +491,9 @@ export const BasicDetailsForm = ({
                   <SelectValue placeholder="Select Experience Level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="entry">Entry Level</SelectItem>
+                  <SelectItem value="entry_level">Entry Level</SelectItem>
                   <SelectItem value="junior">Junior</SelectItem>
-                  <SelectItem value="mid">Mid Level</SelectItem>
+                  <SelectItem value="mid_level">Mid Level</SelectItem>
                   <SelectItem value="senior">Senior</SelectItem>
                   <SelectItem value="lead">Lead</SelectItem>
                   <SelectItem value="executive">Executive</SelectItem>
@@ -479,11 +507,11 @@ export const BasicDetailsForm = ({
               <FieldLabel>Headcounts Needed *</FieldLabel>
               <Input
                 type="number"
-                value={formData.job_posting.number_of_vacancies ?? "0"}
+                value={formData.job_posting.number_of_vacancies ?? ""}
                 onChange={(e) =>
                   handleJobPostingChange(
                     "number_of_vacancies",
-                    Number(e.target.value),
+                    parseNullableNumber(e.target.value),
                   )
                 }
                 placeholder="Enter number of positions"
@@ -581,9 +609,12 @@ export const BasicDetailsForm = ({
               <FieldLabel>Minimum</FieldLabel>
               <Input
                 type="number"
-                value={formData.job_posting.min_salary ?? "0"}
+                value={formData.job_posting.min_salary ?? ""}
                 onChange={(e) =>
-                  handleJobPostingChange("min_salary", e.target.value)
+                  handleJobPostingChange(
+                    "min_salary",
+                    parseNullableNumber(e.target.value),
+                  )
                 }
                 placeholder="Minimum salary"
               />
@@ -595,9 +626,12 @@ export const BasicDetailsForm = ({
               <FieldLabel>Maximum</FieldLabel>
               <Input
                 type="number"
-                value={formData.job_posting.max_salary ?? "0"}
+                value={formData.job_posting.max_salary ?? ""}
                 onChange={(e) =>
-                  handleJobPostingChange("max_salary", e.target.value)
+                  handleJobPostingChange(
+                    "max_salary",
+                    parseNullableNumber(e.target.value),
+                  )
                 }
                 placeholder="Maximum salary"
               />

@@ -1,6 +1,12 @@
 import { memo } from "react";
 import type { Questionnaire } from "../../types/questionnaire.types";
 
+const QUESTION_TYPE_LABEL: Record<string, string> = {
+  multiple_choices: "Multiple Choices",
+  checkboxes: "Checkboxes",
+  paragraph: "Paragraph",
+};
+
 interface QuestionCardProps {
   question: Questionnaire;
   questionNumber: number;
@@ -16,10 +22,11 @@ export const QuestionCard = memo(
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
               <span className="font-medium text-gray-900">
-                Q{questionNumber}: {question.name}
+                Q{questionNumber}: {question.question}
               </span>
               <span className="px-2 py-1 text-xs rounded-md bg-blue-100 text-blue-700">
-                {question.type}
+                {QUESTION_TYPE_LABEL[question.question_type] ??
+                  question.question_type}
               </span>
             </div>
             {question.description && (
@@ -95,7 +102,7 @@ export const QuestionCard = memo(
         </div>
       </div>
     );
-  }
+  },
 );
 
 QuestionCard.displayName = "QuestionCard";

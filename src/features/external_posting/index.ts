@@ -46,3 +46,4 @@ export {
   validateSteps,
 } from "./utils/validateSteps";
 export { getDefaultFormData, testData } from "./utils/positionInitialData";
+export { QuestionType } from "./types/questionnaire.types";
