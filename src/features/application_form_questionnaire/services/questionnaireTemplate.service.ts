@@ -2,8 +2,12 @@ import type { AxiosInstance } from "axios";
 
 import { defaultAxios } from "@/config/axios";
 import type {
+  CreateQuestionnaireTemplatePayload,
+  QuestionnaireTemplateDetail,
+  QuestionnaireTemplateDetailParams,
   QuestionnaireTemplateListParams,
   QuestionnaireTemplateListResponse,
+  UpdateQuestionnaireTemplatePayload,
 } from "../types/questionnaireTemplate.types";
 
 const buildQuery = (params: QuestionnaireTemplateListParams): string => {
@@ -41,5 +45,55 @@ export const questionnaireTemplateService = {
       { signal: options?.signal },
     );
     return response.data;
+  },
+
+  async detailResponse(
+    params: QuestionnaireTemplateDetailParams,
+    options?: { httpClient?: AxiosInstance; signal?: AbortSignal },
+  ): Promise<QuestionnaireTemplateDetail> {
+    const httpClient = options?.httpClient ?? defaultAxios;
+    const response = await httpClient.get<QuestionnaireTemplateDetail>(
+      `/api/application_form_questionnaire/templates/${params.id}/`,
+      { signal: options?.signal },
+    );
+    return response.data;
+  },
+
+  async createTemplate(
+    payload: CreateQuestionnaireTemplatePayload,
+    options?: { httpClient?: AxiosInstance; signal?: AbortSignal },
+  ): Promise<QuestionnaireTemplateDetail> {
+    const httpClient = options?.httpClient ?? defaultAxios;
+    const response = await httpClient.post<QuestionnaireTemplateDetail>(
+      "/api/application_form_questionnaire/templates/",
+      payload,
+      { signal: options?.signal },
+    );
+    return response.data;
+  },
+
+  async updateTemplate(
+    templateId: number,
+    payload: UpdateQuestionnaireTemplatePayload,
+    options?: { httpClient?: AxiosInstance; signal?: AbortSignal },
+  ): Promise<QuestionnaireTemplateDetail> {
+    const httpClient = options?.httpClient ?? defaultAxios;
+    const response = await httpClient.patch<QuestionnaireTemplateDetail>(
+      `/api/application_form_questionnaire/templates/${templateId}/`,
+      payload,
+      { signal: options?.signal },
+    );
+    return response.data;
+  },
+
+  async deleteTemplate(
+    templateId: number,
+    options?: { httpClient?: AxiosInstance; signal?: AbortSignal },
+  ): Promise<void> {
+    const httpClient = options?.httpClient ?? defaultAxios;
+    await httpClient.delete(
+      `/api/application_form_questionnaire/templates/${templateId}/`,
+      { signal: options?.signal },
+    );
   },
 };

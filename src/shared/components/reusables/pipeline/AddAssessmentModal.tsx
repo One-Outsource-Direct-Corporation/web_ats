@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -7,7 +8,7 @@ import {
   DialogTrigger,
 } from "@/shared/components/ui/dialog";
 import { Button } from "@/shared/components/ui/button";
-import { FieldGroup } from "../../ui/field";
+import { Field, FieldGroup, FieldLabel } from "../../ui/field";
 import type {
   Assessment,
   AssessmentInDb,
@@ -17,9 +18,9 @@ import { TemplateSelector } from "./TemplateSelector";
 import { AssessmentTypeSelect } from "./AssessmentTypeSelect";
 import { FileUploadArea } from "./FileUploadArea";
 import { DuplicateFileNotification } from "./DuplicateFileNotification";
-import { TemplateCheckbox } from "./TemplateCheckbox";
 import { useAssessmentForm } from "./useAssessmentForm";
 import useAssessment from "@/shared/hooks/useAssessment";
+import { Input } from "@/shared/components/ui/input";
 
 interface AddAssessmentModalProps {
   open: boolean;
@@ -44,13 +45,17 @@ export function AddAssessmentModal({
     hasMore,
     loadMore,
     handleSearch: onSearchTemplates,
+    refetch,
+    createTemplate,
   } = useAssessment({ templatesOnly: true, pageSize: 20 });
+
+  const [templateName, setTemplateName] = useState("");
+  const [savingTemplate, setSavingTemplate] = useState(false);
 
   const {
     assessmentForm,
     filePreview,
     selectedTemplate,
-    isUsingTemplateFile,
     duplicateFileInfo,
     checkingFile,
     updateField,
@@ -72,6 +77,44 @@ export function AddAssessmentModal({
     }
     onOpenChange(false);
   };
+
+  const handleSaveAsTemplate = async () => {
+    if (!assessmentForm.type || !templateName.trim()) {
+      return;
+    }
+
+    try {
+      setSavingTemplate(true);
+      const createdTemplate = await createTemplate({
+        name: templateName.trim(),
+        type: assessmentForm.type,
+        file: assessmentForm.file,
+      });
+
+      if (createdTemplate) {
+        const refreshedTemplates = await refetch();
+        handleTemplateSelect(String(createdTemplate.id), refreshedTemplates);
+        setTemplateName(createdTemplate.name ?? "");
+      }
+    } catch (error) {
+      console.error("Failed to save template:", error);
+    } finally {
+      setSavingTemplate(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!open) {
+      setTemplateName("");
+      return;
+    }
+
+    if (editingAssessment?.name) {
+      setTemplateName(editingAssessment.name);
+    } else {
+      setTemplateName("");
+    }
+  }, [editingAssessment, open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -120,15 +163,32 @@ export function AddAssessmentModal({
             isChecking={checkingFile}
             duplicateInfo={duplicateFileInfo}
           />
-        </FieldGroup>
 
-        <TemplateCheckbox
-          isTemplate={assessmentForm.is_template}
-          templateName={assessmentForm.name}
-          isUsingTemplateFile={isUsingTemplateFile}
-          onTemplateChange={(checked) => updateField("is_template", checked)}
-          onNameChange={(name) => updateField("name", name)}
-        />
+          <Field>
+            <FieldLabel className="text-sm font-medium text-gray-700 mb-2 block">
+              Template Name
+            </FieldLabel>
+            <div className="flex gap-2">
+              <Input
+                type="text"
+                placeholder="Enter template name"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                className="w-full"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSaveAsTemplate}
+                disabled={
+                  savingTemplate || !templateName.trim() || !assessmentForm.type
+                }
+              >
+                {savingTemplate ? "Saving..." : "Save as Template"}
+              </Button>
+            </div>
+          </Field>
+        </FieldGroup>
 
         <DialogFooter>
           <Button

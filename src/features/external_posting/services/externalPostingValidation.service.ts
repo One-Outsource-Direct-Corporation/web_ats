@@ -23,6 +23,15 @@ const pipelineStepSchema = z.object({
     .string({ message: "Reminder date is required." })
     .trim()
     .min(1, "Reminder date is required."),
+  interviewer: z
+    .object({
+      id: z.number({ message: "Interviewer is required." }),
+    })
+    .nullable()
+    .refine((value) => value !== null, {
+      message: "Interviewer is required.",
+      path: ["interviewer"],
+    }),
 });
 
 const nonNegotiableItemSchema = z.object({

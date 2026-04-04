@@ -10,9 +10,23 @@ import type {
 } from "@/shared/types/application_form.types";
 import type { PipelineStep } from "@/shared/types/pipeline.types";
 import type { ApplicationFormQuestionnaire } from "../types/questionnaire.types";
-import { getDefaultFormData, testData } from "../utils/positionInitialData";
+import { getDefaultFormData } from "../utils/positionInitialData";
 import { positionDraftLocalStore } from "../services/positionDraft.local-store";
 import { questionnaireLocalStore } from "../services/questionnaire.local-store";
+import {
+  normalizeApplicationFormDataPayload,
+  normalizePipelineStepsPayload,
+} from "@/shared/utils/applicationFormDataAdapter";
+
+const normalizeExternalPostingFormData = (
+  value: PositionFormData,
+): PositionFormData => ({
+  ...value,
+  application_form: normalizeApplicationFormDataPayload(value.application_form),
+  pipeline: normalizePipelineStepsPayload(value.pipeline),
+  locations: Array.isArray(value.locations) ? value.locations : [],
+  batches: Array.isArray(value.batches) ? value.batches : [],
+});
 
 export const useExternalPostingFormData = (initialData?: PositionFormData) => {
   const shouldUseDraft = import.meta.env.VITE_REACT_ENV !== "development";
@@ -45,18 +59,21 @@ export const useExternalPostingFormData = (initialData?: PositionFormData) => {
   };
 
   const [formData, setFormData] = useState<PositionFormData>(() => {
-    if (initialData) return initialData;
+    if (initialData) {
+      return normalizeExternalPostingFormData(initialData);
+    }
 
     if (shouldUseDraft) {
       const savedDraft = positionDraftLocalStore.getDraft();
       if (savedDraft?.data) {
-        return savedDraft.data;
+        return normalizeExternalPostingFormData(savedDraft.data);
       }
     }
 
-    return import.meta.env.VITE_REACT_ENV === "development"
-      ? testData()
-      : getDefaultFormData();
+    // return import.meta.env.VITE_REACT_ENV === "development"
+    //   ? getDefaultFormData()
+    //   : getDefaultFormData();
+    return getDefaultFormData();
   });
 
   function handlePositionBaseChange(

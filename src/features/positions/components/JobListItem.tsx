@@ -3,17 +3,34 @@ import { Badge } from "@/shared/components/ui/badge";
 import { getDepartmentColor } from "../utils/departmentColor";
 import DOMPurify from "dompurify";
 import formatName from "@/shared/utils/formatName";
-import type { JobPostingResponse } from "@/features/external_posting";
 import { useContext } from "react";
 import { AuthContext } from "@/features/auth/context/AuthContext";
 import { formatDepartmentName } from "@/shared/utils/formatDepartmentName";
+import type { JobPostingResponseMinimal } from "@/features/jobs/types/JobPosting";
 
 export default function JobListItem({
   posting,
 }: {
-  posting: JobPostingResponse;
+  posting: JobPostingResponseMinimal;
 }) {
   const { user } = useContext(AuthContext);
+
+  const statusValue = posting.status;
+  const typeValue = posting.type;
+  const departmentDisplay = formatDepartmentName(
+    posting.department?.name ?? "",
+  );
+  const postedBy = posting.posted_by;
+  const isOwnedByCurrentUser =
+    !!user &&
+    !!postedBy &&
+    typeof postedBy.id === "number" &&
+    postedBy.id === user.id;
+  const posterLabel = isOwnedByCurrentUser
+    ? "You"
+    : [postedBy?.first_name, postedBy?.last_name].filter(Boolean).join(" ") ||
+      "Unknown";
+
   return (
     <Card className="p-4 shadow-sm hover:shadow-md transition border rounded-md">
       <div>
@@ -26,46 +43,42 @@ export default function JobListItem({
               </h3>
 
               <Badge
-                className={`${getDepartmentColor(
-                  posting.department_name && posting.department_name === "other"
-                    ? posting.department_name_other || ""
-                    : formatDepartmentName(posting.department_name ?? ""),
-                )} text-xs`}
+                className={`${getDepartmentColor(departmentDisplay)} text-xs`}
               >
-                {posting.department_name === "other"
-                  ? posting.department_name_other || ""
-                  : formatDepartmentName(posting.department_name ?? "")}
+                {departmentDisplay || "Unknown Department"}
               </Badge>
 
-              <Badge
-                variant="default"
-                className={`text-xs ${
-                  posting.type === "prf"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-neutral-700 text-neutral-100"
-                }`}
-              >
-                {posting.type === "prf" ? "Internal" : "Client"}
-              </Badge>
+              {typeValue && (
+                <Badge
+                  variant="default"
+                  className={`text-xs ${
+                    typeValue === "prf"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-neutral-700 text-neutral-100"
+                  }`}
+                >
+                  {typeValue === "prf" ? "Internal" : "Client"}
+                </Badge>
+              )}
 
-              <Badge
-                className={`text-xs ${
-                  posting.status === "active"
-                    ? "bg-blue-100 text-blue-800 border-blue-200"
-                    : posting.status === "draft"
-                      ? "bg-yellow-100 text-yellow-800 border-yellow-200"
-                      : posting.status === "closed"
-                        ? "bg-red-100 text-red-800 border-red-200"
-                        : "bg-gray-100 text-gray-800 border-gray-200"
-                }`}
-              >
-                {formatName(posting.status)}
-              </Badge>
+              {statusValue && (
+                <Badge
+                  className={`text-xs ${
+                    statusValue === "active"
+                      ? "bg-blue-100 text-blue-800 border-blue-200"
+                      : statusValue === "draft"
+                        ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                        : statusValue === "closed"
+                          ? "bg-red-100 text-red-800 border-red-200"
+                          : "bg-gray-100 text-gray-800 border-gray-200"
+                  }`}
+                >
+                  {formatName(statusValue) || "Unknown"}
+                </Badge>
+              )}
 
               <Badge className="text-xs bg-cyan-500 text-white">
-                {user && posting.posted_by_display.id === user.id
-                  ? "You"
-                  : posting.posted_by_display.full_name}
+                {posterLabel}
               </Badge>
             </div>
 

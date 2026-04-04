@@ -22,6 +22,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@radix-ui/react-dialog";
+import {RadioGroupItem} from "@/shared/components/ui/radio-group.tsx";
+import {RadioGroup} from "@radix-ui/react-radio-group";
 
 export default function DepartmentAddModal({
   onDepartmentAdded,
@@ -34,13 +36,14 @@ export default function DepartmentAddModal({
   const [departmentForm, setDepartmentForm] = useState<CreateDepartmentPayload>(
     {
       name: "",
+      business_unit: null
     },
   );
 
   const axiosPrivate = useAxiosPrivate();
 
   const resetForm = () => {
-    setDepartmentForm({ name: "" });
+    setDepartmentForm({ name: "", business_unit: null });
     setErrors({});
     setOpen(false);
   };
@@ -101,7 +104,7 @@ export default function DepartmentAddModal({
 
         <FieldGroup>
           <Field>
-            <FieldLabel>Department Name *</FieldLabel>
+            <FieldLabel>Department Name <span className="text-red-600">*</span></FieldLabel>
             <Input
               value={departmentForm.name}
               onChange={(event) =>
@@ -113,6 +116,37 @@ export default function DepartmentAddModal({
               placeholder="Enter department name"
             />
             {errors.name && <FieldError>{errors.name}</FieldError>}
+          </Field>
+          <Field>
+            <FieldLabel>Business Unit</FieldLabel>
+            <RadioGroup
+                value={departmentForm.business_unit ?? ""}
+                onValueChange={(value: string) =>
+                    setDepartmentForm((prev) => ({
+                      ...prev,
+                      business_unit: value as "oodc" | "oors" | null,
+                    }))
+                }
+                className="space-y-2"
+            >
+              <div className="flex items-center gap-3">
+                <RadioGroupItem
+                    value="oodc"
+                    id="oodc"
+                    className="text-blue-500 border-blue-500 [&_svg]:fill-blue-500"
+                />
+                <FieldLabel htmlFor="oodc">OODC</FieldLabel>
+              </div>
+              <div className="flex items-center gap-3">
+                <RadioGroupItem
+                    value="oors"
+                    id="oors"
+                    className="text-blue-500 border-blue-500 [&_svg]:fill-blue-500"
+                />
+                <FieldLabel htmlFor="oors">OORS</FieldLabel>
+              </div>
+            </RadioGroup>
+            {errors.business_unit && <FieldError>{errors.business_unit}</FieldError>}
           </Field>
         </FieldGroup>
 

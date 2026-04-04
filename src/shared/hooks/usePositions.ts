@@ -2,6 +2,10 @@ import { useState, useEffect, useRef } from "react";
 
 import type { AxiosError } from "axios";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
+import {
+  normalizeApplicationFormDataPayload,
+  normalizePipelineStepsPayload,
+} from "@/shared/utils/applicationFormDataAdapter";
 import type { PRFFormData } from "@/features/prf/types/prf.types";
 import type {
   JobPostingListResponse,
@@ -9,6 +13,134 @@ import type {
   PositionFormData,
 } from "@/features/external_posting";
 import { positionService } from "@/features/external_posting";
+import type { JobDetailResponse } from "@/features/external_posting/services/externalPosting.service";
+
+type RequestPositionType = "prf" | "position";
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function toRecord(value: unknown): Record<string, unknown> {
+  return isRecord(value) ? value : {};
+}
+
+function selectApplicationFormPayload(
+  primaryData: Record<string, unknown>,
+  secondaryData: Record<string, unknown>,
+): Record<string, unknown> {
+  const primaryApplicationForm = toRecord(primaryData.application_form);
+  const secondaryApplicationForm = toRecord(secondaryData.application_form);
+
+  const baseApplicationForm =
+    Object.keys(primaryApplicationForm).length > 0
+      ? primaryApplicationForm
+      : secondaryApplicationForm;
+
+  return {
+    ...baseApplicationForm,
+    non_negotiable:
+      primaryData.non_negotiable ??
+      secondaryData.non_negotiable ??
+      baseApplicationForm.non_negotiable,
+    questionnaire:
+      primaryData.questionnaire ??
+      secondaryData.questionnaire ??
+      baseApplicationForm.questionnaire,
+  };
+}
+
+function normalizeJobDetailResponse(
+  response: JobDetailResponse,
+  requestType?: RequestPositionType,
+): PRFFormData | PositionFormData | null {
+  if (!isRecord(response)) {
+    return null;
+  }
+
+  if ("job_posting" in response && isRecord(response.job_posting)) {
+    return response as PRFFormData | PositionFormData;
+  }
+
+  const {
+    prf,
+    prf_nested,
+    external_posting,
+    external_posting_nested,
+    ...rootJobPosting
+  } = response;
+
+  const prfData = toRecord(prf);
+  const prfNestedData = toRecord(prf_nested);
+  const externalPostingData = toRecord(external_posting);
+  const externalPostingNestedData = toRecord(external_posting_nested);
+
+  const inferredType =
+    requestType === "prf"
+      ? "prf"
+      : requestType === "position"
+        ? "client"
+        : (typeof rootJobPosting.type === "string"
+            ? rootJobPosting.type
+            : undefined) ||
+          (Object.keys(prfData).length > 0 ||
+          Object.keys(prfNestedData).length > 0
+            ? "prf"
+            : "client");
+
+  if (inferredType === "prf") {
+    const jobPosting = toRecord(prfData.job_posting);
+    const applicationFormPayload = selectApplicationFormPayload(
+      prfNestedData,
+      prfData,
+    );
+    const pipelinePayload = prfNestedData.pipeline ?? prfData.pipeline;
+
+    const immediateSupervisor =
+      typeof prfData.immediate_supervisor === "number" ||
+      prfData.immediate_supervisor === null
+        ? prfData.immediate_supervisor
+        : null;
+
+    const normalizedPrf: Record<string, unknown> = {
+      ...prfNestedData,
+      ...prfData,
+      job_posting:
+        Object.keys(jobPosting).length > 0 ? jobPosting : rootJobPosting,
+      immediate_supervisor: immediateSupervisor,
+      immediate_supervisor_display: prfNestedData.immediate_supervisor ?? null,
+      application_form: normalizeApplicationFormDataPayload(
+        applicationFormPayload,
+      ),
+      pipeline: normalizePipelineStepsPayload(pipelinePayload),
+    };
+
+    return normalizedPrf as PRFFormData;
+  }
+
+  const externalJobPosting = toRecord(externalPostingData.job_posting);
+  const externalApplicationFormPayload = selectApplicationFormPayload(
+    externalPostingNestedData,
+    externalPostingData,
+  );
+  const externalPipelinePayload =
+    externalPostingNestedData.pipeline ?? externalPostingData.pipeline;
+
+  const normalizedExternalPosting: Record<string, unknown> = {
+    ...externalPostingData,
+    ...externalPostingNestedData,
+    job_posting:
+      Object.keys(externalJobPosting).length > 0
+        ? externalJobPosting
+        : rootJobPosting,
+    application_form: normalizeApplicationFormDataPayload(
+      externalApplicationFormPayload,
+    ),
+    pipeline: normalizePipelineStepsPayload(externalPipelinePayload),
+  };
+
+  return normalizedExternalPosting as PositionFormData;
+}
 
 export function usePositions({
   my_postings = false,
@@ -91,10 +223,11 @@ export function usePositions({
 
       setPositions(response);
       setLoading(false);
-    } catch (err: AxiosError | any) {
-      console.log(err);
-      if (err.code === "ERR_CANCELED") return;
-      setError(err.response?.data?.detail || "An error occurred");
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError<{ detail?: string }>;
+      console.log(axiosError);
+      if (axiosError.code === "ERR_CANCELED") return;
+      setError(axiosError.response?.data?.detail || "An error occurred");
       setPositions({
         count: 0,
         next: null,
@@ -131,15 +264,17 @@ export function usePositions({
 export function usePositionDetail({
   id,
   non_admin = false,
+  requestType,
 }: {
   id: number | undefined;
   non_admin?: boolean;
+  requestType?: RequestPositionType;
 }) {
   const [position, setPosition] = useState<
     PRFFormData | PositionFormData | null
   >(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<AxiosError | any>(null);
+  const [error, setError] = useState<string | null>(null);
   const axiosPrivate = useAxiosPrivate();
   const controllerRef = useRef<AbortController | null>(null);
 
@@ -165,13 +300,28 @@ export function usePositionDetail({
         },
       );
 
-      setPosition(response);
-    } catch (err: AxiosError | any) {
-      console.error(err);
-      if (err.code === "ERR_CANCELED") return;
+      const normalizedResponse = normalizeJobDetailResponse(
+        response,
+        requestType,
+      );
+
+      if (!normalizedResponse) {
+        setError("Unable to load position details");
+        setPosition(null);
+        return;
+      }
+
+      setPosition(normalizedResponse);
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError<{
+        error?: string;
+        detail?: string;
+      }>;
+      console.error(axiosError);
+      if (axiosError.code === "ERR_CANCELED") return;
       setError(
-        err.response?.data?.error ||
-          err.response?.data?.detail ||
+        axiosError.response?.data?.error ||
+          axiosError.response?.data?.detail ||
           "An error occurred",
       );
     } finally {
@@ -179,11 +329,9 @@ export function usePositionDetail({
     }
   };
 
-  console.log(position);
-
   useEffect(() => {
     fetchPositionDetail();
-  }, [id]);
+  }, [id, requestType]);
 
   return {
     position,

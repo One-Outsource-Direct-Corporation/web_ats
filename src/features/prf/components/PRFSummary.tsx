@@ -1,6 +1,5 @@
 import { formatDate, formatTime } from "@/shared/utils/formatDate";
 import type { PRFFormData } from "../types/prf.types";
-import { formatDepartmentName } from "@/shared/utils/formatDepartmentName";
 import formatName from "@/shared/utils/formatName";
 import formatMoney from "@/shared/utils/formatMoney";
 import DOMPurify from "dompurify";
@@ -29,8 +28,16 @@ export default function PRFSummary({ formData }: PRFSummaryProps) {
     .filter(([, selected]) => selected)
     .map(([software]) => formatName(software));
 
+  const resolvedDepartmentName =
+    formData.immediate_supervisor_display?.department?.id ===
+    formData.job_posting.department
+      ? formData.immediate_supervisor_display.department.name
+      : formData.job_posting.department
+        ? `Department #${formData.job_posting.department}`
+        : "Not specified";
+
   return (
-    <div className="space-y-6">
+    <div className="lg:col-span-2 space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-lg">
         <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -103,18 +110,12 @@ export default function PRFSummary({ formData }: PRFSummaryProps) {
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-100">
               <span className="text-gray-600 font-medium">Department</span>
-              <span className="text-gray-900">
-                {formatDepartmentName(
-                  formData.job_posting.department_name ?? "",
-                )}
-              </span>
+              <span className="text-gray-900">{resolvedDepartmentName}</span>
             </div>
             <div className="flex justify-between items-center py-2">
               <span className="text-gray-600 font-medium">Supervisor</span>
               <span className="text-gray-900">
-                {formData.immediate_supervisor
-                  ? formData.immediate_supervisor_display?.full_name
-                  : "Not specified"}
+                {formData.immediate_supervisor || "Not specified"}
               </span>
             </div>
           </div>

@@ -4,7 +4,7 @@ import type { User } from "@/features/auth/types/auth.types";
 
 export interface GetUsersByDepartmentParams {
   business_unit: string;
-  department_name: string;
+  department: number;
   email?: string;
   include?: string;
 }
@@ -18,7 +18,7 @@ export type UsersResponse = User[];
 const buildUsersQuery = (params: GetUsersByDepartmentParams): string => {
   return [
     params.business_unit ? `business_unit=${params.business_unit}` : "",
-    params.department_name ? `department=${params.department_name}` : "",
+    params.department ? `department=${params.department}` : "",
     params.email ? `email=${params.email}` : "",
     params.include ? `include_role=${params.include}` : "",
   ]

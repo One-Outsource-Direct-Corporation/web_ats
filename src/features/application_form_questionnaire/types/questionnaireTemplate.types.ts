@@ -20,6 +20,36 @@ export interface QuestionnaireTemplate {
   sections: QuestionnaireTemplateSection[];
 }
 
+export interface QuestionnaireTemplateQuestionPayload {
+  id?: number;
+  question: string;
+  description?: string;
+  question_type: "multiple_choices" | "checkboxes" | "paragraph";
+  options?: Array<{ value: string; score: number }>;
+  parameter?: string;
+  is_active?: boolean;
+  _delete?: boolean;
+}
+
+export interface QuestionnaireTemplateSectionPayload {
+  id?: number;
+  name: string;
+  questionnaires?: QuestionnaireTemplateQuestionPayload[];
+  _delete?: boolean;
+}
+
+export interface ApplicationFormQuestionnaireTemplatePayload {
+  id?: number;
+  name: string;
+  is_active?: boolean;
+  sections?: QuestionnaireTemplateSectionPayload[];
+}
+
+export interface QuestionnaireTemplateDetail extends QuestionnaireTemplate {
+  is_active: boolean;
+  created_at: string;
+}
+
 export interface QuestionnaireTemplateListResponse {
   count: number;
   next: string | null;
@@ -32,3 +62,12 @@ export interface QuestionnaireTemplateListParams {
   pageSize?: number;
   search?: string;
 }
+
+export interface QuestionnaireTemplateDetailParams {
+  id: number;
+}
+
+export type CreateQuestionnaireTemplatePayload =
+  ApplicationFormQuestionnaireTemplatePayload;
+export type UpdateQuestionnaireTemplatePayload =
+  Partial<ApplicationFormQuestionnaireTemplatePayload>;

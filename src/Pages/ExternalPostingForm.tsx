@@ -98,6 +98,7 @@ export default function ExternalPostingForm(props: ExternalPostingFormProps) {
             nonNegotiableHandler={nonNegotiableHandler}
             questionnaireHandler={questionnaireHandler}
             error={stepErrors[3]}
+            updateMode={updateMode}
           />
         );
       case 4:

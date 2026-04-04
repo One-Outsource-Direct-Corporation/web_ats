@@ -32,7 +32,7 @@ interface AddStepFormDialogProps {
   stepData: Omit<PipelineStep, "id" | "tempId">;
   onStepDataChange: (
     field: keyof PipelineStep,
-    value: string | number | boolean | User[] | Assessment[]
+    value: string | number | boolean | User | null | Assessment[],
   ) => void;
   addAssessment: (assessment: AssessmentLocal) => void;
   updateAssessment: (id: string | number, data: Assessment) => void;
@@ -68,7 +68,7 @@ export function AddStepFormDialog({
       <DialogContent className="w-[95vw] !max-w-[1200px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-blue-600">
-            {isEditing ? `Edit ${stage.name ?? ""}` : stage.name ?? ""}
+            {isEditing ? `Edit ${stage.name ?? ""}` : (stage.name ?? "")}
           </DialogTitle>
         </DialogHeader>
 
@@ -128,14 +128,9 @@ export function AddStepFormDialog({
           </Field>
 
           <HumanResourcesMember
-            humanResources={stepData.human_resources}
-            handleHumanResourcesSelection={(hr) => {
-              onStepDataChange(
-                "human_resources",
-                stepData.human_resources?.some((hm) => hm.id === hr.id)
-                  ? stepData.human_resources.filter((hm) => hm.id !== hr.id)
-                  : [...stepData.human_resources, hr]
-              );
+            interviewer={stepData.interviewer}
+            handleInterviewerSelection={(interviewer) => {
+              onStepDataChange("interviewer", interviewer);
             }}
           />
 

@@ -109,7 +109,7 @@ export const BasicDetailsForm = ({
     (client) => client.id === formData.client,
   );
   const selectedDepartment = departments.find(
-    (department) => department.name === formData.job_posting.department_name,
+    (department) => department.id === formData.job_posting.department,
   );
 
   const getRootError = (field: string) => {
@@ -300,8 +300,8 @@ export const BasicDetailsForm = ({
                                 value={department.name}
                                 onSelect={() => {
                                   handleJobPostingChange(
-                                    "department_name",
-                                    department.name,
+                                    "department",
+                                    department.id,
                                   );
                                   setDepartmentPickerOpen(false);
                                 }}
@@ -310,8 +310,8 @@ export const BasicDetailsForm = ({
                                 <Check
                                   className={cn(
                                     "ml-auto h-4 w-4",
-                                    formData.job_posting.department_name ===
-                                      department.name
+                                    formData.job_posting.department ===
+                                      department.id
                                       ? "opacity-100"
                                       : "opacity-0",
                                   )}
@@ -346,26 +346,10 @@ export const BasicDetailsForm = ({
                   onDepartmentAdded={() => void refetchDepartments()}
                 />
               </Field>
-              {getJobError("department_name") && (
-                <FieldError>{getJobError("department_name")}</FieldError>
+              {getJobError("department") && (
+                <FieldError>{getJobError("department")}</FieldError>
               )}
             </Field>
-
-            {formData.job_posting.department_name === "other" && (
-              <Field>
-                <FieldLabel>Please Specify *</FieldLabel>
-                <Input
-                  type="text"
-                  value={formData.job_posting.department_name_other ?? ""}
-                  onChange={(e) =>
-                    handleJobPostingChange(
-                      "department_name_other",
-                      e.target.value,
-                    )
-                  }
-                />
-              </Field>
-            )}
 
             <Field>
               <FieldLabel>Employment Type *</FieldLabel>

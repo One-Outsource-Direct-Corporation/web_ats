@@ -5,6 +5,7 @@ import type {
   JobPosting,
   JobPostingDb,
 } from "@/features/external_posting";
+import type { DepartmentEntitySimple } from "@/features/department/types/department.types";
 import type { ApplicationFormData } from "@/shared/types/application_form.types";
 import type { PipelineStep } from "@/shared/types/pipeline.types";
 
@@ -44,6 +45,7 @@ export type UpdatePrfPayload = Partial<PRF>;
 export interface PRFDb extends Omit<PRF, "job_posting"> {
   id: number;
   job_posting: JobPostingDb;
+  department?: DepartmentEntitySimple | null;
   immediate_supervisor_display: User | null;
   approving_managers: ApproverDb[];
   approval_status: ApprovalStatusDb;

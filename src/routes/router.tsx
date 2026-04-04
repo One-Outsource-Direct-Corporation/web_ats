@@ -10,15 +10,16 @@ import { dashboardRoutes } from "@/features/dashboard/routes/dashboardRoutes";
 import ProtectedRoutes from "@/features/auth/components/ProtectedRoutes";
 import Login from "@/features/auth/views/Login";
 import PersistLogin from "@/features/auth/components/PersistLogin";
-import { careersRoutes } from "@/features/careers/routes/careersRoute";
+import { publicJobsRoutes } from "@/features/jobs/public/routes/careersRoute";
 import { requestRoutes } from "@/features/requests/routes/requestRoutes";
+import PRFCreation from "@/Pages/PRFCreation";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <PersistLogin />,
     children: [
-      ...careersRoutes,
+      ...publicJobsRoutes,
       {
         path: "login",
         children: [
@@ -44,6 +45,10 @@ export const router = createBrowserRouter([
           ...interviewsRoutes,
           ...prfRoutes,
         ],
+      },
+      {
+        path: "prf_2",
+        element: <PRFCreation />,
       },
     ],
   },

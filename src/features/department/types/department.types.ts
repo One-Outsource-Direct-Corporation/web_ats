@@ -1,4 +1,15 @@
+import type {BusinessUnit} from "@/features/prf_2/types/enums/BusinessUnit.ts";
+
 export interface DepartmentBase {
+  name: string;
+  business_unit: BusinessUnit | null;
+}
+
+export interface DepartmentEntitySimple extends Omit<
+  DepartmentBase,
+  "business_unit"
+> {
+  id: number;
   name: string;
 }
 
@@ -38,6 +49,7 @@ export interface DepartmentListQueryParams {
   page?: number;
   search?: string;
   nested?: boolean;
+  business_unit?: BusinessUnit;
 }
 
 export type CreateDepartmentPayload = DepartmentBase;

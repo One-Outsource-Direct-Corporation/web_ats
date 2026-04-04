@@ -21,6 +21,10 @@ const buildDepartmentListQuery = (
     query.set("search", trimmedSearch);
   }
 
+  if (params.business_unit) {
+    query.set("business_unit", params.business_unit);
+  }
+
   if (params.nested) {
     query.set("nested", "true");
   }

@@ -1,7 +1,7 @@
 import { Button } from "@/shared/components/ui/button";
 import type { PRFFormData } from "../../types/prf.types";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { ApplicationFormManagement } from "@/shared/components/reusables/ApplicationFormManagement";
+import { ApplicationFormStepContent } from "@/shared/components/reusables/ApplicationFormStepContent";
 import type { ApplicationFormQuestionnaire } from "@/features/external_posting";
 import type {
   ApplicationForm,
@@ -36,7 +36,7 @@ export const Step04 = ({
 }: Step04Props) => {
   return (
     <div className="space-y-10">
-      <ApplicationFormManagement
+      <ApplicationFormStepContent
         applicationFormData={formData.application_form}
         applicationFormHandler={applicationFormHandler}
         nonNegotiableHandler={nonNegotiableHandler}

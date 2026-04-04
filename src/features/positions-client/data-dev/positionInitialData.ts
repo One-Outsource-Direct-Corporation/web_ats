@@ -150,7 +150,7 @@ export const testData = (): PositionFormData => ({
       order: 1,
       stage: 1,
       reminder: "2025-11-26T15:55",
-      human_resources: [],
+      interviewer: null,
       assessments: [],
       tempId: "tmp-1762933870971",
     },

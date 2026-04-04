@@ -2,7 +2,6 @@ import { useState } from "react";
 import type { PRFFormData } from "../types/prf.types";
 import formatName from "@/shared/utils/formatName";
 import DOMPurify from "dompurify";
-import { formatDepartmentName } from "@/shared/utils/formatDepartmentName";
 import { formatTime } from "@/shared/utils/formatDate";
 
 interface PreviewInfoProps {
@@ -59,15 +58,11 @@ export const PreviewInfo = ({ step, formData }: PreviewInfoProps) => {
               </p>
               <p>
                 <strong>Department Name:</strong>{" "}
-                {formatDepartmentName(
-                  formData.job_posting.department_name ?? "",
-                ) || "Not specified"}
+                {formData.job_posting.department || "Not specified"}
               </p>
               <p>
                 <strong>Immediate Supervisor:</strong>{" "}
-                {formData.immediate_supervisor
-                  ? formData.immediate_supervisor_display?.full_name
-                  : "Not specified"}
+                {formData.immediate_supervisor || "Not specified"}
               </p>
             </div>
             {step >= 2 && step < 6 && (

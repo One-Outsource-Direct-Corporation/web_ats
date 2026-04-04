@@ -14,10 +14,11 @@ import {
   QuestionnaireBase,
   type ApplicationFormQuestionnaire,
 } from "@/features/external_posting";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Checkbox } from "../ui/checkbox";
 import { Button } from "@/shared/components/ui/button";
 import { Settings } from "lucide-react";
+import { normalizeApplicationFormDataPayload } from "@/shared/utils/applicationFormDataAdapter";
 import type {
   ApplicationForm,
   ApplicationFormData,
@@ -168,6 +169,11 @@ export const ApplicationFormManagement = ({
   questionnaireHandler,
   validationError,
 }: ApplicationFormManagementProps) => {
+  const normalizedApplicationFormData = useMemo(
+    () => normalizeApplicationFormDataPayload(applicationFormData),
+    [applicationFormData],
+  );
+
   const nonNegotiableFields = new Set<FieldKey>([
     "expected_salary",
     "willing_to_work_onsite",
@@ -183,7 +189,7 @@ export const ApplicationFormManagement = ({
 
   // Check if a field is marked as non-negotiable
   const isNonNegotiable = (fieldName: string): boolean => {
-    return applicationFormData.non_negotiable.non_negotiable.some(
+    return normalizedApplicationFormData.non_negotiable.non_negotiable.some(
       (nn) => nn.field === fieldName,
     );
   };
@@ -191,7 +197,7 @@ export const ApplicationFormManagement = ({
   // Toggle non-negotiable status for a field
   const toggleNonNegotiable = (fieldName: string) => {
     const currentNonNegotiables =
-      applicationFormData.non_negotiable.non_negotiable;
+      normalizedApplicationFormData.non_negotiable.non_negotiable;
     const isCurrentlyNonNegotiable = isNonNegotiable(fieldName);
 
     let updatedNonNegotiables: NonNegotiableBase[];
@@ -212,7 +218,7 @@ export const ApplicationFormManagement = ({
 
     // Preserve the id if it exists (for NonNegotiableDb)
     const updatedNonNegotiable: NonNegotiable = {
-      ...applicationFormData.non_negotiable,
+      ...normalizedApplicationFormData.non_negotiable,
       non_negotiable: updatedNonNegotiables,
     };
 
@@ -225,7 +231,7 @@ export const ApplicationFormManagement = ({
     value: string | number | boolean,
   ) => {
     const updatedNonNegotiables =
-      applicationFormData.non_negotiable.non_negotiable.map((nn) => {
+      normalizedApplicationFormData.non_negotiable.non_negotiable.map((nn) => {
         if (nn.field === fieldName) {
           return {
             ...nn,
@@ -236,7 +242,7 @@ export const ApplicationFormManagement = ({
       });
 
     const updatedNonNegotiable: NonNegotiable = {
-      ...applicationFormData.non_negotiable,
+      ...normalizedApplicationFormData.non_negotiable,
       non_negotiable: updatedNonNegotiables,
     };
 
@@ -245,11 +251,11 @@ export const ApplicationFormManagement = ({
 
   const removeNonNegotiable = (fieldName: string) => {
     const updatedNonNegotiables =
-      applicationFormData.non_negotiable.non_negotiable.filter(
+      normalizedApplicationFormData.non_negotiable.non_negotiable.filter(
         (nn) => nn.field !== fieldName,
       );
     const updatedNonNegotiable: NonNegotiable = {
-      ...applicationFormData.non_negotiable,
+      ...normalizedApplicationFormData.non_negotiable,
       non_negotiable: updatedNonNegotiables,
     };
     nonNegotiableHandler(updatedNonNegotiable);
@@ -257,9 +263,9 @@ export const ApplicationFormManagement = ({
 
   const addNonNegotiable = (newNonNegotiable: NonNegotiableBase) => {
     const updatedNonNegotiables = {
-      ...applicationFormData.non_negotiable,
+      ...normalizedApplicationFormData.non_negotiable,
       non_negotiable: [
-        ...applicationFormData.non_negotiable.non_negotiable,
+        ...normalizedApplicationFormData.non_negotiable.non_negotiable,
         newNonNegotiable,
       ],
     };
@@ -369,7 +375,9 @@ export const ApplicationFormManagement = ({
                   key={fieldKey}
                   fieldKey={fieldKey}
                   label={FIELD_LABELS[fieldKey]}
-                  fieldValue={applicationFormData.application_form[fieldKey]}
+                  fieldValue={
+                    normalizedApplicationFormData.application_form[fieldKey]
+                  }
                   setFormData={applicationFormHandler}
                   hasNonNegotiable={nonNegotiableFields.has(fieldKey)}
                   isNonNegotiable={isNonNegotiable}
@@ -405,7 +413,9 @@ export const ApplicationFormManagement = ({
                   key={fieldKey}
                   fieldKey={fieldKey}
                   label={FIELD_LABELS[fieldKey]}
-                  fieldValue={applicationFormData.application_form[fieldKey]}
+                  fieldValue={
+                    normalizedApplicationFormData.application_form[fieldKey]
+                  }
                   setFormData={applicationFormHandler}
                   hasNonNegotiable={nonNegotiableFields.has(fieldKey)}
                   isNonNegotiable={isNonNegotiable}
@@ -441,7 +451,9 @@ export const ApplicationFormManagement = ({
                   key={fieldKey}
                   fieldKey={fieldKey}
                   label={FIELD_LABELS[fieldKey]}
-                  fieldValue={applicationFormData.application_form[fieldKey]}
+                  fieldValue={
+                    normalizedApplicationFormData.application_form[fieldKey]
+                  }
                   setFormData={applicationFormHandler}
                   hasNonNegotiable={nonNegotiableFields.has(fieldKey)}
                   isNonNegotiable={isNonNegotiable}
@@ -455,7 +467,7 @@ export const ApplicationFormManagement = ({
 
       {/* Available Questionnaires Section */}
       <QuestionnaireBase
-        questionnaire={applicationFormData.questionnaire}
+        questionnaire={normalizedApplicationFormData.questionnaire}
         onQuestionnaireChange={questionnaireHandler}
       />
 
@@ -464,7 +476,7 @@ export const ApplicationFormManagement = ({
         show={showNonNegotiableModal}
         onClose={() => setShowNonNegotiableModal(false)}
         onContinue={() => setShowNonNegotiableModal(false)}
-        formData={applicationFormData}
+        formData={normalizedApplicationFormData}
         setNonNegotiableValue={setNonNegotiableValue}
         addCustomNonNegotiable={addNonNegotiable}
         removeNonNegotiable={removeNonNegotiable}

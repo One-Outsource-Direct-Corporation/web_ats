@@ -16,7 +16,7 @@ export const queryKeys = {
       [...queryKeys.prf.all, "users", position ?? "all"] as const,
     usersByDepartment: (params: {
       businessUnit: string;
-      departmentName: string;
+      department: number;
       email?: string;
       include?: string;
     }) =>
@@ -24,7 +24,7 @@ export const queryKeys = {
         ...queryKeys.prf.all,
         "users-by-department",
         params.businessUnit,
-        params.departmentName,
+        params.department,
         params.email ?? "",
         params.include ?? "",
       ] as const,
