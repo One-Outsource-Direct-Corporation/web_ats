@@ -43,14 +43,15 @@ export default function Job() {
   const formatJobSlug = (title: string) =>
     title.toLowerCase().replace(/\s+/g, "-");
 
-  const handleJobTitleClick = (jobTitle: string) => {
-    setSelectedJobTitle(jobTitle);
-    const jobSlug = formatJobSlug(jobTitle);
+  const handleJobTitleClick = (job: Job) => {
+    setSelectedJobTitle(job.title);
+    const jobSlug = formatJobSlug(job.title);
     const generatedLink = `/job/${jobSlug}`;
     setDynamicLink(generatedLink);
     navigate(generatedLink, {
       state: {
-        jobTitle: jobTitle,
+        jobTitle: job.title,
+        jobId: job.id,
       },
     });
   };
@@ -155,7 +156,7 @@ export default function Job() {
                         <Button
                           variant="link"
                           size="sm"
-                          onClick={() => handleJobTitleClick(job.title)}
+                          onClick={() => handleJobTitleClick(job)}
                           className="text-left hover:underline hover:text-blue-600 transition-colors cursor-pointer"
                         >
                           {job.title}

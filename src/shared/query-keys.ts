@@ -2,6 +2,8 @@ export const queryKeys = {
   jobs: {
     all: ["jobs"] as const,
     listing: () => [...queryKeys.jobs.all, "listing"] as const,
+    detail: (id: number | string) =>
+      [...queryKeys.jobs.all, "detail", id] as const,
   },
   externalPosting: {
     all: ["external_posting"] as const,

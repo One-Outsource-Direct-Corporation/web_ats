@@ -28,3 +28,33 @@ export interface JobListItem {
 
 export type JobQueryResult = JobListItem[];
 export type Job = JobListItem;
+
+export interface JobPipelineStepResponseDto {
+  id?: number;
+  process_type: string;
+  process_title?: string | null;
+  stage: number;
+  order: number;
+}
+
+export interface JobDetailPipelineOwnerDto {
+  pipeline?: JobPipelineStepResponseDto[] | null;
+}
+
+export interface JobDetailResponseDto {
+  id: number;
+  job_title?: string;
+  prf?: JobDetailPipelineOwnerDto | null;
+  prf_nested?: JobDetailPipelineOwnerDto | null;
+  external_posting?: JobDetailPipelineOwnerDto | null;
+  external_posting_nested?: JobDetailPipelineOwnerDto | null;
+  [key: string]: unknown;
+}
+
+export interface JobPipelineStep {
+  id: string;
+  process_type: string;
+  process_title: string;
+  stage: number;
+  order: number;
+}
