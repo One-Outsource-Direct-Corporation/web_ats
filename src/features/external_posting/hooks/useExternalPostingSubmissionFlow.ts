@@ -42,6 +42,9 @@ export function useExternalPostingSubmissionFlow({
       const allErrors = validateSteps(formData);
       const hasAnyErrors = Object.values(allErrors).some((error) => hasStepErrors(error));
 
+      console.log(hasAnyErrors);
+      console.log(allErrors);
+
       if (hasAnyErrors) {
         toast.error("Please fix all errors before publishing the position");
         onUpdateStepErrors(allErrors);

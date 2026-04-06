@@ -1,4 +1,4 @@
-import PRF from "../views/PRF";
+import PRF from "@/Pages/PRF";
 
 export const prfRoutes = [
   {

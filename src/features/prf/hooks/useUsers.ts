@@ -7,12 +7,12 @@ import { queryKeys } from "@/shared/query-keys";
 
 export const useUsersByDepartment = ({
   business_unit,
-  department_name,
+  department,
   email,
   include,
 }: {
   business_unit: string;
-  department_name: string;
+  department: number;
   email?: string;
   include?: string;
 }) => {
@@ -21,7 +21,7 @@ export const useUsersByDepartment = ({
   const query = useQuery({
     queryKey: queryKeys.prf.usersByDepartment({
       businessUnit: business_unit,
-      departmentName: department_name,
+      department,
       email,
       include,
     }),
@@ -33,7 +33,7 @@ export const useUsersByDepartment = ({
       return prfService.getUsersByDepartmentResponse(
         {
           business_unit,
-          department_name,
+          department,
           email,
           include,
         },
@@ -42,7 +42,7 @@ export const useUsersByDepartment = ({
         },
       );
     },
-    enabled: Boolean(business_unit && department_name),
+    enabled: Boolean(business_unit && department),
   });
 
   return {

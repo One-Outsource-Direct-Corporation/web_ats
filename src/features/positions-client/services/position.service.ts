@@ -1,10 +1,11 @@
 import { defaultAxios } from "@/config/axios";
 import type { AxiosInstance } from "axios";
+import { clientService } from "@/features/client/services/client.service";
 import type {
   JobPostingListResponse,
   PositionFormData,
   ClientResponse,
-} from "@/features/external_posting/types/externalPosting.types";
+} from "@/features/external_posting";
 import type { PRFFormData } from "@/features/prf/types/prf.types";
 
 export interface GetPositionsParams {
@@ -76,11 +77,7 @@ export const externalPostingService = {
     httpClient?: AxiosInstance;
     signal?: AbortSignal;
   }): Promise<ClientsResponse> {
-    const httpClient = options?.httpClient ?? defaultAxios;
-    const response = await httpClient.get("/api/client/", {
-      signal: options?.signal,
-    });
-    return response.data;
+    return clientService.getAllClientsResponse({}, options);
   },
 };
 

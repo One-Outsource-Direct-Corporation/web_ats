@@ -1,5 +1,5 @@
 import { Card } from "@/shared/components/ui/card";
-import { ApplicationFormManagement } from "../../../../shared/components/reusables/ApplicationFormManagement";
+import { ApplicationFormStepContent } from "@/shared/components/reusables/ApplicationFormStepContent";
 import type {
   ApplicationForm,
   ApplicationFormData,
@@ -13,13 +13,14 @@ interface Step03Props {
   applicationFormData: ApplicationFormData;
   applicationFormHandler: (
     field: keyof ApplicationForm,
-    value: ApplicationFormType
+    value: ApplicationFormType,
   ) => void;
   nonNegotiableHandler: (updatedNonNegotiables: NonNegotiable) => void;
   questionnaireHandler: (
-    updatedQuestionnaire: ApplicationFormQuestionnaire
+    updatedQuestionnaire: ApplicationFormQuestionnaire,
   ) => void;
   error?: ValidationError | null;
+  updateMode?: boolean;
 }
 
 export default function Step03({
@@ -28,16 +29,21 @@ export default function Step03({
   nonNegotiableHandler,
   questionnaireHandler,
   error,
+  updateMode,
 }: Step03Props) {
-  return (
-    <Card className="p-6">
-      <ApplicationFormManagement
-        applicationFormData={applicationFormData}
-        applicationFormHandler={applicationFormHandler}
-        nonNegotiableHandler={nonNegotiableHandler}
-        questionnaireHandler={questionnaireHandler}
-        validationError={error}
-      />
-    </Card>
+  const content = (
+    <ApplicationFormStepContent
+      applicationFormData={applicationFormData}
+      applicationFormHandler={applicationFormHandler}
+      nonNegotiableHandler={nonNegotiableHandler}
+      questionnaireHandler={questionnaireHandler}
+      validationError={error}
+    />
   );
+
+  if (updateMode) {
+    return <div className="space-y-10">{content}</div>;
+  }
+
+  return <Card className="p-6">{content}</Card>;
 }

@@ -152,7 +152,7 @@ export default function PRF({ initialData, updateMode }: PRFProps) {
                   }}
                 >
                   {label}
-                  {i < 6 && (
+                  {i < 5 && (
                     <span className="absolute right-0 top-0 h-full w-px bg-gray-300" />
                   )}
                 </div>

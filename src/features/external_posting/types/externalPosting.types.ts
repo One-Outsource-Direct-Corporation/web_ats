@@ -1,7 +1,15 @@
 import type { ApplicationFormData } from "@/shared/types/application_form.types";
 import type { PipelineStep } from "@/shared/types/pipeline.types";
 import type { User } from "@/features/auth/types/auth.types";
-import type { BatchEntry, LocationEntry } from "./locationAndBatch.types";
+import type { BatchEntry } from "@/features/batch/types/batch.types";
+import type { LocationEntry } from "@/features/location/types/location.types";
+import type { DepartmentEntity } from "@/features/department";
+export type {
+  Client,
+  ClientBase,
+  ClientResponse,
+  CreateClientPayload,
+} from "@/features/client/types/client.types";
 
 export interface StepProps {
   number: number;
@@ -12,8 +20,7 @@ export interface StepProps {
 export interface JobPosting {
   job_title: string | null;
   experience_level: string | null;
-  department_name: string | null;
-  department_name_other: string | null;
+  department: number | null;
   employment_type: string | null;
   number_of_vacancies: number | null;
   work_setup: string | null;
@@ -38,7 +45,7 @@ export interface JobPostingListResponse {
   results: JobPostingDb[] | [];
 }
 
-export type JobPostingResponse = JobPostingDb;
+// export type JobPostingResponse = JobPostingDb;
 
 export interface GetPositionsParams {
   my_postings?: boolean;
@@ -86,21 +93,6 @@ export interface JobPostingDbWithApprovers extends JobPostingDb {
   approving_managers: ApproverDb[];
 }
 
-export interface ClientBase {
-  name: string;
-  email: string;
-  contact_number: string;
-}
-
-export interface ClientDb extends ClientBase {
-  id: number;
-  posted_by: string;
-}
-
-export type ClientResponse = ClientDb;
-export type CreateClientPayload = ClientBase;
-export type Client = ClientDb | ClientBase;
-
 export interface PositionBase {
   client: number | null;
   education_level: string | null;
@@ -135,3 +127,13 @@ export interface PositionDb extends Omit<Position, "job_posting"> {
 
 export type PositionFormData = Position | PositionDb;
 export type ExternalPostingFormData = PositionFormData;
+
+export interface JobPostingPublicResponse {
+  job_title: string;
+  department: DepartmentEntity;
+  description: string | null;
+  employment_type: string;
+  experience_level: string;
+  work_setup: string;
+  updated_at: string;
+}

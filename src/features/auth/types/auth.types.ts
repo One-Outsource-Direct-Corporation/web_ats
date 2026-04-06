@@ -6,15 +6,19 @@
 //   avatar?: string;
 // }
 
+import type { ClientEntity } from "@/features/client";
+import type { DepartmentEntity } from "@/features/department";
+import type { BusinessUnit } from "@/features/prf_2/types/enums/BusinessUnit";
+
 export interface User {
   id: number;
-  full_name: string;
   email: string;
   first_name: string;
   middle_name: string | null;
   last_name: string;
-  business_unit: string;
-  department: string;
+  business_unit: BusinessUnit;
+  department: DepartmentEntity;
+  client: ClientEntity | null;
   role: string;
   is_staff: boolean;
   // access: string;

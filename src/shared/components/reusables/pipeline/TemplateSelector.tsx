@@ -16,12 +16,12 @@ import {
 import { Field, FieldLabel } from "../../ui/field";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Assessment } from "@/shared/types/pipeline.types";
+import type { AssessmentTemplate } from "@/shared/types/pipeline.types";
 
 interface TemplateSelectorProps {
   selectedTemplate: string;
   onTemplateSelect: (templateId: string) => void;
-  templates: Assessment[];
+  templates: AssessmentTemplate[];
   templatesLoading: boolean;
   hasMore: boolean;
   loadMore: () => void;
@@ -59,12 +59,9 @@ export function TemplateSelector({
             className="w-full justify-between"
           >
             {selectedTemplate
-              ? templates.find((template) => {
-                  if ("id" in template) {
-                    return String(template.id) === selectedTemplate;
-                  }
-                  return false;
-                })?.name || "Browse Templates"
+              ? templates.find(
+                  (template) => String(template.id) === selectedTemplate,
+                )?.name || "Browse Templates"
               : "Browse Templates"}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
@@ -95,11 +92,8 @@ export function TemplateSelector({
               </CommandEmpty>
               <CommandGroup>
                 {templates.map((template) => {
-                  const templateId = "id" in template ? template.id : null;
-                  const templateKey =
-                    "id" in template ? template.id : template.tempId;
-
-                  if (!templateId) return null;
+                  const templateId = template.id;
+                  const templateKey = template.id;
 
                   return (
                     <CommandItem
@@ -118,7 +112,7 @@ export function TemplateSelector({
                           "ml-auto h-4 w-4 flex-shrink-0",
                           selectedTemplate === String(templateId)
                             ? "opacity-100"
-                            : "opacity-0"
+                            : "opacity-0",
                         )}
                       />
                     </CommandItem>

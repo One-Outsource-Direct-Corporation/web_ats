@@ -2,18 +2,17 @@ import { useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { Card } from "@/shared/components/ui/card";
 import { BasicDetailsForm } from "../BasicDetailsForm";
-import { LocationManagement } from "../LocationManagement";
-import { BatchManagement } from "../BatchManagement";
+import {
+  LocationManagement,
+  useLocationEntries,
+  type LocationEntryDb,
+  type LocationEntryLocal,
+} from "@/features/location";
+import { BatchManagement, useBatchEntries } from "@/features/batch";
 import type {
   PositionBase,
   PositionFormData,
 } from "../../types/externalPosting.types";
-import { useBatchEntries } from "../../hooks/useBatchEntries";
-import { useLocationEntries } from "../../hooks/useLocationEntries";
-import type {
-  LocationEntryDb,
-  LocationEntryLocal,
-} from "../../types/locationAndBatch.types";
 import type { ValidationError } from "../../utils/validateSteps";
 
 interface Step01Props {
@@ -21,11 +20,11 @@ interface Step01Props {
   setFormData: Dispatch<SetStateAction<PositionFormData>>;
   handleInputChange: (
     fieldName: keyof PositionBase,
-    value: string | number | null
+    value: string | number | null,
   ) => void;
   handleJobPostingChange: (
     fieldName: keyof PositionFormData["job_posting"],
-    value: string | number | null
+    value: string | number | null,
   ) => void;
   error?: ValidationError | null;
 }
@@ -69,7 +68,7 @@ export default function Step01({
         formData={formData}
         onInputChange={handleInputChange}
         handleJobPostingChange={handleJobPostingChange}
-        errorFields={error}
+        errorFields={error ?? null}
       />
 
       <LocationManagement

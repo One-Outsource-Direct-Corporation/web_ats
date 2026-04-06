@@ -1,4 +1,4 @@
-import type { ApproverDb } from "@/features/external_posting/types/externalPosting.types";
+import type { ApproverDb } from "@/features/external_posting";
 import formatMoney from "@/shared/utils/formatMoney";
 import type { PRFFormData, PRFResponse } from "../types/prf.types";
 import formatName from "@/shared/utils/formatName";

@@ -1,4 +1,4 @@
-import type { ApproverDb } from "@/features/external_posting/types/externalPosting.types";
+import type { ApproverDb } from "@/features/external_posting";
 import type { PRFFormData } from "../types/prf.types";
 import Approver from "./Approver";
 import PRFSummary from "./PRFSummary";

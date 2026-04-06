@@ -16,7 +16,7 @@ interface StageCardProps {
   stage: PipelineStage;
   steps: PipelineStep[];
   allSteps: PipelineStep[];
-  errors?: any;
+  errors?: unknown;
   addPipelineStep: (newStep: PipelineStepLocal) => void;
   updatePipelineStep: (id: string | number, data: PipelineStep) => void;
   deletePipelineStep: (id: string | number) => void;
@@ -39,18 +39,18 @@ export function StageCard({
       order: 0,
       stage: 0,
       reminder: "",
-      human_resources: [],
+      interviewer: null,
       assessments: [],
-    }
+    },
   );
   const [openDialogs, setOpenDialogs] = useState<{ [key: number]: boolean }>(
-    {}
+    {},
   );
   const [editingStep, setEditingStep] = useState<PipelineStep | null>(null);
 
   function handleStepDataChange(
     field: keyof PipelineStep,
-    value: string | number | boolean | User[] | Assessment[]
+    value: string | number | boolean | User | null | Assessment[],
   ) {
     setStepData((prev) => ({ ...prev, [field]: value }));
   }
@@ -63,7 +63,7 @@ export function StageCard({
       order: 0,
       stage: 0,
       reminder: "",
-      human_resources: [],
+      interviewer: null,
       assessments: [],
     });
   }
@@ -85,7 +85,7 @@ export function StageCard({
       order: step.order,
       stage: step.stage,
       reminder: step.reminder,
-      human_resources: step.human_resources,
+      interviewer: step.interviewer,
       assessments: step.assessments,
     });
     setOpenDialogs((prev) => ({ ...prev, [stage.id]: true }));
@@ -100,7 +100,7 @@ export function StageCard({
 
   function handleUpdateAssessment(
     id: string | number,
-    updatedData: Partial<Assessment>
+    updatedData: Partial<Assessment>,
   ) {
     setStepData((prev) => ({
       ...prev,
@@ -125,14 +125,14 @@ export function StageCard({
         .map((assessment) =>
           typeof id === "number" && (assessment as AssessmentInDb).id === id
             ? { ...assessment, _delete: true }
-            : assessment
+            : assessment,
         )
         .filter(
           (assessment) =>
             !(
               typeof id === "string" &&
               (assessment as AssessmentLocal).tempId === id
-            )
+            ),
         ),
     }));
   }

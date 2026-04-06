@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type {
   PositionBase,
   PositionFormData,
@@ -26,23 +27,40 @@ import {
   PopoverTrigger,
 } from "@/shared/components/ui/popover";
 import { Button } from "@/shared/components/ui/button";
-import { CalendarIcon } from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/shared/components/ui/command";
+import {
+  CalendarIcon,
+  Check,
+  ChevronsUpDown,
+  LoaderCircle,
+} from "lucide-react";
 import { Calendar } from "@/shared/components/ui/calendar";
-import { useExternalPostingClientsQuery } from "@/features/external_posting/hooks/useExternalPostingClientsQuery";
+import { ClientAddModal, useClientQuery } from "@/features/client";
+import { DepartmentAddModal, useDepartmentQuery } from "@/features/department";
 import { formatDate } from "@/shared/utils/formatDate";
-import ClientAddModal from "./ClientAddModal";
 import type { ValidationError } from "../utils/validateSteps";
-import { getFieldError, getJobPostingError } from "@/shared/utils/formValidation";
+import {
+  getFieldError,
+  getJobPostingError,
+} from "@/shared/utils/formValidation";
+import { cn } from "@/lib/utils";
 
 interface BasicDetailsFormProps {
   formData: PositionFormData;
   onInputChange: (
     field: keyof PositionBase,
-    value: string | number | null
+    value: string | number | null,
   ) => void;
   handleJobPostingChange: (
     fieldName: keyof PositionFormData["job_posting"],
-    value: string | number | null
+    value: string | number | null,
   ) => void;
   errorFields: ValidationError | null;
 }
@@ -56,9 +74,63 @@ export const BasicDetailsForm = ({
   handleJobPostingChange,
   errorFields,
 }: BasicDetailsFormProps) => {
-  const { clients, loading, error, refetch } = useExternalPostingClientsQuery();
+  const parseNullableNumber = (value: string): number | null => {
+    const trimmedValue = value.trim();
+    if (!trimmedValue) {
+      return null;
+    }
 
-  const getRootError = (field: string) => getFieldError(errorFields, field);
+    const parsedValue = Number(trimmedValue);
+    return Number.isNaN(parsedValue) ? null : parsedValue;
+  };
+
+  const [clientPickerOpen, setClientPickerOpen] = useState(false);
+  const [departmentPickerOpen, setDepartmentPickerOpen] = useState(false);
+  const {
+    clients,
+    loading,
+    refetch,
+    setSearch,
+    loadMore,
+    hasMore,
+    isFetchingNextPage,
+  } = useClientQuery();
+  const {
+    departments,
+    loading: loadingDepartments,
+    refetch: refetchDepartments,
+    setSearch: setDepartmentSearch,
+    loadMore: loadMoreDepartments,
+    hasMore: hasMoreDepartments,
+    isFetchingNextPage: isFetchingNextDepartmentPage,
+  } = useDepartmentQuery();
+
+  const selectedClient = clients.find(
+    (client) => client.id === formData.client,
+  );
+  const selectedDepartment = departments.find(
+    (department) => department.id === formData.job_posting.department,
+  );
+
+  const getRootError = (field: string) => {
+    const rootError = getFieldError(errorFields, field);
+
+    // Step-level errors can remain stale until the next full submit cycle.
+    // Hide "required" errors when a valid value is already selected.
+    if (field === "client" && formData.client !== null) {
+      return undefined;
+    }
+
+    if (
+      field === "education_level" &&
+      typeof formData.education_level === "string" &&
+      formData.education_level.trim().length > 0
+    ) {
+      return undefined;
+    }
+
+    return rootError;
+  };
   const getJobError = (field: string) => getJobPostingError(errorFields, field);
 
   return (
@@ -70,35 +142,97 @@ export const BasicDetailsForm = ({
             <Field>
               <FieldLabel>Client *</FieldLabel>
               <Field orientation="horizontal">
-                <Select
-                  value={formData.client ? String(formData.client) : ""}
-                  onValueChange={(value) =>
-                    onInputChange("client", Number(value))
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Client" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {loading && (
-                      <SelectItem value="loading">Loading...</SelectItem>
-                    )}
-                    {error && (
-                      <SelectItem value="error">
-                        Something went wrong!
-                      </SelectItem>
-                    )}
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={String(client.id)}>
-                        {client.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <ClientAddModal onClientAdded={refetch} />
+                <div className="flex w-full items-center gap-2">
+                  <Popover
+                    open={clientPickerOpen}
+                    onOpenChange={setClientPickerOpen}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={clientPickerOpen}
+                        className="flex-1 justify-between"
+                      >
+                        {selectedClient?.name ?? "Select Client"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                      <Command shouldFilter={false}>
+                        <CommandInput
+                          placeholder="Search clients..."
+                          className="h-9"
+                          onValueChange={setSearch}
+                        />
+                        <CommandList
+                          className="max-h-[300px] overflow-y-auto"
+                          onScroll={(event) => {
+                            const target = event.currentTarget;
+                            if (
+                              target.scrollHeight - target.scrollTop <=
+                                target.clientHeight + 100 &&
+                              hasMore &&
+                              !isFetchingNextPage
+                            ) {
+                              void loadMore();
+                            }
+                          }}
+                        >
+                          <CommandEmpty>
+                            {loading
+                              ? "Loading clients..."
+                              : "No client found."}
+                          </CommandEmpty>
+                          <CommandGroup>
+                            {clients.map((client) => (
+                              <CommandItem
+                                key={client.id}
+                                value={String(client.id)}
+                                onSelect={() => {
+                                  onInputChange("client", client.id);
+                                  setClientPickerOpen(false);
+                                }}
+                              >
+                                {client.name}
+                                <Check
+                                  className={cn(
+                                    "ml-auto h-4 w-4",
+                                    formData.client === client.id
+                                      ? "opacity-100"
+                                      : "opacity-0",
+                                  )}
+                                />
+                              </CommandItem>
+                            ))}
+                            {hasMore && !isFetchingNextPage && (
+                              <CommandItem
+                                disabled
+                                className="justify-center text-sm text-gray-500"
+                              >
+                                Scroll for more...
+                              </CommandItem>
+                            )}
+                            {isFetchingNextPage && (
+                              <CommandItem
+                                disabled
+                                className="justify-center text-sm text-gray-500"
+                              >
+                                <LoaderCircle className="h-4 w-4 animate-spin mr-2" />
+                                Loading more clients...
+                              </CommandItem>
+                            )}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <ClientAddModal onClientAdded={() => void refetch()} />
               </Field>
-              {getRootError("client") && <FieldError>{getRootError("client")}</FieldError>}
-              <FieldError></FieldError>
+              {getRootError("client") && (
+                <FieldError>{getRootError("client")}</FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Job Title *</FieldLabel>
@@ -110,62 +244,112 @@ export const BasicDetailsForm = ({
                 }
                 placeholder="Enter job title"
               />
-              {getJobError("job_title") && <FieldError>{getJobError("job_title")}</FieldError>}
+              {getJobError("job_title") && (
+                <FieldError>{getJobError("job_title")}</FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Department *</FieldLabel>
-              <Select
-                value={formData.job_posting.department_name ?? ""}
-                onValueChange={(value) =>
-                  handleJobPostingChange("department_name", value)
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select Department" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sales">Sales Department</SelectItem>
-                  <SelectItem value="sales-and-marketing">
-                    Sales and Marketing Department
-                  </SelectItem>
-                  <SelectItem value="finance">Finance Department</SelectItem>
-                  <SelectItem value="hr">Human Resources Department</SelectItem>
-                  <SelectItem value="ci">
-                    Continuous Improvement Department
-                  </SelectItem>
-                  <SelectItem value="operations-isla">
-                    Operations - ISLA Department
-                  </SelectItem>
-                  <SelectItem value="operations-shell">
-                    Operations - Shell Department
-                  </SelectItem>
-                  <SelectItem value="operations-prime">
-                    Operations - Prime Department
-                  </SelectItem>
-                  <SelectItem value="operations-rpo">
-                    Operations - RPO Department
-                  </SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-              {getJobError("department_name") && <FieldError>{getJobError("department_name")}</FieldError>}
-            </Field>
-
-            {formData.job_posting.department_name === "other" && (
-              <Field>
-                <FieldLabel>Please Specify *</FieldLabel>
-                <Input
-                  type="text"
-                  value={formData.job_posting.department_name_other ?? ""}
-                  onChange={(e) =>
-                    handleJobPostingChange(
-                      "department_name_other",
-                      e.target.value
-                    )
-                  }
+              <Field orientation="horizontal">
+                <div className="flex w-full items-center gap-2">
+                  <Popover
+                    open={departmentPickerOpen}
+                    onOpenChange={setDepartmentPickerOpen}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={departmentPickerOpen}
+                        className="flex-1 justify-between"
+                      >
+                        {selectedDepartment?.name ?? "Select Department"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                      <Command shouldFilter={false}>
+                        <CommandInput
+                          placeholder="Search departments..."
+                          className="h-9"
+                          onValueChange={setDepartmentSearch}
+                        />
+                        <CommandList
+                          className="max-h-[300px] overflow-y-auto"
+                          onScroll={(event) => {
+                            const target = event.currentTarget;
+                            if (
+                              target.scrollHeight - target.scrollTop <=
+                                target.clientHeight + 100 &&
+                              hasMoreDepartments &&
+                              !isFetchingNextDepartmentPage
+                            ) {
+                              void loadMoreDepartments();
+                            }
+                          }}
+                        >
+                          <CommandEmpty>
+                            {loadingDepartments
+                              ? "Loading departments..."
+                              : "No department found."}
+                          </CommandEmpty>
+                          <CommandGroup>
+                            {departments.map((department) => (
+                              <CommandItem
+                                key={department.id}
+                                value={department.name}
+                                onSelect={() => {
+                                  handleJobPostingChange(
+                                    "department",
+                                    department.id,
+                                  );
+                                  setDepartmentPickerOpen(false);
+                                }}
+                              >
+                                {department.name}
+                                <Check
+                                  className={cn(
+                                    "ml-auto h-4 w-4",
+                                    formData.job_posting.department ===
+                                      department.id
+                                      ? "opacity-100"
+                                      : "opacity-0",
+                                  )}
+                                />
+                              </CommandItem>
+                            ))}
+                            {hasMoreDepartments &&
+                              !isFetchingNextDepartmentPage && (
+                                <CommandItem
+                                  disabled
+                                  className="justify-center text-sm text-gray-500"
+                                >
+                                  Scroll for more...
+                                </CommandItem>
+                              )}
+                            {isFetchingNextDepartmentPage && (
+                              <CommandItem
+                                disabled
+                                className="justify-center text-sm text-gray-500"
+                              >
+                                <LoaderCircle className="h-4 w-4 animate-spin mr-2" />
+                                Loading more departments...
+                              </CommandItem>
+                            )}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <DepartmentAddModal
+                  onDepartmentAdded={() => void refetchDepartments()}
                 />
               </Field>
-            )}
+              {getJobError("department") && (
+                <FieldError>{getJobError("department")}</FieldError>
+              )}
+            </Field>
 
             <Field>
               <FieldLabel>Employment Type *</FieldLabel>
@@ -186,7 +370,9 @@ export const BasicDetailsForm = ({
                   <SelectItem value="temporary">Temporary</SelectItem>
                 </SelectContent>
               </Select>
-              {getJobError("employment_type") && <FieldError>{getJobError("employment_type")}</FieldError>}
+              {getJobError("employment_type") && (
+                <FieldError>{getJobError("employment_type")}</FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Work Setup *</FieldLabel>
@@ -205,7 +391,9 @@ export const BasicDetailsForm = ({
                   <SelectItem value="hybrid">Hybrid</SelectItem>
                 </SelectContent>
               </Select>
-              {getJobError("work_setup") && <FieldError>{getJobError("work_setup")}</FieldError>}
+              {getJobError("work_setup") && (
+                <FieldError>{getJobError("work_setup")}</FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Working Site *</FieldLabel>
@@ -217,7 +405,9 @@ export const BasicDetailsForm = ({
                 }
                 placeholder="Enter working site"
               />
-              {getJobError("working_site") && <FieldError>{getJobError("working_site")}</FieldError>}
+              {getJobError("working_site") && (
+                <FieldError>{getJobError("working_site")}</FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Work Schedule From *</FieldLabel>
@@ -228,7 +418,9 @@ export const BasicDetailsForm = ({
                   handleJobPostingChange("work_schedule_from", e.target.value)
                 }
               />
-              {getJobError("work_schedule_from") && <FieldError>{getJobError("work_schedule_from")}</FieldError>}
+              {getJobError("work_schedule_from") && (
+                <FieldError>{getJobError("work_schedule_from")}</FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Work Schedule To *</FieldLabel>
@@ -239,7 +431,9 @@ export const BasicDetailsForm = ({
                   handleJobPostingChange("work_schedule_to", e.target.value)
                 }
               />
-              {getJobError("work_schedule_to") && <FieldError>{getJobError("work_schedule_to")}</FieldError>}
+              {getJobError("work_schedule_to") && (
+                <FieldError>{getJobError("work_schedule_to")}</FieldError>
+              )}
             </Field>
           </FieldGroup>
         </FieldSet>
@@ -281,31 +475,35 @@ export const BasicDetailsForm = ({
                   <SelectValue placeholder="Select Experience Level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="entry">Entry Level</SelectItem>
+                  <SelectItem value="entry_level">Entry Level</SelectItem>
                   <SelectItem value="junior">Junior</SelectItem>
-                  <SelectItem value="mid">Mid Level</SelectItem>
+                  <SelectItem value="mid_level">Mid Level</SelectItem>
                   <SelectItem value="senior">Senior</SelectItem>
                   <SelectItem value="lead">Lead</SelectItem>
                   <SelectItem value="executive">Executive</SelectItem>
                 </SelectContent>
               </Select>
-              {getJobError("experience_level") && <FieldError>{getJobError("experience_level")}</FieldError>}
+              {getJobError("experience_level") && (
+                <FieldError>{getJobError("experience_level")}</FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Headcounts Needed *</FieldLabel>
               <Input
                 type="number"
-                value={formData.job_posting.number_of_vacancies ?? "0"}
+                value={formData.job_posting.number_of_vacancies ?? ""}
                 onChange={(e) =>
                   handleJobPostingChange(
                     "number_of_vacancies",
-                    Number(e.target.value)
+                    parseNullableNumber(e.target.value),
                   )
                 }
                 placeholder="Enter number of positions"
                 min={0}
               />
-              {getJobError("number_of_vacancies") && <FieldError>{getJobError("number_of_vacancies")}</FieldError>}
+              {getJobError("number_of_vacancies") && (
+                <FieldError>{getJobError("number_of_vacancies")}</FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Date Needed *</FieldLabel>
@@ -331,13 +529,15 @@ export const BasicDetailsForm = ({
                     onSelect={(date) =>
                       handleJobPostingChange(
                         "target_start_date",
-                        date ? formatDate(date.toLocaleDateString()) : null
+                        date ? formatDate(date.toLocaleDateString()) : null,
                       )
                     }
                   />
                 </PopoverContent>
               </Popover>
-              {getJobError("target_start_date") && <FieldError>{getJobError("target_start_date")}</FieldError>}
+              {getJobError("target_start_date") && (
+                <FieldError>{getJobError("target_start_date")}</FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Reason for Hire *</FieldLabel>
@@ -357,7 +557,9 @@ export const BasicDetailsForm = ({
                   <SelectItem value="other">Others, Please Specify</SelectItem>
                 </SelectContent>
               </Select>
-              {getJobError("reason_for_posting") && <FieldError>{getJobError("reason_for_posting")}</FieldError>}
+              {getJobError("reason_for_posting") && (
+                <FieldError>{getJobError("reason_for_posting")}</FieldError>
+              )}
             </Field>
             {formData.job_posting.reason_for_posting === "other" && (
               <Field>
@@ -368,7 +570,7 @@ export const BasicDetailsForm = ({
                   onChange={(e) =>
                     handleJobPostingChange(
                       "other_reason_for_posting",
-                      e.target.value
+                      e.target.value,
                     )
                   }
                   placeholder="Enter reason for hire"
@@ -391,25 +593,35 @@ export const BasicDetailsForm = ({
               <FieldLabel>Minimum</FieldLabel>
               <Input
                 type="number"
-                value={formData.job_posting.min_salary ?? "0"}
+                value={formData.job_posting.min_salary ?? ""}
                 onChange={(e) =>
-                  handleJobPostingChange("min_salary", e.target.value)
+                  handleJobPostingChange(
+                    "min_salary",
+                    parseNullableNumber(e.target.value),
+                  )
                 }
                 placeholder="Minimum salary"
               />
-              {getJobError("min_salary") && <FieldError>{getJobError("min_salary")}</FieldError>}
+              {getJobError("min_salary") && (
+                <FieldError>{getJobError("min_salary")}</FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel>Maximum</FieldLabel>
               <Input
                 type="number"
-                value={formData.job_posting.max_salary ?? "0"}
+                value={formData.job_posting.max_salary ?? ""}
                 onChange={(e) =>
-                  handleJobPostingChange("max_salary", e.target.value)
+                  handleJobPostingChange(
+                    "max_salary",
+                    parseNullableNumber(e.target.value),
+                  )
                 }
                 placeholder="Maximum salary"
               />
-              {getJobError("max_salary") && <FieldError>{getJobError("max_salary")}</FieldError>}
+              {getJobError("max_salary") && (
+                <FieldError>{getJobError("max_salary")}</FieldError>
+              )}
             </Field>
           </FieldGroup>
         </FieldSet>

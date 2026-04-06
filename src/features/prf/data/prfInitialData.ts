@@ -1,12 +1,12 @@
 import type { User } from "@/features/auth/types/auth.types";
+import { QuestionType } from "@/features/external_posting";
 import type { PRFFormData } from "../types/prf.types";
 
 export default function initialDataPrf(user?: User): PRFFormData {
   return {
     job_posting: {
       job_title: null,
-      department_name: null,
-      department_name_other: null,
+      department: null,
       employment_type: null,
       experience_level: null,
       number_of_vacancies: null,
@@ -53,6 +53,7 @@ export default function initialDataPrf(user?: User): PRFFormData {
     pipeline: [],
     business_unit: user?.business_unit || null,
     immediate_supervisor: null,
+    immediate_supervisor_display: null,
     category: null,
     hardware_required: {},
     software_required: {},
@@ -63,6 +64,7 @@ export function testData(): PRFFormData {
   return {
     business_unit: "oodc",
     immediate_supervisor: null,
+    immediate_supervisor_display: null,
     category: "supervisory",
     hardware_required: {
       headset: true,
@@ -80,8 +82,7 @@ export function testData(): PRFFormData {
     },
     job_posting: {
       job_title: "Test Job Title",
-      department_name: "sales-and-marketing",
-      department_name_other: null,
+      department: 1,
       experience_level: "mid_level",
       employment_type: "contract",
       number_of_vacancies: 23,
@@ -147,8 +148,8 @@ export function testData(): PRFFormData {
             questionnaires: [
               {
                 tempId: "temp-1763079155675",
-                name: "Bombaclats",
-                type: "Checkboxes",
+                question: "Bombaclats",
+                question_type: QuestionType.CHECKBOXES,
                 options: [
                   {
                     value: "Testes",
@@ -170,12 +171,11 @@ export function testData(): PRFFormData {
         order: 1,
         stage: 1,
         reminder: "2025-11-15T08:18",
-        hiring_managers: [],
+        interviewer: null,
         assessments: [
           {
             name: null,
-            is_template: false,
-            type: "Skills Assessment",
+            type: "skills_assessment",
             order: 1,
             file: null,
             tempId: "temp-1763079178304",

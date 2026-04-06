@@ -1,13 +1,15 @@
 import type { PositionFormData } from "../types/externalPosting.types";
 import {
-  validateJobPosting,
-  validatePipeline,
-  validateNonNegotiable,
   mapServerErrorsToSteps as mapServerErrors,
   hasStepErrors as checkStepErrors,
   getStepErrorSummary as getErrorSummary,
   type ValidationError,
 } from "@/shared/utils/formValidation";
+import {
+  validateJobPostingWithZod,
+  validatePipelineWithZod,
+  validateNonNegotiableWithZod,
+} from "../services/externalPostingValidation.service";
 
 export type { ValidationError };
 
@@ -33,13 +35,13 @@ export function validateSteps(formData: PositionFormData): StepErrors {
     step1Errors.education_level = ["This field may not be null."];
   }
 
-  const jobPostingErrors = validateJobPosting(formData.job_posting);
+  const jobPostingErrors = validateJobPostingWithZod(formData.job_posting);
   const step1JobPostingFields = [
     "job_title",
     "target_start_date",
     "reason_for_posting",
     "experience_level",
-    "department_name",
+    "department",
     "employment_type",
     "work_setup",
     "working_site",
@@ -84,8 +86,8 @@ export function validateSteps(formData: PositionFormData): StepErrors {
   }
 
   const step3Errors: ValidationError = {};
-  const nonNegotiableErrors = validateNonNegotiable(
-    formData.application_form?.non_negotiable
+  const nonNegotiableErrors = validateNonNegotiableWithZod(
+    formData.application_form?.non_negotiable,
   );
 
   if (Object.keys(nonNegotiableErrors).length > 0) {
@@ -101,7 +103,7 @@ export function validateSteps(formData: PositionFormData): StepErrors {
   if (!formData.pipeline || formData.pipeline.length === 0) {
     step4Errors.pipeline = ["At least one pipeline step is required."];
   } else {
-    const pipelineErrors = validatePipeline(formData.pipeline);
+    const pipelineErrors = validatePipelineWithZod(formData.pipeline);
     if (pipelineErrors) {
       step4Errors.pipeline = pipelineErrors;
     }
@@ -114,7 +116,9 @@ export function validateSteps(formData: PositionFormData): StepErrors {
   return errors;
 }
 
-export function mapServerErrorsToSteps(serverErrors: ValidationError): StepErrors {
+export function mapServerErrorsToSteps(
+  serverErrors: ValidationError,
+): StepErrors {
   const fieldMapping: { [field: string]: number } = {
     client: 1,
     education_level: 1,
@@ -122,7 +126,7 @@ export function mapServerErrorsToSteps(serverErrors: ValidationError): StepError
     "job_posting.target_start_date": 1,
     "job_posting.reason_for_posting": 1,
     "job_posting.experience_level": 1,
-    "job_posting.department_name": 1,
+    "job_posting.department": 1,
     "job_posting.employment_type": 1,
     "job_posting.work_setup": 1,
     "job_posting.working_site": 1,
@@ -146,6 +150,8 @@ export function hasStepErrors(stepErrors: ValidationError | null): boolean {
   return checkStepErrors(stepErrors);
 }
 
-export function getStepErrorSummary(stepErrors: ValidationError | null): string {
+export function getStepErrorSummary(
+  stepErrors: ValidationError | null,
+): string {
   return getErrorSummary(stepErrors);
 }

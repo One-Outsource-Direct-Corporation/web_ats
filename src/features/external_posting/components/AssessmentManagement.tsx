@@ -29,6 +29,12 @@ import type {
   QuestionnaireLocal,
 } from "../types/questionnaire.types";
 
+const QUESTION_TYPE_LABEL: Record<string, string> = {
+  multiple_choices: "Multiple Choices",
+  checkboxes: "Checkboxes",
+  paragraph: "Paragraph",
+};
+
 interface AssessmentManagementProps {
   pipelineSteps: PipelineStep[];
   pipelineHandler: (updatedPipelines: PipelineStep[]) => void;
@@ -385,7 +391,7 @@ export const AssessmentManagement = ({
                                         htmlFor={`q-${qId}`}
                                         className="text-sm text-gray-700 cursor-pointer"
                                       >
-                                        {question.name}
+                                        {question.question}
                                       </label>
                                     </div>
                                     <div className="flex gap-1">
@@ -408,7 +414,9 @@ export const AssessmentManagement = ({
                                   </div>
                                   <div className="flex gap-2 text-xs text-gray-500 ml-6">
                                     <span className="bg-white px-2 py-0.5 rounded border border-gray-200">
-                                      {question.type}
+                                      {QUESTION_TYPE_LABEL[
+                                        question.question_type
+                                      ] ?? question.question_type}
                                     </span>
                                     {question.parameter && (
                                       <span className="bg-white px-2 py-0.5 rounded border border-gray-200">

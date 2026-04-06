@@ -13,6 +13,12 @@ import { Move, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { AddEditQuestionModal } from "./AddEditQuestionModal";
 
+const QUESTION_TYPE_LABEL: Record<string, string> = {
+  multiple_choices: "Multiple Choices",
+  checkboxes: "Checkboxes",
+  paragraph: "Paragraph",
+};
+
 interface SectionListProps {
   sections: Section[];
   addSection: (newSection: Section) => void;
@@ -55,10 +61,10 @@ export function SectionList({
   function handleEditQuestion(
     section: Section,
     id: number | string,
-    updatedQuestion: Questionnaire
+    updatedQuestion: Questionnaire,
   ) {
     const updatedQuestionnaires = section.questionnaires.map((q) =>
-      getIdQuestion(q) === id ? updatedQuestion : q
+      getIdQuestion(q) === id ? updatedQuestion : q,
     );
 
     const updatedSection: Section = {
@@ -73,11 +79,11 @@ export function SectionList({
     let updatedQuestionnaires;
     if (typeof id === "number") {
       updatedQuestionnaires = section.questionnaires.map((q) =>
-        getIdQuestion(q) === id ? { ...q, _delete: true } : q
+        getIdQuestion(q) === id ? { ...q, _delete: true } : q,
       );
     } else {
       updatedQuestionnaires = section.questionnaires.filter(
-        (q) => getIdQuestion(q) !== id
+        (q) => getIdQuestion(q) !== id,
       );
     }
     const updatedSection: Section = {
@@ -209,7 +215,7 @@ export function SectionList({
                   )}
                 </div>
                 {section.questionnaires.filter(
-                  (q) => !(q as QuestionnaireDb)._delete
+                  (q) => !(q as QuestionnaireDb)._delete,
                 ).length > 0 && (
                   <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
                     <div className="space-y-2">
@@ -230,7 +236,8 @@ export function SectionList({
                                 </p>
                               )}
                               <p className="text-xs text-gray-400">
-                                {question.type}
+                                {QUESTION_TYPE_LABEL[question.question_type] ??
+                                  question.question_type}
                               </p>
                             </div>
                             <div className="flex gap-1">
@@ -240,13 +247,13 @@ export function SectionList({
                                   handleEditQuestion(
                                     section,
                                     getIdQuestion(question),
-                                    updatedQuestion
+                                    updatedQuestion,
                                   )
                                 }
                                 onDelete={() =>
                                   handleDeleteQuestion(
                                     section,
-                                    getIdQuestion(question)
+                                    getIdQuestion(question),
                                   )
                                 }
                               />
@@ -257,7 +264,7 @@ export function SectionList({
                                 onClick={() =>
                                   handleDeleteQuestion(
                                     section,
-                                    getIdQuestion(question)
+                                    getIdQuestion(question),
                                   )
                                 }
                               >

@@ -1,6 +1,6 @@
 import DOMPurify from "dompurify";
 import { formatDateYYYYMMDD } from "./formatDate";
-import type { PositionFormData } from "@/features/external_posting/types/externalPosting.types";
+import type { PositionFormData } from "@/features/external_posting";
 import type { PRFFormData } from "@/features/prf/types/prf.types";
 
 type ExtractedFiles = Record<string, File>;
@@ -8,6 +8,43 @@ type ExtractFilesResult = { data: unknown; files: ExtractedFiles };
 
 function sanitizeString(input?: string): string {
   return DOMPurify.sanitize(input ?? "");
+}
+
+const assessmentTypeLabelToValue: Record<string, string> = {
+  "Technical Test": "technical_test",
+  "Personality Test": "personality_test",
+  "Skills Assessment": "skills_assessment",
+  "Cognitive Test": "cognitive_test",
+  "Portfolio Review": "portfolio_review",
+};
+
+function normalizeAssessmentType(value: unknown): unknown {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  return assessmentTypeLabelToValue[value] ?? value;
+}
+
+function normalizeDepartmentId(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  if (typeof value === "number") {
+    return Number.isNaN(value) ? null : value;
+  }
+
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    "id" in value &&
+    typeof (value as { id: unknown }).id === "number"
+  ) {
+    return (value as { id: number }).id;
+  }
+
+  return null;
 }
 
 function formatJobPosting<T extends Record<string, any>>(jobPosting: T): T {
@@ -83,13 +120,13 @@ export function stateToDataFormat<T extends object>(
   options: {
     jobPostingField?: keyof T;
     customFields?: (data: T) => Partial<T>;
-  } = {}
+  } = {},
 ): FormData {
   let baseData = { ...formData } as any;
 
   if (options.jobPostingField && baseData[options.jobPostingField as string]) {
     baseData[options.jobPostingField as string] = formatJobPosting(
-      baseData[options.jobPostingField as string]
+      baseData[options.jobPostingField as string],
     );
   }
 
@@ -99,20 +136,19 @@ export function stateToDataFormat<T extends object>(
 
   if ("pipeline" in baseData && Array.isArray(baseData.pipeline)) {
     baseData.pipeline = baseData.pipeline.map((step: any) => {
-      const hrIds = Array.isArray(step.human_resources)
-        ? step.human_resources.map((mgr: any) =>
-            typeof mgr === "object" && mgr !== null && "id" in mgr
-              ? mgr.id
-              : mgr
-          )
-        : [];
+      const interviewerId =
+        step.interviewer &&
+        typeof step.interviewer === "object" &&
+        "id" in step.interviewer
+          ? step.interviewer.id
+          : null;
 
       const normalizedStep: any = {
         ...step,
         process_title: step.process_title || step.name || "",
-        human_resources_ids: hrIds,
+        interviewer_id: interviewerId,
         // Remove old keys
-        human_resources: undefined,
+        interviewer: undefined,
         name: undefined,
 
         assessments: Array.isArray(step.assessments)
@@ -121,6 +157,12 @@ export function stateToDataFormat<T extends object>(
 
               if (assessment.id !== undefined)
                 normalizedAssessment.id = assessment.id;
+
+              normalizedAssessment.type = normalizeAssessmentType(
+                normalizedAssessment.type,
+              );
+
+              delete normalizedAssessment.is_template;
 
               /* 
                 Backend Handling for Assessment Files:
@@ -217,7 +259,6 @@ export function stateToDataFormat<T extends object>(
     baseData.batches_input = baseData.batches;
     delete baseData.batches;
   }
-  console.log("Base Data:", baseData);
 
   const { data: jsonData, files } = extractFiles(baseData);
 
@@ -236,5 +277,20 @@ export function stateToDataFormatClient(formData: PositionFormData): FormData {
 }
 
 export function stateToDataFormatPRF(formData: PRFFormData): FormData {
-  return stateToDataFormat(formData, { jobPostingField: "job_posting" });
+  return stateToDataFormat(formData, {
+    jobPostingField: "job_posting",
+    customFields: (data) => {
+      const sourceJobPosting = (data as PRFFormData).job_posting as Record<
+        string,
+        unknown
+      >;
+
+      return {
+        job_posting: {
+          ...sourceJobPosting,
+          department: normalizeDepartmentId(sourceJobPosting.department),
+        },
+      } as Partial<PRFFormData>;
+    },
+  });
 }

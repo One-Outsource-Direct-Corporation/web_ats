@@ -1,13 +1,15 @@
 import type { PRFFormData } from "../types/prf.types";
 import {
-  validateJobPosting,
-  validatePipeline,
-  validateNonNegotiable,
   mapServerErrorsToSteps as mapServerErrors,
   hasStepErrors as checkStepErrors,
   getStepErrorSummary as getErrorSummary,
   type ValidationError,
 } from "@/shared/utils/formValidation";
+import {
+  validatePrfJobPostingWithZod,
+  validatePrfPipelineWithZod,
+  validatePrfNonNegotiableWithZod,
+} from "../services/prfValidation.service";
 
 export type { ValidationError };
 
@@ -36,12 +38,12 @@ export function validateSteps(formData: PRFFormData): StepErrors {
   }
 
   // Validate job posting fields that appear in Step 1 UI
-  const jobPostingErrors = validateJobPosting(formData.job_posting);
+  const jobPostingErrors = validatePrfJobPostingWithZod(formData.job_posting);
   const step1JobPostingFields = [
     "job_title",
     "target_start_date",
     "reason_for_posting",
-    "department_name",
+    "department",
     "number_of_vacancies",
   ];
   const step1JobPosting: ValidationError = {};
@@ -54,11 +56,6 @@ export function validateSteps(formData: PRFFormData): StepErrors {
 
   if (Object.keys(step1JobPosting).length > 0) {
     step1Errors.job_posting = step1JobPosting;
-  }
-
-  // Validate immediate_supervisor
-  if (!formData.immediate_supervisor) {
-    step1Errors.immediate_supervisor = ["This field may not be null."];
   }
 
   if (Object.keys(step1Errors).length > 0) {
@@ -106,7 +103,7 @@ export function validateSteps(formData: PRFFormData): StepErrors {
 
   // Step 4: Application Form - Non-negotiable validation
   const step4Errors: ValidationError = {};
-  const nonNegotiableErrors = validateNonNegotiable(
+  const nonNegotiableErrors = validatePrfNonNegotiableWithZod(
     formData.application_form?.non_negotiable,
   );
 
@@ -124,7 +121,7 @@ export function validateSteps(formData: PRFFormData): StepErrors {
   if (!formData.pipeline || formData.pipeline.length === 0) {
     step5Errors.pipeline = ["At least one pipeline step is required."];
   } else {
-    const pipelineErrors = validatePipeline(formData.pipeline);
+    const pipelineErrors = validatePrfPipelineWithZod(formData.pipeline);
     if (pipelineErrors) {
       step5Errors.pipeline = pipelineErrors;
     }
@@ -150,7 +147,7 @@ export function mapServerErrorsToSteps(
     "job_posting.target_start_date": 2,
     "job_posting.reason_for_posting": 2,
     "job_posting.experience_level": 2,
-    "job_posting.department_name": 2,
+    "job_posting.department": 2,
     "job_posting.employment_type": 2,
     "job_posting.work_setup": 2,
     "job_posting.working_site": 2,

@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import type {
   QuestionOption,
-  Questionnaire,
   QuestionnaireBase,
+  Questionnaire,
+  QuestionType,
 } from "../../types/questionnaire.types";
 import {
   Field,
@@ -38,9 +39,9 @@ interface AddEditQuestionModalProps {
 const defaultForm: QuestionnaireBase = {
   question: "",
   description: "",
-  type: "Multiple Choice",
+  question_type: "multiple_choices",
   parameter: undefined,
-  options: undefined,
+  options: [{ value: "", score: 0 }],
 };
 
 export function AddEditQuestionModal({
@@ -58,27 +59,45 @@ export function AddEditQuestionModal({
       setQuestionForm({
         question: question.question,
         description: question.description || "",
-        type: question.type,
+        question_type: question.question_type,
         parameter: question.parameter,
-        options: question.options,
+        options: question.options ?? [{ value: "", score: 0 }],
       });
+    } else {
+      setQuestionForm(defaultForm);
     }
   }, [question]);
 
   const handleFormChange = (
     field: keyof QuestionnaireBase,
-    value: string | QuestionOption[]
+    value: string | QuestionOption[],
   ) => {
-    setQuestionForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    if (field === "question_type") {
+      setQuestionForm((prev) => ({
+        ...prev,
+        question_type: value as QuestionType,
+        // Reset options if switching to a type that needs them
+        options:
+          value === "multiple_choices" || value === "checkboxes"
+            ? prev.options && prev.options.length > 0
+              ? prev.options
+              : [{ value: "", score: 0 }]
+            : undefined,
+        // Reset parameter if switching to paragraph
+        parameter: value === "paragraph" ? prev.parameter : undefined,
+      }));
+    } else {
+      setQuestionForm((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+    }
   };
 
   const handleOptionChange = (
     idx: number,
     field: "value" | "score",
-    value: string | number
+    value: string | number,
   ) => {
     const newOptions = [...(questionForm?.options || [])];
     if (field === "value") {
@@ -100,7 +119,7 @@ export function AddEditQuestionModal({
     if ((questionForm?.options || []).length > 1) {
       handleFormChange(
         "options",
-        (questionForm?.options || []).filter((_, i) => i !== idx)
+        (questionForm?.options || []).filter((_, i) => i !== idx),
       );
     }
   };
@@ -118,14 +137,14 @@ export function AddEditQuestionModal({
       ...(isEdit && question ? question : { tempId: `temp-${Date.now()}` }),
       question: questionForm.question,
       description: questionForm.description || undefined,
-      type: questionForm.type,
+      question_type: questionForm.question_type,
       options:
-        questionForm.type === "Multiple Choice" ||
-        questionForm.type === "Checkboxes"
+        questionForm.question_type === "multiple_choices" ||
+        questionForm.question_type === "checkboxes"
           ? questionForm.options?.filter((opt) => opt.value.trim() !== "")
           : undefined,
       parameter:
-        questionForm.type === "Text Entry" || questionForm.type === "Paragraph"
+        questionForm.question_type === "paragraph"
           ? questionForm.parameter
           : undefined,
     };
@@ -143,9 +162,6 @@ export function AddEditQuestionModal({
       }
     }
   };
-
-  console.log(questionForm);
-
   return (
     <Dialog open={showDialog} onOpenChange={setShowDialog}>
       <DialogTrigger asChild>
@@ -196,29 +212,26 @@ export function AddEditQuestionModal({
           <Field>
             <FieldLabel>Question Type</FieldLabel>
             <Select
-              value={questionForm.type}
-              onValueChange={(
-                value:
-                  | "Multiple Choice"
-                  | "Checkboxes"
-                  | "Text Entry"
-                  | "Paragraph"
-              ) => handleFormChange("type", value)}
+              value={questionForm.question_type}
+              onValueChange={(value: QuestionType) =>
+                handleFormChange("question_type", value)
+              }
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select question type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Multiple Choice">Multiple Choice</SelectItem>
-                <SelectItem value="Checkboxes">Checkboxes</SelectItem>
-                <SelectItem value="Text Entry">Text Entry</SelectItem>
-                <SelectItem value="Paragraph">Paragraph</SelectItem>
+                <SelectItem value="multiple_choices">
+                  Multiple Choice
+                </SelectItem>
+                <SelectItem value="checkboxes">Checkboxes</SelectItem>
+                <SelectItem value="paragraph">Paragraph</SelectItem>
               </SelectContent>
             </Select>
           </Field>
 
-          {(questionForm.type === "Multiple Choice" ||
-            questionForm.type === "Checkboxes") && (
+          {(questionForm.question_type === "multiple_choices" ||
+            questionForm.question_type === "checkboxes") && (
             <FieldGroup>
               <FieldLabel>Options</FieldLabel>
               <FieldGroup className="grid grid-cols-1 gap-2">
@@ -286,22 +299,17 @@ export function AddEditQuestionModal({
               </Button>
             </FieldGroup>
           )}
-          {(questionForm.type === "Text Entry" ||
-            questionForm.type === "Paragraph") && (
+          {questionForm.question_type === "paragraph" && (
             <Field>
               <FieldLabel className="block text-base font-medium text-gray-800">
                 Parameter Value
               </FieldLabel>
               <Input
                 type="text"
-                value={questionForm.parameter}
+                value={questionForm.parameter ?? ""}
                 onChange={(e) => handleFormChange("parameter", e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-md text-base"
-                placeholder={
-                  questionForm.type === "Paragraph"
-                    ? "Enter parameter value (e.g., essay, long answer)"
-                    : "Enter parameter value"
-                }
+                placeholder="Enter parameter value (e.g., essay, long answer)"
               />
             </Field>
           )}

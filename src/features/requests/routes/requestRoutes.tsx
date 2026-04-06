@@ -4,6 +4,7 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { isRestrictedManager } from "@/features/auth/utils/rolePermissions";
 import ManagerRequest from "../views/ManagerRequest";
 import ManagersView from "@/features/prf/views/ManagersView";
+import ExternalPostingForm from "@/Pages/ExternalPostingForm";
 
 // Wrapper component to handle // Wrapper component to handle conditional rendering
 const RequestIndex = () => {
@@ -18,6 +19,10 @@ export const requestRoutes = [
       {
         index: true,
         element: <RequestIndex />,
+      },
+      {
+        path: "create-new-external-posting",
+        element: <ExternalPostingForm />,
       },
       {
         path: "manager/:positionId",

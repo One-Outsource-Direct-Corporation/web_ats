@@ -38,10 +38,18 @@ export interface SectionLocal extends SectionBase {
 
 export type Section = SectionLocal | SectionDb;
 
+export const QuestionType = {
+	MULTIPLE_CHOICES: "multiple_choices",
+	CHECKBOXES: "checkboxes",
+	PARAGRAPH: "paragraph",
+} as const;
+
+export type QuestionType = (typeof QuestionType)[keyof typeof QuestionType];
+
 export interface QuestionnaireBase {
 	question: string;
 	description?: string;
-	type: "Multiple Choice" | "Checkboxes" | "Text Entry" | "Paragraph";
+	question_type: QuestionType;
 	options?: QuestionOption[];
 	parameter?: string;
 }

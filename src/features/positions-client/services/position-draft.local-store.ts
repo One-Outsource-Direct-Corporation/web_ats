@@ -1,4 +1,4 @@
-import type { PositionFormData } from "@/features/external_posting/types/externalPosting.types";
+import type { PositionFormData } from "@/features/external_posting";
 
 const POSITION_DRAFT_STORAGE_KEY = "external-posting:position-draft:v1";
 

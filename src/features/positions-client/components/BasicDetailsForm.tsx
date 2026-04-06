@@ -28,9 +28,12 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { CalendarIcon } from "lucide-react";
 import { Calendar } from "@/shared/components/ui/calendar";
-import { useExternalPostingClientsQuery } from "@/features/external_posting/hooks/useExternalPostingClientsQuery";
+import { ClientAddModal, useClientListQuery } from "@/features/client";
+import {
+  DepartmentAddModal,
+  useDepartmentListQuery,
+} from "@/features/department";
 import { formatDate } from "@/shared/utils/formatDate";
-import ClientAddModal from "./ClientAddModal";
 import type { ValidationError } from "../utils/validateSteps";
 import {
   getFieldError,
@@ -59,7 +62,13 @@ export const BasicDetailsForm = ({
   handleJobPostingChange,
   errorFields,
 }: BasicDetailsFormProps) => {
-  const { clients, loading, error, refetch } = useExternalPostingClientsQuery();
+  const { clients, loading, error, refetch } = useClientListQuery();
+  const {
+    departments,
+    loading: departmentLoading,
+    error: departmentError,
+    refetch: refetchDepartments,
+  } = useDepartmentListQuery();
 
   const getRootError = (field: string) => getFieldError(errorFields, field);
   const getJobError = (field: string) => getJobPostingError(errorFields, field);
@@ -121,40 +130,37 @@ export const BasicDetailsForm = ({
             </Field>
             <Field>
               <FieldLabel>Department *</FieldLabel>
-              <Select
-                value={formData.job_posting.department_name ?? ""}
-                onValueChange={(value) =>
-                  handleJobPostingChange("department_name", value)
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select Department" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sales">Sales Department</SelectItem>
-                  <SelectItem value="sales-and-marketing">
-                    Sales and Marketing Department
-                  </SelectItem>
-                  <SelectItem value="finance">Finance Department</SelectItem>
-                  <SelectItem value="hr">Human Resources Department</SelectItem>
-                  <SelectItem value="ci">
-                    Continuous Improvement Department
-                  </SelectItem>
-                  <SelectItem value="operations-isla">
-                    Operations - ISLA Department
-                  </SelectItem>
-                  <SelectItem value="operations-shell">
-                    Operations - Shell Department
-                  </SelectItem>
-                  <SelectItem value="operations-prime">
-                    Operations - Prime Department
-                  </SelectItem>
-                  <SelectItem value="operations-rpo">
-                    Operations - RPO Department
-                  </SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
+              <Field orientation="horizontal">
+                <Select
+                  value={formData.job_posting.department_name ?? ""}
+                  onValueChange={(value) =>
+                    handleJobPostingChange("department_name", value)
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departmentLoading && (
+                      <SelectItem value="loading">Loading...</SelectItem>
+                    )}
+                    {departmentError && (
+                      <SelectItem value="error">
+                        Something went wrong!
+                      </SelectItem>
+                    )}
+                    {departments.map((department) => (
+                      <SelectItem key={department.id} value={department.name}>
+                        {department.name}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+                <DepartmentAddModal
+                  onDepartmentAdded={() => void refetchDepartments()}
+                />
+              </Field>
               {getJobError("department_name") && (
                 <FieldError>{getJobError("department_name")}</FieldError>
               )}

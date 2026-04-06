@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Question, QuestionOption } from "../types/questionnaire.types";
+import type { Questionnaire, QuestionOption, QuestionType } from "@/features/external_posting";
 
 export const useQuestionForm = () => {
   const [showAddQuestionModal, setShowAddQuestionModal] = useState(false);
@@ -13,7 +13,7 @@ export const useQuestionForm = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [questionText, setQuestionText] = useState("");
   const [questionDesc, setQuestionDesc] = useState("");
-  const [questionType, setQuestionType] = useState("Multiple Choice");
+  const [questionType, setQuestionType] = useState<QuestionType>("multiple_choices");
   const [questionMode, setQuestionMode] = useState("Parameter");
   const [parameterValue, setParameterValue] = useState("");
   const [options, setOptions] = useState<QuestionOption[]>([
@@ -26,7 +26,7 @@ export const useQuestionForm = () => {
     setShowAddQuestionModal(true);
     setQuestionText("");
     setQuestionDesc("");
-    setQuestionType("Multiple Choice");
+    setQuestionType("multiple_choices");
     setQuestionMode("Parameter");
     setParameterValue("");
     setOptions([{ value: "", score: 0 }]);
@@ -35,16 +35,16 @@ export const useQuestionForm = () => {
   const handleOpenEditQuestion = (
     sectionIdx: number,
     questionIdx: number,
-    question: Question
+    question: Questionnaire
   ) => {
     setEditQuestionSectionIdx(sectionIdx);
     setEditQuestionIdx(questionIdx);
     setIsEditMode(true);
     setShowAddQuestionModal(true);
-    setQuestionText(question.text);
-    setQuestionDesc(question.desc || "");
-    setQuestionType(question.type);
-    setQuestionMode(question.mode);
+    setQuestionText(question.question);
+    setQuestionDesc(question.description || "");
+    setQuestionType(question.question_type);
+    setQuestionMode(question.parameter ? "Parameter" : "");
     setParameterValue(question.parameter || "");
     setOptions(question.options || [{ value: "", score: 0 }]);
   };
@@ -76,20 +76,15 @@ export const useQuestionForm = () => {
   };
 
   const getCurrentQuestion = () => ({
-    text: questionText,
-    desc: questionDesc,
-    type: questionType as
-      | "Multiple Choice"
-      | "Checkboxes"
-      | "Text Entry"
-      | "Paragraph",
-    mode: questionMode,
+    question: questionText,
+    description: questionDesc,
+    question_type: questionType,
     options:
-      questionType === "Multiple Choice" || questionType === "Checkboxes"
+      questionType === "multiple_choices" || questionType === "checkboxes"
         ? options
         : undefined,
     parameter:
-      questionType === "Text Entry" || questionType === "Paragraph"
+      questionType === "paragraph"
         ? parameterValue
         : undefined,
   });

@@ -1,5 +1,6 @@
 import { defaultAxios } from "@/config/axios";
 import type { AxiosInstance } from "axios";
+import { clientService } from "@/features/client/services/client.service";
 import type {
   ClientResponse,
   GetPositionsParams,
@@ -10,6 +11,15 @@ import type { PRFFormData } from "@/features/prf/types/prf.types";
 
 export interface GetPositionDetailParams {
   id: number;
+}
+
+export interface JobDetailResponse {
+  type?: "prf" | "client";
+  prf?: Record<string, unknown> | null;
+  prf_nested?: Record<string, unknown> | null;
+  external_posting?: Record<string, unknown> | null;
+  external_posting_nested?: Record<string, unknown> | null;
+  [key: string]: unknown;
 }
 
 export type PositionDetailResponse = PRFFormData | PositionFormData;
@@ -36,7 +46,7 @@ const buildQueryString = (params: GetPositionsParams): string => {
 export const externalPostingService = {
   async getPositionsResponse(
     params: GetPositionsParams,
-    options?: { httpClient?: AxiosInstance; signal?: AbortSignal }
+    options?: { httpClient?: AxiosInstance; signal?: AbortSignal },
   ): Promise<PositionsResponse> {
     const query = buildQueryString(params);
     const httpClient = options?.httpClient ?? defaultAxios;
@@ -48,12 +58,15 @@ export const externalPostingService = {
 
   async getPositionDetailResponse(
     params: GetPositionDetailParams,
-    options?: { httpClient?: AxiosInstance; signal?: AbortSignal }
-  ): Promise<PositionDetailResponse> {
+    options?: { httpClient?: AxiosInstance; signal?: AbortSignal },
+  ): Promise<JobDetailResponse> {
     const httpClient = options?.httpClient ?? defaultAxios;
-    const response = await httpClient.get(`/api/external_posting/${params.id}/`, {
-      signal: options?.signal,
-    });
+    const response = await httpClient.get<JobDetailResponse>(
+      `/api/job/${params.id}/`,
+      {
+        signal: options?.signal,
+      },
+    );
     return response.data;
   },
 
@@ -61,11 +74,7 @@ export const externalPostingService = {
     httpClient?: AxiosInstance;
     signal?: AbortSignal;
   }): Promise<ClientsResponse> {
-    const httpClient = options?.httpClient ?? defaultAxios;
-    const response = await httpClient.get("/api/client/", {
-      signal: options?.signal,
-    });
-    return response.data;
+    return clientService.getAllClientsResponse({}, options);
   },
 };
 

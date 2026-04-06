@@ -2,11 +2,12 @@ export const queryKeys = {
   jobs: {
     all: ["jobs"] as const,
     listing: () => [...queryKeys.jobs.all, "listing"] as const,
+    detail: (id: number | string) =>
+      [...queryKeys.jobs.all, "detail", id] as const,
   },
   externalPosting: {
     all: ["external_posting"] as const,
     listing: () => [...queryKeys.externalPosting.all, "listing"] as const,
-    clients: () => [...queryKeys.externalPosting.all, "clients"] as const,
     detail: (id: number | string) =>
       [...queryKeys.externalPosting.all, "detail", id] as const,
   },
@@ -17,7 +18,7 @@ export const queryKeys = {
       [...queryKeys.prf.all, "users", position ?? "all"] as const,
     usersByDepartment: (params: {
       businessUnit: string;
-      departmentName: string;
+      department: number;
       email?: string;
       include?: string;
     }) =>
@@ -25,10 +26,21 @@ export const queryKeys = {
         ...queryKeys.prf.all,
         "users-by-department",
         params.businessUnit,
-        params.departmentName,
+        params.department,
         params.email ?? "",
         params.include ?? "",
       ] as const,
-    detail: (id: number | string) => [...queryKeys.prf.all, "detail", id] as const,
+    detail: (id: number | string) =>
+      [...queryKeys.prf.all, "detail", id] as const,
+  },
+  applicationFormQuestionnaire: {
+    all: ["application_form_questionnaire"] as const,
+    templates: (search: string = "", pageSize: number = 10) =>
+      [
+        ...queryKeys.applicationFormQuestionnaire.all,
+        "templates",
+        search,
+        pageSize,
+      ] as const,
   },
 } as const;

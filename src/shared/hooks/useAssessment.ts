@@ -1,12 +1,28 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
-import type { Assessment } from "../types/pipeline.types";
+import type {
+  Assessment,
+  AssessmentTemplate,
+  FileI,
+} from "../types/pipeline.types";
 
 interface AssessmentResponse {
   count: number;
   next: string | null;
   previous: string | null;
-  results: Assessment[];
+  results: AssessmentTemplate[];
+}
+
+interface CreateTemplateInput {
+  name: string;
+  type: string;
+  file: FileI | File | null;
+}
+
+interface FileUploadResponse {
+  file?: {
+    id?: number;
+  };
 }
 
 interface UseAssessmentParams {
@@ -22,7 +38,7 @@ export default function useAssessment(params?: UseAssessmentParams) {
     initialSearch = "",
   } = params || {};
 
-  const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [assessments, setAssessments] = useState<AssessmentTemplate[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [hasMore, setHasMore] = useState<boolean>(false);
   const [page, setPage] = useState<number>(1);
@@ -36,8 +52,8 @@ export default function useAssessment(params?: UseAssessmentParams) {
     async (
       pageNum: number = 1,
       searchQuery: string = "",
-      append: boolean = false
-    ) => {
+      append: boolean = false,
+    ): Promise<AssessmentTemplate[]> => {
       if (controllerRef.current) {
         controllerRef.current.abort();
       }
@@ -45,44 +61,44 @@ export default function useAssessment(params?: UseAssessmentParams) {
       controllerRef.current = new AbortController();
       try {
         setLoading(true);
-        const params: Record<string, any> = {
+        const requestParams: Record<string, string | number> = {
           page: pageNum,
           page_size: pageSize,
         };
 
         if (searchQuery) {
-          params.search = searchQuery;
+          requestParams.search = searchQuery;
         }
 
-        if (templatesOnly) {
-          params.is_template = true;
-        }
+        const endpoint = templatesOnly
+          ? "/api/assessment/template/"
+          : "/api/assessment/";
 
-        const response = await axiosPrivate.get<AssessmentResponse>(
-          `/api/assessment/`,
-          {
-            params,
-            signal: controllerRef.current.signal,
-          }
-        );
+        const response = await axiosPrivate.get<AssessmentResponse>(endpoint, {
+          params: requestParams,
+          signal: controllerRef.current.signal,
+        });
 
         const newAssessments = response.data.results;
 
         setAssessments((prev) =>
-          append ? [...prev, ...newAssessments] : newAssessments
+          append ? [...prev, ...newAssessments] : newAssessments,
         );
         setHasMore(!!response.data.next);
         setTotalCount(response.data.count);
-      } catch (err: any) {
-        if (err.name !== "CanceledError") {
+        return newAssessments;
+      } catch (err) {
+        const error = err as { name?: string };
+        if (error.name !== "CanceledError") {
           console.error("Error fetching assessments:", err);
         }
         controllerRef.current = null;
+        return [];
       } finally {
         setLoading(false);
       }
     },
-    [axiosPrivate, pageSize, templatesOnly]
+    [axiosPrivate, pageSize, templatesOnly],
   );
 
   const loadMore = useCallback(() => {
@@ -99,17 +115,63 @@ export default function useAssessment(params?: UseAssessmentParams) {
       setPage(1);
       fetchAssessments(1, searchQuery, false);
     },
-    [fetchAssessments]
+    [fetchAssessments],
   );
 
-  const refetch = useCallback(() => {
+  const refetch = useCallback(async () => {
     setPage(1);
-    fetchAssessments(1, search, false);
+    return fetchAssessments(1, search, false);
   }, [search, fetchAssessments]);
+
+  const createTemplate = useCallback(
+    async ({
+      name,
+      type,
+      file,
+    }: CreateTemplateInput): Promise<AssessmentTemplate | null> => {
+      let fileId: number | null = null;
+
+      if (file && typeof file === "object" && "id" in file) {
+        fileId = file.id;
+      } else if (file instanceof File) {
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", file);
+
+        const uploadResponse = await axiosPrivate.post<FileUploadResponse>(
+          "/api/assessment/file-upload/",
+          uploadFormData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          },
+        );
+
+        fileId = uploadResponse.data?.file?.id ?? null;
+      }
+
+      const payload: Record<string, unknown> = {
+        name,
+        type,
+      };
+
+      if (fileId) {
+        payload.file_id = fileId;
+      }
+
+      const response = await axiosPrivate.post<AssessmentTemplate>(
+        "/api/assessment/template/",
+        payload,
+      );
+
+      return response.data;
+    },
+    [axiosPrivate],
+  );
 
   useEffect(() => {
     fetchAssessments(1, search, false);
-  }, []);
+  }, [fetchAssessments, search]);
 
   return {
     assessments,
@@ -120,6 +182,7 @@ export default function useAssessment(params?: UseAssessmentParams) {
     loadMore,
     handleSearch,
     refetch,
+    createTemplate,
   };
 }
 

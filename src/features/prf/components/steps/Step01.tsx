@@ -10,6 +10,7 @@ import {
 } from "@/shared/components/ui/select";
 import type { PRFFormData } from "../../types/prf.types";
 import { useUsersByDepartment } from "../../hooks/useUsers";
+import { useDepartmentListQuery } from "@/features/department";
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import type { User } from "@/features/auth/types/auth.types";
 import {
@@ -46,9 +47,22 @@ export const Step01 = ({
   updateFormData,
   errors,
 }: Step01Props) => {
+  const { departments, loading: departmentsLoading } = useDepartmentListQuery();
+  const selectedBusinessUnit = formData.business_unit?.toLowerCase() ?? "";
+
+  const filteredDepartments = departments.filter((department) => {
+    if (!selectedBusinessUnit) {
+      return true;
+    }
+
+    return (
+      (department.business_unit ?? "").toLowerCase() === selectedBusinessUnit
+    );
+  });
+
   const { users, loading } = useUsersByDepartment({
-    business_unit: formData.business_unit?.toLowerCase() || "",
-    department_name: formData.job_posting.department_name?.toLowerCase() || "",
+    business_unit: selectedBusinessUnit || "all",
+    department: formData.job_posting.department ?? 0,
     include: "human_resources",
   });
 
@@ -58,12 +72,12 @@ export const Step01 = ({
       job_posting: {
         ...prev.job_posting,
         reason_for_posting: value,
-        other_reason_for_posting: value === "Other" ? "" : null,
+        other_reason_for_posting: value === "other" ? "" : null,
       },
     }));
   };
 
-  if (loading) return <LoadingComponent />;
+  if (loading || departmentsLoading) return <LoadingComponent />;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
@@ -127,7 +141,7 @@ export const Step01 = ({
                         job_posting: {
                           ...prev.job_posting,
                           target_start_date: date
-                            ? formatDate(date.toLocaleDateString())
+                            ? `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`
                             : null,
                         },
                       }));
@@ -184,14 +198,14 @@ export const Step01 = ({
                   {getJobPostingError(errors, "reason_for_posting")}
                 </FieldError>
               )}
-              {formData.job_posting.reason_for_posting === "Other" && (
+              {formData.job_posting.reason_for_posting === "other" && (
                 <Input
                   className="w-full mt-2"
                   placeholder="Please specify"
                   value={
-                    formData.job_posting.reason_for_posting !== "Other"
+                    formData.job_posting.reason_for_posting !== "other"
                       ? ""
-                      : formData.job_posting.other_reason_for_posting ?? ""
+                      : (formData.job_posting.other_reason_for_posting ?? "")
                   }
                   onChange={(e) =>
                     updateFormData((prev) => ({
@@ -223,8 +237,10 @@ export const Step01 = ({
                     business_unit: value,
                     job_posting: {
                       ...prev.job_posting,
-                      department_name: null,
+                      department: null,
                     },
+                    immediate_supervisor: null,
+                    immediate_supervisor_display: null,
                   }))
                 }
               >
@@ -254,14 +270,17 @@ export const Step01 = ({
             <Field>
               <FieldLabel>Department Name</FieldLabel>
               <Select
-                value={formData.job_posting.department_name ?? ""}
+                value={
+                  formData.job_posting.department === null
+                    ? ""
+                    : String(formData.job_posting.department)
+                }
                 onValueChange={(value) =>
                   updateFormData((prev) => ({
                     ...prev,
                     job_posting: {
                       ...prev.job_posting,
-                      department_name: value,
-                      // department_display: formatDepartmentName(value),
+                      department: Number(value),
                     },
                     immediate_supervisor: null,
                     immediate_supervisor_display: null,
@@ -272,41 +291,19 @@ export const Step01 = ({
                   <SelectValue placeholder="Select Department" />
                 </SelectTrigger>
                 <SelectContent>
-                  {formData.business_unit?.toUpperCase() === "OORS" ? (
-                    <SelectItem value="sales">Sales Department</SelectItem>
-                  ) : (
-                    <>
-                      <SelectItem value="sales-and-marketing">
-                        Sales and Marketing Department
-                      </SelectItem>
-                      <SelectItem value="finance">
-                        Finance Department
-                      </SelectItem>
-                      <SelectItem value="hr">
-                        Human Resources Department
-                      </SelectItem>
-                      <SelectItem value="ci">
-                        Continuous Improvement Department
-                      </SelectItem>
-                      <SelectItem value="operations-isla">
-                        Operations - ISLA Department
-                      </SelectItem>
-                      <SelectItem value="operations-shell">
-                        Operations - Shell Department
-                      </SelectItem>
-                      <SelectItem value="operations-prime">
-                        Operations - Prime Department
-                      </SelectItem>
-                      <SelectItem value="operations-rpo">
-                        Operations - RPO Department
-                      </SelectItem>
-                    </>
-                  )}
+                  {filteredDepartments.map((department) => (
+                    <SelectItem
+                      key={department.id}
+                      value={String(department.id)}
+                    >
+                      {department.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              {getJobPostingError(errors, "department_name") && (
+              {getJobPostingError(errors, "department") && (
                 <FieldError>
-                  {getJobPostingError(errors, "department_name")}
+                  {getJobPostingError(errors, "department")}
                 </FieldError>
               )}
             </Field>
@@ -339,14 +336,14 @@ export const Step01 = ({
                   {formData.immediate_supervisor &&
                     (() => {
                       const selectedUser = users.find(
-                        (usr: User) => usr.id === formData.immediate_supervisor
+                        (usr: User) => usr.id === formData.immediate_supervisor,
                       );
                       return selectedUser ? (
                         <SelectItem
                           key={selectedUser.id}
                           value={String(selectedUser.id)}
                         >
-                          {selectedUser.full_name}
+                          {`${selectedUser.first_name} ${selectedUser.last_name}`}
                         </SelectItem>
                       ) : null;
                     })()}
@@ -357,19 +354,19 @@ export const Step01 = ({
                   users.some(
                     (usr: User) =>
                       usr.role === "supervisor" &&
-                      usr.department === formData.job_posting.department_name
+                      usr.department?.id === formData.job_posting.department,
                   )
                     ? users
                         .filter(
                           (usr: User) =>
                             usr.role === "supervisor" &&
-                            usr.department ===
-                              formData.job_posting.department_name &&
-                            usr.id !== formData.immediate_supervisor
+                            usr.department?.id ===
+                              formData.job_posting.department &&
+                            usr.id !== formData.immediate_supervisor,
                         )
                         .map((usr: User) => (
                           <SelectItem key={usr.id} value={String(usr.id)}>
-                            {usr.full_name}
+                            {`${usr.first_name} ${usr.last_name}`}
                           </SelectItem>
                         ))
                     : null}

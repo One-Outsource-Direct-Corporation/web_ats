@@ -1,8 +1,9 @@
 import type { User } from "@/features/auth/types/auth.types";
 
 interface FileBase {
-  file: File;
+  file: File | string;
   filename: string;
+  file_extension?: string;
 }
 
 interface FileInDb extends FileBase {
@@ -13,7 +14,6 @@ export type FileI = FileInDb | FileBase;
 
 interface AssessmentBase {
   name?: string | null; // For template assessments
-  is_template: boolean;
   type: string | null;
   order: number;
   file: FileI | null;
@@ -29,6 +29,16 @@ export interface AssessmentLocal extends AssessmentBase {
 }
 
 export type Assessment = AssessmentInDb | AssessmentLocal;
+
+export interface AssessmentTemplate {
+  id: number;
+  name?: string | null;
+  type: string;
+  file: FileI | null;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
 
 export interface AssessmentResponse {
   count: number;
@@ -49,7 +59,7 @@ interface PipelineStepBase {
   order: number;
   stage: number;
   reminder: string;
-  human_resources: User[] | [];
+  interviewer: User | null;
   assessments: Assessment[];
 }
 
