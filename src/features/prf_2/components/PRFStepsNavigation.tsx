@@ -1,4 +1,5 @@
-import type { Dispatch, SetStateAction } from "react";
+import type { StepErrors } from "@/features/prf_2/utils/validateSteps";
+import { hasStepErrors } from "@/features/prf_2/utils/validateSteps";
 
 const STEPS = [
   "Step 01",
@@ -11,26 +12,55 @@ const STEPS = [
 
 interface PRFStepsNavigationProps {
   step: number;
-  setStep: Dispatch<SetStateAction<number>>;
+  maxStepVisited: number;
+  stepErrors: StepErrors;
+  updateMode?: boolean;
+  onStepClick: (targetStep: number) => void;
 }
 
 export default function PRFStepsNavigation({
   step,
-  setStep,
+  maxStepVisited,
+  stepErrors,
+  updateMode = false,
+  onStepClick,
 }: PRFStepsNavigationProps) {
   return (
     <div className="flex space-x-0 border border-gray-300 rounded-md overflow-hidden mt-10 mb-8">
       {STEPS.map((label, i) => {
         const currentStepIndex = i + 1;
+        const isActive = step === currentStepIndex;
+        const isVisited = updateMode || currentStepIndex <= maxStepVisited;
+        const isClickable = updateMode
+          ? !isActive
+          : currentStepIndex <= maxStepVisited && !isActive;
+        const hasError = hasStepErrors(stepErrors[currentStepIndex]);
+
         return (
           <div
             key={currentStepIndex}
             className={`flex-1 text-center py-2 text-sm font-semibold relative ${
-              step === currentStepIndex
-                ? "bg-[#0056D2] text-white"
-                : "hover:bg-gray-200 text-gray-500"
+              hasError
+                ? "bg-red-600 text-white"
+                : isActive
+                  ? "bg-[#0056D2] text-white"
+                  : isVisited
+                    ? "bg-green-50 text-green-700"
+                    : "bg-white text-gray-500"
+            } ${
+              isClickable
+                ? hasError
+                  ? "cursor-pointer hover:bg-red-700"
+                  : isVisited
+                    ? "cursor-pointer hover:bg-green-100"
+                    : "cursor-pointer hover:bg-gray-200"
+                : ""
             }`}
-            onClick={() => setStep(currentStepIndex)}
+            onClick={() => {
+              if (isClickable) {
+                onStepClick(currentStepIndex);
+              }
+            }}
           >
             {label}
             {currentStepIndex < 6 && (

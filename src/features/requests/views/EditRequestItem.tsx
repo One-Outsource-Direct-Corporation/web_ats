@@ -15,7 +15,7 @@ import type { AxiosError } from "axios";
 import { formatBackgroundStatus } from "@/shared/utils/formatBackgroundStatus";
 import { usePositionDetail } from "@/shared/hooks/usePositions";
 import { useEffect } from "react";
-import PRF from "@/features/prf/views/PRF";
+import PRFCreation from "@/Pages/PRFCreation";
 import type { PRFFormData, PRFResponse } from "@/features/prf/types/prf.types";
 import type {
   PositionResponse,
@@ -200,7 +200,7 @@ export default function EditRequestItem() {
       {/* Form Content */}
       <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
         {isPrf ? (
-          <PRF
+          <PRFCreation
             initialData={editablePosition as PRFFormData}
             updateMode={true}
           />

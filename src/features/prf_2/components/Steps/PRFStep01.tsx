@@ -367,16 +367,16 @@ export default function PRFStep01({
               <SelectContent>
                 <SelectItem value="no-supervisor">No Supervisor</SelectItem>
 
-                {formData.immediate_supervisor &&
+                {typeof formData.prf_input.immediate_supervisor === "number" &&
                   !supervisors.some(
                     (supervisor) =>
-                      supervisor.id === formData.immediate_supervisor?.id,
+                      supervisor.id === formData.prf_input.immediate_supervisor,
                   ) && (
                     <SelectItem
-                      value={String(formData.immediate_supervisor.id)}
+                      value={String(formData.prf_input.immediate_supervisor)}
                     >
-                      {formData.immediate_supervisor_display ||
-                        `${formData.immediate_supervisor.first_name} ${formData.immediate_supervisor.last_name}`}
+                      {formData.prf_input.immediate_supervisor_display ||
+                        "Current supervisor"}
                     </SelectItem>
                   )}
 
@@ -403,7 +403,7 @@ export default function PRFStep01({
                 {supervisors
                   .filter(
                     (supervisor: User) =>
-                      supervisor.id !== formData.immediate_supervisor?.id,
+                      supervisor.id !== formData.prf_input.immediate_supervisor,
                   )
                   .map((supervisor: User) => (
                     <SelectItem

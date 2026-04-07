@@ -6,6 +6,7 @@ interface PRFNavigationButtonProps {
   handleNext: () => void;
   handlePrevious: () => void;
   submitting?: boolean;
+  updateMode?: boolean;
 }
 
 export default function PRFNavigationButton({
@@ -13,7 +14,11 @@ export default function PRFNavigationButton({
   handleNext,
   handlePrevious,
   submitting = false,
+  updateMode = false,
 }: PRFNavigationButtonProps) {
+  const submitLabel = updateMode ? "Update" : "Submit";
+  const submittingLabel = updateMode ? "Updating..." : "Submitting...";
+
   return (
     <div className="flex justify-between mt-10">
       <Button
@@ -29,7 +34,7 @@ export default function PRFNavigationButton({
         onClick={handleNext}
         disabled={submitting}
       >
-        {step === 6 ? (submitting ? "Submitting..." : "Submit") : "Next"}
+        {step === 6 ? (submitting ? submittingLabel : submitLabel) : "Next"}
       </Button>
     </div>
   );

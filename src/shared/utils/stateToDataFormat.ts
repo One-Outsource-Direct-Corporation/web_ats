@@ -168,18 +168,20 @@ export function stateToDataFormat<T extends object>(
                 Backend Handling for Assessment Files:
                 1. New File: 'file' is a File object. It will be extracted to request.FILES. 
                    JSON 'file' field will be null. Backend creates new file.
-                2. Existing/Template File: 'file' is { id: ... }. 
-                   JSON 'file' field will be { id: ... }. Backend links existing file.
+                2. Existing/Template File: 'file' is an object with id.
+                   JSON 'file' field will be a numeric pk. Backend links existing file.
                 3. No File: 'file' is null.
               */
               if (
                 normalizedAssessment.file &&
                 !(normalizedAssessment.file instanceof File)
               ) {
-                if (normalizedAssessment.file.id) {
-                  normalizedAssessment.file = {
-                    id: normalizedAssessment.file.id,
-                  };
+                if (
+                  typeof normalizedAssessment.file === "object" &&
+                  "id" in normalizedAssessment.file &&
+                  typeof normalizedAssessment.file.id === "number"
+                ) {
+                  normalizedAssessment.file = normalizedAssessment.file.id;
                 } else {
                   normalizedAssessment.file = null;
                 }

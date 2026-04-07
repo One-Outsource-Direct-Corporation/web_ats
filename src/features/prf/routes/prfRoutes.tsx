@@ -1,4 +1,4 @@
-import PRF from "@/Pages/PRF";
+import PRFCreation from "@/Pages/PRFCreation";
 
 export const prfRoutes = [
   {
@@ -6,7 +6,7 @@ export const prfRoutes = [
     children: [
       {
         index: true,
-        element: <PRF />,
+        element: <PRFCreation />,
       },
     ],
   },
