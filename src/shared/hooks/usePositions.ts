@@ -6,10 +6,10 @@ import {
   normalizeApplicationFormDataPayload,
   normalizePipelineStepsPayload,
 } from "@/shared/utils/applicationFormDataAdapter";
-import type { PRFFormData } from "@/features/prf/types/prf.types";
+import type { PRFFormData } from "@/features/prf_2/types/LegacyPRFCompat";
 import type {
   JobPostingListResponse,
-  JobPostingResponse,
+  JobPostingDb,
   PositionFormData,
 } from "@/features/external_posting";
 import { positionService } from "@/features/external_posting";
@@ -59,7 +59,7 @@ function normalizeJobDetailResponse(
   }
 
   if ("job_posting" in response && isRecord(response.job_posting)) {
-    return response as PRFFormData | PositionFormData;
+    return response as unknown as PRFFormData | PositionFormData;
   }
 
   const {
@@ -115,7 +115,7 @@ function normalizeJobDetailResponse(
       pipeline: normalizePipelineStepsPayload(pipelinePayload),
     };
 
-    return normalizedPrf as PRFFormData;
+    return normalizedPrf as unknown as PRFFormData;
   }
 
   const externalJobPosting = toRecord(externalPostingData.job_posting);
@@ -139,7 +139,7 @@ function normalizeJobDetailResponse(
     pipeline: normalizePipelineStepsPayload(externalPipelinePayload),
   };
 
-  return normalizedExternalPosting as PositionFormData;
+  return normalizedExternalPosting as unknown as PositionFormData;
 }
 
 export function usePositions({
@@ -161,7 +161,7 @@ export function usePositions({
         count: number;
         next: string | null;
         previous: string | null;
-        results: JobPostingResponse[];
+        results: JobPostingDb[];
       }
   >({
     count: 0,

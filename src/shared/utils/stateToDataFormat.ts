@@ -1,7 +1,7 @@
 import DOMPurify from "dompurify";
 import { formatDateYYYYMMDD } from "./formatDate";
 import type { PositionFormData } from "@/features/external_posting";
-import type { PRFFormData } from "@/features/prf/types/prf.types";
+import type { PRFFormData } from "@/features/prf_2/types/LegacyPRFCompat";
 
 type ExtractedFiles = Record<string, File>;
 type ExtractFilesResult = { data: unknown; files: ExtractedFiles };

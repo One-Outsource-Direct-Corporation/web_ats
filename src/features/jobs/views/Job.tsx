@@ -9,26 +9,31 @@ import {
   SelectContent,
   SelectItem,
 } from "@/shared/components/ui/select.tsx";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useJobs, useJobsQuery } from "@/features/jobs/hooks/useJobs";
 import type { Job } from "@/features/jobs/types/job.types";
+import formatName from "@/shared/utils/formatName";
 
 const statusColor: Record<string, string> = {
-  Published: "bg-green-100 text-green-700",
-  Closed: "bg-red-100 text-red-700",
-  Draft: "bg-gray-100 text-gray-600",
-  Pending: "bg-yellow-100 text-yellow-700",
+  active: "bg-green-100 text-green-700",
+  closed: "bg-red-100 text-red-700",
+  draft: "bg-gray-100 text-gray-600",
+  pending: "bg-yellow-100 text-yellow-700",
+  cancelled: "bg-gray-100 text-gray-600",
 };
 
 function getStatusCircle(status?: string) {
-  const color = statusColor[status || ""] || "bg-gray-200 text-gray-600";
+  const normalizedStatus = (status || "").toLowerCase();
+  const statusLabel = formatName(status);
+  const color = statusColor[normalizedStatus] || "bg-gray-200 text-gray-600";
+
   return (
     <span
       className={`inline-flex px-3 py-1 rounded-full items-center justify-center text-xs font-bold ${color}`}
       style={{ minWidth: "2.5rem", textAlign: "center" }}
-      title={status}
+      title={statusLabel || "-"}
     >
-      {status || "-"}
+      {statusLabel || "-"}
     </span>
   );
 }
@@ -39,6 +44,140 @@ export default function Job() {
   const { isLoading, isError } = useJobsQuery();
   const [selectedJobTitle, setSelectedJobTitle] = useState<string>("");
   const [dynamicLink, setDynamicLink] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [postingTypeFilter, setPostingTypeFilter] = useState<
+    "all" | "client" | "prf"
+  >("all");
+  const [clientNameFilter, setClientNameFilter] = useState<string>("all");
+  const [internalFilter, setInternalFilter] = useState<
+    "all" | "internal" | "external"
+  >("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [jobPositionFilter, setJobPositionFilter] = useState<string>("all");
+  const [departmentFilter, setDepartmentFilter] = useState<string>("all");
+  const [employmentTypeFilter, setEmploymentTypeFilter] =
+    useState<string>("all");
+
+  const postingTypeOptions = useMemo(
+    () =>
+      Array.from(new Set(jobs.map((job) => job.postingType))).filter(
+        (type): type is "client" | "prf" => type === "client" || type === "prf",
+      ),
+    [jobs],
+  );
+
+  const clientNameOptions = useMemo(
+    () =>
+      Array.from(new Set(jobs.map((job) => job.clientName))).filter(
+        (name): name is string => Boolean(name && name.trim()),
+      ),
+    [jobs],
+  );
+
+  const statusOptions = useMemo(
+    () =>
+      Array.from(new Set(jobs.map((job) => job.status))).filter(
+        (status): status is string => Boolean(status && status.trim()),
+      ),
+    [jobs],
+  );
+
+  const jobPositionOptions = useMemo(
+    () =>
+      Array.from(new Set(jobs.map((job) => job.title))).filter((title) =>
+        Boolean(title.trim()),
+      ),
+    [jobs],
+  );
+
+  const departmentOptions = useMemo(
+    () =>
+      Array.from(new Set(jobs.map((job) => job.department))).filter(
+        (department): department is string =>
+          Boolean(department && department.trim()),
+      ),
+    [jobs],
+  );
+
+  const employmentTypeOptions = useMemo(
+    () =>
+      Array.from(new Set(jobs.map((job) => job.employmentType))).filter(
+        (employmentType): employmentType is string =>
+          Boolean(employmentType && employmentType.trim()),
+      ),
+    [jobs],
+  );
+
+  const filteredJobs = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    return jobs.filter((job) => {
+      if (internalFilter === "internal" && job.postingType !== "prf") {
+        return false;
+      }
+
+      if (internalFilter === "external" && job.postingType !== "client") {
+        return false;
+      }
+
+      if (
+        postingTypeFilter !== "all" &&
+        job.postingType !== postingTypeFilter
+      ) {
+        return false;
+      }
+
+      if (clientNameFilter !== "all" && job.clientName !== clientNameFilter) {
+        return false;
+      }
+
+      if (statusFilter !== "all" && job.status !== statusFilter) {
+        return false;
+      }
+
+      if (jobPositionFilter !== "all" && job.title !== jobPositionFilter) {
+        return false;
+      }
+
+      if (departmentFilter !== "all" && job.department !== departmentFilter) {
+        return false;
+      }
+
+      if (
+        employmentTypeFilter !== "all" &&
+        job.employmentType !== employmentTypeFilter
+      ) {
+        return false;
+      }
+
+      if (!normalizedSearch) {
+        return true;
+      }
+
+      const searchableText = [
+        job.title,
+        job.postingType ?? "",
+        job.clientName ?? "",
+        job.department ?? "",
+        job.employmentType ?? "",
+        job.status ?? "",
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return searchableText.includes(normalizedSearch);
+    });
+  }, [
+    jobs,
+    internalFilter,
+    postingTypeFilter,
+    clientNameFilter,
+    statusFilter,
+    jobPositionFilter,
+    departmentFilter,
+    employmentTypeFilter,
+    searchTerm,
+  ]);
 
   const formatJobSlug = (title: string) =>
     title.toLowerCase().replace(/\s+/g, "-");
@@ -87,6 +226,14 @@ export default function Job() {
                 onClick={() => {
                   setSelectedJobTitle("");
                   setDynamicLink("");
+                  setSearchTerm("");
+                  setInternalFilter("all");
+                  setPostingTypeFilter("all");
+                  setClientNameFilter("all");
+                  setStatusFilter("all");
+                  setJobPositionFilter("all");
+                  setDepartmentFilter("all");
+                  setEmploymentTypeFilter("all");
                 }}
                 className="text-sm text-blue-500 hover:underline cursor-pointer pb-2"
               >
@@ -94,24 +241,132 @@ export default function Job() {
               </Button>
             </div>
             <div className="flex flex-wrap justify-between items-center gap-4">
-              <Input placeholder="Search applicants..." className="w-64" />
+              <Input
+                placeholder="Search applicants..."
+                className="w-64"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+              />
               <div className="flex flex-wrap gap-2 ml-auto">
-                {[
-                  "All Internal",
-                  "All Status",
-                  "All Job Position",
-                  "All Departments",
-                  "Employment Type",
-                ].map((label) => (
-                  <Select key={label}>
-                    <SelectTrigger className="min-w-[160px] bg-gray-100">
-                      <SelectValue placeholder={label} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{label}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                ))}
+                <Select
+                  value={postingTypeFilter}
+                  onValueChange={(value) =>
+                    setPostingTypeFilter(value as "all" | "client" | "prf")
+                  }
+                >
+                  <SelectTrigger className="min-w-[160px] bg-gray-100">
+                    <SelectValue placeholder="Posting Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Posting Types</SelectItem>
+                    {postingTypeOptions.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {formatName(type)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={clientNameFilter}
+                  onValueChange={(value) => setClientNameFilter(value)}
+                >
+                  <SelectTrigger className="min-w-[160px] bg-gray-100">
+                    <SelectValue placeholder="Client Name" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Clients</SelectItem>
+                    {clientNameOptions.map((clientName) => (
+                      <SelectItem key={clientName} value={clientName}>
+                        {clientName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={internalFilter}
+                  onValueChange={(value) =>
+                    setInternalFilter(value as "all" | "internal" | "external")
+                  }
+                >
+                  <SelectTrigger className="min-w-[160px] bg-gray-100">
+                    <SelectValue placeholder="All Internal" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Internal</SelectItem>
+                    <SelectItem value="internal">Internal</SelectItem>
+                    <SelectItem value="external">External</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={statusFilter}
+                  onValueChange={(value) => setStatusFilter(value)}
+                >
+                  <SelectTrigger className="min-w-[160px] bg-gray-100">
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    {statusOptions.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {formatName(status)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={jobPositionFilter}
+                  onValueChange={(value) => setJobPositionFilter(value)}
+                >
+                  <SelectTrigger className="min-w-[160px] bg-gray-100">
+                    <SelectValue placeholder="All Job Position" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Job Position</SelectItem>
+                    {jobPositionOptions.map((position) => (
+                      <SelectItem key={position} value={position}>
+                        {position}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={departmentFilter}
+                  onValueChange={(value) => setDepartmentFilter(value)}
+                >
+                  <SelectTrigger className="min-w-[160px] bg-gray-100">
+                    <SelectValue placeholder="All Departments" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Departments</SelectItem>
+                    {departmentOptions.map((department) => (
+                      <SelectItem key={department} value={department}>
+                        {department}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={employmentTypeFilter}
+                  onValueChange={(value) => setEmploymentTypeFilter(value)}
+                >
+                  <SelectTrigger className="min-w-[160px] bg-gray-100">
+                    <SelectValue placeholder="Employment Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Employment Type</SelectItem>
+                    {employmentTypeOptions.map((employmentType) => (
+                      <SelectItem key={employmentType} value={employmentType}>
+                        {formatName(employmentType)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
@@ -122,6 +377,8 @@ export default function Job() {
               <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
                 <tr>
                   <th className="px-4 py-2">Job</th>
+                  <th className="px-4 py-2 text-center">Posting Type</th>
+                  <th className="px-4 py-2 text-center">Client Name</th>
                   <th className="px-4 py-2 text-center">Department</th>
                   <th className="px-4 py-2 text-center">Employment Type</th>
                   <th className="px-4 py-2 text-center">Status</th>
@@ -133,24 +390,24 @@ export default function Job() {
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-6 text-gray-400">
+                    <td colSpan={9} className="text-center py-6 text-gray-400">
                       Loading jobs...
                     </td>
                   </tr>
                 ) : isError ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-6 text-red-500">
+                    <td colSpan={9} className="text-center py-6 text-red-500">
                       Failed to load jobs.
                     </td>
                   </tr>
-                ) : jobs.length === 0 ? (
+                ) : filteredJobs.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-6 text-gray-400">
+                    <td colSpan={9} className="text-center py-6 text-gray-400">
                       No jobs found.
                     </td>
                   </tr>
                 ) : (
-                  jobs.map((job: Job) => (
+                  filteredJobs.map((job: Job) => (
                     <tr key={job.id} className="border-t text-sm text-gray-800">
                       <td className="px-4 py-3">
                         <Button
@@ -163,10 +420,18 @@ export default function Job() {
                         </Button>
                       </td>
                       <td className="px-4 py-3 text-center">
+                        {job.postingType ? formatName(job.postingType) : "-"}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {job.clientName || "-"}
+                      </td>
+                      <td className="px-4 py-3 text-center">
                         {job.department || "-"}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        {job.employmentType || "-"}
+                        {job.employmentType
+                          ? formatName(job.employmentType)
+                          : "-"}
                       </td>
                       <td className="px-4 py-3 text-center">
                         {getStatusCircle(job.status)}

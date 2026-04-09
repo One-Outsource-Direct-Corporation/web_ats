@@ -9,7 +9,7 @@ import {
   validatePrfJobPostingWithZod,
   validatePrfPipelineWithZod,
   validatePrfNonNegotiableWithZod,
-} from "@/features/prf/services/prfValidation.service";
+} from "@/features/prf_2/services/prfValidation.service";
 
 export type { ValidationError };
 
@@ -65,6 +65,16 @@ function getStep1Errors(formData: PRFFormData): ValidationError | null {
 
   if (!formData.prf_input.business_unit) {
     stepErrors.business_unit = ["This field may not be null."];
+  }
+
+  if (normalizeNumber(formData.job_posting.department) === null) {
+    if (!stepErrors.job_posting || Array.isArray(stepErrors.job_posting)) {
+      stepErrors.job_posting = {};
+    }
+
+    (stepErrors.job_posting as ValidationError).department = [
+      "This field may not be null.",
+    ];
   }
 
   if (
@@ -205,6 +215,7 @@ export function mapServerErrorsToSteps(
 ): StepErrors {
   const fieldMapping: { [field: string]: number } = {
     business_unit: 1,
+    department: 1,
     immediate_supervisor: 1,
     category: 2,
 

@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import type { User } from "@/features/auth/types/auth.types";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
-import { usersDev } from "../data/users-dev";
-import { prfService } from "@/features/prf/services/prf.service";
+import { usersDev } from "@/features/prf_2/data/users-dev";
+import { prfUserService } from "@/features/prf_2/services/PRFUserService";
 import { queryKeys } from "@/shared/query-keys";
 
 export const useUsersByDepartment = ({
@@ -30,7 +30,7 @@ export const useUsersByDepartment = ({
         return Promise.resolve(usersDev());
       }
 
-      return prfService.getUsersByDepartmentResponse(
+      return prfUserService.getUsersByDepartmentResponse(
         {
           business_unit,
           department,
@@ -67,7 +67,7 @@ export const useUsers = ({ position = "" }: { position?: string }) => {
         );
       }
 
-      return prfService.getUsersResponse(
+      return prfUserService.getUsersResponse(
         { position },
         {
           httpClient: axiosPrivate,

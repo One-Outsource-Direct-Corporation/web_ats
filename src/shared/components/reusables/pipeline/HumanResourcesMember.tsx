@@ -1,4 +1,4 @@
-import { useUsers } from "@/features/prf/hooks/useUsers";
+import { useUsers } from "@/features/prf_2/hooks/useUsers";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import {

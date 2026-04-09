@@ -1,5 +1,6 @@
 import {
   Field,
+  FieldError,
   FieldGroup,
   FieldLabel,
 } from "@/shared/components/ui/field.tsx";
@@ -30,15 +31,21 @@ import React from "react";
 import type { BusinessUnit } from "@/features/prf_2/types/enums/BusinessUnit.ts";
 import type { ImmediateSupervisorObject } from "@/features/prf_2/types/PRF";
 import { useDepartmentByBusinessUnit } from "@/features/department/hooks/useDepartmentByBusinessUnit.ts";
-import { useUsersByDepartment } from "@/features/prf/hooks/useUsers";
+import { useUsersByDepartment } from "@/features/prf_2/hooks/useUsers";
 import {
   getDepartmentName,
   getImmediateSupervisorDisplay,
 } from "@/features/prf_2/utils/displayMappers";
+import type { ValidationError } from "@/features/prf_2/utils/validateSteps";
+import {
+  getFieldError,
+  getJobPostingError,
+} from "@/shared/utils/formValidation";
 
 interface PRFStep01Props {
   formData: PRFFormData;
   updateFormData: React.Dispatch<React.SetStateAction<PRFFormData>>;
+  errors?: ValidationError | null;
 }
 
 function toImmediateSupervisorObject(user: User): ImmediateSupervisorObject {
@@ -54,6 +61,7 @@ function toImmediateSupervisorObject(user: User): ImmediateSupervisorObject {
 export default function PRFStep01({
   formData,
   updateFormData,
+  errors,
 }: PRFStep01Props) {
   const selectedBusinessUnit = formData.prf_input.business_unit || undefined;
   const selectedDepartmentId =
@@ -143,10 +151,36 @@ export default function PRFStep01({
       ? String(formData.job_posting.department)
       : "";
 
+  const selectedSupervisorId =
+    typeof formData.prf_input.immediate_supervisor === "number"
+      ? formData.prf_input.immediate_supervisor
+      : null;
+
   const selectedSupervisorValue =
-    formData.prf_input.immediate_supervisor === ""
+    selectedSupervisorId === null
       ? "no-supervisor"
-      : String(formData.prf_input.immediate_supervisor);
+      : String(selectedSupervisorId);
+
+  const jobTitleError = getJobPostingError(errors, "job_title");
+  const targetStartDateError = getJobPostingError(errors, "target_start_date");
+  const numberOfVacanciesError = getJobPostingError(
+    errors,
+    "number_of_vacancies",
+  );
+  const reasonForPostingError = getJobPostingError(
+    errors,
+    "reason_for_posting",
+  );
+  const otherReasonForPostingError = getJobPostingError(
+    errors,
+    "other_reason_for_posting",
+  );
+  const businessUnitError = getFieldError(errors, "business_unit");
+  const departmentError = getJobPostingError(errors, "department");
+  const immediateSupervisorError = getFieldError(
+    errors,
+    "immediate_supervisor",
+  );
 
   return (
     <div className="lg:col-span-2 space-y-6">
@@ -170,6 +204,7 @@ export default function PRFStep01({
               }))
             }
           />
+          {jobTitleError && <FieldError>{jobTitleError}</FieldError>}
         </Field>
 
         <Field>
@@ -217,6 +252,9 @@ export default function PRFStep01({
               />
             </PopoverContent>
           </Popover>
+          {targetStartDateError && (
+            <FieldError>{targetStartDateError}</FieldError>
+          )}
         </Field>
 
         <Field>
@@ -236,6 +274,9 @@ export default function PRFStep01({
               }))
             }
           />
+          {numberOfVacanciesError && (
+            <FieldError>{numberOfVacanciesError}</FieldError>
+          )}
         </Field>
 
         <Field>
@@ -263,22 +304,30 @@ export default function PRFStep01({
               <SelectItem value="other">Other</SelectItem>
             </SelectContent>
           </Select>
+          {reasonForPostingError && (
+            <FieldError>{reasonForPostingError}</FieldError>
+          )}
 
           {formData.job_posting.reason_for_posting === "other" && (
-            <Input
-              className="w-full mt-2"
-              placeholder="Please specify"
-              value={formData.job_posting.other_reason_for_posting || ""}
-              onChange={(e) =>
-                updateFormData((prev) => ({
-                  ...prev,
-                  job_posting: {
-                    ...prev.job_posting,
-                    other_reason_for_posting: e.target.value,
-                  },
-                }))
-              }
-            />
+            <>
+              <Input
+                className="w-full mt-2"
+                placeholder="Please specify"
+                value={formData.job_posting.other_reason_for_posting || ""}
+                onChange={(e) =>
+                  updateFormData((prev) => ({
+                    ...prev,
+                    job_posting: {
+                      ...prev.job_posting,
+                      other_reason_for_posting: e.target.value,
+                    },
+                  }))
+                }
+              />
+              {otherReasonForPostingError && (
+                <FieldError>{otherReasonForPostingError}</FieldError>
+              )}
+            </>
           )}
         </Field>
       </FieldGroup>
@@ -314,6 +363,7 @@ export default function PRFStep01({
                 <FieldLabel htmlFor="oors">OORS</FieldLabel>
               </div>
             </RadioGroup>
+            {businessUnitError && <FieldError>{businessUnitError}</FieldError>}
           </Field>
 
           <Field>
@@ -353,6 +403,7 @@ export default function PRFStep01({
                 ))}
               </SelectContent>
             </Select>
+            {departmentError && <FieldError>{departmentError}</FieldError>}
           </Field>
 
           <Field>
@@ -367,14 +418,11 @@ export default function PRFStep01({
               <SelectContent>
                 <SelectItem value="no-supervisor">No Supervisor</SelectItem>
 
-                {typeof formData.prf_input.immediate_supervisor === "number" &&
+                {selectedSupervisorId !== null &&
                   !supervisors.some(
-                    (supervisor) =>
-                      supervisor.id === formData.prf_input.immediate_supervisor,
+                    (supervisor) => supervisor.id === selectedSupervisorId,
                   ) && (
-                    <SelectItem
-                      value={String(formData.prf_input.immediate_supervisor)}
-                    >
+                    <SelectItem value={String(selectedSupervisorId)}>
                       {formData.prf_input.immediate_supervisor_display ||
                         "Current supervisor"}
                     </SelectItem>
@@ -400,21 +448,16 @@ export default function PRFStep01({
                     </SelectItem>
                   )}
 
-                {supervisors
-                  .filter(
-                    (supervisor: User) =>
-                      supervisor.id !== formData.prf_input.immediate_supervisor,
-                  )
-                  .map((supervisor: User) => (
-                    <SelectItem
-                      key={supervisor.id}
-                      value={String(supervisor.id)}
-                    >
-                      {`${supervisor.first_name} ${supervisor.last_name}`}
-                    </SelectItem>
-                  ))}
+                {supervisors.map((supervisor: User) => (
+                  <SelectItem key={supervisor.id} value={String(supervisor.id)}>
+                    {`${supervisor.first_name} ${supervisor.last_name}`}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
+            {immediateSupervisorError && (
+              <FieldError>{immediateSupervisorError}</FieldError>
+            )}
           </Field>
         </FieldGroup>
       </FieldGroup>

@@ -1,7 +1,7 @@
 import type { ApproverDb } from "@/features/external_posting";
-import type { PRFFormData } from "../types/prf.types";
-import Approver from "./Approver";
-import PRFSummary from "./PRFSummary";
+import type { PRFFormData } from "@/features/prf_2/types/LegacyPRFCompat";
+import Approver from "@/features/prf_2/components/manager/Approver";
+import PRFSummary from "@/features/prf_2/components/manager/PRFSummary";
 
 interface PRFManagersViewProps {
   approvers: ApproverDb[] | [];

@@ -1,7 +1,7 @@
 import type { User } from "@/features/auth/types/auth.types";
 
 export function usersDev(): User[] {
-  return [
+  const users = [
     {
       id: 1,
       full_name: "John Doe",
@@ -135,4 +135,6 @@ export function usersDev(): User[] {
       role: "hiring_manager",
     },
   ];
+
+  return users as unknown as User[];
 }

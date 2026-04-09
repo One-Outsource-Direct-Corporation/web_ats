@@ -16,7 +16,10 @@ import { formatBackgroundStatus } from "@/shared/utils/formatBackgroundStatus";
 import { usePositionDetail } from "@/shared/hooks/usePositions";
 import { useEffect } from "react";
 import PRFCreation from "@/Pages/PRFCreation";
-import type { PRFFormData, PRFResponse } from "@/features/prf/types/prf.types";
+import type {
+  PRFFormData,
+  PRFResponse,
+} from "@/features/prf_2/types/LegacyPRFCompat";
 import type {
   PositionResponse,
   PositionFormData,

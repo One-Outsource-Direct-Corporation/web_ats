@@ -1,5 +1,5 @@
 import { formatDate, formatTime } from "@/shared/utils/formatDate";
-import type { PRFFormData } from "../types/prf.types";
+import type { PRFFormData } from "@/features/prf_2/types/LegacyPRFCompat";
 import formatName from "@/shared/utils/formatName";
 import formatMoney from "@/shared/utils/formatMoney";
 import DOMPurify from "dompurify";

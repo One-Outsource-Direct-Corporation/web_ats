@@ -24,6 +24,7 @@ import type {
 } from "@/shared/types/pipeline.types";
 import { AddAssessmentModal } from "./AddAssessmentModal";
 import { useState, useEffect } from "react";
+import formatName from "@/shared/utils/formatName";
 
 interface AssessmentSectionProps {
   assessments: Assessment[];
@@ -77,7 +78,9 @@ function SortableAssessmentItem({
       </button>
 
       <div className="flex-1">
-        <div className="text-xs text-gray-600">{assessment.type}</div>
+        <div className="text-xs text-gray-600">
+          {formatName(assessment.type)}
+        </div>
       </div>
 
       <div className="flex items-center gap-2">
@@ -98,7 +101,7 @@ function SortableAssessmentItem({
           onClick={() =>
             onDelete(
               (assessment as AssessmentInDb)?.id ||
-                (assessment as AssessmentLocal).tempId
+                (assessment as AssessmentLocal).tempId,
             )
           }
         >
@@ -118,7 +121,7 @@ export function AssessmentSection({
 }: AssessmentSectionProps) {
   const [openAssessment, setOpenAssessment] = useState(false);
   const [editingAssessment, setEditingAssessment] = useState<Assessment | null>(
-    null
+    null,
   );
   const [localAssessments, setLocalAssessments] =
     useState<Assessment[]>(assessments);
@@ -127,7 +130,7 @@ export function AssessmentSection({
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   // Sync with parent assessments and sort by order field
@@ -145,7 +148,7 @@ export function AssessmentSection({
       const getId = (a: Assessment) =>
         (a as AssessmentInDb)?.id || (a as AssessmentLocal).tempId;
       const oldIndex = localAssessments.findIndex(
-        (a) => getId(a) === active.id
+        (a) => getId(a) === active.id,
       );
       const newIndex = localAssessments.findIndex((a) => getId(a) === over.id);
 
@@ -153,7 +156,7 @@ export function AssessmentSection({
         const reorderedAssessments = arrayMove(
           localAssessments,
           oldIndex,
-          newIndex
+          newIndex,
         );
 
         // Update the order field for each assessment based on new position
@@ -161,7 +164,7 @@ export function AssessmentSection({
           (assessment, index) => ({
             ...assessment,
             order: index + 1, // Start order from 1
-          })
+          }),
         );
 
         setLocalAssessments(assessmentsWithUpdatedOrder);
@@ -208,7 +211,7 @@ export function AssessmentSection({
       >
         <SortableContext
           items={localAssessments.map(
-            (a) => (a as AssessmentInDb)?.id || (a as AssessmentLocal).tempId
+            (a) => (a as AssessmentInDb)?.id || (a as AssessmentLocal).tempId,
           )}
           strategy={verticalListSortingStrategy}
         >

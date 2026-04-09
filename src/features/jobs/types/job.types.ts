@@ -1,9 +1,15 @@
 export interface JobPostingResponseDto {
   id: number;
   job_title: string;
-  created_at: string;
-  number_of_vacancies: number;
-  status: string;
+  created_at?: string | null;
+  updated_at?: string | null;
+  type?: "client" | "prf" | null;
+  client_name?: string | null;
+  number_of_vacancies?: number | null;
+  status?: string | null;
+  department?: {
+    name?: string | null;
+  } | null;
   department_name?: string | null;
   employment_type?: string | null;
 }
@@ -19,6 +25,8 @@ export interface JobListItem {
   id: string;
   title: string;
   created: string;
+  postingType?: "client" | "prf";
+  clientName?: string;
   totalCandidates?: number;
   vacancies?: number;
   status?: string;

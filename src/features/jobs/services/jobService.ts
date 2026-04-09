@@ -9,17 +9,36 @@ import type {
   JobQueryResult,
 } from "../types/job.types";
 
-const toJobListItem = (jobPosting: JobPostingResponseDto): JobListItem => ({
-  id: String(jobPosting.id),
-  title: jobPosting.job_title,
-  created: new Date(jobPosting.created_at).toLocaleDateString("en-US", {
+function formatDisplayDate(dateValue?: string | null): string {
+  if (!dateValue) {
+    return "";
+  }
+
+  const parsedDate = new Date(dateValue);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "";
+  }
+
+  return parsedDate.toLocaleDateString("en-US", {
     month: "short",
     day: "2-digit",
     year: "numeric",
-  }),
-  vacancies: jobPosting.number_of_vacancies,
-  status: jobPosting.status,
-  department: jobPosting.department_name ?? undefined,
+  });
+}
+
+const toJobListItem = (jobPosting: JobPostingResponseDto): JobListItem => ({
+  id: String(jobPosting.id),
+  title: jobPosting.job_title,
+  created: formatDisplayDate(jobPosting.created_at ?? jobPosting.updated_at),
+  postingType: jobPosting.type ?? undefined,
+  clientName: jobPosting.client_name ?? undefined,
+  vacancies:
+    typeof jobPosting.number_of_vacancies === "number"
+      ? jobPosting.number_of_vacancies
+      : undefined,
+  status: jobPosting.status ?? undefined,
+  department:
+    jobPosting.department?.name ?? jobPosting.department_name ?? undefined,
   employmentType: jobPosting.employment_type ?? undefined,
 });
 

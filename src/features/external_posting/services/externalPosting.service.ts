@@ -7,7 +7,7 @@ import type {
   JobPostingListResponse,
   PositionFormData,
 } from "@/features/external_posting/types/externalPosting.types";
-import type { PRFFormData } from "@/features/prf/types/prf.types";
+import type { PRFFormData } from "@/features/prf_2/types/LegacyPRFCompat";
 
 export interface GetPositionDetailParams {
   id: number;

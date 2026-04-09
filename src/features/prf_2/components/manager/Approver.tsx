@@ -1,6 +1,9 @@
 import type { ApproverDb } from "@/features/external_posting";
 import formatMoney from "@/shared/utils/formatMoney";
-import type { PRFFormData, PRFResponse } from "../types/prf.types";
+import type {
+  PRFFormData,
+  PRFResponse,
+} from "@/features/prf_2/types/LegacyPRFCompat";
 import formatName from "@/shared/utils/formatName";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useState } from "react";
@@ -166,7 +169,8 @@ export default function Approver({
                     {formatName(approver.approving_manager.role)} Review
                   </p>
                   <p className="text-xs text-gray-500">
-                    Approver: {approver.approving_manager.full_name}
+                    Approver:{" "}
+                    {`${approver.approving_manager.first_name} ${approver.approving_manager.last_name}`}
                   </p>
                 </div>
                 {isCurrentUser && (

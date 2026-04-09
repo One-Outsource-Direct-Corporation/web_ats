@@ -6,7 +6,7 @@ import type {
   PositionFormData,
   ClientResponse,
 } from "@/features/external_posting";
-import type { PRFFormData } from "@/features/prf/types/prf.types";
+import type { PRFFormData } from "@/features/prf_2/types/LegacyPRFCompat";
 
 export interface GetPositionsParams {
   my_postings?: boolean;

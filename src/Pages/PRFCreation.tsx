@@ -12,7 +12,7 @@ import { isAxiosError } from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import PRFSidebarPreview from "@/features/prf_2/components/PRFSidebarPreview.tsx";
-import type { PRFFormData as LegacyPRFFormData } from "@/features/prf/types/prf.types";
+import type { PRFFormData as LegacyPRFFormData } from "@/features/prf_2/types/LegacyPRFCompat";
 import { adaptLegacyPrfToPrf2FormData } from "@/features/prf_2/utils/prf2PayloadAdapter";
 import {
   createEmptyStepErrors,
@@ -37,8 +37,9 @@ export default function PRFCreation({
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [maxStepVisited, setMaxStepVisited] = useState(updateMode ? 6 : 1);
-  const [stepErrors, setStepErrors] =
-    useState<StepErrors>(createEmptyStepErrors());
+  const [stepErrors, setStepErrors] = useState<StepErrors>(
+    createEmptyStepErrors(),
+  );
   const adaptedInitialData = useMemo(
     () => (initialData ? adaptLegacyPrfToPrf2FormData(initialData) : undefined),
     [initialData],
@@ -197,13 +198,15 @@ export default function PRFCreation({
         />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
           <PRFStepComponent
-              step={step}
-              formData={formData}
-              updateFormData={setFormData}
+            step={step}
+            formData={formData}
+            updateFormData={setFormData}
+            stepErrors={stepErrors}
           />
 
-
-          {(step > 0 && step < 4) && <PRFSidebarPreview step={step} formData={formData} />}
+          {step > 0 && step < 4 && (
+            <PRFSidebarPreview step={step} formData={formData} />
+          )}
         </div>
         <PRFNavigationButton
           step={step}

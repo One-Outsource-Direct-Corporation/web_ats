@@ -10,8 +10,10 @@ import {
   DialogTrigger,
 } from "@/shared/components/ui/dialog";
 import { MinusCircle } from "lucide-react";
+import { useNavigate } from "react-router";
 
 export default function CancelRequestModal() {
+  const navigate = useNavigate();
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -35,7 +37,9 @@ export default function CancelRequestModal() {
           <DialogClose asChild>
             <Button variant="outline">No</Button>
           </DialogClose>
-          <Button variant="destructive">Yes</Button>
+          <Button variant="destructive" onClick={() => navigate("/requests")}>
+            Yes
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

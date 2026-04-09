@@ -1,5 +1,5 @@
-import FeaturePRF from "@/features/prf/views/PRF";
-import type { PRFFormData } from "@/features/prf/types/prf.types";
+import PRFCreation from "@/Pages/PRFCreation";
+import type { PRFFormData } from "@/features/prf_2/types/LegacyPRFCompat";
 
 interface PRFPageProps {
   initialData?: PRFFormData;
@@ -7,5 +7,5 @@ interface PRFPageProps {
 }
 
 export default function PRFPage(props: PRFPageProps) {
-  return <FeaturePRF {...props} />;
+  return <PRFCreation {...props} />;
 }

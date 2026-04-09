@@ -1,7 +1,7 @@
 import { usePositionDetail } from "@/shared/hooks/usePositions";
 import { useParams } from "react-router-dom";
-import { PRFManagersView } from "../components/PRFManagersView";
-import type { PRFResponse } from "../types/prf.types";
+import { PRFManagersView } from "@/features/prf_2/components/manager/PRFManagersView";
+import type { PRFResponse } from "@/features/prf_2/types/LegacyPRFCompat";
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 
 export default function ManagersView() {
@@ -9,8 +9,6 @@ export default function ManagersView() {
   const { position, loading } = usePositionDetail({
     id: Number(params.positionId),
   });
-
-  console.log(position);
 
   const approvers =
     position && "type" in (position as PRFResponse).job_posting

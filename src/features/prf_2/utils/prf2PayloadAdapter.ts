@@ -1,5 +1,8 @@
-import { JobPostingStatus, JobPostingType } from "@/features/jobs/types/JobPosting";
-import type { PRFFormData as LegacyPRFFormData } from "@/features/prf/types/prf.types";
+import {
+  JobPostingStatus,
+  JobPostingType,
+} from "@/features/jobs/types/JobPosting";
+import type { PRFFormData as LegacyPRFFormData } from "@/features/prf_2/types/LegacyPRFCompat";
 import type { PRFFormData } from "@/features/prf_2/types/PRFFormData";
 import type {
   DepartmentObject,
@@ -118,7 +121,8 @@ function toImmediateSupervisorObject(
   return {
     id: value.id,
     first_name: value.first_name,
-    middle_name: typeof value.middle_name === "string" ? value.middle_name : null,
+    middle_name:
+      typeof value.middle_name === "string" ? value.middle_name : null,
     last_name: value.last_name,
     role: typeof value.role === "string" ? value.role : "supervisor",
   };
@@ -161,18 +165,24 @@ export function adaptLegacyPrfToPrf2FormData(
   const sourceJobPosting: Record<string, unknown> = isRecord(source.job_posting)
     ? source.job_posting
     : {};
-  const department = toDepartmentObject((source as { department?: unknown }).department);
+  const department = toDepartmentObject(
+    (source as { department?: unknown }).department,
+  );
   const immediateSupervisor = toImmediateSupervisorObject(
     (source as { immediate_supervisor_display?: unknown })
       .immediate_supervisor_display,
   );
-  const immediateSupervisorDisplay = getImmediateSupervisorDisplay(immediateSupervisor);
+  const immediateSupervisorDisplay =
+    getImmediateSupervisorDisplay(immediateSupervisor);
 
   const adapted: PRFFormData = {
     ...base,
     job_posting: {
       ...base.job_posting,
-      id: typeof sourceJobPosting.id === "number" ? sourceJobPosting.id : undefined,
+      id:
+        typeof sourceJobPosting.id === "number"
+          ? sourceJobPosting.id
+          : undefined,
       job_title: toStringOrEmpty(sourceJobPosting.job_title),
       target_start_date: toStringOrEmpty(sourceJobPosting.target_start_date),
       reason_for_posting: toStringOrEmpty(sourceJobPosting.reason_for_posting),
@@ -197,7 +207,9 @@ export function adaptLegacyPrfToPrf2FormData(
         | PRFFormData["job_posting"]["work_setup"]
         | "",
       working_site: toStringOrEmpty(sourceJobPosting.working_site),
-      number_of_vacancies: toNumberOrEmpty(sourceJobPosting.number_of_vacancies),
+      number_of_vacancies: toNumberOrEmpty(
+        sourceJobPosting.number_of_vacancies,
+      ),
       work_schedule_from: toStringOrEmpty(sourceJobPosting.work_schedule_from),
       work_schedule_to: toStringOrEmpty(sourceJobPosting.work_schedule_to),
       min_salary: toNumberOrEmpty(sourceJobPosting.min_salary),
@@ -206,19 +218,22 @@ export function adaptLegacyPrfToPrf2FormData(
       responsibilities: toStringOrEmpty(sourceJobPosting.responsibilities),
       qualifications: toStringOrEmpty(sourceJobPosting.qualifications),
       status:
-        (toNullableString(sourceJobPosting.status) as PRFFormData["job_posting"]["status"]) ||
-        JobPostingStatus.PENDING,
+        (toNullableString(
+          sourceJobPosting.status,
+        ) as PRFFormData["job_posting"]["status"]) || JobPostingStatus.PENDING,
       type: JobPostingType.PRF,
     },
     prf_input: {
       ...base.prf_input,
-      business_unit: (toNullableString(source.business_unit) ?? "") as PRFFormData["prf_input"]["business_unit"],
+      business_unit: (toNullableString(source.business_unit) ??
+        "") as PRFFormData["prf_input"]["business_unit"],
       immediate_supervisor:
         typeof source.immediate_supervisor === "number"
           ? source.immediate_supervisor
           : (immediateSupervisor?.id ?? ""),
       immediate_supervisor_display: immediateSupervisorDisplay,
-      category: (toNullableString(source.category) ?? "") as PRFFormData["prf_input"]["category"],
+      category: (toNullableString(source.category) ??
+        "") as PRFFormData["prf_input"]["category"],
       hardware_required: normalizeBooleanRecord(source.hardware_required),
       software_required: normalizeBooleanRecord(source.software_required),
     },
@@ -241,10 +256,17 @@ export function buildPrfSubmitPayload(formData: PRFFormData): PrfSubmitPayload {
 
   return {
     job_posting: {
-      id: typeof formData.job_posting.id === "number" ? formData.job_posting.id : undefined,
+      id:
+        typeof formData.job_posting.id === "number"
+          ? formData.job_posting.id
+          : undefined,
       job_title: toNullableString(formData.job_posting.job_title),
-      target_start_date: toNullableString(formData.job_posting.target_start_date),
-      reason_for_posting: toNullableString(formData.job_posting.reason_for_posting),
+      target_start_date: toNullableString(
+        formData.job_posting.target_start_date,
+      ),
+      reason_for_posting: toNullableString(
+        formData.job_posting.reason_for_posting,
+      ),
       other_reason_for_posting: toNullableString(
         formData.job_posting.other_reason_for_posting,
       ),
@@ -253,23 +275,35 @@ export function buildPrfSubmitPayload(formData: PRFFormData): PrfSubmitPayload {
       employment_type: toNullableString(formData.job_posting.employment_type),
       work_setup: toNullableString(formData.job_posting.work_setup),
       working_site: toNullableString(formData.job_posting.working_site),
-      number_of_vacancies: toNumberOrNull(formData.job_posting.number_of_vacancies),
-      work_schedule_from: toNullableString(formData.job_posting.work_schedule_from),
+      number_of_vacancies: toNumberOrNull(
+        formData.job_posting.number_of_vacancies,
+      ),
+      work_schedule_from: toNullableString(
+        formData.job_posting.work_schedule_from,
+      ),
       work_schedule_to: toNullableString(formData.job_posting.work_schedule_to),
       min_salary: toNumberOrNull(formData.job_posting.min_salary),
       max_salary: toNumberOrNull(formData.job_posting.max_salary),
       description: toNullableString(formData.job_posting.description),
       responsibilities: toNullableString(formData.job_posting.responsibilities),
       qualifications: toNullableString(formData.job_posting.qualifications),
-      status: toNullableString(formData.job_posting.status) ?? JobPostingStatus.PENDING,
+      status:
+        toNullableString(formData.job_posting.status) ??
+        JobPostingStatus.PENDING,
       type: "prf",
     },
     business_unit: toNullableString(formData.prf_input.business_unit),
     immediate_supervisor: immediateSupervisorId,
     category: toNullableString(formData.prf_input.category),
-    hardware_required: normalizeBooleanRecord(formData.prf_input.hardware_required),
-    software_required: normalizeBooleanRecord(formData.prf_input.software_required),
+    hardware_required: normalizeBooleanRecord(
+      formData.prf_input.hardware_required,
+    ),
+    software_required: normalizeBooleanRecord(
+      formData.prf_input.software_required,
+    ),
     application_form: formData.application_form_input,
-    pipeline: Array.isArray(formData.pipeline_input) ? formData.pipeline_input : [],
+    pipeline: Array.isArray(formData.pipeline_input)
+      ? formData.pipeline_input
+      : [],
   };
 }

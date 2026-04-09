@@ -13,6 +13,7 @@ import {
   groupPipelineStepsByStage,
   toCompactJobSlug,
 } from "../utils/jobFormatters";
+import formatName from "@/shared/utils/formatName";
 
 interface JobRouteState {
   jobTitle?: string;
@@ -144,13 +145,13 @@ export default function JobDetails() {
                   <div>
                     <span className="text-gray-500">Employment Type:</span>
                     <span className="ml-2 font-semibold">
-                      {currentJob.employmentType || "-"}
+                      {formatName(currentJob.employmentType) || "-"}
                     </span>
                   </div>
                   <div>
                     <span className="text-gray-500">Status:</span>
                     <span className="ml-2 font-semibold">
-                      {currentJob.status || "-"}
+                      {formatName(currentJob.status) || "-"}
                     </span>
                   </div>
                 </div>
