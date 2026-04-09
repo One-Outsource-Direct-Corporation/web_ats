@@ -23,6 +23,8 @@ interface StepNavigationProps {
   resetForm: () => void;
   stepErrors?: StepErrors;
   updateMode?: boolean;
+  onSaveDraft?: () => Promise<void> | void;
+  savingDraft?: boolean;
 }
 
 export const StepNavigation = ({
@@ -33,6 +35,8 @@ export const StepNavigation = ({
   resetForm,
   stepErrors,
   updateMode = false,
+  onSaveDraft,
+  savingDraft = false,
 }: StepNavigationProps) => {
   const navigate = useNavigate();
 
@@ -60,12 +64,12 @@ export const StepNavigation = ({
                 hasError
                   ? "text-red-600"
                   : isActive
-                  ? "text-blue-600"
-                  : isCompleted
-                  ? "text-green-600"
-                  : updateMode && isClickable
-                  ? "text-blue-400 hover:text-blue-600"
-                  : "text-gray-600"
+                    ? "text-blue-600"
+                    : isCompleted
+                      ? "text-green-600"
+                      : updateMode && isClickable
+                        ? "text-blue-400 hover:text-blue-600"
+                        : "text-gray-600"
               } ${isClickable ? "cursor-pointer" : ""}`}
               onClick={() => isClickable && onStepClick(step.number)}
             >
@@ -74,12 +78,12 @@ export const StepNavigation = ({
                   hasError
                     ? "bg-red-600 text-white"
                     : isActive
-                    ? "bg-blue-600 text-white"
-                    : isCompleted
-                    ? "bg-green-600 text-white"
-                    : updateMode && isClickable
-                    ? "bg-blue-200 text-blue-800 hover:bg-blue-300 hover:text-blue-900"
-                    : "bg-gray-300 text-gray-600"
+                      ? "bg-blue-600 text-white"
+                      : isCompleted
+                        ? "bg-green-600 text-white"
+                        : updateMode && isClickable
+                          ? "bg-blue-200 text-blue-800 hover:bg-blue-300 hover:text-blue-900"
+                          : "bg-gray-300 text-gray-600"
                 }`}
               >
                 {step.number}
@@ -89,12 +93,12 @@ export const StepNavigation = ({
                   hasError
                     ? "text-red-600"
                     : isActive
-                    ? "text-blue-600"
-                    : isCompleted
-                    ? "text-green-600"
-                    : updateMode && isClickable
-                    ? "text-blue-500 hover:text-blue-700"
-                    : "text-gray-600"
+                      ? "text-blue-600"
+                      : isCompleted
+                        ? "text-green-600"
+                        : updateMode && isClickable
+                          ? "text-blue-500 hover:text-blue-700"
+                          : "text-gray-600"
                 }`}
               >
                 {step.title}
@@ -118,6 +122,17 @@ export const StepNavigation = ({
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
+              {onSaveDraft && (
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    void onSaveDraft();
+                  }}
+                  disabled={savingDraft}
+                >
+                  {savingDraft ? "Saving..." : "Save as Draft"}
+                </Button>
+              )}
               <DialogClose asChild>
                 <Button variant="ghost">Continue Editing</Button>
               </DialogClose>

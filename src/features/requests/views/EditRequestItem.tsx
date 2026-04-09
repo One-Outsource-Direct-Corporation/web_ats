@@ -153,7 +153,9 @@ export default function EditRequestItem() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="draft">Draft</SelectItem>
+              {jobPosting.status === "draft" && (
+                <SelectItem value="draft">Draft</SelectItem>
+              )}
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="closed">Closed</SelectItem>

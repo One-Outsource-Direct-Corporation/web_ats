@@ -7,6 +7,7 @@ interface PRFNavigationButtonProps {
   handlePrevious: () => void;
   submitting?: boolean;
   updateMode?: boolean;
+  onSaveDraft?: () => Promise<void> | void;
 }
 
 export default function PRFNavigationButton({
@@ -15,20 +16,34 @@ export default function PRFNavigationButton({
   handlePrevious,
   submitting = false,
   updateMode = false,
+  onSaveDraft,
 }: PRFNavigationButtonProps) {
   const submitLabel = updateMode ? "Update" : "Submit";
   const submittingLabel = updateMode ? "Updating..." : "Submitting...";
 
   return (
     <div className="flex justify-between mt-10">
-      <Button
-        variant="outline"
-        onClick={handlePrevious}
-        disabled={step === 1 || submitting}
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Previous
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          onClick={handlePrevious}
+          disabled={step === 1 || submitting}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Previous
+        </Button>
+        {onSaveDraft && (
+          <Button
+            variant="secondary"
+            onClick={() => {
+              void onSaveDraft();
+            }}
+            disabled={submitting}
+          >
+            Save as Draft
+          </Button>
+        )}
+      </div>
       <Button
         className="bg-[#0056D2] hover:bg-blue-700 text-white"
         onClick={handleNext}

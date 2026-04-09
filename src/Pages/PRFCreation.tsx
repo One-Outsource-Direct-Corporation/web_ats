@@ -94,6 +94,7 @@ export default function PRFCreation({
       const response = await submitPrf({
         formData: normalizedFormData,
         updateMode,
+        statusOverride: updateMode ? undefined : "pending",
       });
 
       const successMessage = updateMode
@@ -136,6 +137,51 @@ export default function PRFCreation({
           : updateMode
             ? "Failed to update PRF. Please try again."
             : "Failed to submit PRF. Please try again.";
+
+      toast.error(errorMessage);
+    }
+  }
+
+  async function handleSaveDraft() {
+    if (isSubmitting) {
+      return;
+    }
+
+    const normalizedFormData = serializeFormData();
+
+    try {
+      const response = await submitPrf({
+        formData: normalizedFormData,
+        updateMode,
+        statusOverride: "draft",
+      });
+
+      if (response.status === 200 || response.status === 201) {
+        toast.success(
+          updateMode
+            ? "Draft updated successfully!"
+            : "Draft saved successfully!",
+        );
+        navigate("/requests");
+        return;
+      }
+
+      toast.error(
+        updateMode ? "Failed to update draft." : "Failed to save draft.",
+      );
+    } catch (error: unknown) {
+      if (error instanceof UpdatePRF2IdMissingError) {
+        toast.error("Cannot update draft because posting id is missing.");
+        return;
+      }
+
+      const errorMessage =
+        isAxiosError<{ detail?: string; error?: string }>(error) &&
+        (error.response?.data?.detail || error.response?.data?.error)
+          ? error.response.data.detail || error.response.data.error
+          : updateMode
+            ? "Failed to update draft. Please try again."
+            : "Failed to save draft. Please try again.";
 
       toast.error(errorMessage);
     }
@@ -187,7 +233,12 @@ export default function PRFCreation({
           </h1>
         )}
 
-        {!updateMode && <CancelRequestModal />}
+        {!updateMode && (
+          <CancelRequestModal
+            onSaveDraft={handleSaveDraft}
+            savingDraft={isSubmitting}
+          />
+        )}
 
         <PRFStepsNavigation
           step={step}
@@ -214,6 +265,7 @@ export default function PRFCreation({
           handlePrevious={handleStepPrevChange}
           submitting={isSubmitting}
           updateMode={updateMode}
+          onSaveDraft={handleSaveDraft}
         />
       </div>
     </section>

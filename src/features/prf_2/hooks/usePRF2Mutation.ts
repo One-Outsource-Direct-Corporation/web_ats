@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import type { PRFFormData } from "@/features/prf_2/types/PRFFormData";
 import { stateToDataFormat } from "@/shared/utils/stateToDataFormat";
-import { buildPrfSubmitPayload } from "@/features/prf_2/utils/prf2PayloadAdapter";
+import { buildPrfSubmitPayloadWithOptions } from "@/features/prf_2/utils/prf2PayloadAdapter";
 
 export class UpdatePRF2IdMissingError extends Error {
   constructor() {
@@ -21,12 +21,18 @@ export function usePRF2Mutation() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const submitPrf = useCallback(
-    async (params: { formData: PRFFormData; updateMode?: boolean }) => {
-      const { formData, updateMode } = params;
+    async (params: {
+      formData: PRFFormData;
+      updateMode?: boolean;
+      statusOverride?: "draft" | "pending";
+    }) => {
+      const { formData, updateMode, statusOverride } = params;
       setIsSubmitting(true);
 
       try {
-        const submitPayload = buildPrfSubmitPayload(formData);
+        const submitPayload = buildPrfSubmitPayloadWithOptions(formData, {
+          statusOverride,
+        });
         const payload = stateToDataFormat(submitPayload, {
           jobPostingField: "job_posting",
         });
@@ -37,9 +43,13 @@ export function usePRF2Mutation() {
             throw new UpdatePRF2IdMissingError();
           }
 
-          return await axiosPrivate.patch(`/api/prf/${jobPostingId}/`, payload, {
-            headers: { "Content-Type": "multipart/form-data" },
-          });
+          return await axiosPrivate.patch(
+            `/api/prf/${jobPostingId}/`,
+            payload,
+            {
+              headers: { "Content-Type": "multipart/form-data" },
+            },
+          );
         }
 
         return await axiosPrivate.post("/api/prf/", payload, {

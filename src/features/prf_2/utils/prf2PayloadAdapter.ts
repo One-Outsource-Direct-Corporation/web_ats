@@ -249,6 +249,14 @@ export function adaptLegacyPrfToPrf2FormData(
 }
 
 export function buildPrfSubmitPayload(formData: PRFFormData): PrfSubmitPayload {
+  return buildPrfSubmitPayloadWithOptions(formData, {});
+}
+
+export function buildPrfSubmitPayloadWithOptions(
+  formData: PRFFormData,
+  options: { statusOverride?: string } = {},
+): PrfSubmitPayload {
+  const { statusOverride } = options;
   const immediateSupervisorId =
     typeof formData.prf_input.immediate_supervisor === "number"
       ? formData.prf_input.immediate_supervisor
@@ -288,6 +296,7 @@ export function buildPrfSubmitPayload(formData: PRFFormData): PrfSubmitPayload {
       responsibilities: toNullableString(formData.job_posting.responsibilities),
       qualifications: toNullableString(formData.job_posting.qualifications),
       status:
+        statusOverride ??
         toNullableString(formData.job_posting.status) ??
         JobPostingStatus.PENDING,
       type: "prf",

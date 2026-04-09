@@ -33,6 +33,56 @@ export function useExternalPostingSubmissionFlow({
 }: UseExternalPostingSubmissionFlowParams) {
   const { submitExternalPosting } = useExternalPostingMutation();
 
+  const saveDraft = useCallback(
+    async (formData: PositionFormData) => {
+      try {
+        const response = await submitExternalPosting({
+          formData,
+          updateMode,
+          statusOverride: "draft",
+        });
+
+        if (response.status === 200 || response.status === 201) {
+          toast.success(
+            updateMode
+              ? "Draft updated successfully!"
+              : "Draft saved successfully!",
+          );
+          return { didSubmit: true, isSuccess: true };
+        }
+
+        return { didSubmit: true, isSuccess: false };
+      } catch (err: unknown) {
+        if (err instanceof UpdateExternalPostingIdMissingError) {
+          toast.error("Cannot update draft because posting id is missing.");
+          return { didSubmit: true, isSuccess: false };
+        }
+
+        if (!isAxiosError(err)) {
+          toast.error(
+            updateMode ? "Failed to update draft." : "Failed to save draft.",
+          );
+          return { didSubmit: true, isSuccess: false };
+        }
+
+        const responseData = err.response?.data as
+          | (Record<string, unknown> & { error?: string })
+          | undefined;
+
+        if (responseData?.error) {
+          toast.error(responseData.error);
+          return { didSubmit: true, isSuccess: false };
+        }
+
+        toast.error(
+          updateMode ? "Failed to update draft." : "Failed to save draft.",
+        );
+        return { didSubmit: true, isSuccess: false };
+      }
+    },
+    [submitExternalPosting, updateMode],
+  );
+
   const submitCurrentStep = useCallback(
     async (formData: PositionFormData) => {
       if (currentStep !== 4) {
@@ -40,10 +90,9 @@ export function useExternalPostingSubmissionFlow({
       }
 
       const allErrors = validateSteps(formData);
-      const hasAnyErrors = Object.values(allErrors).some((error) => hasStepErrors(error));
-
-      console.log(hasAnyErrors);
-      console.log(allErrors);
+      const hasAnyErrors = Object.values(allErrors).some((error) =>
+        hasStepErrors(error),
+      );
 
       if (hasAnyErrors) {
         toast.error("Please fix all errors before publishing the position");
@@ -61,7 +110,11 @@ export function useExternalPostingSubmissionFlow({
       }
 
       try {
-        const response = await submitExternalPosting({ formData, updateMode });
+        const response = await submitExternalPosting({
+          formData,
+          updateMode,
+          statusOverride: updateMode ? undefined : "pending",
+        });
 
         if (response.status === 200 || response.status === 201) {
           const successMessage = updateMode
@@ -110,7 +163,9 @@ export function useExternalPostingSubmissionFlow({
         }
 
         if (responseData) {
-          const serverErrors = mapServerErrorsToSteps(responseData as ValidationError);
+          const serverErrors = mapServerErrorsToSteps(
+            responseData as ValidationError,
+          );
           onUpdateStepErrors(serverErrors);
 
           const firstErrorStep = Object.keys(serverErrors)
@@ -142,8 +197,8 @@ export function useExternalPostingSubmissionFlow({
       onUpdateSuccess,
       submitExternalPosting,
       updateMode,
-    ]
+    ],
   );
 
-  return { submitCurrentStep };
+  return { submitCurrentStep, saveDraft };
 }

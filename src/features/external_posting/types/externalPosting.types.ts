@@ -35,6 +35,7 @@ export interface JobPosting {
   working_site: string | null;
   work_schedule_from: string | null;
   work_schedule_to: string | null;
+  status?: string | null;
   approving_manager?: ApproverDb[];
 }
 

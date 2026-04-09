@@ -23,6 +23,7 @@ export enum WorkSetup {
   HYBRID = "hybrid",
 }
 export enum JobPostingStatus {
+  DRAFT = "draft",
   ACTIVE = "active",
   CLOSED = "closed",
   CANCELLED = "cancelled",

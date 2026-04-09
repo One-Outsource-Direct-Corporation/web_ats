@@ -50,8 +50,9 @@ export default function ExternalPostingForm(props: ExternalPostingFormProps) {
   } = useExternalPostingFormData(initialData);
 
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
 
-  const { submitCurrentStep } = useExternalPostingSubmissionFlow({
+  const { submitCurrentStep, saveDraft } = useExternalPostingSubmissionFlow({
     updateMode,
     currentStep,
     onUpdateStepErrors: updateStepErrors,
@@ -67,6 +68,22 @@ export default function ExternalPostingForm(props: ExternalPostingFormProps) {
     const { didSubmit } = await submitCurrentStep(formData);
     if (!didSubmit) {
       stepHandleNext();
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    if (isSavingDraft) {
+      return;
+    }
+
+    setIsSavingDraft(true);
+    try {
+      const result = await saveDraft(formData);
+      if (result.isSuccess) {
+        navigate("/requests");
+      }
+    } finally {
+      setIsSavingDraft(false);
     }
   };
 
@@ -131,6 +148,8 @@ export default function ExternalPostingForm(props: ExternalPostingFormProps) {
           resetForm={resetFormData}
           stepErrors={stepErrors}
           updateMode={updateMode}
+          onSaveDraft={handleSaveDraft}
+          savingDraft={isSavingDraft}
         />
 
         <div className="flex items-start justify-between">
@@ -149,14 +168,23 @@ export default function ExternalPostingForm(props: ExternalPostingFormProps) {
         {renderStepContent()}
 
         <div className="flex justify-between">
-          <Button
-            variant="outline"
-            className="bg-transparent text-gray-600"
-            onClick={handleBack}
-            disabled={currentStep === 1}
-          >
-            ← Back
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              className="bg-transparent text-gray-600"
+              onClick={handleBack}
+              disabled={currentStep === 1 || isSavingDraft}
+            >
+              ← Back
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={handleSaveDraft}
+              disabled={isSavingDraft}
+            >
+              {isSavingDraft ? "Saving..." : "Save as Draft"}
+            </Button>
+          </div>
           <Button
             className="bg-blue-600 text-white hover:bg-blue-700"
             onClick={handleNext}

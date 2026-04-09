@@ -12,7 +12,15 @@ import {
 import { MinusCircle } from "lucide-react";
 import { useNavigate } from "react-router";
 
-export default function CancelRequestModal() {
+interface CancelRequestModalProps {
+  onSaveDraft?: () => Promise<void> | void;
+  savingDraft?: boolean;
+}
+
+export default function CancelRequestModal({
+  onSaveDraft,
+  savingDraft = false,
+}: CancelRequestModalProps) {
   const navigate = useNavigate();
   return (
     <Dialog>
@@ -34,6 +42,17 @@ export default function CancelRequestModal() {
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="mt-4 flex justify-end gap-2">
+          {onSaveDraft && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                void onSaveDraft();
+              }}
+              disabled={savingDraft}
+            >
+              {savingDraft ? "Saving..." : "Save as Draft"}
+            </Button>
+          )}
           <DialogClose asChild>
             <Button variant="outline">No</Button>
           </DialogClose>
