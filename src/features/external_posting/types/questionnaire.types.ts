@@ -52,6 +52,8 @@ export interface QuestionnaireBase {
 	question_type: QuestionType;
 	options?: QuestionOption[];
 	parameter?: string;
+	is_non_negotiable?: boolean;
+	non_negotiable_value?: string | number | boolean | string[] | null;
 }
 
 export interface QuestionnaireDb extends QuestionnaireBase {

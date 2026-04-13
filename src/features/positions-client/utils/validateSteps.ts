@@ -3,6 +3,7 @@ import {
   validateJobPosting,
   validatePipeline,
   validateNonNegotiable,
+  validateQuestionnaireNonNegotiable,
   mapServerErrorsToSteps as mapServerErrors,
   hasStepErrors as checkStepErrors,
   getStepErrorSummary as getErrorSummary,
@@ -94,9 +95,16 @@ export function validateSteps(formData: PositionFormData): StepErrors {
   const nonNegotiableErrors = validateNonNegotiable(
     formData.application_form?.non_negotiable,
   );
+  const questionnaireNonNegotiableErrors = validateQuestionnaireNonNegotiable(
+    formData.application_form?.questionnaire,
+  );
 
   if (Object.keys(nonNegotiableErrors).length > 0) {
     Object.assign(step3Errors, nonNegotiableErrors);
+  }
+
+  if (Object.keys(questionnaireNonNegotiableErrors).length > 0) {
+    Object.assign(step3Errors, questionnaireNonNegotiableErrors);
   }
 
   if (Object.keys(step3Errors).length > 0) {
@@ -148,6 +156,7 @@ export function mapServerErrorsToSteps(
     "job_posting.responsibilities": 2,
     "job_posting.qualifications": 2,
     non_negotiable: 3,
+    questionnaire: 3,
     "application_form.non_negotiable": 3,
     pipeline: 4,
   };

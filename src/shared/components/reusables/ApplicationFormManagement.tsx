@@ -12,7 +12,6 @@ import {
   FormFieldRadioButton,
   NonNegotiableModal,
   QuestionnaireBase,
-  type ApplicationFormQuestionnaire,
 } from "@/features/external_posting";
 import { useMemo, useState } from "react";
 import { Checkbox } from "../ui/checkbox";
@@ -261,16 +260,45 @@ export const ApplicationFormManagement = ({
     nonNegotiableHandler(updatedNonNegotiable);
   };
 
-  const addNonNegotiable = (newNonNegotiable: NonNegotiableBase) => {
-    const updatedNonNegotiables = {
-      ...normalizedApplicationFormData.non_negotiable,
-      non_negotiable: [
-        ...normalizedApplicationFormData.non_negotiable.non_negotiable,
-        newNonNegotiable,
-      ],
+  const setQuestionnaireNonNegotiableValue = (
+    sectionKey: number | string,
+    questionKey: number | string,
+    value: string | number | boolean | string[],
+  ) => {
+    const updatedQuestionnaire = {
+      ...normalizedApplicationFormData.questionnaire,
+      sections: normalizedApplicationFormData.questionnaire.sections.map(
+        (section) => {
+          const currentSectionKey =
+            (section as { id?: number; tempId?: string }).id ??
+            (section as { id?: number; tempId?: string }).tempId;
+
+          if (currentSectionKey !== sectionKey) {
+            return section;
+          }
+
+          return {
+            ...section,
+            questionnaires: section.questionnaires.map((question) => {
+              const currentQuestionKey =
+                (question as { id?: number; tempId?: string }).id ??
+                (question as { id?: number; tempId?: string }).tempId;
+
+              if (currentQuestionKey !== questionKey) {
+                return question;
+              }
+
+              return {
+                ...question,
+                non_negotiable_value: value,
+              };
+            }),
+          };
+        },
+      ),
     };
 
-    nonNegotiableHandler(updatedNonNegotiables);
+    questionnaireHandler(updatedQuestionnaire);
   };
 
   return (
@@ -478,8 +506,8 @@ export const ApplicationFormManagement = ({
         onContinue={() => setShowNonNegotiableModal(false)}
         formData={normalizedApplicationFormData}
         setNonNegotiableValue={setNonNegotiableValue}
-        addCustomNonNegotiable={addNonNegotiable}
         removeNonNegotiable={removeNonNegotiable}
+        setQuestionnaireNonNegotiableValue={setQuestionnaireNonNegotiableValue}
         validationError={validationError}
       />
     </div>

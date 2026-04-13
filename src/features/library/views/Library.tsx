@@ -222,15 +222,14 @@ export default function Library() {
         question_type: question.question_type,
         options: question.options,
         parameter: question.parameter,
+        is_non_negotiable: Boolean(question.is_non_negotiable),
+        non_negotiable_value: question.non_negotiable_value ?? null,
       })),
     })),
   });
 
   const getSectionId = (section: Section) =>
     (section as SectionDb).id ?? (section as SectionLocal).tempId;
-
-  const getQuestionId = (question: Questionnaire) =>
-    (question as QuestionnaireDb).id ?? (question as QuestionnaireLocal).tempId;
 
   const handleTemplateNameChange = (value: string) => {
     setTemplateDraft((prev) => ({
@@ -306,6 +305,8 @@ export default function Library() {
         question_type: question.question_type,
         options: question.options ?? [],
         parameter: question.parameter ?? "",
+        is_non_negotiable: Boolean(question.is_non_negotiable),
+        non_negotiable_value: question.non_negotiable_value ?? null,
         _delete: (question as QuestionnaireDb)._delete,
       })),
     })),

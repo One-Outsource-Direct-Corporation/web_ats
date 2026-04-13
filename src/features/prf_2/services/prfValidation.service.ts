@@ -49,6 +49,13 @@ const nonNegotiableSchema = z.object({
   non_negotiable: z.array(nonNegotiableItemSchema),
 });
 
+const MANAGED_NON_NEGOTIABLE_FIELDS = new Set([
+  "expected_salary",
+  "willing_to_work_onsite",
+  "education_attained",
+  "course",
+]);
+
 export const prfJobPostingSchema = z
   .object({
     job_title: requiredTextField,
@@ -145,6 +152,10 @@ export function validatePrfNonNegotiableWithZod(
   const emptyFields: string[] = [];
 
   parsed.data.non_negotiable.forEach((item) => {
+    if (!MANAGED_NON_NEGOTIABLE_FIELDS.has(item.field)) {
+      return;
+    }
+
     if (item.value === "" || item.value === null || item.value === undefined) {
       const fieldLabel = item.field
         .split("_")
