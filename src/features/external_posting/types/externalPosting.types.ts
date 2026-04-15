@@ -49,6 +49,7 @@ export interface JobPostingListResponse {
 
 export interface GetPositionsParams {
   my_postings?: boolean;
+  manager_approvals?: boolean;
   page?: number;
   type?: string;
   status?: string;
@@ -62,10 +63,7 @@ export interface GetPositionsParams {
 
 export interface ApproverDb {
   id: number;
-  /** Newer API shape places the user under `user` */
   user?: User;
-  /** Legacy/frontend shape used `approving_manager` as the user object */
-  approving_manager?: User;
   comment: string | null;
   status: string;
   created_at: string;

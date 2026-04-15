@@ -14,12 +14,15 @@ export default function ProtectedRoutes({
 }) {
   const { user } = useAuth();
   const location = useLocation();
+  const isNonProduction = import.meta.env.VITE_REACT_ENV !== "production";
 
-  if (import.meta.env.VITE_REACT_ENV !== "production") {
-    return <>{children}</>;
+  if (!user) {
+    if (isNonProduction) {
+      return <>{children}</>;
+    }
+
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
-
-  if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
 
   // Check if user has access to the current route
   if (!canAccessRoute(location.pathname, user?.role)) {

@@ -31,6 +31,41 @@ interface ApproverState {
   comment: string;
 }
 
+interface ApproverManagerUser {
+  id: number;
+  first_name: string;
+  last_name: string;
+  role: string;
+}
+
+type LegacyApprovingManager =
+  | ApproverManagerUser
+  | {
+      user?: ApproverManagerUser | null;
+    }
+  | null
+  | undefined;
+
+interface LegacyApproverShape extends ApproverDb {
+  approving_manager?: LegacyApprovingManager;
+}
+
+const hasNestedApprovingUser = (
+  value: LegacyApprovingManager,
+): value is { user?: ApproverManagerUser | null } => {
+  return Boolean(value && typeof value === "object" && "user" in value);
+};
+
+const resolveApproverManager = (approver: ApproverDb): ApproverManagerUser | null => {
+  const legacyApprover = approver as LegacyApproverShape;
+
+  if (hasNestedApprovingUser(legacyApprover.approving_manager)) {
+    return legacyApprover.approving_manager.user ?? approver.user ?? null;
+  }
+
+  return (legacyApprover.approving_manager as ApproverManagerUser) ?? approver.user ?? null;
+};
+
 export default function Approver({
   approvers,
   formData,
@@ -139,7 +174,8 @@ export default function Approver({
       {approvers.map((approver, index) => {
         const isLast = index === approvers.length - 1;
         const state = approverStates[approver.id];
-        const isCurrentUser = approver.approving_manager.id === user?.id;
+        const manager = resolveApproverManager(approver);
+        const isCurrentUser = manager?.id === user?.id;
         const isUpdating = updatingApprovers.has(approver.id);
         const canUpdate = isCurrentUser && hasChanges(approver.id);
 
@@ -149,7 +185,7 @@ export default function Approver({
             <div className="flex flex-col items-center w-6">
               {/* Line */}
               {!isLast && (
-                <div className="absolute top-6 left-[11px] h-full w-px bg-blue-200 z-0" />
+                <div className="absolute top-6 left-2.75 h-full w-px bg-blue-200 z-0" />
               )}
               {/* Circle */}
               <div
@@ -166,11 +202,13 @@ export default function Approver({
               <div className="flex justify-between items-start gap-4">
                 <div className="flex-1">
                   <p className="font-semibold text-sm">
-                    {formatName(approver.approving_manager.role)} Review
+                    {manager?.role ? formatName(manager.role) : "Approver"} Review
                   </p>
                   <p className="text-xs text-gray-500">
                     Approver:{" "}
-                    {`${approver.approving_manager.first_name} ${approver.approving_manager.last_name}`}
+                    {manager
+                      ? `${manager.first_name} ${manager.last_name}`
+                      : "Unknown Approver"}
                   </p>
                 </div>
                 {isCurrentUser && (

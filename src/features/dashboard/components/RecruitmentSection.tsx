@@ -43,9 +43,9 @@ export function RecruitmentSection({
       <CardContent className="p-6">
         <div className="flex flex-col md:flex-row gap-0 items-start md:items-stretch w-full">
           {/* Job Table */}
-          <div className="flex-1 md:max-w-[55%] md:pr-6">
+          <div className="flex-1">
             <div className="overflow-x-auto w-full">
-              <Table className="table-auto w-full min-w-[450px]">
+              <Table className="table-auto">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-sm sm:text-base min-w-[200px]">
@@ -97,38 +97,6 @@ export function RecruitmentSection({
               orientation="vertical"
               className="h-full w-[1px] bg-border"
             />
-          </div>
-
-          {/* Ongoing Processes */}
-          <div className="flex-1 space-y-4 min-h-[300px] md:min-h-[250px] md:pl-6 w-full">
-            <h3 className="font-semibold text-gray-900">Ongoing Process</h3>
-            <div className="space-y-3 md:max-h-[400px] md:overflow-y-auto">
-              {ongoingProcesses.map((process, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between rounded-lg border p-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={process.avatar} alt={process.name} />
-                      <AvatarFallback>
-                        {process.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-medium">{process.name}</div>
-                      <div className="text-sm text-gray-500">{process.job}</div>
-                    </div>
-                  </div>
-                  <Badge className={getStatusColor(process.status)}>
-                    {process.status}
-                  </Badge>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </CardContent>
