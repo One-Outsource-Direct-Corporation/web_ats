@@ -43,6 +43,19 @@ export function ApprovalPipelineDropdown({
               const isPending = approver.status.toLowerCase() === "pending";
               const isRejected = approver.status.toLowerCase() === "rejected";
 
+              // Normalize manager object for different API shapes:
+              // - newer: approver.user
+              // - older: approver.approving_manager
+              // - some shapes: approver.approving_manager.user
+              const manager: any =
+                (approver as any).user ??
+                (approver as any).approving_manager ??
+                (approver as any).approving_manager?.user ??
+                null;
+
+              const managerDisplayName =
+                manager?.first_name || manager?.full_name || manager?.email || null;
+
               return (
                 <div
                   key={approver.id}
@@ -72,10 +85,10 @@ export function ApprovalPipelineDropdown({
                       {isApproved && "Approved by "}
                       {isPending && "Pending Approval by "}
                       {isRejected && "Rejected by "}
-                      {approver.approving_manager.full_name}
+                      {managerDisplayName ? managerDisplayName : "Unknown Approver"}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {formatName(approver.approving_manager.role)}
+                      {manager?.role ? formatName(manager.role) : null}
                     </p>
                   </div>
                 </div>

@@ -29,6 +29,7 @@ export type ClientsResponse = ClientResponse[];
 const buildQueryString = (params: GetPositionsParams): string => {
   return [
     params.my_postings ? `my_postings=${params.my_postings}` : "",
+    params.manager_approvals ? `manager_approvals=${params.manager_approvals}` : "",
     params.no_active ? `no_active=${params.no_active}` : "",
     params.page ? `page=${params.page}` : "",
     params.status ? `status=${params.status}` : "",

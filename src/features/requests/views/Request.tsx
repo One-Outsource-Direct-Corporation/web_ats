@@ -44,6 +44,7 @@ export default function Request({ manager = false }: { manager?: boolean }) {
   });
   const { positions, loading, error, refetch } = usePositions({
     my_postings: manager ? false : true,
+    manager_approvals: manager,
     page: currentPage,
     type: filters.type,
     status: filters.status,

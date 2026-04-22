@@ -61,11 +61,14 @@ export interface GetPositionsParams {
 
 export interface ApproverDb {
   id: number;
-  approving_manager: User;
+  /** Newer API shape places the user under `user` */
+  user?: User;
+  /** Legacy/frontend shape used `approving_manager` as the user object */
+  approving_manager?: User;
   comment: string | null;
   status: string;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ApprovalStatusDb {

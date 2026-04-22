@@ -230,6 +230,11 @@ export function SectionList({
                               <p className="text-sm font-medium text-gray-900">
                                 {question.question}
                               </p>
+                              {question.is_non_negotiable && (
+                                <p className="text-xs font-semibold text-blue-700">
+                                  Non-Negotiable
+                                </p>
+                              )}
                               {question.description && (
                                 <p className="text-xs text-gray-500">
                                   {question.description}

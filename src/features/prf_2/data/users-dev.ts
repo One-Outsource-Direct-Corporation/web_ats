@@ -55,7 +55,7 @@ export function usersDev(): User[] {
       email: "liam.tan@example.com",
       business_unit: "oors",
       department: "sales-and-marketing",
-      role: "hiring_manager",
+      role: "human_resources_manager",
     },
     {
       id: 6,
@@ -88,7 +88,7 @@ export function usersDev(): User[] {
       email: "olivia.santos@example.com",
       business_unit: "oodc",
       department: "operations-shell",
-      role: "hiring_manager",
+      role: "human_resources_manager",
     },
     {
       id: 9,
@@ -132,7 +132,7 @@ export function usersDev(): User[] {
       email: "isabella.mendoza@example.com",
       business_unit: "oodc",
       department: "finance",
-      role: "hiring_manager",
+      role: "human_resources_manager",
     },
   ];
 

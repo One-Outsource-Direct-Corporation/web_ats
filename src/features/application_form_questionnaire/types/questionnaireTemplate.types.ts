@@ -5,6 +5,8 @@ export interface QuestionnaireTemplateQuestion {
   question_type: "multiple_choices" | "checkboxes" | "paragraph";
   options: Array<{ value: string; score: number }>;
   parameter: string;
+  is_non_negotiable?: boolean;
+  non_negotiable_value?: string | number | boolean | string[] | null;
 }
 
 export interface QuestionnaireTemplateSection {
@@ -27,6 +29,8 @@ export interface QuestionnaireTemplateQuestionPayload {
   question_type: "multiple_choices" | "checkboxes" | "paragraph";
   options?: Array<{ value: string; score: number }>;
   parameter?: string;
+  is_non_negotiable?: boolean;
+  non_negotiable_value?: string | number | boolean | string[] | null;
   is_active?: boolean;
   _delete?: boolean;
 }

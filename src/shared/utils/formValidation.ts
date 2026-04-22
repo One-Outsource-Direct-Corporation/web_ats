@@ -6,6 +6,21 @@ export interface ValidationError {
   [key: string]: string[] | ValidationError;
 }
 
+const MANAGED_NON_NEGOTIABLE_FIELDS = new Set([
+  "expected_salary",
+  "willing_to_work_onsite",
+  "education_attained",
+  "course",
+]);
+
+const hasEmptyValue = (value: unknown): boolean => {
+  if (Array.isArray(value)) {
+    return value.length === 0;
+  }
+
+  return value === "" || value === null || value === undefined;
+};
+
 /**
  * Validates job posting fields
  */
@@ -180,8 +195,12 @@ export function validateNonNegotiable(nonNegotiable: any): ValidationError {
 
   const emptyFields: string[] = [];
 
-  nonNegotiable.non_negotiable.forEach((item: any, index: number) => {
-    if (item.value === "" || item.value === null || item.value === undefined) {
+  nonNegotiable.non_negotiable.forEach((item: any) => {
+    if (!MANAGED_NON_NEGOTIABLE_FIELDS.has(item.field)) {
+      return;
+    }
+
+    if (hasEmptyValue(item.value)) {
       // Convert field key to readable label
       const fieldLabel = item.field
         .split("_")
@@ -196,6 +215,47 @@ export function validateNonNegotiable(nonNegotiable: any): ValidationError {
       `The following non-negotiable fields must have values: ${emptyFields.join(
         ", "
       )}`,
+    ];
+  }
+
+  return errors;
+}
+
+/**
+ * Validates questionnaire non-negotiable values.
+ */
+export function validateQuestionnaireNonNegotiable(
+  questionnaire: any,
+): ValidationError {
+  const errors: ValidationError = {};
+
+  if (!questionnaire || !Array.isArray(questionnaire.sections)) {
+    return errors;
+  }
+
+  const emptyQuestions: string[] = [];
+
+  questionnaire.sections.forEach((section: any) => {
+    const sectionName = section?.name || "Unnamed Section";
+    if (!Array.isArray(section?.questionnaires)) {
+      return;
+    }
+
+    section.questionnaires.forEach((question: any) => {
+      if (!question?.is_non_negotiable) {
+        return;
+      }
+
+      if (hasEmptyValue(question?.non_negotiable_value)) {
+        const questionLabel = question?.question || "Unnamed Question";
+        emptyQuestions.push(`${sectionName}: ${questionLabel}`);
+      }
+    });
+  });
+
+  if (emptyQuestions.length > 0) {
+    errors.questionnaire = [
+      `The following questionnaire non-negotiable items must have values: ${emptyQuestions.join(", ")}`,
     ];
   }
 

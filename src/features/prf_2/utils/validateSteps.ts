@@ -3,6 +3,7 @@ import {
   mapServerErrorsToSteps as mapServerErrors,
   hasStepErrors as checkStepErrors,
   getStepErrorSummary as getErrorSummary,
+  validateQuestionnaireNonNegotiable,
   type ValidationError,
 } from "@/shared/utils/formValidation";
 import {
@@ -166,6 +167,14 @@ function getStep4Errors(formData: PRFFormData): ValidationError | null {
   const errors = validatePrfNonNegotiableWithZod(
     formData.application_form_input?.non_negotiable,
   );
+
+  const questionnaireErrors = validateQuestionnaireNonNegotiable(
+    formData.application_form_input?.questionnaire,
+  );
+
+  if (Object.keys(questionnaireErrors).length > 0) {
+    Object.assign(errors, questionnaireErrors);
+  }
 
   return Object.keys(errors).length > 0 ? errors : null;
 }

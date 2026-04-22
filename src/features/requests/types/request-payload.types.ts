@@ -25,7 +25,7 @@ export interface UpdatePrfPayload {
   non_negotiables: string;
   business_unit: string;
   immediate_supervisor: number;
-  hiring_managers: number[];
+  human_resources_managers: number[];
   interview_levels: number;
   category: string;
   position: string;
@@ -73,7 +73,7 @@ export interface PrfEditFormState {
   non_negotiables: string;
   business_unit: string;
   immediate_supervisor: number;
-  hiring_managers: number[];
+  human_resources_managers: number[];
   category: string;
   position: string;
   work_schedule_from: string;

@@ -57,10 +57,10 @@ export default function useSubmitEditForm({
       non_negotiables: cleanRichText(formData.non_negotiables),
       business_unit: formData.business_unit.toLowerCase(),
       immediate_supervisor: formData.immediate_supervisor,
-      hiring_managers: formData.hiring_managers.filter(
+      human_resources_managers: formData.human_resources_managers.filter(
         (hm: number) => hm !== 0,
       ),
-      interview_levels: formData.hiring_managers.filter(
+      interview_levels: formData.human_resources_managers.filter(
         (hm: number) => hm !== 0,
       ).length,
       category: formData.category,

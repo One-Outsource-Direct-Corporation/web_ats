@@ -75,6 +75,8 @@ export default function QuestionnaireBase({
         question_type: question.question_type,
         options: question.options,
         parameter: question.parameter,
+        is_non_negotiable: Boolean(question.is_non_negotiable),
+        non_negotiable_value: question.non_negotiable_value ?? null,
       })),
     }));
   }

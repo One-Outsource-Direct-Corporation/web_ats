@@ -144,6 +144,7 @@ function normalizeJobDetailResponse(
 
 export function usePositions({
   my_postings = false,
+  manager_approvals = false,
   page = 1,
   type = "",
   status = "",
@@ -186,6 +187,7 @@ export function usePositions({
       if (non_admin) {
         response = await positionService.getPositionsResponse(
           {
+            manager_approvals,
             no_active,
             page,
             status,
@@ -204,6 +206,7 @@ export function usePositions({
         response = await positionService.getPositionsResponse(
           {
             my_postings,
+            manager_approvals,
             no_active,
             page,
             status,
@@ -248,6 +251,7 @@ export function usePositions({
     work_setup,
     order_by,
     my_postings,
+    manager_approvals,
     published,
     no_active,
     non_admin,
