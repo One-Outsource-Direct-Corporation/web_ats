@@ -12,6 +12,7 @@ export interface JobPostingResponseDto {
   } | null;
   department_name?: string | null;
   employment_type?: string | null;
+  total_candidates?: number | null;
 }
 
 export interface JobPostingListResponseDto {

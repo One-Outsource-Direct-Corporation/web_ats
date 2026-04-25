@@ -36,6 +36,10 @@ const toJobListItem = (jobPosting: JobPostingResponseDto): JobListItem => ({
     typeof jobPosting.number_of_vacancies === "number"
       ? jobPosting.number_of_vacancies
       : undefined,
+  totalCandidates:
+    typeof jobPosting.total_candidates === "number"
+      ? jobPosting.total_candidates
+      : undefined,
   status: jobPosting.status ?? undefined,
   department:
     jobPosting.department?.name ?? jobPosting.department_name ?? undefined,
