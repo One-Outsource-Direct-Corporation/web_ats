@@ -1,18 +1,17 @@
 import { Button } from "@/shared/components/ui/button";
-import type { ApplicationFormData } from "../../types/application_form.types";
 
 interface ApplicationFooterProps {
   currentStage: number;
-  formData: ApplicationFormData;
   onBack: () => void;
   onNext: () => void;
+  isSubmitting?: boolean;
 }
 
 export const ApplicationFooter = ({
   currentStage,
-  formData,
   onBack,
   onNext,
+  isSubmitting = false,
 }: ApplicationFooterProps) => {
   return (
     <div className="fixed bottom-0 left-0 lg:left-80 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-40">
@@ -20,7 +19,7 @@ export const ApplicationFooter = ({
         {currentStage > 1 && (
           <Button
             onClick={onBack}
-            className="border-1 border-blue-600 text-blue-600 hover:bg-blue-50 bg-transparent px-8 py-2"
+            className="border border-blue-600 text-blue-600 hover:bg-blue-50 bg-transparent px-8 py-2"
           >
             Back
           </Button>
@@ -28,9 +27,14 @@ export const ApplicationFooter = ({
         <Button
           onClick={onNext}
           // disabled={isNextDisabled}
+          disabled={isSubmitting}
           className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 ml-auto"
         >
-          {currentStage === 4 ? "Submit Application" : "Next"}
+          {currentStage === 4
+            ? isSubmitting
+              ? "Submitting..."
+              : "Submit Application"
+            : "Next"}
         </Button>
       </div>
     </div>

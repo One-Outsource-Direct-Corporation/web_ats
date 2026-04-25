@@ -2,6 +2,7 @@ import { Navigate, useParams } from "react-router-dom";
 import CareerDescription from "../views/CareerDescription";
 import CareersApply from "../views/CareersApply";
 import CareersLandingPage from "../views/CareersLandingPage";
+import ApplicationTracker from "../views/ApplicationTracker";
 
 function LegacyJobRedirect() {
   const { jobId } = useParams();
@@ -38,6 +39,10 @@ export const publicJobsRoutes = [
         element: <CareersApply />,
       },
     ],
+  },
+  {
+    path: "track",
+    element: <ApplicationTracker />,
   },
   {
     path: "careers/:jobId/apply",

@@ -52,6 +52,31 @@ export interface PipelineStage {
   name: string;
 }
 
+export type PipelineEmailTriggerOutcome = "passed" | "failed";
+
+export interface PipelineStepNotificationTemplateBase {
+  action_type: "send_email";
+  trigger_outcome: PipelineEmailTriggerOutcome;
+  subject: string;
+  body: string;
+  is_active?: boolean;
+  _delete?: boolean;
+}
+
+export interface PipelineStepNotificationTemplateInDb
+  extends PipelineStepNotificationTemplateBase {
+  id: number;
+}
+
+export interface PipelineStepNotificationTemplateLocal
+  extends PipelineStepNotificationTemplateBase {
+  tempId: string;
+}
+
+export type PipelineStepNotificationTemplate =
+  | PipelineStepNotificationTemplateInDb
+  | PipelineStepNotificationTemplateLocal;
+
 interface PipelineStepBase {
   process_type: string;
   process_title: string;
@@ -61,6 +86,7 @@ interface PipelineStepBase {
   reminder: string;
   interviewer: User | null;
   assessments: Assessment[];
+  notification_templates: PipelineStepNotificationTemplate[];
 }
 
 export interface PipelineStepInDb extends PipelineStepBase {

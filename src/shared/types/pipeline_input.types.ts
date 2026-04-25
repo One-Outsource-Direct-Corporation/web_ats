@@ -1,4 +1,7 @@
-import type { PipelineStep } from "@/shared/types/pipeline.types";
+import type {
+  PipelineStep,
+  PipelineStepNotificationTemplate,
+} from "@/shared/types/pipeline.types";
 
 export interface PipelineAssessmentInputPayload {
   id?: number;
@@ -20,6 +23,7 @@ export interface PipelineStepInputPayload {
   reminder?: string;
   interviewer_id: number;
   assessments?: PipelineAssessmentInputPayload[];
+  notification_templates?: PipelineStepNotificationTemplate[];
   is_active?: boolean;
   _delete?: boolean;
 }

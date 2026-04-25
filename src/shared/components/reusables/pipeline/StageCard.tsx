@@ -6,11 +6,27 @@ import type {
   Assessment,
   AssessmentLocal,
   AssessmentInDb,
+  PipelineStepNotificationTemplate,
 } from "@/shared/types/pipeline.types";
+import type { User } from "@/features/auth/types/auth.types";
 import { StepCard } from "./StepCard";
 import { AddStepFormDialog } from "./AddStepFormDialog";
 import { useState } from "react";
-import type { User } from "@/features/auth/types/auth.types";
+ 
+const DEFAULT_NOTIFICATION_TEMPLATES: PipelineStepNotificationTemplate[] = [
+  {
+    action_type: "send_email",
+    trigger_outcome: "passed",
+    subject: "",
+    body: "",
+  },
+  {
+    action_type: "send_email",
+    trigger_outcome: "failed",
+    subject: "",
+    body: "",
+  },
+];
 
 interface StageCardProps {
   stage: PipelineStage;
@@ -40,6 +56,7 @@ export function StageCard({
       stage: 0,
       reminder: "",
       interviewer: null,
+      notification_templates: DEFAULT_NOTIFICATION_TEMPLATES,
       assessments: [],
     },
   );
@@ -50,9 +67,31 @@ export function StageCard({
 
   function handleStepDataChange(
     field: keyof PipelineStep,
-    value: string | number | boolean | User | null | Assessment[],
+    value:
+      | string
+      | number
+      | boolean
+      | User
+      | null
+      | Assessment[]
+      | PipelineStepNotificationTemplate[],
   ) {
     setStepData((prev) => ({ ...prev, [field]: value }));
+  }
+  function normalizeNotificationTemplates(
+    templates?: PipelineStepNotificationTemplate[],
+  ): PipelineStepNotificationTemplate[] {
+    const passedTemplate = templates?.find(
+      (template) => template.trigger_outcome === "passed",
+    );
+    const failedTemplate = templates?.find(
+      (template) => template.trigger_outcome === "failed",
+    );
+
+    return [
+      passedTemplate ?? DEFAULT_NOTIFICATION_TEMPLATES[0],
+      failedTemplate ?? DEFAULT_NOTIFICATION_TEMPLATES[1],
+    ];
   }
 
   function resetStepData() {
@@ -65,6 +104,7 @@ export function StageCard({
       reminder: "",
       interviewer: null,
       assessments: [],
+      notification_templates: DEFAULT_NOTIFICATION_TEMPLATES,
     });
   }
 
@@ -87,6 +127,9 @@ export function StageCard({
       reminder: step.reminder,
       interviewer: step.interviewer,
       assessments: step.assessments,
+      notification_templates: normalizeNotificationTemplates(
+        step.notification_templates,
+      ),
     });
     setOpenDialogs((prev) => ({ ...prev, [stage.id]: true }));
   }

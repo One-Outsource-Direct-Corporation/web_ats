@@ -8,9 +8,11 @@ import { useJobFilters } from "../hooks/useJobFilters";
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import { usePositions } from "@/shared/hooks/usePositions";
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function CareersLandingPage() {
   const navigation = useAppNavigation();
+  const navigate = useNavigate();
   const {
     searchTerm,
     setSearchTerm,
@@ -29,7 +31,7 @@ export default function CareersLandingPage() {
   }, []);
 
   const handleTrackApplication = () => {
-    navigation.goToTracker();
+    return navigate("/track");
   };
 
   const { positions, loading, error } = usePositions({

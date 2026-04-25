@@ -16,6 +16,7 @@ import type {
   PipelineStage,
   AssessmentLocal,
   PipelineStepInDb,
+  PipelineStepNotificationTemplate,
 } from "@/shared/types/pipeline.types";
 import { ProcessTypeSelect } from "./ProcessTypeSelect";
 import { AssessmentSection } from "./AssessmentSection";
@@ -32,7 +33,14 @@ interface AddStepFormDialogProps {
   stepData: Omit<PipelineStep, "id" | "tempId">;
   onStepDataChange: (
     field: keyof PipelineStep,
-    value: string | number | boolean | User | null | Assessment[],
+    value:
+      | string
+      | number
+      | boolean
+      | User
+      | null
+      | Assessment[]
+      | PipelineStepNotificationTemplate[],
   ) => void;
   addAssessment: (assessment: AssessmentLocal) => void;
   updateAssessment: (id: string | number, data: Assessment) => void;
@@ -65,7 +73,10 @@ export function AddStepFormDialog({
           Add Step Here
         </button>
       </DialogTrigger>
-      <DialogContent className="w-[95vw] !max-w-[1200px] max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        className="w-[95vw] max-h-[90vh] overflow-y-auto"
+        style={{ maxWidth: 1200 }}
+      >
         <DialogHeader>
           <DialogTitle className="text-blue-600">
             {isEditing ? `Edit ${stage.name ?? ""}` : (stage.name ?? "")}
@@ -107,7 +118,8 @@ export function AddStepFormDialog({
               placeholder="Enter description"
               value={stepData.description}
               onChange={(e) => onStepDataChange("description", e.target.value)}
-              className="w-full min-h-[80px] px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={{ minHeight: 80 }}
             />
           </Field>
 
@@ -138,6 +150,12 @@ export function AddStepFormDialog({
             reminderTime={stepData.reminder || ""}
             onReminderTimeChange={(value: string) =>
               onStepDataChange("reminder", value)
+            }
+            notificationTemplates={stepData.notification_templates}
+            onNotificationTemplatesChange={(
+              value: PipelineStepNotificationTemplate[],
+            ) =>
+              onStepDataChange("notification_templates", value)
             }
           />
         </FieldGroup>

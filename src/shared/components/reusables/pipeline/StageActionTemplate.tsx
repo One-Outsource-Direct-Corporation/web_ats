@@ -1,11 +1,7 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/components/ui/select";
-import { Input } from "@/shared/components/ui/input";
+import { useEffect, useMemo, useState } from "react";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+
 import { Button } from "@/shared/components/ui/button";
 import { Calendar } from "@/shared/components/ui/calendar";
 import {
@@ -13,80 +9,149 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/shared/components/ui/popover";
-import { useState, useEffect } from "react";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
+import { Input } from "@/shared/components/ui/input";
+import { Textarea } from "@/shared/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import type {
+  PipelineEmailTriggerOutcome,
+  PipelineStepNotificationTemplate,
+} from "@/shared/types/pipeline.types";
 
 interface StageActionTemplateProps {
   reminderTime: string;
   onReminderTimeChange: (value: string) => void;
+  notificationTemplates: PipelineStepNotificationTemplate[];
+  onNotificationTemplatesChange: (
+    value: PipelineStepNotificationTemplate[],
+  ) => void;
+}
+
+const DEFAULT_NOTIFICATION_TEMPLATES: PipelineStepNotificationTemplate[] = [
+  {
+    action_type: "send_email",
+    trigger_outcome: "passed",
+    subject: "",
+    body: "",
+  },
+  {
+    action_type: "send_email",
+    trigger_outcome: "failed",
+    subject: "",
+    body: "",
+  },
+];
+
+function ensureTemplates(
+  notificationTemplates: PipelineStepNotificationTemplate[],
+) {
+  const passedTemplate = notificationTemplates.find(
+    (template) => template.trigger_outcome === "passed",
+  );
+  const failedTemplate = notificationTemplates.find(
+    (template) => template.trigger_outcome === "failed",
+  );
+
+  return [
+    passedTemplate ?? DEFAULT_NOTIFICATION_TEMPLATES[0],
+    failedTemplate ?? DEFAULT_NOTIFICATION_TEMPLATES[1],
+  ];
 }
 
 export function StageActionTemplate({
   reminderTime,
   onReminderTimeChange,
+  notificationTemplates,
+  onNotificationTemplatesChange,
 }: StageActionTemplateProps) {
-  const [templateType, setTemplateType] = useState("");
   const [reminderDate, setReminderDate] = useState<Date | undefined>(undefined);
   const [reminderTimeOnly, setReminderTimeOnly] = useState("");
 
-  // Parse the reminderTime prop into date and time components
+  const normalizedTemplates = useMemo(
+    () => ensureTemplates(notificationTemplates),
+    [notificationTemplates],
+  );
+
   useEffect(() => {
-    if (reminderTime) {
-      // If reminderTime is in ISO format or datetime-local format (YYYY-MM-DDTHH:mm)
-      if (reminderTime.includes("T")) {
-        const [dateStr, time] = reminderTime.split("T");
-        setReminderDate(new Date(dateStr));
-        setReminderTimeOnly(time.substring(0, 5)); // Get HH:mm
-      } else if (reminderTime.includes(" ")) {
-        // If format is "YYYY-MM-DD HH:mm:ss" or similar
-        const [dateStr, time] = reminderTime.split(" ");
-        setReminderDate(new Date(dateStr));
-        setReminderTimeOnly(time.substring(0, 5)); // Get HH:mm
-      } else if (reminderTime.includes(":")) {
-        // If it's just a time string (HH:mm or HH:mm:ss)
-        setReminderTimeOnly(reminderTime.substring(0, 5));
-        setReminderDate(undefined);
-      } else {
-        // If it's just a date string (YYYY-MM-DD)
-        setReminderDate(new Date(reminderTime));
-        setReminderTimeOnly("");
-      }
-    } else {
-      // Clear both fields if reminderTime is empty
+    if (!reminderTime) {
       setReminderDate(undefined);
       setReminderTimeOnly("");
+      return;
     }
+
+    if (reminderTime.includes("T")) {
+      const [dateStr, time] = reminderTime.split("T");
+      setReminderDate(new Date(dateStr));
+      setReminderTimeOnly(time.substring(0, 5));
+      return;
+    }
+
+    if (reminderTime.includes(" ")) {
+      const [dateStr, time] = reminderTime.split(" ");
+      setReminderDate(new Date(dateStr));
+      setReminderTimeOnly(time.substring(0, 5));
+      return;
+    }
+
+    if (reminderTime.includes(":")) {
+      setReminderTimeOnly(reminderTime.substring(0, 5));
+      setReminderDate(undefined);
+      return;
+    }
+
+    setReminderDate(new Date(reminderTime));
+    setReminderTimeOnly("");
   }, [reminderTime]);
 
-  // Combine date and time and update parent
   const handleDateChange = (date: Date | undefined) => {
     setReminderDate(date);
+
     if (date && reminderTimeOnly) {
-      const dateStr = format(date, "yyyy-MM-dd");
-      onReminderTimeChange(`${dateStr}T${reminderTimeOnly}`);
-    } else if (date) {
-      const dateStr = format(date, "yyyy-MM-dd");
-      onReminderTimeChange(dateStr);
-    } else {
-      // If date is cleared, clear the entire reminder
-      onReminderTimeChange("");
+      onReminderTimeChange(`${format(date, "yyyy-MM-dd")}T${reminderTimeOnly}`);
+      return;
     }
+
+    if (date) {
+      onReminderTimeChange(format(date, "yyyy-MM-dd"));
+      return;
+    }
+
+    onReminderTimeChange("");
   };
 
   const handleTimeChange = (time: string) => {
     setReminderTimeOnly(time);
+
     if (reminderDate && time) {
-      const dateStr = format(reminderDate, "yyyy-MM-dd");
-      onReminderTimeChange(`${dateStr}T${time}`);
-    } else if (time) {
-      // Only time provided, just store the time
-      onReminderTimeChange(time);
-    } else {
-      // If time is cleared, clear the entire reminder
-      onReminderTimeChange("");
+      onReminderTimeChange(`${format(reminderDate, "yyyy-MM-dd")}T${time}`);
+      return;
     }
+
+    if (time) {
+      onReminderTimeChange(time);
+      return;
+    }
+
+    onReminderTimeChange("");
+  };
+
+  const updateTemplateField = (
+    triggerOutcome: PipelineEmailTriggerOutcome,
+    field: "subject" | "body",
+    value: string,
+  ) => {
+    onNotificationTemplatesChange(
+      normalizedTemplates.map((template) => {
+        if (template.trigger_outcome !== triggerOutcome) {
+          return template;
+        }
+
+        return {
+          ...template,
+          action_type: "send_email",
+          [field]: value,
+        };
+      }),
+    );
   };
 
   return (
@@ -95,43 +160,15 @@ export function StageActionTemplate({
         <h4 className="text-sm font-semibold text-gray-900">
           Configure Stage Action Template
         </h4>
-        <p className="text-xs text-gray-600">Send Email / SMS</p>
+        <p className="text-xs text-gray-600">Send Email</p>
       </div>
+
       <p className="text-xs text-blue-600 mb-3">
-        Select the template type. Generation may take up to 2 weeks due to
-        backend processing.
+        Configure reminder timing and the email content sent when a candidate
+        passes or fails this step.
       </p>
 
-      <div className="grid grid-cols-3 gap-4">
-        <div>
-          <label className="text-sm text-gray-700 mb-1 block">
-            Set Template
-          </label>
-          <Select value={templateType} onValueChange={setTemplateType}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Template" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Select Template" disabled>
-                Select Template
-              </SelectItem>
-              <SelectItem value="setup_panel_interview">
-                Setup Panel Interview
-              </SelectItem>
-              <SelectItem value="setup_one_on_one_interview">
-                Setup One on One Interview
-              </SelectItem>
-              <SelectItem value="setup_online_interview">
-                Setup Online Interview
-              </SelectItem>
-              <SelectItem value="setup_final_interview">
-                Setup Final Interview
-              </SelectItem>
-              <SelectItem value="none">None</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div>
           <label className="text-sm text-gray-700 mb-1 block">
             Reminder Date
@@ -142,15 +179,11 @@ export function StageActionTemplate({
                 variant="outline"
                 className={cn(
                   "w-full justify-start text-left font-normal",
-                  !reminderDate && "text-muted-foreground"
+                  !reminderDate && "text-muted-foreground",
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {reminderDate ? (
-                  format(reminderDate, "PPP")
-                ) : (
-                  <span>Pick a date</span>
-                )}
+                {reminderDate ? format(reminderDate, "PPP") : <span>Pick a date</span>}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -171,9 +204,66 @@ export function StageActionTemplate({
           <Input
             type="time"
             value={reminderTimeOnly}
-            onChange={(e) => handleTimeChange(e.target.value)}
+            onChange={(event) => handleTimeChange(event.target.value)}
           />
         </div>
+
+        <div className="rounded-lg border border-dashed border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
+          SMS is reserved for a later release. This template currently stores
+          Send Email content only.
+        </div>
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {normalizedTemplates.map((template) => (
+          <div key={template.trigger_outcome} className="rounded-lg border p-4">
+            <div className="mb-3">
+              <h5 className="text-sm font-semibold text-gray-900 capitalize">
+                {template.trigger_outcome} Email
+              </h5>
+              <p className="text-xs text-gray-500">
+                Sent when the candidate {template.trigger_outcome === "passed" ? "passes" : "fails"} this pipeline step.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-sm text-gray-700 mb-1 block">
+                  Subject
+                </label>
+                <Input
+                  value={template.subject}
+                  onChange={(event) =>
+                    updateTemplateField(
+                      template.trigger_outcome,
+                      "subject",
+                      event.target.value,
+                    )
+                  }
+                  placeholder="Enter email subject"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm text-gray-700 mb-1 block">
+                  Body
+                </label>
+                <Textarea
+                  value={template.body}
+                  onChange={(event) =>
+                    updateTemplateField(
+                      template.trigger_outcome,
+                      "body",
+                      event.target.value,
+                    )
+                  }
+                  placeholder="Enter email body"
+                  style={{ minHeight: 140 }}
+                />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

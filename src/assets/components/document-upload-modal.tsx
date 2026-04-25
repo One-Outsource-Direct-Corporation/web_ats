@@ -1,11 +1,18 @@
 import type React from "react";
 import { useState } from "react";
-import { X, Upload, FileText } from "lucide-react";
+import { X, FileText } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
+
+export interface UploadedDocumentsPayload {
+  resumeFile: File;
+  coverLetterFile?: File | null;
+}
 
 interface DocumentUploadModalProps {
   onClose: () => void;
-  onDocumentsUploaded: (resumeData: any) => void;
+  onDocumentsUploaded: (
+    documents: UploadedDocumentsPayload,
+  ) => Promise<void> | void;
 }
 
 export function DocumentUploadModal({
@@ -42,27 +49,20 @@ export function DocumentUploadModal({
   };
 
   const handleContinue = async () => {
+    if (!resumeFile) {
+      return;
+    }
+
     setIsProcessing(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    const mockResumeData = {
-      firstName: "John",
-      lastName: "Doe",
-      birthday: "15-Jan-1990",
-      gender: "male",
-      primaryContact: "+63 912 345 6789",
-      secondaryContact: "+63 987 654 3210",
-      email: "john.doe@email.com",
-      linkedinProfile: "https://linkedin.com/in/johndoe",
-      addressLine1: "123 Main Street, Barangay San Antonio",
-      city: "Makati City",
-      district: "Metro Manila",
-      postalCode: "1203",
-      country: "Philippines",
-    };
-
-    onDocumentsUploaded(mockResumeData);
+    try {
+      await onDocumentsUploaded({
+        resumeFile,
+        coverLetterFile,
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (

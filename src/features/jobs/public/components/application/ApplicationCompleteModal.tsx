@@ -3,11 +3,12 @@ import { useNavigate } from "react-router-dom";
 
 interface ApplicationCompleteModalProps {
   onTrackApplication: () => void;
+  trackingCode: string;
 }
 
 export const ApplicationCompleteModal: React.FC<
   ApplicationCompleteModalProps
-> = ({ onTrackApplication }) => {
+> = ({ onTrackApplication, trackingCode }) => {
   const navigate = useNavigate();
   return (
     <div className="fixed inset-0 bg-gray-900/65 flex items-center justify-center z-50 p-4">
@@ -16,15 +17,13 @@ export const ApplicationCompleteModal: React.FC<
           Application Complete!
         </h2>
         <p className="text-gray-600 text-sm leading-relaxed mb-4">
-          Congratulations! Your application is complete! 🎉 A tracking code has
-          been sent to your email. You can use this code to easily track your
-          application's progress through the Track Application section. We're
-          excited to have you on this journey!
+          Congratulations! Your application has been submitted. Please save the
+          tracking code below and use it in the Track Application section to
+          monitor your application status.
         </p>
-        {/* TODO: Brincg back the tracking code after submission */}
         <div className="bg-blue-50 p-3 rounded-lg mb-6">
           <p className="text-sm text-gray-600 mb-1">Your tracking code:</p>
-          <p className="text-lg font-bold text-blue-600">303030</p>
+          <p className="text-lg font-bold text-blue-600">{trackingCode}</p>
         </div>
         <div className="flex gap-3">
           <Button

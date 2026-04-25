@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { useJobDetail } from "../hooks/useJobDetail";
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import { Button } from "@/shared/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { DocumentUploadModal } from "@/assets/components/document-upload-modal";
+import {
+  DocumentUploadModal,
+  type UploadedDocumentsPayload,
+} from "@/assets/components/document-upload-modal";
 import { useApplicationForm } from "../hooks/useApplicationForm";
 import { ApplicationSidebar } from "../components/application/ApplicationSidebar";
 import { ApplicationHeader } from "../components/application/ApplicationHeader";
@@ -15,6 +19,7 @@ import Step02 from "../components/steps/Step02";
 import Step03 from "../components/steps/Step03";
 import Step04 from "../components/steps/Step04";
 import type { WorkExperienceEntry } from "../types/application_form.types";
+import { useCandidateApplicationSubmission } from "../hooks/useCandidateApplicationSubmission";
 
 export default function CareersApply() {
   const params = useParams();
@@ -23,7 +28,13 @@ export default function CareersApply() {
   const { jobDetail, loading, error } = useJobDetail(params.jobId);
 
   const [showUploadModal, setShowUploadModal] = useState(true);
-  const [showCompletionModal] = useState(false);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [coverLetterFile, setCoverLetterFile] = useState<File | null>(null);
+  const [trackingCode, setTrackingCode] = useState("");
+
+  const { submitCandidateApplication, isSubmitting } =
+    useCandidateApplicationSubmission();
 
   const {
     formData,
@@ -89,7 +100,11 @@ export default function CareersApply() {
     setShowUploadModal(false);
   };
 
-  const handleDocumentsUploadComplete = () => {
+  const handleDocumentsUploadComplete = async (
+    documents: UploadedDocumentsPayload,
+  ) => {
+    setResumeFile(documents.resumeFile);
+    setCoverLetterFile(documents.coverLetterFile ?? null);
     setShowUploadModal(false);
   };
 
@@ -110,6 +125,79 @@ export default function CareersApply() {
       navigate(`/jobs/${jobDetail.job_posting.id}`);
     }
   }, [jobDetail, navigate]);
+
+  const handleNextOrSubmit = useCallback(async () => {
+    if (!jobDetail) {
+      return;
+    }
+
+    if (currentStage < 4) {
+      if (currentStage === 1 && !acceptTerms) {
+        toast.error("Please accept the data privacy terms to continue.");
+        return;
+      }
+
+      goToNextStage();
+      return;
+    }
+
+    if (!resumeFile) {
+      toast.error("Resume is required. Please upload your resume to continue.");
+      setShowUploadModal(true);
+      return;
+    }
+
+    const signatureValue =
+      typeof formData.acknowledgement.signature === "string"
+        ? formData.acknowledgement.signature
+        : formData.acknowledgement.signature?.name ?? null;
+
+    try {
+      const response = await submitCandidateApplication({
+        payload: {
+          job_posting: jobDetail.job_posting.id,
+          source: "careers_page",
+          personal_info: formData.personalInfo,
+          job_details: {
+            expectedSalary: formData.jobDetails.expectedSalary,
+            willingToWorkOnsite: formData.jobDetails.willingToWorkOnsite,
+            interviewSchedule: formData.jobDetails.interviewSchedule,
+          },
+          education_work: formData.educationWork,
+          acknowledgement: {
+            ...formData.acknowledgement,
+            signature: signatureValue,
+          },
+          questionnaire_answers: formData.questionnaire,
+          requirements: [],
+        },
+        files: {
+          resume: resumeFile,
+          coverLetter: coverLetterFile,
+          photo: formData.jobDetails.photo,
+          medicalCertificate: formData.jobDetails.medicalCertificate,
+        },
+      });
+
+      setTrackingCode(response.tracking_code);
+      setShowCompletionModal(true);
+    } catch (submissionError: unknown) {
+      const message =
+        submissionError instanceof Error
+          ? submissionError.message
+          : "Failed to submit your application. Please try again.";
+      toast.error(message);
+    }
+  }, [
+    acceptTerms,
+    coverLetterFile,
+    currentStage,
+    formData,
+    goToNextStage,
+    jobDetail,
+    resumeFile,
+    submitCandidateApplication,
+  ]);
 
   if (loading) {
     return <LoadingComponent />;
@@ -216,14 +304,17 @@ export default function CareersApply() {
       {/* Fixed Footer for Navigation Buttons */}
       <ApplicationFooter
         currentStage={currentStage}
-        formData={formData}
         onBack={() => currentStage > 1 && goToPreviousStage()}
-        onNext={() => currentStage < 4 && goToNextStage()}
+        onNext={handleNextOrSubmit}
+        isSubmitting={isSubmitting}
       />
 
       {/* Application Complete Modal */}
       {showCompletionModal && (
-        <ApplicationCompleteModal onTrackApplication={handleTrackApplication} />
+        <ApplicationCompleteModal
+          onTrackApplication={handleTrackApplication}
+          trackingCode={trackingCode}
+        />
       )}
     </div>
   );

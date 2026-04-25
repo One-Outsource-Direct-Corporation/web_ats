@@ -12,6 +12,7 @@ import Login from "@/features/auth/views/Login";
 import PersistLogin from "@/features/auth/components/PersistLogin";
 import { publicJobsRoutes } from "@/features/jobs/public/routes/careersRoute";
 import { requestRoutes } from "@/features/requests/routes/requestRoutes";
+import ApplicationTracker from "@/features/jobs/public/views/ApplicationTracker";
 
 export const router = createBrowserRouter([
   {
@@ -27,6 +28,10 @@ export const router = createBrowserRouter([
             element: <Login />,
           },
         ],
+      },
+      {
+        path: "track",
+        element: <ApplicationTracker/>
       },
       {
         element: (
