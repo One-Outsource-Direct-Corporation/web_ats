@@ -23,7 +23,7 @@ const STAGE_COMPONENTS: Record<
 };
 
 export default function JobStageTemplate() {
-  const { jobtitle, jobstage } = useParams();
+  const { jobId, jobstage } = useParams();
   const location = useLocation();
 
   const stageKey = (jobstage || "").toLowerCase().replace(/\s+/g, "");
@@ -41,7 +41,7 @@ export default function JobStageTemplate() {
 
   return (
     <Component
-      jobTitle={state?.jobTitle || jobtitle}
+      jobTitle={state?.jobTitle || jobId}
       stageName={state?.stageName || jobstage}
     />
   );

@@ -10,6 +10,29 @@ interface UseAssessmentFormProps {
   open: boolean;
 }
 
+const resolveFilePreviewUrl = (rawUrl: string): string => {
+  if (!rawUrl) {
+    return rawUrl;
+  }
+
+  if (/^(https?:)?\/\//i.test(rawUrl)) {
+    return rawUrl;
+  }
+
+  const backendBaseUrl = import.meta.env.VITE_BACKEND_URL as
+    | string
+    | undefined;
+
+  if (!backendBaseUrl) {
+    return rawUrl;
+  }
+
+  const trimmedBaseUrl = backendBaseUrl.replace(/\/$/, "");
+  const normalizedPath = rawUrl.startsWith("/") ? rawUrl : `/${rawUrl}`;
+
+  return `${trimmedBaseUrl}${normalizedPath}`;
+};
+
 export function useAssessmentForm({
   editingAssessment,
   open,
@@ -80,12 +103,7 @@ export function useAssessmentForm({
             isImage &&
             typeof editingAssessment.file.file === "string"
           ) {
-            // Handle DB file URLs by appending backend URL
-            setFilePreview(
-              `${import.meta.env.VITE_BACKEND_URL}${
-                editingAssessment.file.file
-              }`,
-            );
+            setFilePreview(resolveFilePreviewUrl(editingAssessment.file.file));
           } else {
             setFilePreview(null);
           }
@@ -228,9 +246,7 @@ export function useAssessmentForm({
             fileData.file &&
             typeof fileData.file === "string"
           ) {
-            setFilePreview(
-              `${import.meta.env.VITE_BACKEND_URL}${fileData.file}`,
-            );
+            setFilePreview(resolveFilePreviewUrl(fileData.file));
           } else {
             setFilePreview(null);
           }

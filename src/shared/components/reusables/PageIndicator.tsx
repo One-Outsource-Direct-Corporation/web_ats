@@ -19,7 +19,7 @@ export default function PageIndicator({
   handleNextPage,
 }: PageIndicator) {
   return (
-    <div className="flex justify-center items-center mt-4 space-x-4">
+    <div className="flex justify-center items-center my-4 space-x-4">
       {positions && (
         <>
           <Button

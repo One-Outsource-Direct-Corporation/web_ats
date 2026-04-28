@@ -81,10 +81,6 @@ export function normalizeJobToken(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
-export function toCompactJobSlug(jobTitle: string): string {
-  return normalizeJobToken(jobTitle);
-}
-
 /**
  * Converts a stage name into a URL-friendly slug
  * @param stageName - The human-readable stage name
@@ -119,10 +115,10 @@ export function isCustomFinalStage(stageName: string): boolean {
 /**
  * Gets the appropriate route path for a stage
  * @param stageName - The stage name
- * @param jobSlug - The job title slug (optional for custom final stages)
+ * @param jobId - The job id (optional for custom final stages)
  * @returns The complete route path
  */
-export function getStageRoutePath(stageName: string, jobSlug?: string): string {
+export function getStageRoutePath(stageName: string, jobId?: string): string {
   const isCustomStage = isCustomFinalStage(stageName);
 
   if (isCustomStage) {
@@ -131,7 +127,7 @@ export function getStageRoutePath(stageName: string, jobSlug?: string): string {
   }
 
   const stageSlug = formatStageSlug(stageName);
-  return `/job/${jobSlug}/${stageSlug}`;
+  return `/job/${jobId}/${stageSlug}`;
 }
 
 export function getProcessTypeLabel(processType: string): string {
@@ -148,7 +144,7 @@ export function getProcessTypeLabel(processType: string): string {
 
 export function getStageRoutePathFromProcessType(
   processType: string,
-  jobSlug?: string,
+  jobId?: string,
 ): string | null {
   const routeConfig = PROCESS_TYPE_ROUTE_SEGMENTS[processType];
 
@@ -160,7 +156,22 @@ export function getStageRoutePathFromProcessType(
     return `/job/stage/${routeConfig.segment}`;
   }
 
-  return `/job/${jobSlug}/${routeConfig.segment}`;
+  return `/job/${jobId}/applicants?type=${encodeURIComponent(processType)}`;
+}
+
+export function getProcessTypeFromRouteSegment(
+  routeSegment?: string,
+): string | null {
+  if (!routeSegment) {
+    return null;
+  }
+
+  const normalizedSegment = routeSegment.toLowerCase();
+  const routeEntry = Object.entries(PROCESS_TYPE_ROUTE_SEGMENTS).find(
+    ([, value]) => value.segment.toLowerCase() === normalizedSegment,
+  );
+
+  return routeEntry?.[0] ?? null;
 }
 
 export interface JobPipelineStageGroup {

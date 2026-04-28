@@ -64,7 +64,7 @@ export interface StageSectionProps {
   onToggleSelect: (id: string) => void;
   onColumnClick: (columnId: string) => void;
   navigate: any;
-  jobtitle?: string;
+  jobId?: string;
 }
 
 export interface StageConfig {

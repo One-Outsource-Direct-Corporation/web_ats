@@ -12,7 +12,7 @@ export function StageSection({
   onToggleSelect,
   onColumnClick,
   navigate,
-  jobtitle,
+  jobId,
 }: StageSectionProps) {
   if (isMultiRow && columns.length === 5) {
     // Special layout for Stage 3 with 5 columns
@@ -50,7 +50,7 @@ export function StageSection({
               hasSelectedApplicants={selectedApplicants.size > 0}
               onColumnClick={onColumnClick}
               navigate={navigate}
-              jobtitle={jobtitle}
+              jobId={jobId}
             />
           ))}
         </div>
@@ -76,7 +76,7 @@ export function StageSection({
               hasSelectedApplicants={selectedApplicants.size > 0}
               onColumnClick={onColumnClick}
               navigate={navigate}
-              jobtitle={jobtitle}
+              jobId={jobId}
             />
           ))}
         </div>
@@ -111,7 +111,7 @@ export function StageSection({
             hasSelectedApplicants={selectedApplicants.size > 0}
             onColumnClick={onColumnClick}
             navigate={navigate}
-            jobtitle={jobtitle}
+            jobId={jobId}
           />
         ))}
       </div>

@@ -1,22 +1,84 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Mic, Upload, ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { defaultAxios } from "@/config/axios";
+import { toast } from "react-toastify";
+
+type PipelineProgressOutcome = "pass" | "fail";
+
+const GRACE_PERIOD_MS = 5000;
+
+interface PendingProgressAction {
+  id: string;
+  candidateApplicationId: number;
+  candidateName: string;
+  pipelineStepId: number;
+  outcome: PipelineProgressOutcome;
+}
+
+interface InterviewRouteState {
+  candidateApplicationId?: number;
+  candidateName?: string;
+  pipelineStepId?: number;
+  processType?: string;
+  scheduledFor?: string;
+  interviewerName?: string;
+  interviewerEmail?: string;
+  department?: string;
+  jobTitle?: string;
+}
+
+const toDateInputValue = (isoDateTime?: string): string => {
+  if (!isoDateTime) {
+    return "";
+  }
+
+  const parsed = new Date(isoDateTime);
+  if (Number.isNaN(parsed.getTime())) {
+    return "";
+  }
+
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 export default function InterviewEvaluationForm() {
-  const [formData, setFormData] = useState({
-    applicantName: "",
-    interviewDate: "",
-    positionApplyingFor: "",
-    interviewer: "",
-    notes: "",
-  });
-
+  const location = useLocation();
   const navigate = useNavigate();
+  const routeState = (location.state as InterviewRouteState | null) ?? null;
+
+  const [formData, setFormData] = useState(() => ({
+    applicantName: routeState?.candidateName ?? "",
+    interviewDate: toDateInputValue(routeState?.scheduledFor),
+    positionApplyingFor: routeState?.jobTitle ?? "",
+    interviewer: routeState?.interviewerName ?? routeState?.interviewerEmail ?? "",
+    notes: "",
+  }));
+
+  const [pendingActions, setPendingActions] = useState<PendingProgressAction[]>([]);
+  const [isCommittingAction, setIsCommittingAction] = useState(false);
+  const pendingTimersRef = useRef<Record<string, ReturnType<typeof window.setTimeout>>>({});
+  const pendingActionsRef = useRef<PendingProgressAction[]>([]);
+
+  useEffect(() => {
+    pendingActionsRef.current = pendingActions;
+  }, [pendingActions]);
+
+  useEffect(() => {
+    return () => {
+      for (const timerId of Object.values(pendingTimersRef.current)) {
+        window.clearTimeout(timerId);
+      }
+      pendingTimersRef.current = {};
+    };
+  }, []);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -26,18 +88,127 @@ export default function InterviewEvaluationForm() {
   };
 
   const handleSubmit = () => {
-    console.log("Form submitted:", formData);
-    // Handle form submission logic here
+    toast.success("Interview evaluation form submitted.");
+  };
+
+  const removePendingAction = (actionId: string) => {
+    setPendingActions((previousValue) =>
+      previousValue.filter((action) => action.id !== actionId),
+    );
+  };
+
+  const handleUndoPendingAction = (actionId: string) => {
+    const timerId = pendingTimersRef.current[actionId];
+    if (timerId) {
+      window.clearTimeout(timerId);
+      delete pendingTimersRef.current[actionId];
+    }
+
+    removePendingAction(actionId);
+    toast.dismiss(actionId);
+  };
+
+  const commitPendingAction = async (pendingAction: PendingProgressAction) => {
+    if (!pendingActionsRef.current.some((action) => action.id === pendingAction.id)) {
+      return;
+    }
+
+    const timerId = pendingTimersRef.current[pendingAction.id];
+    if (timerId) {
+      window.clearTimeout(timerId);
+      delete pendingTimersRef.current[pendingAction.id];
+    }
+
+    setIsCommittingAction(true);
+
+    try {
+      await defaultAxios.post("/api/candidate/pipeline/progress/", {
+        candidate_application_id: pendingAction.candidateApplicationId,
+        pipeline_step_id: pendingAction.pipelineStepId,
+        outcome: pendingAction.outcome,
+        remarks: formData.notes,
+      });
+
+      toast.success(
+        `${pendingAction.candidateName} marked as ${
+          pendingAction.outcome === "pass" ? "Pass" : "Fail"
+        }.`,
+      );
+    } catch (error) {
+      console.error("Unable to update candidate pipeline progress.", error);
+      toast.error("Unable to submit interview outcome.");
+    } finally {
+      removePendingAction(pendingAction.id);
+      setIsCommittingAction(false);
+    }
+  };
+
+  const queueInterviewOutcome = (outcome: PipelineProgressOutcome) => {
+    const candidateApplicationId = routeState?.candidateApplicationId;
+    const pipelineStepId = routeState?.pipelineStepId;
+
+    if (!candidateApplicationId || !pipelineStepId) {
+      toast.error("Interview context is missing candidate or pipeline step details.");
+      return;
+    }
+
+    if (isCommittingAction) {
+      return;
+    }
+
+    const hasPendingAction = pendingActions.some(
+      (pendingAction) =>
+        pendingAction.candidateApplicationId === candidateApplicationId &&
+        pendingAction.pipelineStepId === pipelineStepId,
+    );
+    if (hasPendingAction) {
+      return;
+    }
+
+    const pendingAction: PendingProgressAction = {
+      id: `${candidateApplicationId}-${pipelineStepId}-${Date.now()}-${outcome}`,
+      candidateApplicationId,
+      candidateName: routeState?.candidateName || formData.applicantName || "Candidate",
+      pipelineStepId,
+      outcome,
+    };
+
+    toast.info(
+      <div className="space-y-2">
+        <p className="text-sm leading-5">
+          <span className="font-semibold">{pendingAction.candidateName}</span>{" "}
+          queued for {outcome === "pass" ? "Pass" : "Fail"}. Auto-submit in 5 seconds.
+        </p>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-8"
+          onClick={() => handleUndoPendingAction(pendingAction.id)}
+        >
+          Undo
+        </Button>
+      </div>,
+      {
+        toastId: pendingAction.id,
+        autoClose: GRACE_PERIOD_MS,
+        closeButton: false,
+        position: "top-right",
+      },
+    );
+
+    setPendingActions((previousValue) => [...previousValue, pendingAction]);
+    pendingTimersRef.current[pendingAction.id] = window.setTimeout(() => {
+      void commitPendingAction(pendingAction);
+    }, GRACE_PERIOD_MS);
   };
 
   const handlePass = () => {
-    console.log("Applicant passed");
-    // Handle pass logic here
+    queueInterviewOutcome("pass");
   };
 
   const handleFail = () => {
-    console.log("Applicant failed");
-    // Handle fail logic here
+    queueInterviewOutcome("fail");
   };
 
   const handleLiveRecord = () => {
@@ -79,6 +250,7 @@ export default function InterviewEvaluationForm() {
             <Button
               onClick={handlePass}
               variant="outline"
+              disabled={isCommittingAction}
               className="border-green-500 text-green-600 hover:bg-green-50 px-6 w-full sm:w-auto"
             >
               Pass
@@ -86,6 +258,7 @@ export default function InterviewEvaluationForm() {
             <Button
               onClick={handleFail}
               variant="outline"
+              disabled={isCommittingAction}
               className="border-red-500 text-red-600 hover:bg-red-50 px-6 w-full sm:w-auto"
             >
               Fail
@@ -146,11 +319,9 @@ export default function InterviewEvaluationForm() {
                 <Input
                   id="positionApplyingFor"
                   value={formData.positionApplyingFor}
-                  onChange={(e) =>
-                    handleInputChange("positionApplyingFor", e.target.value)
-                  }
-                  placeholder="Enter position"
-                  className="w-full"
+                  readOnly
+                  placeholder="Job posting title"
+                  className="w-full bg-gray-50"
                 />
               </div>
               <div className="space-y-2">
@@ -163,11 +334,9 @@ export default function InterviewEvaluationForm() {
                 <Input
                   id="interviewer"
                   value={formData.interviewer}
-                  onChange={(e) =>
-                    handleInputChange("interviewer", e.target.value)
-                  }
-                  placeholder="Enter interviewer name"
-                  className="w-full"
+                  readOnly
+                  placeholder="Selected pipeline step interviewer"
+                  className="w-full bg-gray-50"
                 />
               </div>
             </div>
@@ -212,7 +381,7 @@ export default function InterviewEvaluationForm() {
                 value={formData.notes}
                 onChange={(e) => handleInputChange("notes", e.target.value)}
                 placeholder="Add your interview notes here..."
-                className="w-full min-h-[120px] resize-none"
+                className="w-full min-h-30 resize-none"
               />
             </div>
 

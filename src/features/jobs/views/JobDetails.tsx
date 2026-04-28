@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { useJobBySlug, useJobDetailQuery, useJobs } from "../hooks/useJobs";
+import { useJobById, useJobDetailQuery, useJobs } from "../hooks/useJobs";
 import { extractPipelineStepsFromJobDetail } from "../services/jobService";
 import { Input } from "@/shared/components/ui/input.tsx";
 import { Button } from "@/shared/components/ui/button.tsx";
+import { Badge } from "@/shared/components/ui/badge";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { ArrowLeft, LayoutGrid, List } from "lucide-react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import type { JobPipelineStep } from "../types/job.types";
 import {
-  formatJobTitle,
   getProcessTypeLabel,
   getStageRoutePathFromProcessType,
   groupPipelineStepsByStage,
-  toCompactJobSlug,
 } from "../utils/jobFormatters";
 import formatName from "@/shared/utils/formatName";
 
@@ -23,10 +23,11 @@ interface JobRouteState {
 export default function JobDetails() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { jobtitle } = useParams<{ jobtitle: string }>();
+  const { jobId } = useParams<{ jobId: string }>();
   const jobs = useJobs();
-  const jobBySlug = useJobBySlug(jobtitle);
+  const jobById = useJobById(jobId);
   const routeState = (location.state ?? null) as JobRouteState | null;
+  const { user } = useAuth();
 
   const [selectedStage, setSelectedStage] = useState<string>("");
 
@@ -46,10 +47,10 @@ export default function JobDetails() {
     return jobs.find((item) => item.title === routeState.jobTitle);
   }, [jobs, routeState?.jobTitle]);
 
-  const currentJob = jobFromStateById ?? jobBySlug ?? jobFromStateByTitle;
-  const currentJobTitle =
-    currentJob?.title ?? routeState?.jobTitle ?? formatJobTitle(jobtitle);
+  const currentJob = jobById ?? jobFromStateById ?? jobFromStateByTitle;
+  const currentJobTitle = currentJob?.title ?? routeState?.jobTitle ?? "Job Details";
   const currentJobId =
+    jobId ??
     currentJob?.id ??
     (routeState?.jobId ? String(routeState.jobId) : undefined);
 
@@ -69,12 +70,15 @@ export default function JobDetails() {
   );
 
   const handleStageClick = (step: JobPipelineStep) => {
+    if (!currentJobId) {
+      return;
+    }
+
     const stageName =
       step.process_title || getProcessTypeLabel(step.process_type);
     setSelectedStage(stageName);
 
-    const jobSlug = toCompactJobSlug(currentJobTitle);
-    const path = getStageRoutePathFromProcessType(step.process_type, jobSlug);
+    const path = getStageRoutePathFromProcessType(step.process_type, currentJobId);
 
     if (!path) {
       return;
@@ -83,6 +87,7 @@ export default function JobDetails() {
     navigate(path, {
       state: {
         jobTitle: currentJobTitle,
+        jobId: currentJobId,
         stageName,
       },
     });
@@ -95,7 +100,7 @@ export default function JobDetails() {
   return (
     <>
       <div className="min-h-screen bg-gray-50 p-6">
-        <div className="mx-auto max-w-7xl space-y-6">
+        <div className="space-y-6">
           <div className="w-full space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
@@ -117,9 +122,9 @@ export default function JobDetails() {
                   size="icon"
                   onClick={() =>
                     navigate(
-                      `/job/${toCompactJobSlug(currentJobTitle)}/weekly`,
+                      `/job/${currentJobId}/weekly`,
                       {
-                        state: { jobTitle: currentJobTitle },
+                        state: { jobTitle: currentJobTitle, jobId: currentJobId },
                       },
                     )
                   }
@@ -212,13 +217,26 @@ export default function JobDetails() {
                             {step.process_title ||
                               getProcessTypeLabel(step.process_type)}
                           </span>
-                          <Button
-                            variant="link"
-                            className="text-blue-600 text-sm px-0 hover:underline"
-                            onClick={() => handleStageClick(step)}
-                          >
-                            View Applicants
-                          </Button>
+                                <div className="flex items-center gap-3">
+                                  {user && step.interviewerId && user.id === step.interviewerId && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-sm px-0 text-green-600"
+                                      onClick={() => handleStageClick(step)}
+                                    >
+                                      You (Interviewer)
+                                    </Button>
+                                  )}
+
+                                  <Button
+                                    variant="link"
+                                    className="text-blue-600 text-sm px-0 hover:underline"
+                                    onClick={() => handleStageClick(step)}
+                                  >
+                                    View Applicants
+                                  </Button>
+                                </div>
                         </div>
                       ))}
                     </div>

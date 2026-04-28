@@ -4,7 +4,7 @@ import type { ApplicationFormBase } from "@/shared/types/application_form.types"
 
 interface Step02Props {
   formData: JobDetailsFormData;
-  onInputChange: (field: string, value: string | File | number | null) => void;
+  onInputChange: (field: string, value: string | string[] | File | number | null) => void;
   applicationForm: ApplicationFormBase;
 }
 

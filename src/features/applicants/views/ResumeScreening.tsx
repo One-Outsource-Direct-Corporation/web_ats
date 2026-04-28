@@ -91,7 +91,7 @@ export default function ResumeScreening() {
   const [jobStatus, setJobStatus] = useState("active");
   const navigate = useNavigate();
 
-  const { jobtitle } = useParams<{ jobtitle: string }>();
+  const { jobId } = useParams<{ jobId: string }>();
 
   // Filter applicants based on search term
   const filteredApplicants = applicants.filter((applicant) =>
@@ -117,7 +117,7 @@ export default function ResumeScreening() {
   };
 
   const location = useLocation();
-  const { jobtitle: jobTitleParam } = useParams<{ jobtitle: string }>();
+  const { jobId: jobTitleParam } = useParams<{ jobId: string }>();
   const jobTitleFromState = location.state?.jobTitle;
 
   const rawJobTitle = jobTitleParam || jobTitleFromState;
@@ -141,7 +141,7 @@ export default function ResumeScreening() {
                   if (from?.includes("/weekly")) {
                     navigate(from);
                   } else {
-                    navigate(`/job/${jobtitle}`);
+                    navigate(`/job/${jobId}`);
                   }
                 }}
               >
@@ -197,8 +197,8 @@ export default function ResumeScreening() {
                 value={selectedFilter || "resumescreening"}
                 onValueChange={(value) => {
                   setSelectedFilter(value);
-                  if (jobtitle) {
-                    navigate(`/job/${jobtitle}/${value}`);
+                  if (jobId) {
+                    navigate(`/job/${jobId}/${value}`);
                   }
                 }}
               >
@@ -302,7 +302,7 @@ export default function ResumeScreening() {
                           size="sm"
                           className="border-1 w-full px-2 lg:px-3 h-7 lg:h-8 text-xs lg:text-sm text-green-600 border-green-600 bg-white hover:bg-green-600 hover:text-white transition"
                           onClick={() =>
-                            navigate(`/job/${jobtitle}/phonecallinterview`)
+                            navigate(`/job/${jobId}/phonecallinterview`)
                           }
                         >
                           Pass

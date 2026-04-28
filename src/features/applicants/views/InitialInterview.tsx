@@ -533,8 +533,8 @@ export default function JobManagement() {
       ? titleMap[slug.toLowerCase()] || slug.replace(/([a-z])([A-Z])/g, "$1 $2")
       : "Unknown Job";
   };
-  const { jobtitle } = useParams<{ jobtitle: string }>();
-  const resolvedJobTitle = formatJobTitle(jobtitle);
+  const { jobId } = useParams<{ jobId: string }>();
+  const resolvedJobTitle = formatJobTitle(jobId);
   const location = useLocation();
   const previousPath = location.state?.from;
 
@@ -556,9 +556,9 @@ export default function JobManagement() {
                     className="flex items-center gap-2"
                     onClick={() => {
                       if (previousPath?.includes("/weekly")) {
-                        navigate(`/job/${jobtitle}/weekly`);
+                        navigate(`/job/${jobId}/weekly`);
                       } else {
-                        navigate(`/job/${jobtitle}`);
+                        navigate(`/job/${jobId}`);
                       }
                     }}
                   >
@@ -610,8 +610,8 @@ export default function JobManagement() {
                     value={selectedFilter || "initialinterview"}
                     onValueChange={(value) => {
                       setSelectedFilter(value);
-                      if (jobtitle) {
-                        navigate(`/job/${jobtitle}/${value}`);
+                      if (jobId) {
+                        navigate(`/job/${jobId}/${value}`);
                       }
                     }}
                   >
@@ -772,7 +772,7 @@ export default function JobManagement() {
                               className="w-full px-1 lg:px-3 text-xs lg:text-sm h-7 lg:h-10 lg:whitespace-nowrap"
                               onClick={() =>
                                 navigate(
-                                  `/job/${jobtitle}/applicant/${applicant.id}/full-result`,
+                                  `/job/${jobId}/applicant/${applicant.id}/full-result`,
                                   {
                                     state: { from: "initialinterview" },
                                   }

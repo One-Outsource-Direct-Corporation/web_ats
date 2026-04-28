@@ -23,6 +23,15 @@ export const RESTRICTED_MANAGER_ROLES: UserRole[] = [
   "finance_manager",
 ];
 
+// Roles that should be allowed to see the Applicants tab
+export const APPLICANTS_VISIBLE_ROLES: UserRole[] = [
+  "manager",
+  "general_manager",
+  "finance_manager",
+  "human_resources_manager",
+  "supervisor",
+];
+
 export const isManagerDashboardOnlyRole = (
   role: string | undefined
 ): boolean => {
@@ -67,7 +76,8 @@ export const canAccessRoute = (
     return (
       route === "/" ||
       route.startsWith("/dashboard") ||
-      route.startsWith("/positions")
+      route.startsWith("/positions") ||
+      route.startsWith("/job")
     );
   }
 
@@ -76,7 +86,8 @@ export const canAccessRoute = (
     return (
       route === "/" ||
       route.startsWith("/positions") ||
-      route.startsWith("/requests")
+      route.startsWith("/requests") ||
+      route.startsWith("/job")
     );
   }
 
@@ -98,14 +109,20 @@ export const getAccessibleRoutes = (role: string | undefined) => {
 
   if (isManagerDashboardOnlyRole(role)) {
     return allRoutes.filter(
-      (route) => route.path === "/dashboard" || route.path === "/positions"
+      (route) =>
+        route.path === "/dashboard" ||
+        route.path === "/positions" ||
+        route.path === "/job"
     );
   }
 
   // If restricted manager, only return positions and requests
   if (isRestrictedManager(role)) {
     return allRoutes.filter(
-      (route) => route.path === "/positions" || route.path === "/requests"
+      (route) =>
+        route.path === "/positions" ||
+        route.path === "/requests" ||
+        route.path === "/job"
     );
   }
 

@@ -37,11 +37,11 @@ export enum JobPostingType {
 
 export interface JobPostingResponseMinimal {
   id: number;
-  job_title: string;
-  description: string;
-  work_setup: string;
-  employment_type: string;
-  experience_level: string;
+  job_title: string | null;
+  description: string | null;
+  work_setup: string | null;
+  employment_type: string | null;
+  experience_level: string | null;
   department: DepartmentEntity;
   updated_at: string;
   posted_by: JobPostedBy | null;

@@ -4,9 +4,6 @@ import type { Job } from "@/features/jobs/types/job.types";
 import { getJobDetailResponse, getJobsResponse } from "../services/jobService";
 import { queryKeys } from "@/shared/query-keys";
 
-const normalizeJobToken = (value: string) =>
-  value.toLowerCase().replace(/[^a-z0-9]/g, "");
-
 export function useJobsQuery() {
   return useQuery({
     queryKey: queryKeys.jobs.listing(),
@@ -36,13 +33,14 @@ export function useJobByTitle(title?: string): Job | undefined {
   }, [jobs, title]);
 }
 
-export function useJobBySlug(slug?: string): Job | undefined {
+export function useJobById(jobId?: string | number): Job | undefined {
   const jobs = useJobs();
 
   return useMemo(() => {
-    if (!slug) return undefined;
+    if (jobId === undefined || jobId === null || jobId === "") {
+      return undefined;
+    }
 
-    const normalizedSlug = normalizeJobToken(slug);
-    return jobs.find((job) => normalizeJobToken(job.title) === normalizedSlug);
-  }, [jobs, slug]);
+    return jobs.find((job) => job.id === String(jobId));
+  }, [jobs, jobId]);
 }

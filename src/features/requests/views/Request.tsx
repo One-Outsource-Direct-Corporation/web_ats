@@ -146,7 +146,7 @@ export default function Request({ manager = false }: { manager?: boolean }) {
   return (
     <section className="flex flex-col">
       <div className="bg-gray-50 border-b border-gray-200 shadow-sm px-6 pt-4 pb-3">
-        <div className="max-w-7xl mx-auto space-y-3">
+        <div className="space-y-3">
           <div className="flex justify-between items-center">
             <h1 className="text-3xl font-bold text-gray-800">Request</h1>
             {!manager && selectedItems.length > 0 && (
@@ -171,7 +171,7 @@ export default function Request({ manager = false }: { manager?: boolean }) {
       {loading ? (
         <LoadingComponent />
       ) : (
-        <div className="max-w-7xl mx-auto w-full mt-5 px-6">
+        <div className="w-full mt-6 px-6">
           <table className="min-w-full bg-white text-sm">
             <thead className="bg-gray-50 text-gray-700 text-left">
               <tr>
@@ -342,7 +342,7 @@ export default function Request({ manager = false }: { manager?: boolean }) {
         </div>
       )}
       {positions && positions.results.length > 0 && (
-        <div className="flex justify-center items-center mt-4 space-x-4">
+        <div className="flex justify-center items-center my-4 space-x-4">
           <Button
             variant="ghost"
             onClick={handlePrevPage}

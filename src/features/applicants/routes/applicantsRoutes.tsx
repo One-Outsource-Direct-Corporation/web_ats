@@ -1,12 +1,6 @@
 import Applicants from "../views/Applicants";
 import PoolApplicants from "../views/PoolApplicants";
-import ResumeScreening from "../views/ResumeScreening";
-import PhoneInterview from "../views/PhoneInterview";
-import Shortlisted from "../views/Shortlisted";
-import InitialInterview from "../views/InitialInterview";
-import Assessment from "../views/Assessment";
-import FinalInterview from "../views/FinalInterview";
-import ForJobOffer from "../views/ForJobOffer";
+import PipelineApplicants from "../views/PipelineApplicants";
 import OfferAndFinalization from "../views/OfferAndFinalization";
 import Onboarding from "../views/Onboarding";
 import Warm from "../views/Warm";
@@ -26,36 +20,41 @@ export const applicantsRoutes = [
       },
     ],
   },
-  // Stage routes nested under :jobtitle
+  // Unified route for applicants view by process type
   {
-    path: ":jobtitle/resumescreening",
-    element: <ResumeScreening />,
+    path: ":jobId/applicants",
+    element: <PipelineApplicants />,
+  },
+  // Legacy stage routes mapped to the unified applicants page
+  {
+    path: ":jobId/resumescreening",
+    element: <PipelineApplicants />,
   },
   {
-    path: ":jobtitle/phonecallinterview",
-    element: <PhoneInterview />,
+    path: ":jobId/phonecallinterview",
+    element: <PipelineApplicants />,
   },
   {
-    path: ":jobtitle/shortlisted",
-    element: <Shortlisted />,
+    path: ":jobId/shortlisted",
+    element: <PipelineApplicants />,
   },
   {
-    path: ":jobtitle/initialinterview",
-    element: <InitialInterview />,
+    path: ":jobId/initialinterview",
+    element: <PipelineApplicants />,
   },
   {
-    path: ":jobtitle/assessments",
-    element: <Assessment />,
+    path: ":jobId/assessments",
+    element: <PipelineApplicants />,
   },
   {
-    path: ":jobtitle/finalinterview",
-    element: <FinalInterview />,
+    path: ":jobId/finalinterview",
+    element: <PipelineApplicants />,
   },
   {
-    path: ":jobtitle/forjoboffer",
-    element: <ForJobOffer />,
+    path: ":jobId/forjoboffer",
+    element: <PipelineApplicants />,
   },
-  // Custom final stages (without jobtitle)
+  // Custom final stages (without jobId)
   {
     path: "stage/OfferAndFinalization",
     element: <OfferAndFinalization />,

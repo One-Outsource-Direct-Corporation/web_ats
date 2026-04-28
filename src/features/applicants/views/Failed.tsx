@@ -236,14 +236,16 @@ export default function Failed() {
     const isCustomFinalStage = customFinalStages.includes(value);
 
     const routeSegment = slugify(value);
+    const currentJobId = location.state?.jobId;
 
     const path = isCustomFinalStage
       ? `/job/stage/${routeSegment}`
-      : `/job/${routeSegment}`;
+      : `/job/${currentJobId}/${routeSegment}`;
 
     navigate(path, {
       state: {
         jobTitle: location.state?.jobTitle,
+        jobId: currentJobId,
         jobData: location.state?.jobData,
         from: location.pathname,
       },
@@ -280,15 +282,17 @@ export default function Failed() {
   };
 
   const location = useLocation();
-  const jobTitleFromState = location.state?.jobTitle;
+  const jobIdFromState = location.state?.jobId;
   const from = location.state?.from;
 
   const slugify = (str: string) =>
     str.replace(/\s+/g, "").replace(/[^\w]+/g, "");
 
-  const backPath = from?.includes("/weekly")
-    ? `/job/${slugify(jobTitleFromState)}\/weekly`
-    : `/job/${slugify(jobTitleFromState)}`;
+  const backPath = jobIdFromState
+    ? from?.includes("/weekly")
+      ? `/job/${jobIdFromState}/weekly`
+      : `/job/${jobIdFromState}`
+    : "/job";
 
   return (
     <>

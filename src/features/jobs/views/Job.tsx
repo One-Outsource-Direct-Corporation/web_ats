@@ -179,13 +179,9 @@ export default function Job() {
     searchTerm,
   ]);
 
-  const formatJobSlug = (title: string) =>
-    title.toLowerCase().replace(/\s+/g, "-");
-
   const handleJobTitleClick = (job: Job) => {
     setSelectedJobTitle(job.title);
-    const jobSlug = formatJobSlug(job.title);
-    const generatedLink = `/job/${jobSlug}`;
+    const generatedLink = `/job/${job.id}`;
     setDynamicLink(generatedLink);
     navigate(generatedLink, {
       state: {
@@ -200,10 +196,9 @@ export default function Job() {
   }, []);
 
   return (
-    <>
-      <div className="flex flex-col min-h-screen pt-[150px] bg-gray-50">
-        <div className="fixed top-[64px] left-0 right-0 z-20 bg-gray-50 border-b border-gray-200 shadow-sm px-6 pt-4 pb-3">
-          <div className="max-w-7xl mx-auto -space-y-2">
+      <section className="flex flex-col">
+        <div className="bg-gray-50 border-b border-gray-200 shadow-sm px-6 pt-4 pb-3">
+          <div className="-space-y-2">
             <h1 className="text-3xl font-bold text-gray-800">Applicants</h1>
             <p className="text-lg text-gray-700 mt-5">
               Stores candidate details and tracks their application progress.
@@ -371,8 +366,7 @@ export default function Job() {
             </div>
           </div>
         </div>
-        <main className="flex-grow px-6 pt-[120px] pb-[80px] max-w-7xl mx-auto w-full">
-          <div className="overflow-auto rounded-lg border bg-white">
+          <div className="w-full mt-6 px-6">
             <table className="w-full text-sm text-left">
               <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
                 <tr>
@@ -453,7 +447,6 @@ export default function Job() {
               </tbody>
             </table>
           </div>
-        </main>
         <footer className="fixed bottom-0 left-0 right-0 border-t bg-white px-6 py-4 z-30 shadow-md">
           <div className="max-w-7xl mx-auto flex justify-end">
             <Button
@@ -467,7 +460,6 @@ export default function Job() {
             </Button>
           </div>
         </footer>
-      </div>
-    </>
+      </section>
   );
 }

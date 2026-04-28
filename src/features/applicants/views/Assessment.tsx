@@ -270,8 +270,8 @@ export default function JobManagement() {
       : "Unknown Job";
   };
 
-  const { jobtitle } = useParams<{ jobtitle: string }>();
-  const resolvedJobTitle = formatJobTitle(jobtitle);
+  const { jobId } = useParams<{ jobId: string }>();
+  const resolvedJobTitle = formatJobTitle(jobId);
   const previousPath = location.state?.from;
   const navigate = useNavigate();
   const customStage = "Failed";
@@ -294,9 +294,9 @@ export default function JobManagement() {
                     className="flex items-center gap-2"
                     onClick={() => {
                       if (previousPath?.includes("/weekly")) {
-                        navigate(`/job/${jobtitle}/weekly`);
+                        navigate(`/job/${jobId}/weekly`);
                       } else {
-                        navigate(`/job/${jobtitle}`);
+                        navigate(`/job/${jobId}`);
                       }
                     }}
                   >
@@ -348,8 +348,8 @@ export default function JobManagement() {
                     value={selectedFilter || "assessments"}
                     onValueChange={(value) => {
                       setSelectedFilter(value);
-                      if (jobtitle) {
-                        navigate(`/job/${jobtitle}/${value}`);
+                      if (jobId) {
+                        navigate(`/job/${jobId}/${value}`);
                       }
                     }}
                   >
@@ -460,7 +460,7 @@ export default function JobManagement() {
                                 size="sm"
                                 className="px-3 bg-white text-green-600 border border-green-600 hover:bg-green-600 hover:text-white text-xs h-8"
                                 onClick={() =>
-                                  navigate(`/job/${jobtitle}/finalinterview`)
+                                  navigate(`/job/${jobId}/finalinterview`)
                                 }
                               >
                                 Pass
@@ -472,7 +472,8 @@ export default function JobManagement() {
                                 onClick={() =>
                                   navigate(`/job/stage/${customStage}`, {
                                     state: {
-                                      jobTitle: jobtitle,
+                                      jobTitle: resolvedJobTitle,
+                                      jobId,
                                       from: location.pathname,
                                     },
                                   })
@@ -498,10 +499,10 @@ export default function JobManagement() {
                               className="text-blue-600 hover:text-blue-800 text-xs lg:text-sm underline"
                               onClick={() => {
                                 console.log(
-                                  `Navigating to: /job/${jobtitle}/exam-form/${applicant.id}`
+                                  `Navigating to: /job/${jobId}/exam-form/${applicant.id}`
                                 );
                                 navigate(
-                                  `/job/${jobtitle}/exam-form/${applicant.id}`
+                                  `/job/${jobId}/exam-form/${applicant.id}`
                                 );
                               }}
                             >

@@ -84,6 +84,71 @@ function toPipelineStep(
 ): JobPipelineStep {
   const stage = typeof step.stage === "number" ? step.stage : 0;
   const order = typeof step.order === "number" ? step.order : index + 1;
+  const interviewerFirstName =
+    typeof step.interviewer?.first_name === "string"
+      ? step.interviewer.first_name.trim()
+      : "";
+  const interviewerLastName =
+    typeof step.interviewer?.last_name === "string"
+      ? step.interviewer.last_name.trim()
+      : "";
+  const interviewerName = step.interviewer
+    ? `${interviewerFirstName} ${interviewerLastName}`.trim() || step.interviewer.email
+    : undefined;
+  const candidateApplicationIds = Array.isArray(step.candidate_application_ids)
+    ? step.candidate_application_ids.filter(
+        (candidateId): candidateId is number =>
+          typeof candidateId === "number",
+      )
+    : [];
+  const candidateApplications = Array.isArray(step.candidate_applications)
+    ? step.candidate_applications
+        .filter(
+          (candidate) =>
+            typeof candidate?.id === "number" &&
+            typeof candidate?.name === "string" &&
+            typeof candidate?.status === "string" &&
+            typeof candidate?.status_label === "string",
+        )
+        .map((candidate) => ({
+          id: candidate.id,
+          name: candidate.name,
+          status: candidate.status,
+          statusLabel: candidate.status_label,
+          pipelineStepId:
+            typeof candidate.pipeline_step_id === "number"
+              ? candidate.pipeline_step_id
+              : undefined,
+          pipelineStatus:
+            typeof candidate.pipeline_status === "string"
+              ? candidate.pipeline_status
+              : undefined,
+          pipelineStatusLabel:
+            typeof candidate.pipeline_status_label === "string"
+              ? candidate.pipeline_status_label
+              : undefined,
+          scheduledFor:
+            typeof candidate.scheduled_for === "string"
+              ? candidate.scheduled_for
+              : undefined,
+          assignedInterviewerName:
+            typeof candidate.assigned_interviewer_name === "string"
+              ? candidate.assigned_interviewer_name
+              : undefined,
+          assignedInterviewerEmail:
+            typeof candidate.assigned_interviewer_email === "string"
+              ? candidate.assigned_interviewer_email
+              : undefined,
+          department:
+            typeof candidate.department === "string"
+              ? candidate.department
+              : undefined,
+          photoUrl:
+            typeof candidate.photo_url === "string"
+              ? candidate.photo_url
+              : undefined,
+        }))
+    : [];
 
   return {
     id: String(step.id ?? `${stage}-${order}-${index}`),
@@ -91,6 +156,11 @@ function toPipelineStep(
     process_title: (step.process_title ?? "").trim(),
     stage,
     order,
+    interviewerName,
+    interviewerEmail: step.interviewer?.email,
+    interviewerId: step.interviewer?.id,
+    candidateApplicationIds,
+    candidateApplications,
   };
 }
 

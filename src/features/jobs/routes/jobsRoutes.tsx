@@ -12,11 +12,11 @@ export const jobsRoutes = [
         element: <Job />,
       },
       {
-        path: ":jobtitle",
+        path: ":jobId",
         element: <JobDetails />,
       },
       {
-        path: ":jobtitle/weekly",
+        path: ":jobId/weekly",
         element: <JobWeeklyView />,
       },
       ...applicantsRoutes,

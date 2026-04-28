@@ -1,6 +1,5 @@
 import { useState, useEffect, cloneElement } from "react";
 import { useNavigate } from "react-router-dom";
-import { Navbar } from "@/shared/components/reusables/Navbar.tsx";
 import {
   Users,
   Building2,
@@ -52,7 +51,6 @@ import type {
   SectionLocal,
   QuestionnaireDb,
   QuestionnaireLocal,
-  Questionnaire,
 } from "@/features/external_posting/types/questionnaire.types";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import { SectionList } from "@/features/external_posting/components/questionnaires/SectionList";
@@ -63,8 +61,6 @@ export default function Library() {
   const [path, setPath] = useState<
     (
       | "home"
-      | "internal"
-      | "external"
       | "forms"
       | "departments"
       | "questionnaire-templates"
@@ -293,7 +289,7 @@ export default function Library() {
   };
 
   const buildTemplatePayload = (draft: ApplicationFormQuestionnaire) => ({
-    name: draft.name.trim(),
+    name: draft?.name ? draft.name.trim() : "",
     sections: draft.sections.map((section) => ({
       id: (section as SectionDb).id,
       name: section.name,
@@ -313,7 +309,7 @@ export default function Library() {
   });
 
   const handleTemplateSave = async () => {
-    const trimmedName = templateDraft.name.trim();
+    const trimmedName = templateDraft?.name ? templateDraft.name.trim() : "";
     if (!trimmedName) {
       setTemplateSaveError("Template name is required.");
       return;
@@ -389,11 +385,11 @@ export default function Library() {
     setIsArchiveDialogOpen(false);
   };
 
-  const isFolderView = currentView === "internal" || currentView === "external";
+  // `internal` and `external` folder views removed — items surfaced outside
 
   return (
     <>
-      <Navbar />
+      {/* <Navbar /> */}
       <div className="flex flex-col min-h-screen pt-[100px] bg-gray-50">
         {" "}
         {/* Added pt for fixed header */}
@@ -426,26 +422,25 @@ export default function Library() {
             {/* Home View */}
             {currentView === "home" && (
               <div className="w-full space-y-8">
-                <div className="flex space-x-10">
-                  <div
-                    onClick={() => setPath((prev) => [...prev, "internal"])}
-                    className="flex flex-col items-center cursor-pointer group transition"
-                  >
-                    <Users className="text-gray-800 group-hover:text-blue-600 w-7 h-7 group-hover:scale-110 transition-transform" />
-                    <span className="text-sm font-medium text-gray-800 group-hover:text-blue-600 mt-2">
-                      Internal
-                    </span>
-                  </div>
+                {/* removed separate Internal/External tiles - folder shortcuts shown above Quick Access */}
 
-                  <div
-                    onClick={() => setPath((prev) => [...prev, "external"])}
-                    className="flex flex-col items-center cursor-pointer group transition"
-                  >
-                    <Building2 className="text-gray-800 group-hover:text-blue-600 w-7 h-7 group-hover:scale-110 transition-transform" />
-                    <span className="text-sm font-medium text-gray-800 group-hover:text-blue-600 mt-2">
-                      External Client
-                    </span>
-                  </div>
+                {/* Folder shortcuts placed above Quick Access */}
+                <div className="mt-2 flex flex-wrap gap-4">
+                  {sharedFolders.map((folder, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-3 cursor-pointer rounded-md border border-gray-100 bg-white p-3 shadow-sm"
+                      onClick={folder.onClick}
+                    >
+                      <div className="w-10 h-10 flex items-center justify-center rounded-md bg-gray-50">
+                        {cloneElement(folder.icon, { className: "w-5 h-5" })}
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{folder.label}</div>
+                        <div className="text-xs text-gray-500">Quick open</div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="rounded-2xl border border-gray-200 bg-gradient-to-br from-white via-slate-50 to-amber-50 p-6 shadow-sm">
@@ -466,6 +461,7 @@ export default function Library() {
                       Curated resources
                     </div>
                   </div>
+                  
                   <div className="mt-5 grid gap-4 md:grid-cols-2">
                     <button
                       type="button"
@@ -517,37 +513,7 @@ export default function Library() {
               </div>
             )}
 
-            {isFolderView && (
-              <div className="flex space-x-10">
-                {sharedFolders.map((folder, index) => (
-                  <div
-                    key={index}
-                    className="flex flex-col items-center space-y-2 group"
-                  >
-                    <div
-                      className="cursor-pointer transition-transform hover:scale-105"
-                      onClick={folder.onClick}
-                    >
-                      <div className="relative w-16 h-16">
-                        <FolderIcon
-                          className={`${folder.folderColor} w-full h-full`}
-                          strokeWidth={folderStroke}
-                        />
-                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                          {cloneElement(folder.icon, {
-                            strokeWidth: iconStroke,
-                            className: `${folder.icon.props.className} w-5 h-5`,
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                    <span className={`text-sm font-medium ${folder.textColor}`}>
-                      {folder.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
+            
 
             {currentView === "forms" && (
               <div className="w-full">
@@ -863,10 +829,10 @@ export default function Library() {
               </div>
             )}
 
-            {isFolderView && (
-              <div className="flex items-center space-x-1 text-blue-600 cursor-pointer hover:underline transition">
+            {selectedForms.length > 0 && (
+              <div className="flex items-center space-x-1 text-blue-600 cursor-pointer hover:underline transition" onClick={() => setIsArchiveDialogOpen(true)}>
                 <Trash2 className="w-4 h-4" />
-                <span className="text-sm font-medium">Archive Folder</span>
+                <span className="text-sm font-medium">Archive</span>
               </div>
             )}
           </div>
@@ -932,7 +898,7 @@ export default function Library() {
                       Template Name
                     </p>
                     <Input
-                      value={templateDraft.name}
+                      value={templateDraft?.name || ""}
                       onChange={(event) =>
                         handleTemplateNameChange(event.target.value)
                       }

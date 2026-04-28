@@ -12,7 +12,7 @@ import type { StageColumnProps } from "../types/kanban.types";
 
 interface DroppableColumnProps extends StageColumnProps {
   navigate: any;
-  jobtitle?: string;
+  jobId?: string;
 }
 
 export function DroppableColumn({
@@ -24,7 +24,7 @@ export function DroppableColumn({
   hasSelectedApplicants,
   onColumnClick,
   navigate,
-  jobtitle,
+  jobId,
 }: DroppableColumnProps) {
   const [isMobile, setIsMobile] = useState(false);
   const { setNodeRef, isOver } = useDroppable({
@@ -78,16 +78,14 @@ export function DroppableColumn({
         "Warm",
         "Failed",
       ].includes(routeSegment);
-      const currentJobTitle = jobtitle || "leaddeveloper";
-      const jobSlug = currentJobTitle.toLowerCase().replace(/\s+/g, "");
 
       const path = isCustomFinalStage
         ? `/job/stage/${routeSegment}`
-        : `/job/${jobSlug}/${routeSegment}`;
+        : `/job/${jobId}/${routeSegment}`;
 
       navigate(path, {
         state: {
-          jobTitle: jobtitle,
+          jobId,
           stageName: title,
           from: location.pathname,
         },

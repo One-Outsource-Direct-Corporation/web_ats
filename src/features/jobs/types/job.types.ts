@@ -44,6 +44,44 @@ export interface JobPipelineStepResponseDto {
   process_title?: string | null;
   stage: number;
   order: number;
+  interviewer?: {
+    id: number;
+    email: string;
+    first_name?: string | null;
+    last_name?: string | null;
+  } | null;
+  candidate_application_ids?: number[] | null;
+  candidate_applications?: JobPipelineCandidateResponseDto[] | null;
+}
+
+export interface JobPipelineCandidateResponseDto {
+  id: number;
+  name: string;
+  status: string;
+  status_label: string;
+  pipeline_step_id?: number | null;
+  pipeline_status?: string | null;
+  pipeline_status_label?: string | null;
+  scheduled_for?: string | null;
+  assigned_interviewer_name?: string | null;
+  assigned_interviewer_email?: string | null;
+  department?: string | null;
+  photo_url?: string | null;
+}
+
+export interface JobPipelineCandidate {
+  id: number;
+  name: string;
+  status: string;
+  statusLabel: string;
+  pipelineStepId?: number;
+  pipelineStatus?: string;
+  pipelineStatusLabel?: string;
+  scheduledFor?: string;
+  assignedInterviewerName?: string;
+  assignedInterviewerEmail?: string;
+  department?: string;
+  photoUrl?: string;
 }
 
 export interface JobDetailPipelineOwnerDto {
@@ -66,4 +104,9 @@ export interface JobPipelineStep {
   process_title: string;
   stage: number;
   order: number;
+  interviewerName?: string;
+  interviewerEmail?: string;
+  interviewerId?: number;
+  candidateApplicationIds: number[];
+  candidateApplications: JobPipelineCandidate[];
 }

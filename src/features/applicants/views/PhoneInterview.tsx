@@ -92,7 +92,7 @@ export default function PhoneInterview() {
   const [jobStatus, setJobStatus] = useState("active");
   const navigate = useNavigate();
 
-  const { jobtitle } = useParams<{ jobtitle: string }>();
+  const { jobId } = useParams<{ jobId: string }>();
 
   // Filter applicants based on search term
   const filteredApplicants = applicants.filter((applicant) =>
@@ -118,7 +118,7 @@ export default function PhoneInterview() {
   };
 
   const location = useLocation();
-  const { jobtitle: jobTitleParam } = useParams<{ jobtitle: string }>();
+  const { jobId: jobTitleParam } = useParams<{ jobId: string }>();
   const jobTitleFromState = location.state?.jobTitle;
 
   const rawJobTitle = jobTitleParam || jobTitleFromState;
@@ -142,7 +142,7 @@ export default function PhoneInterview() {
                   if (from?.includes("/weekly")) {
                     navigate(from);
                   } else {
-                    navigate(`/job/${jobtitle}`);
+                    navigate(`/job/${jobId}`);
                   }
                 }}
               >
@@ -192,8 +192,8 @@ export default function PhoneInterview() {
                 value={selectedFilter || "phonecallinterview"}
                 onValueChange={(value) => {
                   setSelectedFilter(value);
-                  if (jobtitle) {
-                    navigate(`/job/${jobtitle}/${value}`);
+                  if (jobId) {
+                    navigate(`/job/${jobId}/${value}`);
                   }
                 }}
               >

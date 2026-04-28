@@ -55,7 +55,7 @@ export default function CareersApply() {
   // Wrapper functions to handle type compatibility
   const handleJobDetailsChange = (
     field: string,
-    value: string | number | File | null,
+    value: string | string[] | number | File | null,
   ) => {
     handleInputJobDetails(field as keyof typeof formData.jobDetails, value);
   };
@@ -144,6 +144,24 @@ export default function CareersApply() {
     if (!resumeFile) {
       toast.error("Resume is required. Please upload your resume to continue.");
       setShowUploadModal(true);
+      return;
+    }
+
+    const interviewScheduleFieldStatus =
+      jobDetail.application_form.application_form.preferred_interview_schedule;
+    const selectedInterviewScheduleCount =
+      formData.jobDetails.interviewSchedule.length;
+
+    if (
+      interviewScheduleFieldStatus !== "disabled" &&
+      selectedInterviewScheduleCount < 1
+    ) {
+      toast.error("Please add at least one preferred interview schedule option.");
+      return;
+    }
+
+    if (selectedInterviewScheduleCount > 3) {
+      toast.error("You can only provide up to 3 preferred interview schedules.");
       return;
     }
 

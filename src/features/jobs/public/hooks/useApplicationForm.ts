@@ -31,7 +31,7 @@ const initialJobDetailsData: JobDetailsFormData = {
   willingToWorkOnsite: null,
   photo: null,
   medicalCertificate: null,
-  interviewSchedule: null,
+  interviewSchedule: [],
 };
 
 const initialEducationWorkData: EducationWorkFormData = {
@@ -94,7 +94,7 @@ export const useApplicationForm = (jobTitle?: string) => {
 
   function handleInputJobDetails(
     field: keyof JobDetailsFormData,
-    value: string | File | number | null,
+    value: string | string[] | File | number | null,
   ) {
     setFormData((prev) => ({
       ...prev,

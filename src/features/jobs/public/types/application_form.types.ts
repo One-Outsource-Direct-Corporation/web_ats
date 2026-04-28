@@ -19,7 +19,7 @@ export interface JobDetailsFormData {
   willingToWorkOnsite: string | null;
   photo: File | null;
   medicalCertificate: File | null;
-  interviewSchedule: string | null;
+  interviewSchedule: string[];
 }
 
 export interface EducationWorkFormData {

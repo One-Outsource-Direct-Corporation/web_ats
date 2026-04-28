@@ -41,8 +41,8 @@ const getVerdictInfo = (score: number) => {
 // Update the ExamForm component to get the applicant ID from the URL params
 export default function ExamForm() {
   const navigate = useNavigate();
-  const { jobtitle, applicantId } = useParams<{
-    jobtitle: string;
+  const { jobId, applicantId } = useParams<{
+    jobId: string;
     applicantId: string;
   }>();
   const [showFullExam, setShowFullExam] = useState(false);
@@ -51,7 +51,7 @@ export default function ExamForm() {
   // For now, we'll use the mock data, but you can replace this with actual data fetching
   const mockExamData = {
     candidateName: getApplicantName(applicantId), // You'll need to implement this function
-    jobTitle: formatJobTitle(jobtitle),
+    jobTitle: formatJobTitle(jobId),
     assessmentType: "Technical Assessment",
     totalScore: 42,
     maxScore: 50,
@@ -144,7 +144,7 @@ export default function ExamForm() {
             variant="outline"
             size="sm"
             className="flex items-center gap-2"
-            onClick={() => navigate(`/job/${jobtitle}/assessments`)}
+            onClick={() => navigate(`/job/${jobId}/assessments`)}
           >
             <ArrowLeft className="h-4 w-4" />
             Back
