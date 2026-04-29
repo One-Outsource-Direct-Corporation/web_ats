@@ -111,10 +111,6 @@ export function validatePipeline(pipeline: any[]): {
       stepErrors.process_title = ["Process title is required."];
     }
 
-    if (!step.reminder || step.reminder.trim() === "") {
-      stepErrors.reminder = ["Reminder date is required."];
-    }
-
     if (Object.keys(stepErrors).length > 0) {
       pipelineErrors[index] = stepErrors;
     }

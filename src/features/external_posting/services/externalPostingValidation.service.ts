@@ -19,10 +19,6 @@ const pipelineStepSchema = z.object({
     .string({ message: "Process title is required." })
     .trim()
     .min(1, "Process title is required."),
-  reminder: z
-    .string({ message: "Reminder date is required." })
-    .trim()
-    .min(1, "Reminder date is required."),
   interviewer: z
     .object({
       id: z.number({ message: "Interviewer is required." }),

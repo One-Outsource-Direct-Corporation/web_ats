@@ -6,6 +6,7 @@ import { interviewsRoutes } from "@/features/interviews/routes/interviewsRoutes.
 import { positionRoutes } from "@/features/positions/routes/positionRoutes";
 import { prfRoutes } from "@/features/prf_2/routes/prfRoutes";
 import { libraryRoutes } from "@/features/library/routes/libraryRoutes";
+import IEFTemplateLibrary from "@/features/library/views/IEFTemplateLibrary";
 import { dashboardRoutes } from "@/features/dashboard/routes/dashboardRoutes";
 import ProtectedRoutes from "@/features/auth/components/ProtectedRoutes";
 import Login from "@/features/auth/views/Login";
@@ -42,6 +43,11 @@ export const router = createBrowserRouter([
         children: [
           ...dashboardRoutes,
           ...positionRoutes,
+          // Explicit route for IEF Template Library to avoid 404 on direct navigation
+          {
+            path: "library/ief-templates",
+            element: <IEFTemplateLibrary />,
+          },
           ...libraryRoutes,
           ...requestRoutes,
           ...jobsRoutes,

@@ -1,5 +1,5 @@
 import { useState, useEffect, cloneElement } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Users,
   Building2,
@@ -28,6 +28,14 @@ import {
 import { Button } from "@/shared/components/ui/button.tsx";
 import { toast } from "react-toastify";
 import { Input } from "@/shared/components/ui/input";
+import { Textarea } from "@/shared/components/ui/textarea.tsx";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select.tsx";
 import {
   Table,
   TableBody,
@@ -43,6 +51,8 @@ import {
   useQuestionnaireTemplateDetail,
   useQuestionnaireTemplatesQuery,
 } from "@/features/application_form_questionnaire";
+import { emailTemplateService } from "@/features/library/services/emailTemplate.service";
+import { useEmailTemplatesQuery } from "@/features/library/hooks/useEmailTemplatesQuery";
 import type { QuestionnaireTemplateDetail } from "@/features/application_form_questionnaire";
 import type {
   ApplicationFormQuestionnaire,
@@ -64,6 +74,7 @@ export default function Library() {
       | "forms"
       | "departments"
       | "questionnaire-templates"
+      | "email-templates"
     )[]
   >(["home"]);
   const currentView = path[path.length - 1]; // The current active view
@@ -81,9 +92,7 @@ export default function Library() {
       template: false,
       sections: [],
     });
-  const [templateSaveError, setTemplateSaveError] = useState<string | null>(
-    null,
-  );
+  const [templateSaveError, setTemplateSaveError] = useState<string | null>(null);
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
 
   const {
@@ -108,7 +117,40 @@ export default function Library() {
     refetch: refetchTemplates,
   } = useQuestionnaireTemplatesQuery({ pageSize: 10 });
 
+  const {
+    templates: emailTemplates,
+    loading: emailTemplatesLoading,
+    hasMore: emailTemplatesHasMore,
+    loadMore: loadMoreEmailTemplates,
+    handleSearch: handleEmailTemplateSearch,
+    totalCount: emailTemplatesTotalCount,
+    refetch: refetchEmailTemplates,
+  } = useEmailTemplatesQuery({ pageSize: 10 });
+
   const axiosPrivate = useAxiosPrivate();
+
+  // Email templates UI state
+  const [isEmailTemplateDialogOpen, setIsEmailTemplateDialogOpen] = useState(false);
+  const [emailTemplateDialogMode, setEmailTemplateDialogMode] = useState<"view" | "edit" | "create">("view");
+  const [emailTemplateDetailId, setEmailTemplateDetailId] = useState<number | null>(null);
+  const [emailTemplateDraft, setEmailTemplateDraft] = useState<{
+    name: string;
+    category: "general" | "interview" | "offer" | "onboarding";
+    subject: string;
+    body: string;
+    is_active: boolean;
+  }>({ name: "", category: "general", subject: "", body: "", is_active: true });
+  const [emailTemplateSaveError, setEmailTemplateSaveError] = useState<string | null>(null);
+
+  const defaultCategories = [
+    { value: "general", label: "General" },
+    { value: "interview", label: "Interview" },
+    { value: "offer", label: "Offer" },
+    { value: "onboarding", label: "Onboarding" },
+  ] as const;
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
+
+  const selectedEmailTemplate = emailTemplates.find((t) => t.id === emailTemplateDetailId);
 
   const { template: selectedTemplate, loading: templateLoading } =
     useQuestionnaireTemplateDetail(
@@ -119,6 +161,36 @@ export default function Library() {
   useEffect(() => {
     document.title = "Library";
   }, []);
+
+  const location = useLocation();
+
+  // Sync internal `path` view state with URL so direct navigation works
+  useEffect(() => {
+    // support /library/email-templates and ?view=email-templates
+    const parts = location.pathname.split("/").filter(Boolean);
+    const lastSegment = parts[parts.length - 1] ?? "";
+    const q = new URLSearchParams(location.search);
+    const viewQ = q.get("view");
+
+    if (viewQ && ["home", "forms", "departments", "questionnaire-templates", "email-templates"].includes(viewQ)) {
+      setPath(["home", viewQ as any]);
+      return;
+    }
+
+    if (lastSegment === "email-templates" || lastSegment === "questionnaire-templates" || lastSegment === "departments" || lastSegment === "forms") {
+      setPath(["home", lastSegment as any]);
+      return;
+    }
+
+    // If user visited /library directly, keep the home view
+    if (lastSegment === "library") {
+      setPath(["home"]);
+      return;
+    }
+
+    // default to home
+    setPath(["home"]);
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     if (!isTemplateDialogOpen) {
@@ -136,6 +208,39 @@ export default function Library() {
       setTemplateDraft(mapTemplateToDraft(selectedTemplate));
     }
   }, [isTemplateDialogOpen, selectedTemplate, templateDialogMode]);
+
+  useEffect(() => {
+    if (!isEmailTemplateDialogOpen) {
+      return;
+    }
+
+    setEmailTemplateSaveError(null);
+
+    if (emailTemplateDialogMode === "create") {
+      setEmailTemplateDraft({
+        name: "",
+        category: "general",
+        subject: "",
+        body: "",
+        is_active: true,
+      });
+      return;
+    }
+
+    if (selectedEmailTemplate && emailTemplateDialogMode !== "view") {
+      setEmailTemplateDraft({
+        name: selectedEmailTemplate.name ?? "",
+        category: selectedEmailTemplate.category ?? "general",
+        subject: selectedEmailTemplate.subject ?? "",
+        body: selectedEmailTemplate.body ?? "",
+        is_active: Boolean(selectedEmailTemplate.is_active),
+      });
+    }
+  }, [
+    isEmailTemplateDialogOpen,
+    emailTemplateDialogMode,
+    selectedEmailTemplate,
+  ]);
 
   const folderStroke = 1;
   const iconStroke = 1.5;
@@ -171,7 +276,16 @@ export default function Library() {
       folderColor: "text-gray-800 group-hover:text-blue-600",
       icon: <MailIcon className="text-gray-800 group-hover:text-blue-600" />,
       textColor: "text-gray-800 group-hover:text-blue-600",
-      onClick: () => console.log("Email Templates clicked"), // Placeholder for actual navigation
+      onClick: () => setPath((prev) => [...prev, "email-templates"]),
+    },
+    {
+      label: "IEF Templates",
+      folderColor: "text-gray-800 group-hover:text-slate-700",
+      icon: (
+        <FileTextIcon className="text-gray-800 group-hover:text-slate-700" />
+      ),
+      textColor: "text-gray-800 group-hover:text-slate-700",
+      onClick: () => navigate("/library/ief-templates"),
     },
     {
       label: "Applicants",
@@ -356,6 +470,58 @@ export default function Library() {
       setIsSavingTemplate(false);
     }
   };
+
+    const handleEmailTemplateSave = async () => {
+      const trimmedName = (emailTemplateDraft?.name || "").trim();
+      if (!trimmedName) {
+        setEmailTemplateSaveError("Template name is required.");
+        return;
+      }
+
+      setIsSavingTemplate(true);
+      setEmailTemplateSaveError(null);
+
+      try {
+        const payload = {
+          name: trimmedName,
+          category: emailTemplateDraft.category,
+          subject: emailTemplateDraft.subject || "",
+          body: emailTemplateDraft.body || "",
+          is_active: emailTemplateDraft.is_active,
+        };
+
+        if (emailTemplateDialogMode === "create") {
+          await emailTemplateService.createTemplate(payload, { httpClient: axiosPrivate });
+          toast.success("Email template created.");
+        } else if (emailTemplateDialogMode === "edit") {
+          const id = emailTemplateDetailId;
+          if (id) {
+            await emailTemplateService.updateTemplate(id, payload, { httpClient: axiosPrivate });
+            toast.success("Email template updated.");
+          }
+        }
+
+        setIsEmailTemplateDialogOpen(false);
+        setEmailTemplateDetailId(null);
+        setEmailTemplateDialogMode("view");
+        refetchEmailTemplates();
+      } catch (err) {
+        setEmailTemplateSaveError("Failed to save email template.");
+        toast.error("Failed to save email template.");
+      } finally {
+        setIsSavingTemplate(false);
+      }
+    };
+
+    const handleEmailTemplateDelete = async (id: number) => {
+      try {
+        await emailTemplateService.deleteTemplate(id, { httpClient: axiosPrivate });
+        toast.success("Email template deleted.");
+        refetchEmailTemplates();
+      } catch (err) {
+        toast.error("Failed to delete template.");
+      }
+    };
 
   const toggleFormSelection = (formName: string) => {
     setSelectedForms((prev) =>
@@ -829,6 +995,114 @@ export default function Library() {
               </div>
             )}
 
+            {currentView === "email-templates" && (
+              <div className="w-full space-y-6">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Email Templates</h2>
+                    <p className="text-sm text-gray-600">Manage your private email templates.</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      className="bg-blue-600 text-white hover:bg-blue-700"
+                      onClick={() => {
+                        setEmailTemplateDialogMode("create");
+                        setEmailTemplateDetailId(null);
+                        setIsEmailTemplateDialogOpen(true);
+                      }}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      New Template
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div className="relative w-full md:max-w-sm">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <Input onChange={(e) => handleEmailTemplateSearch(e.target.value)} className="pl-9" placeholder="Search email templates" />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <select value={selectedCategoryFilter ?? ""} onChange={(e) => setSelectedCategoryFilter(e.target.value || null)} className="text-sm border rounded px-2 py-1">
+                      <option value="">All categories</option>
+                      {defaultCategories.map((c) => (
+                        <option key={c.value} value={c.value}>{c.label}</option>
+                      ))}
+                    </select>
+                    <div className="text-xs uppercase tracking-[0.2em] text-gray-500">Total {emailTemplatesTotalCount}</div>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+                  <Table>
+                    <TableHeader className="bg-blue-50">
+                      <TableRow>
+                        <TableHead className="p-4">Name</TableHead>
+                        <TableHead className="p-4">Subject</TableHead>
+                        <TableHead className="p-4">Category</TableHead>
+                        <TableHead className="p-4">Updated</TableHead>
+                        <TableHead className="p-4 text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {emailTemplatesLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="p-6 text-center">Loading templates...</TableCell>
+                        </TableRow>
+                      ) : emailTemplates.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="p-6 text-center">No email templates found.</TableCell>
+                        </TableRow>
+                      ) : (
+                        emailTemplates
+                          .filter((t) => {
+                            if (!selectedCategoryFilter) return true;
+                            return t.category === selectedCategoryFilter;
+                          })
+                          .map((template) => (
+                            <TableRow key={template.id}>
+                              <TableCell className="p-4 font-medium text-gray-900">{template.name}</TableCell>
+                              <TableCell className="p-4 text-gray-600">{template.subject}</TableCell>
+                              <TableCell className="p-4 text-gray-600">{defaultCategories.find((c) => c.value === template.category)?.label ?? "-"}</TableCell>
+                              <TableCell className="p-4 text-gray-600">{template.updated_at ? new Date(template.updated_at).toLocaleDateString() : "-"}</TableCell>
+                              <TableCell className="p-4">
+                                <div className="flex items-center justify-end gap-2">
+                                  <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900" onClick={() => {
+                                    setEmailTemplateDialogMode("view");
+                                    setEmailTemplateDetailId(template.id);
+                                    setIsEmailTemplateDialogOpen(true);
+                                  }}>
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-700" onClick={() => {
+                                    setEmailTemplateDialogMode("edit");
+                                    setEmailTemplateDetailId(template.id);
+                                    setIsEmailTemplateDialogOpen(true);
+                                  }}>
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-700" onClick={() => handleEmailTemplateDelete(template.id)}>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {emailTemplatesHasMore && (
+                  <div className="flex justify-center">
+                    <Button variant="outline" onClick={() => loadMoreEmailTemplates()} disabled={emailTemplatesLoading}>
+                      {emailTemplatesLoading ? "Loading..." : "Load more"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {selectedForms.length > 0 && (
               <div className="flex items-center space-x-1 text-blue-600 cursor-pointer hover:underline transition" onClick={() => setIsArchiveDialogOpen(true)}>
                 <Trash2 className="w-4 h-4" />
@@ -862,6 +1136,149 @@ export default function Library() {
               Archive
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isEmailTemplateDialogOpen}
+        onOpenChange={(open) => {
+          setIsEmailTemplateDialogOpen(open);
+          if (!open) {
+            setEmailTemplateDetailId(null);
+            setEmailTemplateDialogMode("view");
+          }
+        }}
+      >
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">
+              {emailTemplateDialogMode === "create"
+                ? "Create Email Template"
+                : emailTemplateDialogMode === "edit"
+                ? "Edit Email Template"
+                : "Email Template"}
+            </DialogTitle>
+          </DialogHeader>
+
+          {emailTemplateDialogMode !== "view" ? (
+            <div className="space-y-5 pt-2">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Name</p>
+                  <Input
+                    value={emailTemplateDraft.name}
+                    onChange={(e) =>
+                      setEmailTemplateDraft((p) => ({
+                        ...p,
+                        name: e.target.value,
+                      }))
+                    }
+                    placeholder="Template name"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Category</p>
+                  <Select
+                    value={emailTemplateDraft.category}
+                    onValueChange={(value) =>
+                      setEmailTemplateDraft((p) => ({
+                        ...p,
+                        category: value as "general" | "interview" | "offer" | "onboarding",
+                      }))
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {defaultCategories.map((category) => (
+                        <SelectItem key={category.value} value={category.value}>
+                          {category.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Subject</p>
+                <Input
+                  value={emailTemplateDraft.subject}
+                  onChange={(e) =>
+                    setEmailTemplateDraft((p) => ({
+                      ...p,
+                      subject: e.target.value,
+                    }))
+                  }
+                  placeholder="Email subject"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Body</p>
+                <Textarea
+                  value={emailTemplateDraft.body}
+                  onChange={(e) =>
+                    setEmailTemplateDraft((p) => ({
+                      ...p,
+                      body: e.target.value,
+                    }))
+                  }
+                  placeholder="Write the email body"
+                  className="min-h-40 resize-y"
+                />
+              </div>
+
+              {emailTemplateSaveError && (
+                <p className="text-xs text-red-600">{emailTemplateSaveError}</p>
+              )}
+
+              <div className="flex items-center justify-end gap-2 border-t pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEmailTemplateDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-blue-600 text-white hover:bg-blue-700"
+                  onClick={handleEmailTemplateSave}
+                  disabled={isSavingTemplate}
+                >
+                  {isSavingTemplate ? "Saving..." : "Save"}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {!selectedEmailTemplate ? (
+                <p className="text-sm text-gray-500">Template not found.</p>
+              ) : (
+                <div>
+                  <div className="mb-3">
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Name</p>
+                    <p className="text-lg font-semibold text-gray-900">{selectedEmailTemplate.name}</p>
+                  </div>
+                  <div className="mb-3">
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Category</p>
+                    <p className="text-sm text-gray-700">
+                      {defaultCategories.find((c) => c.value === selectedEmailTemplate.category)?.label ?? "General"}
+                    </p>
+                  </div>
+                  <div className="mb-3">
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Subject</p>
+                    <p className="text-sm text-gray-700">{selectedEmailTemplate.subject}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Body</p>
+                    <div className="prose max-w-none mt-2">{selectedEmailTemplate.body}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

@@ -20,8 +20,9 @@ export interface PipelineStepInputPayload {
   order: number;
   process_type: string;
   process_title: string;
-  reminder?: string;
   interviewer_id: number;
+  passed_email_template_id?: number | null;
+  failed_email_template_id?: number | null;
   assessments?: PipelineAssessmentInputPayload[];
   notification_templates?: PipelineStepNotificationTemplate[];
   is_active?: boolean;

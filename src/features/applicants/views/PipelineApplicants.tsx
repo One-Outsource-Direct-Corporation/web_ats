@@ -42,6 +42,7 @@ import {
 import { Label } from "@/shared/components/ui/label.tsx";
 import { Textarea } from "@/shared/components/ui/textarea.tsx";
 import { defaultAxios } from "@/config/axios";
+import { emailTemplateService } from "@/features/library/services/emailTemplate.service";
 
 import { useJobDetailQuery } from "@/features/jobs/hooks/useJobs";
 import { extractPipelineStepsFromJobDetail } from "@/features/jobs/services/jobService";
@@ -69,6 +70,7 @@ interface InterviewScheduleModalState {
   pipelineStepId: number;
   mode: "set" | "reschedule";
   existingSchedule?: string;
+  jobTitle?: string;
 }
 
 interface InterviewScheduleFormState {
@@ -82,7 +84,18 @@ interface InterviewScheduleFormState {
   meetingPlatform: string;
   meetingLink: string;
   meetingLinkName: string;
+  meetingAddress: string;
   rescheduleReason: string;
+  emailTemplateId?: number | null;
+}
+
+interface InterviewEmailPreviewResponse {
+  candidate_application_id: number;
+  pipeline_step_id: number;
+  subject: string;
+  body: string;
+  html_body: string;
+  scheduled_for: string;
 }
 
 const GRACE_PERIOD_MS = 5000;
@@ -148,23 +161,106 @@ const formatDisplaySchedule = (scheduledFor?: string): string => {
   });
 };
 
+const buildInterviewSetupDetails = (
+  setup: "onsite" | "online" | "phone",
+  address?: string,
+  platform?: string,
+  link?: string,
+  linkName?: string,
+): string => {
+  const lines: string[] = [];
+  lines.push("\n---\nInterview Setup Details:");
+
+  if (setup === "onsite") {
+    lines.push(`Setup: Onsite`);
+    if (address?.trim()) {
+      lines.push(`Address: ${address}`);
+    }
+  } else if (setup === "online") {
+    lines.push(`Setup: Online`);
+    if (platform?.trim()) {
+      lines.push(`Platform: ${platform}`);
+    }
+    if (linkName?.trim()) {
+      lines.push(`Link Name: ${linkName}`);
+    }
+    if (link?.trim()) {
+      lines.push(`Link: ${link}`);
+    }
+  } else if (setup === "phone") {
+    lines.push(`Setup: Phone`);
+  }
+
+  return lines.join("\n");
+};
+
+const buildDefaultInterviewSubject = (
+  mode: "set" | "reschedule",
+  setup: "onsite" | "online" | "phone",
+  jobTitle?: string,
+): string => {
+  const setupLabel = setup.charAt(0).toUpperCase() + setup.slice(1);
+  const jobTitleStr = jobTitle ? ` - ${jobTitle}` : "";
+
+  return mode === "reschedule"
+    ? `Rescheduled Interview - ${setupLabel}${jobTitleStr}`
+    : `Interview - ${setupLabel}${jobTitleStr}`;
+};
+
+const renderTemplate = (
+  tmpl: string,
+  form: InterviewScheduleFormState,
+  modal: InterviewScheduleModalState,
+): string => {
+  if (!tmpl) return "";
+  const scheduleIso = buildIsoDateTime(form.scheduledDate, form.scheduledTime) || "";
+  const scheduleStr = scheduleIso ? formatDisplaySchedule(scheduleIso) : "Not Scheduled";
+
+  const placeholders: Record<string, string> = {
+    candidate_name: modal.candidateName || "",
+    schedule: scheduleStr,
+    pipeline_step_title: modal.jobTitle || "",
+    meeting_link: form.meetingLink || "",
+    meeting_address: form.meetingAddress || "",
+    interview_setup: form.interviewSetup || "",
+    interviewer_names: form.interviewerNames || "",
+    job_title: modal.jobTitle || "",
+    reschedule_reason: form.rescheduleReason || "",
+    duration: form.duration || "",
+    meeting_platform: form.meetingPlatform || "",
+    meeting_link_name: form.meetingLinkName || "",
+  };
+
+  return tmpl.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, key) => placeholders[key] ?? "");
+};
+
 const createDefaultScheduleForm = (
   candidateName: string,
   existingSchedule?: string,
   interviewerName?: string,
-): InterviewScheduleFormState => ({
-  scheduledDate: toDateInputValue(existingSchedule),
-  scheduledTime: toTimeInputValue(existingSchedule),
-  duration: "60 mins",
-  subject: "Interview Session",
-  interviewerNames: interviewerName || "",
-  templateBody: `Hello ${candidateName},\n\nYour interview has been scheduled.`,
-  interviewSetup: "phone",
-  meetingPlatform: "Zoom Meeting",
-  meetingLink: "",
-  meetingLinkName: "",
-  rescheduleReason: "",
-});
+  mode?: "set" | "reschedule",
+  jobTitle?: string,
+): InterviewScheduleFormState => {
+  const subject = buildDefaultInterviewSubject(mode || "set", "phone", jobTitle);
+  
+  const baseBody = `Hello ${candidateName},\n\nYour interview has been scheduled.`;
+  const templateBody = baseBody;
+
+  return {
+    scheduledDate: toDateInputValue(existingSchedule),
+    scheduledTime: toTimeInputValue(existingSchedule),
+    duration: "60 mins",
+    subject,
+    interviewerNames: interviewerName || "",
+    templateBody,
+    interviewSetup: "phone",
+    meetingPlatform: "Zoom Meeting",
+    meetingLink: "",
+    meetingLinkName: "",
+    meetingAddress: "",
+    rescheduleReason: "",
+  };
+};
 
 const normalizeStatusTag = (value?: string): string => {
   if (!value) {
@@ -197,6 +293,7 @@ export default function PipelineApplicants() {
     pipelineStepId: 0,
     mode: "set",
     existingSchedule: undefined,
+    jobTitle: undefined,
   });
   const [scheduleForm, setScheduleForm] = useState<InterviewScheduleFormState>({
     scheduledDate: "",
@@ -209,9 +306,15 @@ export default function PipelineApplicants() {
     meetingPlatform: "Zoom Meeting",
     meetingLink: "",
     meetingLinkName: "",
+    meetingAddress: "",
     rescheduleReason: "",
+    emailTemplateId: undefined,
   });
   const [isSavingSchedule, setIsSavingSchedule] = useState(false);
+  const [isEmailPreviewOpen, setIsEmailPreviewOpen] = useState(false);
+  const [isLoadingEmailPreview, setIsLoadingEmailPreview] = useState(false);
+  const [emailPreview, setEmailPreview] = useState<InterviewEmailPreviewResponse | null>(null);
+  const subjectEditedRef = useRef(false);
 
   const { data: jobDetail, isLoading, isError, refetch } = useJobDetailQuery(jobId);
 
@@ -270,11 +373,12 @@ export default function PipelineApplicants() {
 
   const selectedTypeLabel = getProcessTypeLabel(selectedType);
 
+  const isInterviewScheduleStage =
+    selectedType === "phone_call_interview" ||
+    selectedType === "initial_interview" ||
+    selectedType === "final_interview";
   const isPassFailStage =
     selectedType === "resume_screening" ||
-    selectedType === "phone_call_interview" ||
-    selectedType === "initial_interview";
-  const isInterviewScheduleStage =
     selectedType === "phone_call_interview" ||
     selectedType === "initial_interview";
 
@@ -533,6 +637,7 @@ export default function PipelineApplicants() {
       interviewerName?: string;
       interviewerEmail?: string;
     },
+    jobTitle?: string,
   ) => {
     if (!candidate.pipelineStepId) {
       toast.error("Unable to schedule interview: pipeline step not found.");
@@ -547,6 +652,7 @@ export default function PipelineApplicants() {
       pipelineStepId: candidate.pipelineStepId,
       mode,
       existingSchedule: candidate.scheduledFor,
+      jobTitle,
     });
 
     setScheduleForm(
@@ -554,7 +660,42 @@ export default function PipelineApplicants() {
         candidate.name,
         candidate.scheduledFor,
         candidate.interviewerName,
+        mode,
+        jobTitle,
       ),
+    );
+  };
+
+  const handleOpenInterviewEvaluationForm = (
+    candidate: {
+      id: number;
+      name: string;
+      pipelineStepId?: number;
+      scheduledFor?: string;
+      interviewerName?: string;
+      interviewerEmail?: string;
+    },
+    jobTitle?: string,
+  ) => {
+    if (!candidate.pipelineStepId) {
+      toast.error("Unable to open interview evaluation form: pipeline step not found.");
+      return;
+    }
+
+    // Navigate to a bookmarkable interview-specific IEF route; still pass state for perf
+    navigate(
+      `/job/${jobId}/applicants/${candidate.id}/interviews/${candidate.pipelineStepId}/ief`,
+      {
+        state: {
+          candidateApplicationId: candidate.id,
+          candidateName: candidate.name,
+          pipelineStepId: candidate.pipelineStepId,
+          scheduledFor: candidate.scheduledFor,
+          interviewerName: candidate.interviewerName,
+          interviewerEmail: candidate.interviewerEmail,
+          jobTitle,
+        },
+      },
     );
   };
 
@@ -573,11 +714,65 @@ export default function PipelineApplicants() {
     field: keyof InterviewScheduleFormState,
     value: string,
   ) => {
-    setScheduleForm((previous) => ({
-      ...previous,
-      [field]: value,
-    }));
+    setScheduleForm((previous) => {
+      const updated = { ...previous, [field]: value };
+
+      // If user edits the subject directly, mark it as manually edited
+      if (field === "subject") {
+        subjectEditedRef.current = true;
+        return updated;
+      }
+
+      // If setup-related fields changed, update subject (unless user edited it)
+      if (
+        field === "interviewSetup" ||
+        field === "meetingAddress" ||
+        field === "meetingPlatform" ||
+        field === "meetingLink" ||
+        field === "meetingLinkName"
+      ) {
+        if (!subjectEditedRef.current) {
+          const activeSetup = (field === "interviewSetup" ? value : previous.interviewSetup) as
+            InterviewScheduleFormState["interviewSetup"];
+          const selectedTemplate = emailTemplates.find(
+            (template) => String(template.id) === String(previous.emailTemplateId),
+          );
+
+          updated.subject = selectedTemplate?.subject
+            ? renderTemplate(selectedTemplate.subject ?? "", { ...updated, subject: "" }, scheduleModalState) ||
+              buildDefaultInterviewSubject(scheduleModalState.mode, activeSetup, scheduleModalState.jobTitle)
+            : buildDefaultInterviewSubject(scheduleModalState.mode, activeSetup, scheduleModalState.jobTitle);
+        }
+
+        // Do not modify templateBody here; setup details are appended only in previews/sent emails
+      }
+
+      return updated;
+    });
   };
+
+  const [emailTemplates, setEmailTemplates] = useState<Array<any>>([]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadTemplates = async () => {
+      try {
+        const resp = await emailTemplateService.listResponse({ page: 1, pageSize: 50 });
+        const items = Array.isArray(resp) ? resp : resp?.results ?? [];
+        if (mounted) setEmailTemplates(items);
+      } catch (err) {
+        // non-blocking
+        console.debug("Unable to load email templates", err);
+      }
+    };
+
+    void loadTemplates();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleSubmitSchedule = async () => {
     const scheduledFor = buildIsoDateTime(
@@ -593,7 +788,7 @@ export default function PipelineApplicants() {
     setIsSavingSchedule(true);
 
     try {
-      await defaultAxios.post("/api/candidate/pipeline/schedule/", {
+      const payload = {
         candidate_application_id: scheduleModalState.candidateApplicationId,
         pipeline_step_id: scheduleModalState.pipelineStepId,
         scheduled_for: scheduledFor,
@@ -606,10 +801,14 @@ export default function PipelineApplicants() {
           meeting_platform: scheduleForm.meetingPlatform,
           meeting_link: scheduleForm.meetingLink,
           meeting_link_name: scheduleForm.meetingLinkName,
+          meeting_address: scheduleForm.meetingAddress,
           reschedule_reason: scheduleForm.rescheduleReason,
           template_body: scheduleForm.templateBody,
+          email_template_id: scheduleForm.emailTemplateId ?? null,
         },
-      });
+      };
+
+      await defaultAxios.post("/api/candidate/pipeline/schedule/", payload);
 
       toast.success(
         scheduleModalState.mode === "reschedule"
@@ -624,6 +823,53 @@ export default function PipelineApplicants() {
       toast.error("Unable to save interview schedule.");
     } finally {
       setIsSavingSchedule(false);
+    }
+  };
+
+  const handleOpenEmailPreview = async () => {
+    const scheduledFor = buildIsoDateTime(
+      scheduleForm.scheduledDate,
+      scheduleForm.scheduledTime,
+    );
+
+    if (!scheduledFor) {
+      toast.error("Please provide a valid interview date and time.");
+      return;
+    }
+
+    setIsLoadingEmailPreview(true);
+
+    try {
+      const payload = {
+        candidate_application_id: scheduleModalState.candidateApplicationId,
+        pipeline_step_id: scheduleModalState.pipelineStepId,
+        scheduled_for: scheduledFor,
+        schedule_details: {
+          duration: scheduleForm.duration,
+          subject: scheduleForm.subject,
+          interviewer_names: scheduleForm.interviewerNames,
+          interview_setup: scheduleForm.interviewSetup,
+          meeting_platform: scheduleForm.meetingPlatform,
+          meeting_link: scheduleForm.meetingLink,
+          meeting_link_name: scheduleForm.meetingLinkName,
+          meeting_address: scheduleForm.meetingAddress,
+          reschedule_reason: scheduleForm.rescheduleReason,
+          template_body: scheduleForm.templateBody,
+          email_template_id: scheduleForm.emailTemplateId ?? null,
+        },
+      };
+
+      const response = await defaultAxios.post<InterviewEmailPreviewResponse>(
+        "/api/candidate/pipeline/schedule/preview/",
+        payload,
+      );
+      setEmailPreview(response.data);
+      setIsEmailPreviewOpen(true);
+    } catch (error) {
+      console.error("Unable to generate interview email preview.", error);
+      toast.error("Unable to generate interview email preview.");
+    } finally {
+      setIsLoadingEmailPreview(false);
     }
   };
 
@@ -643,7 +889,7 @@ export default function PipelineApplicants() {
     return "border-gray-300 text-gray-600";
   };
 
-  const interviewTableColumnCount = isInterviewScheduleStage ? 5 : isPassFailStage ? 5 : 6;
+  const interviewTableColumnCount = isInterviewScheduleStage ? 6 : isPassFailStage ? 5 : 6;
 
   return (
     <>
@@ -717,13 +963,13 @@ export default function PipelineApplicants() {
 
             {!isLoading && !isError && processTypes.length > 0 && (
               <div className="mt-4 rounded-md border bg-white overflow-x-auto">
-                <Table className="table-fixed text-xs lg:min-w-200">
+                <Table className="w-full table-fixed text-xs">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="text-center w-16 border border-gray-200 py-2 px-3 text-xs lg:text-sm lg:py-3 lg:px-4">
                         ID Number
                       </TableHead>
-                      <TableHead className="text-center border border-gray-200 py-2 px-3 w-32 lg:min-w-50 text-xs lg:text-sm lg:py-3 lg:px-4">
+                      <TableHead className="text-center border border-gray-200 py-2 px-3 w-36 text-xs whitespace-normal wrap-break-word lg:text-sm lg:py-3 lg:px-4">
                         Full Name
                       </TableHead>
 
@@ -734,6 +980,9 @@ export default function PipelineApplicants() {
                           </TableHead>
                           <TableHead className="border border-gray-200 py-2 px-3 w-24 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
                             Status
+                          </TableHead>
+                          <TableHead className="border border-gray-200 py-2 px-3 w-24 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
+                            Interview Evaluation Form
                           </TableHead>
                         </>
                       ) : isPassFailStage ? (
@@ -785,14 +1034,17 @@ export default function PipelineApplicants() {
                       visibleStepCandidates.map((candidate) => (
                         <TableRow
                           key={candidate.id}
-                          className="hover:bg-gray-50 h-16 lg:h-20"
+                          className="hover:bg-gray-50"
                         >
                           <TableCell className="text-center border border-gray-200 py-3 px-3 font-medium text-xs lg:text-sm align-middle">
                             {String(candidate.id).padStart(3, "0")}
                           </TableCell>
-                          <TableCell className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 w-32 align-middle">
-                            <div className="flex items-center justify-center gap-2 lg:gap-3">
-                              <Avatar className="h-12 w-12 shrink-0 rounded-sm">
+                          <TableCell
+                            className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 w-36 align-middle"
+                            style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}
+                          >
+                            <div className="flex min-w-0 flex-col items-center justify-center gap-1 text-center lg:flex-row lg:gap-2">
+                              <Avatar className="h-10 w-10 shrink-0 rounded-sm">
                                 <AvatarImage
                                   src={candidate.photoUrl || "/placeholder.svg"}
                                   className="object-cover"
@@ -807,12 +1059,12 @@ export default function PipelineApplicants() {
                                 </AvatarFallback>
                               </Avatar>
                               <span
-                                className="font-medium text-xs lg:text-sm wrap-break-word leading-tight"
+                                className="block min-w-0 max-w-full font-medium text-xs leading-tight whitespace-normal lg:text-sm"
+                                style={{ overflowWrap: "anywhere" }}
                                 title={candidate.name}
                               >
                                 {candidate.name}
                               </span>
-
                             </div>
                           </TableCell>
 
@@ -823,7 +1075,7 @@ export default function PipelineApplicants() {
                                   variant="outline"
                                   size="sm"
                                   className="w-full text-yellow-600 border-yellow-500 bg-white hover:bg-yellow-500 hover:text-white"
-                                  onClick={() => handleOpenScheduleModal(candidate)}
+                                  onClick={() => handleOpenScheduleModal(candidate, resolvedJobTitle)}
                                   disabled={isSavingSchedule}
                                 >
                                   {candidate.scheduledFor ? "Reschedule" : "Set Schedule"}
@@ -839,6 +1091,19 @@ export default function PipelineApplicants() {
                                 >
                                   {candidate.statusLabel}
                                 </Badge>
+                              </TableCell>
+                              <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full text-slate-700 border-slate-300 bg-white hover:bg-slate-900 hover:text-white"
+                                  onClick={() =>
+                                    handleOpenInterviewEvaluationForm(candidate, resolvedJobTitle)
+                                  }
+                                  disabled={!candidate.pipelineStepId}
+                                >
+                                  View
+                                </Button>
                               </TableCell>
                             </>
                           ) : isPassFailStage ? (
@@ -905,7 +1170,10 @@ export default function PipelineApplicants() {
                           )}
 
                           <TableCell className="text-center border border-gray-200 py-3 px-3 text-xs lg:text-sm align-middle">
-                            <span className="wrap-break-word leading-tight">
+                            <span
+                              className="leading-tight whitespace-normal"
+                              style={{ overflowWrap: "anywhere" }}
+                            >
                               {candidate.department}
                             </span>
                           </TableCell>
@@ -1007,7 +1275,7 @@ export default function PipelineApplicants() {
               </div>
 
               <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_220px]">
-                <div className="space-y-2">
+                  <div className="space-y-2">
                   <Input
                     id="interview-subject"
                     value={scheduleForm.subject}
@@ -1016,6 +1284,52 @@ export default function PipelineApplicants() {
                     }
                     placeholder="Subject:"
                   />
+
+                  <Select
+                    value={scheduleForm.emailTemplateId ? String(scheduleForm.emailTemplateId) : "custom"}
+                    onValueChange={(value) => {
+                      if (!value || value === "custom") {
+                        // custom — keep current body
+                        subjectEditedRef.current = false;
+                        setScheduleForm((prev) => ({
+                          ...prev,
+                          emailTemplateId: undefined,
+                          subject: buildDefaultInterviewSubject(
+                            scheduleModalState.mode,
+                            prev.interviewSetup,
+                            scheduleModalState.jobTitle,
+                          ),
+                        }));
+                        return;
+                      }
+
+                      const chosen = emailTemplates.find((t) => String(t.id) === String(value));
+                      if (chosen) {
+                        const baseBody = chosen.body ?? "";
+                        const renderedSubject = renderTemplate(chosen.subject ?? "", scheduleForm, scheduleModalState);
+                        subjectEditedRef.current = false;
+                        setScheduleForm((prev) => ({
+                          ...prev,
+                          templateBody: baseBody,
+                          emailTemplateId: chosen.id,
+                          subject: renderedSubject || prev.subject,
+                        }));
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select template or Custom" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="custom">Custom / No template</SelectItem>
+                      {emailTemplates.map((tmpl) => (
+                        <SelectItem key={tmpl.id} value={String(tmpl.id)}>
+                          {tmpl.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
                   <Textarea
                     id="interview-template"
                     value={scheduleForm.templateBody}
@@ -1025,46 +1339,83 @@ export default function PipelineApplicants() {
                     placeholder="Templated"
                     className="min-h-28"
                   />
+                  <div className="mt-2 text-sm text-gray-700 bg-gray-50 p-3 rounded border border-gray-100 whitespace-pre-wrap">
+                    {buildInterviewSetupDetails(
+                      scheduleForm.interviewSetup,
+                      scheduleForm.meetingAddress,
+                      scheduleForm.meetingPlatform,
+                      scheduleForm.meetingLink,
+                      scheduleForm.meetingLinkName,
+                    )}
+                  </div>
                 </div>
 
-                {scheduleModalState.mode === "reschedule" ? (
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold">Interview Set-up</Label>
-                    <div className="flex items-center gap-3 text-sm">
-                      <label className="flex items-center gap-1"><input type="radio" name="setup" checked={scheduleForm.interviewSetup === "onsite"} onChange={() => handleScheduleInputChange("interviewSetup", "onsite")} /> Onsite</label>
-                      <label className="flex items-center gap-1"><input type="radio" name="setup" checked={scheduleForm.interviewSetup === "online"} onChange={() => handleScheduleInputChange("interviewSetup", "online")} /> Online</label>
-                      <label className="flex items-center gap-1"><input type="radio" name="setup" checked={scheduleForm.interviewSetup === "phone"} onChange={() => handleScheduleInputChange("interviewSetup", "phone")} /> Phone</label>
-                    </div>
-                    <Select
-                      value={scheduleForm.meetingPlatform}
-                      onValueChange={(value) => handleScheduleInputChange("meetingPlatform", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Platform" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Zoom Meeting">Zoom Meeting</SelectItem>
-                        <SelectItem value="Google Meet">Google Meet</SelectItem>
-                        <SelectItem value="Microsoft Teams">Microsoft Teams</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Input
-                      value={scheduleForm.meetingLink}
-                      onChange={(event) => handleScheduleInputChange("meetingLink", event.target.value)}
-                      placeholder="Link"
-                    />
-                    <Input
-                      value={scheduleForm.meetingLinkName}
-                      onChange={(event) => handleScheduleInputChange("meetingLinkName", event.target.value)}
-                      placeholder="Link Name"
-                    />
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">Interview Set-up</Label>
+                  <div className="flex items-center gap-3 text-sm">
+                    <label className="flex items-center gap-1">
+                      <input
+                        type="radio"
+                        name="setup"
+                        checked={scheduleForm.interviewSetup === "onsite"}
+                        onChange={() => handleScheduleInputChange("interviewSetup", "onsite")}
+                      />
+                      Onsite
+                    </label>
+                    <label className="flex items-center gap-1">
+                      <input
+                        type="radio"
+                        name="setup"
+                        checked={scheduleForm.interviewSetup === "online"}
+                        onChange={() => handleScheduleInputChange("interviewSetup", "online")}
+                      />
+                      Online
+                    </label>
+                    <label className="flex items-center gap-1">
+                      <input
+                        type="radio"
+                        name="setup"
+                        checked={scheduleForm.interviewSetup === "phone"}
+                        onChange={() => handleScheduleInputChange("interviewSetup", "phone")}
+                      />
+                      Phone
+                    </label>
                   </div>
-                ) : (
-                  <div className="space-y-1 text-sm">
-                    <p className="font-semibold">Schedule Interview:</p>
-                    <p className="capitalize">{scheduleForm.interviewSetup}</p>
-                  </div>
-                )}
+
+                  {scheduleForm.interviewSetup === "onsite" ? (
+                    <Input
+                      value={scheduleForm.meetingAddress}
+                      onChange={(event) => handleScheduleInputChange("meetingAddress", event.target.value)}
+                      placeholder="Address"
+                    />
+                  ) : scheduleForm.interviewSetup === "online" ? (
+                    <>
+                      <Select
+                        value={scheduleForm.meetingPlatform}
+                        onValueChange={(value) => handleScheduleInputChange("meetingPlatform", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Platform" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Zoom Meeting">Zoom Meeting</SelectItem>
+                          <SelectItem value="Google Meet">Google Meet</SelectItem>
+                          <SelectItem value="Microsoft Teams">Microsoft Teams</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        value={scheduleForm.meetingLink}
+                        onChange={(event) => handleScheduleInputChange("meetingLink", event.target.value)}
+                        placeholder="Link"
+                      />
+                      <Input
+                        value={scheduleForm.meetingLinkName}
+                        onChange={(event) => handleScheduleInputChange("meetingLinkName", event.target.value)}
+                        placeholder="Link Name"
+                      />
+                    </>
+                  ) : null}
+                </div>
               </div>
 
               {scheduleModalState.mode === "reschedule" && (
@@ -1090,6 +1441,14 @@ export default function PipelineApplicants() {
             <Button
               type="button"
               variant="outline"
+              onClick={() => void handleOpenEmailPreview()}
+              disabled={isSavingSchedule || isLoadingEmailPreview}
+            >
+              {isLoadingEmailPreview ? "Loading..." : "View Email"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
               onClick={handleCloseScheduleModal}
               disabled={isSavingSchedule}
             >
@@ -1105,6 +1464,52 @@ export default function PipelineApplicants() {
                 : scheduleModalState.mode === "reschedule"
                   ? "Confirm"
                   : "Confirm"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isEmailPreviewOpen} onOpenChange={setIsEmailPreviewOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Email Preview</DialogTitle>
+            <DialogDescription>
+              This is what will be sent to the candidate.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-gray-600 uppercase">Subject</div>
+              <div className="text-sm bg-white p-3 rounded border border-gray-200 wrap-break-word">
+                {emailPreview?.subject || scheduleForm.subject}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-gray-600 uppercase">Rendered HTML</div>
+              <iframe
+                title="Interview Email HTML Preview"
+                className="w-full h-80 bg-white rounded border border-gray-200"
+                srcDoc={emailPreview?.html_body || ""}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-gray-600 uppercase">Plain Text Body</div>
+              <div className="text-sm bg-white p-4 rounded border border-gray-200 whitespace-pre-wrap wrap-break-word max-h-80 overflow-y-auto">
+                {emailPreview?.body || "No preview available."}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsEmailPreviewOpen(false)}
+            >
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

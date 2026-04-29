@@ -83,8 +83,9 @@ interface PipelineStepBase {
   description: string;
   order: number;
   stage: number;
-  reminder: string;
   interviewer: User | null;
+  passedEmailTemplateId?: number | null;
+  failedEmailTemplateId?: number | null;
   assessments: Assessment[];
   notification_templates: PipelineStepNotificationTemplate[];
 }

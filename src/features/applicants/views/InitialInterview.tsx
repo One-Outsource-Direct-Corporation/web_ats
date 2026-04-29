@@ -662,33 +662,54 @@ export default function JobManagement() {
 
               {/* Applicants Table */}
               <div className="mt-4 rounded-md border bg-white overflow-x-auto">
-                <Table className="table-fixed text-xs lg:min-w-[800px]">
+                <Table className="w-full table-fixed text-xs">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className=" text-center align-center w-16 border border-gray-200 py-2 px-3 text-xs lg:text-sm lg:py-3 lg:px-4">
+                      <TableHead
+                        className="text-center align-center w-16 border border-gray-200 py-2 px-3 text-xs whitespace-normal break-words lg:text-sm lg:py-3 lg:px-4"
+                        style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}
+                      >
                         ID
                       </TableHead>
 
-                      <TableHead className="text-center align-center border border-gray-200 py-2 px-3 w-32 lg:min-w-[200px] text-xs lg:text-sm lg:py-3 lg:px-4">
+                      <TableHead
+                        className="text-center align-center border border-gray-200 py-2 px-3 w-32 text-xs whitespace-normal break-words lg:text-sm lg:py-3 lg:px-4"
+                        style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}
+                      >
                         Full Name
                       </TableHead>
-                      <TableHead className="border border-gray-200 py-2 px-3 w-20 lg:min-w-[120px] text-center text-xs lg:text-sm lg:py-3 lg:px-4">
+                      <TableHead
+                        className="border border-gray-200 py-2 px-3 w-20 text-center text-xs whitespace-normal break-words lg:text-sm lg:py-3 lg:px-4"
+                        style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}
+                      >
                         Set
                         <br />
                         Interview
                       </TableHead>
-                      <TableHead className="border border-gray-200 py-2 px-3 w-20 lg:min-w-[120px] text-center text-xs lg:text-sm lg:py-3 lg:px-4">
+                      <TableHead
+                        className="border border-gray-200 py-2 px-3 w-20 text-center text-xs whitespace-normal break-words lg:text-sm lg:py-3 lg:px-4"
+                        style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}
+                      >
                         Set
                         <br />
                         Schedule
                       </TableHead>
-                      <TableHead className="border border-gray-200 py-2 px-3 w-12 lg:min-w-[80px] text-center text-xs lg:text-sm lg:py-3 lg:px-4">
+                      <TableHead
+                        className="border border-gray-200 py-2 px-3 w-12 text-center text-xs whitespace-normal break-words lg:text-sm lg:py-3 lg:px-4"
+                        style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}
+                      >
                         Status
                       </TableHead>
-                      <TableHead className="text-center align-center border border-gray-200 py-2 px-3 w-20 lg:min-w-[120px] text-xs lg:text-sm lg:py-3 lg:px-4">
+                      <TableHead
+                        className="text-center align-center border border-gray-200 py-2 px-3 w-20 text-xs whitespace-normal break-words lg:text-sm lg:py-3 lg:px-4"
+                        style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}
+                      >
                         Department
                       </TableHead>
-                      <TableHead className="border border-gray-200 py-2 px-3 w-24 lg:min-w-[160px] text-center text-xs lg:text-sm lg:py-3 lg:px-4">
+                      <TableHead
+                        className="border border-gray-200 py-2 px-3 w-24 text-center text-xs whitespace-normal break-words lg:text-sm lg:py-3 lg:px-4"
+                        style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}
+                      >
                         Interview Evaluation
                         <br />
                         Form
@@ -700,15 +721,21 @@ export default function JobManagement() {
                       filteredApplicants.map((applicant) => (
                         <TableRow
                           key={applicant.id}
-                          className="hover:bg-gray-50 h-16 lg:h-20"
+                          className="hover:bg-gray-50"
                         >
-                          <TableCell className="text-center align-center border-gray-200 py-3 px-3 font-medium text-xs lg:text-sm align-middle">
+                          <TableCell
+                            className="text-center align-center border-gray-200 py-3 px-3 font-medium text-xs whitespace-normal break-words lg:text-sm align-middle"
+                            style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}
+                          >
                             {applicant.id}
                           </TableCell>
 
-                          <TableCell className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 w-32 align-middle">
-                            <div className="flex items-center justify-center gap-2 lg:gap-3">
-                              <Avatar className="h-6 w-6 lg:h-8 lg:w-8 flex-shrink-0">
+                          <TableCell
+                            className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 w-32 align-middle"
+                            style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}
+                          >
+                            <div className="flex min-w-0 flex-col items-center justify-center gap-1 text-center lg:flex-row lg:gap-3">
+                              <Avatar className="h-6 w-6 lg:h-8 lg:w-8 shrink-0">
                                 <AvatarImage
                                   src={applicant.avatar || "/placeholder.svg"}
                                 />
@@ -720,14 +747,18 @@ export default function JobManagement() {
                                 </AvatarFallback>
                               </Avatar>
                               <span
-                                className="font-medium text-xs lg:text-sm break-words leading-tight lg:whitespace-nowrap"
+                                className="block min-w-0 max-w-full font-medium text-xs leading-tight whitespace-normal lg:text-sm"
+                                style={{ overflowWrap: "anywhere" }}
                                 title={applicant.name}
                               >
                                 {applicant.name}
                               </span>
                             </div>
                           </TableCell>
-                          <TableCell className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 text-center w-20 align-middle">
+                          <TableCell
+                            className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 text-center w-20 align-middle whitespace-normal break-words"
+                            style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}
+                          >
                             <Button
                               variant="outline"
                               size="sm"
@@ -739,7 +770,10 @@ export default function JobManagement() {
                               Interview
                             </Button>
                           </TableCell>
-                          <TableCell className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 text-center w-20 align-middle">
+                          <TableCell
+                            className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 text-center w-20 align-middle whitespace-normal break-words"
+                            style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}
+                          >
                             <Button
                               variant="outline"
                               size="sm"
@@ -751,7 +785,10 @@ export default function JobManagement() {
                               Reschedule
                             </Button>
                           </TableCell>
-                          <TableCell className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 text-center w-12 align-middle">
+                          <TableCell
+                            className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 text-center w-12 align-middle whitespace-normal break-words"
+                            style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}
+                          >
                             <Button
                               variant="outline"
                               size="sm"
@@ -760,12 +797,21 @@ export default function JobManagement() {
                               Fail
                             </Button>
                           </TableCell>
-                          <TableCell className="text-center align-center border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 w-20 text-xs lg:text-sm align-middle">
-                            <span className="break-words leading-tight lg:whitespace-nowrap">
+                          <TableCell
+                            className="text-center align-center border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 w-20 text-xs lg:text-sm align-middle whitespace-normal break-words"
+                            style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}
+                          >
+                            <span
+                              className="block max-w-full whitespace-normal leading-tight text-center"
+                              style={{ overflowWrap: "anywhere" }}
+                            >
                               {applicant.department}
                             </span>
                           </TableCell>
-                          <TableCell className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 text-center w-24 align-middle">
+                          <TableCell
+                            className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 text-center w-24 align-middle whitespace-normal break-words"
+                            style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}
+                          >
                             <Button
                               variant="outline"
                               size="sm"

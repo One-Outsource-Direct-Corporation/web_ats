@@ -138,3 +138,10 @@ export interface JobPostingPublicResponse {
   work_setup: string;
   updated_at: string;
 }
+
+export interface AssessmentSettings {
+  dueDate?: string;
+  timeLimit?: string;
+  passedEmailTemplateId?: number | null;
+  failedEmailTemplateId?: number | null;
+}

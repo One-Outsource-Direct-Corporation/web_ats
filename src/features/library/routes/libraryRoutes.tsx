@@ -1,4 +1,6 @@
 import Library from "../views/Library";
+import IEFTemplateLibrary from "../views/IEFTemplateLibrary";
+import IEFTemplateEditor from "../views/IEFTemplateEditor";
 
 export const libraryRoutes = [
   {
@@ -7,6 +9,23 @@ export const libraryRoutes = [
       {
         index: true,
         element: <Library />,
+      },
+      {
+        path: "ief-templates",
+        children: [
+          {
+            index: true,
+            element: <IEFTemplateLibrary />,
+          },
+          {
+            path: "new",
+            element: <IEFTemplateEditor />,
+          },
+          {
+            path: ":templateId",
+            element: <IEFTemplateEditor />,
+          },
+        ],
       },
     ],
   },

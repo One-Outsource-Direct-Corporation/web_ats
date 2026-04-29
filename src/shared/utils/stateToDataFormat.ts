@@ -196,6 +196,16 @@ export function stateToDataFormat<T extends object>(
       if (step.id !== undefined) normalizedStep.id = step.id;
       if ("tempId" in normalizedStep) delete normalizedStep.tempId;
 
+      // Map frontend camelCase template ids to backend snake_case fields
+      if (step.passedEmailTemplateId !== undefined) {
+        normalizedStep.passed_email_template_id = step.passedEmailTemplateId;
+        delete normalizedStep.passedEmailTemplateId;
+      }
+      if (step.failedEmailTemplateId !== undefined) {
+        normalizedStep.failed_email_template_id = step.failedEmailTemplateId;
+        delete normalizedStep.failedEmailTemplateId;
+      }
+
       return normalizedStep;
     });
   }

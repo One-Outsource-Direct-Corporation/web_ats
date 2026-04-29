@@ -147,15 +147,19 @@ export function AddStepFormDialog({
           />
 
           <StageActionTemplate
-            reminderTime={stepData.reminder || ""}
-            onReminderTimeChange={(value: string) =>
-              onStepDataChange("reminder", value)
-            }
             notificationTemplates={stepData.notification_templates}
             onNotificationTemplatesChange={(
               value: PipelineStepNotificationTemplate[],
             ) =>
               onStepDataChange("notification_templates", value)
+            }
+            passedEmailTemplateId={stepData.passedEmailTemplateId}
+            failedEmailTemplateId={stepData.failedEmailTemplateId}
+            onPassedEmailTemplateChange={(id) =>
+              onStepDataChange("passedEmailTemplateId", id)
+            }
+            onFailedEmailTemplateChange={(id) =>
+              onStepDataChange("failedEmailTemplateId", id)
             }
           />
         </FieldGroup>
