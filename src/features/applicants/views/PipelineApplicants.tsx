@@ -1496,6 +1496,122 @@ export default function PipelineApplicants() {
                                 </Button>
                               </TableCell>
                             </>
+                          ) : candidate.pipelineStatus === "pending" ? (
+                            <>
+                              <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="px-3 text-blue-600 border-blue-600 bg-white hover:bg-blue-600 hover:text-white"
+                                  onClick={() =>
+                                    handleOpenShortlistModal(
+                                      candidate.id,
+                                      candidate.name,
+                                      candidate.pipelineStepId,
+                                      "shortlist",
+                                    )
+                                  }
+                                >
+                                  Shortlist
+                                </Button>
+                              </TableCell>
+                              <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle" />
+                            </>
+                          ) : candidate.pipelineStatus === "shortlisted" ? (
+                            <>
+                              <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="px-3 text-green-600 border-green-600 bg-white hover:bg-green-600 hover:text-white"
+                                  onClick={() =>
+                                    handleOpenShortlistModal(
+                                      candidate.id,
+                                      candidate.name,
+                                      candidate.pipelineStepId,
+                                      "approve",
+                                    )
+                                  }
+                                >
+                                  Approve
+                                </Button>
+                              </TableCell>
+                              <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="px-3 text-red-600 border-red-600 bg-white hover:bg-red-600 hover:text-white"
+                                  onClick={() =>
+                                    handleOpenShortlistModal(
+                                      candidate.id,
+                                      candidate.name,
+                                      candidate.pipelineStepId,
+                                      "reject",
+                                    )
+                                  }
+                                >
+                                  Reject
+                                </Button>
+                              </TableCell>
+                            </>
+                          ) : candidate.pipelineStatus === "pending" ? (
+                            <>
+                              <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="px-3 text-blue-600 border-blue-600 bg-white hover:bg-blue-600 hover:text-white"
+                                  onClick={() =>
+                                    handleOpenShortlistModal(
+                                      candidate.id,
+                                      candidate.name,
+                                      candidate.pipelineStepId,
+                                      "shortlist",
+                                    )
+                                  }
+                                >
+                                  Shortlist
+                                </Button>
+                              </TableCell>
+                              <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle" />
+                            </>
+                          ) : candidate.pipelineStatus === "shortlisted" ? (
+                            <>
+                              <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="px-3 text-green-600 border-green-600 bg-white hover:bg-green-600 hover:text-white"
+                                  onClick={() =>
+                                    handleOpenShortlistModal(
+                                      candidate.id,
+                                      candidate.name,
+                                      candidate.pipelineStepId,
+                                      "approve",
+                                    )
+                                  }
+                                >
+                                  Approve
+                                </Button>
+                              </TableCell>
+                              <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="px-3 text-red-600 border-red-600 bg-white hover:bg-red-600 hover:text-white"
+                                  onClick={() =>
+                                    handleOpenShortlistModal(
+                                      candidate.id,
+                                      candidate.name,
+                                      candidate.pipelineStepId,
+                                      "reject",
+                                    )
+                                  }
+                                >
+                                  Reject
+                                </Button>
+                              </TableCell>
+                            </>
                           ) : isPassFailStage ? (
                             <>
                               <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
@@ -1582,7 +1698,7 @@ export default function PipelineApplicants() {
                             </TableCell>
                           ) : null}
 
-                          {!isInterviewScheduleStage && !isPassFailStage ? (
+                          {!isInterviewScheduleStage && !isPassFailStage && candidate.pipelineStatus !== "pending" && candidate.pipelineStatus !== "shortlisted" ? (
                             <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
                               <Button
                                 variant="outline"
@@ -1917,6 +2033,65 @@ export default function PipelineApplicants() {
               onClick={() => setIsEmailPreviewOpen(false)}
             >
               Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={shortlistModalOpen} onOpenChange={handleCloseShortlistModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {shortlistAction === "shortlist"
+                ? "Shortlist Candidate"
+                : shortlistAction === "approve"
+                  ? "Approve Shortlisted Candidate"
+                  : "Reject Shortlisted Candidate"}
+            </DialogTitle>
+            <DialogDescription>
+              {shortlistCandidateName && (
+                <>
+                  Candidate: <span className="font-medium">{shortlistCandidateName}</span>
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="shortlist-remarks" className="text-sm font-medium mb-2 block">
+                Remarks (Optional)
+              </Label>
+              <Textarea
+                id="shortlist-remarks"
+                placeholder="Add any remarks or notes..."
+                value={shortlistRemarks}
+                onChange={(e) => setShortlistRemarks(e.target.value)}
+                className="min-h-24 resize-none"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCloseShortlistModal}
+              disabled={isProcessingShortlist}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSubmitShortlistAction}
+              disabled={isProcessingShortlist}
+              className={
+                shortlistAction === "reject"
+                  ? "bg-red-600 hover:bg-red-700"
+                  : "bg-blue-600 hover:bg-blue-700"
+              }
+            >
+              {isProcessingShortlist ? "Processing..." : "Submit"}
             </Button>
           </DialogFooter>
         </DialogContent>
