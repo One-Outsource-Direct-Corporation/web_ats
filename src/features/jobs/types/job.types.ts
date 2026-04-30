@@ -67,6 +67,7 @@ export interface JobPipelineCandidateResponseDto {
   assigned_interviewer_email?: string | null;
   department?: string | null;
   photo_url?: string | null;
+  resume_url?: string | null;
 }
 
 export interface JobPipelineCandidate {
@@ -82,6 +83,7 @@ export interface JobPipelineCandidate {
   assignedInterviewerEmail?: string;
   department?: string;
   photoUrl?: string;
+  resumeUrl?: string;
 }
 
 export interface JobDetailPipelineOwnerDto {

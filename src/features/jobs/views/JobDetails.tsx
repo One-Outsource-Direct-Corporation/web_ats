@@ -3,9 +3,8 @@ import { useJobById, useJobDetailQuery, useJobs } from "../hooks/useJobs";
 import { extractPipelineStepsFromJobDetail } from "../services/jobService";
 import { Input } from "@/shared/components/ui/input.tsx";
 import { Button } from "@/shared/components/ui/button.tsx";
-import { Badge } from "@/shared/components/ui/badge";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { ArrowLeft, LayoutGrid, List } from "lucide-react";
+import { ArrowLeft, LayoutGrid, List, UserRound } from "lucide-react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import type { JobPipelineStep } from "../types/job.types";
 import {
@@ -213,10 +212,19 @@ export default function JobDetails() {
                           key={step.id}
                           className="flex justify-between items-center px-4 py-3 hover:bg-gray-50"
                         >
-                          <span>
-                            {step.process_title ||
-                              getProcessTypeLabel(step.process_type)}
-                          </span>
+                          <div className="min-w-0">
+                            <span className="block truncate">
+                              {step.process_title ||
+                                getProcessTypeLabel(step.process_type)}
+                            </span>
+                            <span
+                              className="mt-1 inline-flex items-center gap-1 text-xs text-gray-500"
+                              title={`${step.process_title || getProcessTypeLabel(step.process_type)} - ${step.interviewerName || "Unassigned"}`}
+                            >
+                              <UserRound className="h-3 w-3" />
+                              {`${step.interviewerName || "Unassigned"}`}
+                            </span>
+                          </div>
                                 <div className="flex items-center gap-3">
                                   {user && step.interviewerId && user.id === step.interviewerId && (
                                     <Button

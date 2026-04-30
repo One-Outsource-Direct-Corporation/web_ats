@@ -3,6 +3,19 @@ import { useState } from "react";
 import { X, FileText } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 
+const ALLOWED_DOCUMENT_EXTENSIONS = [".doc", ".docx", ".pdf", ".jpg", ".jpeg", ".png"] as const;
+const ALLOWED_DOCUMENT_MIME_TYPES = new Set([
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "application/octet-stream",
+]);
+
+const RESUME_ACCEPT_ATTRIBUTE = ALLOWED_DOCUMENT_EXTENSIONS.join(",");
+const RESUME_HELPER_TEXT = "Supported: DOC, DOCX, PDF, JPG, JPEG, PNG (Max 10MB)";
+
 export interface UploadedDocumentsPayload {
   resumeFile: File;
   coverLetterFile?: File | null;
@@ -22,6 +35,21 @@ export function DocumentUploadModal({
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [coverLetterFile, setCoverLetterFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const isAllowedDocumentFile = (file: File) => {
+    const extension = `.${file.name.split(".").pop()?.toLowerCase() || ""}`;
+
+    if (!ALLOWED_DOCUMENT_EXTENSIONS.includes(extension as (typeof ALLOWED_DOCUMENT_EXTENSIONS)[number])) {
+      return false;
+    }
+
+    if (file.type && !ALLOWED_DOCUMENT_MIME_TYPES.has(file.type)) {
+      return false;
+    }
+
+    return true;
+  };
 
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -30,14 +58,13 @@ export function DocumentUploadModal({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const valid =
-      file.type === "application/pdf" ||
-      file.type.startsWith("image/") ||
-      file.type === "application/msword" ||
-      file.type ===
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    if (!isAllowedDocumentFile(file)) {
+      setErrorMessage("Unsupported file type. Use DOC, DOCX, PDF, JPG, JPEG, or PNG.");
+      e.target.value = "";
+      return;
+    }
 
-    if (!valid) return;
+    setErrorMessage(null);
 
     if (type === "resume") setResumeFile(file);
     else setCoverLetterFile(file);
@@ -46,6 +73,7 @@ export function DocumentUploadModal({
   const removeFile = (type: "resume" | "cover") => {
     if (type === "resume") setResumeFile(null);
     else setCoverLetterFile(null);
+    setErrorMessage(null);
   };
 
   const handleContinue = async () => {
@@ -79,6 +107,12 @@ export function DocumentUploadModal({
         information to help fill out your application.
       </p>
 
+      {errorMessage ? (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {errorMessage}
+        </div>
+      ) : null}
+
       {/* Resume Upload */}
       <div className="mb-6">
         <h3 className="text-sm font-medium text-gray-900 mb-2">Resume / CV</h3>
@@ -91,7 +125,7 @@ export function DocumentUploadModal({
               </p>
               <input
                 type="file"
-                accept=".pdf,.doc,.docx,image/*"
+                accept={RESUME_ACCEPT_ATTRIBUTE}
                 onChange={(e) => handleFileChange(e, "resume")}
                 className="hidden"
                 id="resume-upload"
@@ -103,7 +137,7 @@ export function DocumentUploadModal({
                 Browse Resume
               </label>
               <p className="text-xs text-gray-500 mt-2">
-                Supported: PDF, DOC, DOCX, JPG, PNG (Max 10MB)
+                {RESUME_HELPER_TEXT}
               </p>
             </>
           ) : (
@@ -142,7 +176,7 @@ export function DocumentUploadModal({
               </p>
               <input
                 type="file"
-                accept=".pdf,.doc,.docx,image/*"
+                accept={RESUME_ACCEPT_ATTRIBUTE}
                 onChange={(e) => handleFileChange(e, "cover")}
                 className="hidden"
                 id="cover-upload"
@@ -154,7 +188,7 @@ export function DocumentUploadModal({
                 Browse Cover Letter
               </label>
               <p className="text-xs text-gray-500 mt-2">
-                Supported: PDF, DOC, DOCX, JPG, PNG (Max 10MB)
+                {RESUME_HELPER_TEXT}
               </p>
             </>
           ) : (

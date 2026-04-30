@@ -43,6 +43,7 @@ import { Label } from "@/shared/components/ui/label.tsx";
 import { Textarea } from "@/shared/components/ui/textarea.tsx";
 import { defaultAxios } from "@/config/axios";
 import { emailTemplateService } from "@/features/library/services/emailTemplate.service";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
 import { useJobDetailQuery } from "@/features/jobs/hooks/useJobs";
 import { extractPipelineStepsFromJobDetail } from "@/features/jobs/services/jobService";
@@ -51,6 +52,8 @@ import {
   getProcessTypeFromRouteSegment,
   getProcessTypeLabel,
 } from "@/features/jobs/utils/jobFormatters";
+
+import ResumeScreeningTable from "@/features/applicants/components/ResumeScreeningTable";
 
 type PipelineProgressOutcome = "pass" | "fail";
 
@@ -72,6 +75,8 @@ interface InterviewScheduleModalState {
   existingSchedule?: string;
   jobTitle?: string;
 }
+
+
 
 interface InterviewScheduleFormState {
   scheduledDate: string;
@@ -99,7 +104,11 @@ interface InterviewEmailPreviewResponse {
 }
 
 const GRACE_PERIOD_MS = 5000;
-const DEFERRED_ACTION_TOAST_POSITION = "top-right" as const;
+const DEFERRED_ACTION_TOAST_POSITION = "top-center" as const;
+const DEFERRED_ACTION_TOAST_STYLE = {
+  top: "50%",
+  transform: "translateY(-50%)",
+};
 
 const toDateInputValue = (isoDateTime?: string): string => {
   if (!isoDateTime) {
@@ -279,9 +288,11 @@ export default function PipelineApplicants() {
   const { jobId } = useParams<{ jobId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
+  const { user } = useAuth();
 
   const [pendingActions, setPendingActions] = useState<PendingProgressAction[]>([]);
   const pendingTimersRef = useRef<Record<string, ReturnType<typeof window.setTimeout>>>({});
+  const pendingCountdownIntervalsRef = useRef<Record<string, ReturnType<typeof window.setInterval>>>({});
   const pendingActionsRef = useRef<PendingProgressAction[]>([]);
 
   const [processingCandidateId, setProcessingCandidateId] = useState<number | null>(null);
@@ -328,6 +339,11 @@ export default function PipelineApplicants() {
         window.clearTimeout(timerId);
       }
       pendingTimersRef.current = {};
+
+      for (const intervalId of Object.values(pendingCountdownIntervalsRef.current)) {
+        window.clearInterval(intervalId);
+      }
+      pendingCountdownIntervalsRef.current = {};
     };
   }, []);
 
@@ -381,13 +397,14 @@ export default function PipelineApplicants() {
     selectedType === "resume_screening" ||
     selectedType === "phone_call_interview" ||
     selectedType === "initial_interview";
+  const showResumeColumn = selectedType === "resume_screening";
 
   const resolvePhotoUrl = (rawUrl?: string) => {
     if (!rawUrl) {
       return undefined;
     }
 
-    if (/^https?:\/\//i.test(rawUrl)) {
+    if (/^(?:https?:\/\/|data:|blob:)/i.test(rawUrl)) {
       return rawUrl;
     }
 
@@ -410,11 +427,13 @@ export default function PipelineApplicants() {
         department: string;
         statusLabel: string;
         pipelineStatus: string;
+        resumeUrl?: string;
         scheduledFor?: string;
         interviewerName?: string;
         interviewerEmail?: string;
         stepInterviewerName?: string;
         stepInterviewerEmail?: string;
+        stepInterviewerId?: number;
         photoUrl?: string;
         pipelineStepId?: number;
       }
@@ -437,6 +456,7 @@ export default function PipelineApplicants() {
             department: candidate.department || "-",
             statusLabel: candidate.pipelineStatusLabel || candidate.statusLabel,
             pipelineStatus: normalizeStatusTag(candidate.pipelineStatus),
+            resumeUrl: (candidate as { resumeUrl?: string }).resumeUrl,
             scheduledFor: candidate.scheduledFor,
             interviewerName:
               step.interviewerName || candidate.assignedInterviewerName,
@@ -444,7 +464,33 @@ export default function PipelineApplicants() {
               step.interviewerEmail || candidate.assignedInterviewerEmail,
             stepInterviewerName: step.interviewerName,
             stepInterviewerEmail: step.interviewerEmail,
-            photoUrl: resolvePhotoUrl(candidate.photoUrl),
+            stepInterviewerId: step.interviewerId,
+            photoUrl: (() => {
+              const direct = resolvePhotoUrl(candidate.photoUrl);
+              if (direct) return direct;
+
+              // Try to derive from the application form snapshot (common fields)
+              const snapshot = (candidate as any).applicationFormSnapshot || (candidate as any).application_form_snapshot || {};
+              const personal = snapshot.personal_info || {};
+
+              const candidatesrcs = [
+                personal.photo,
+                personal.avatar,
+                personal.photo2x2,
+                personal.photo_2x2,
+                snapshot.photo,
+                snapshot.avatar,
+              ];
+
+              for (const s of candidatesrcs) {
+                if (typeof s === 'string' && s.trim()) {
+                  const resolved = resolvePhotoUrl(s);
+                  if (resolved) return resolved;
+                }
+              }
+
+              return undefined;
+            })(),
             pipelineStepId: Number.isNaN(resolvedPipelineStepId)
               ? undefined
               : resolvedPipelineStepId,
@@ -499,6 +545,16 @@ export default function PipelineApplicants() {
     setSearchParams({ type: nextType });
   };
 
+  const clearPendingActionCountdown = useCallback((actionId: string) => {
+    const intervalId = pendingCountdownIntervalsRef.current[actionId];
+    if (!intervalId) {
+      return;
+    }
+
+    window.clearInterval(intervalId);
+    delete pendingCountdownIntervalsRef.current[actionId];
+  }, []);
+
   const removePendingAction = useCallback((actionId: string) => {
     setPendingActions((previousValue) =>
       previousValue.filter((action) => action.id !== actionId),
@@ -512,10 +568,17 @@ export default function PipelineApplicants() {
       delete pendingTimersRef.current[actionId];
     }
 
+    clearPendingActionCountdown(actionId);
+
+    const existingAction = pendingActionsRef.current.find(
+      (pendingAction) => pendingAction.id === actionId,
+    );
     removePendingAction(actionId);
 
-    toast.dismiss(actionId);
-  }, [removePendingAction]);
+    if (existingAction?.toastId !== undefined) {
+      toast.dismiss(existingAction.toastId);
+    }
+  }, [clearPendingActionCountdown, removePendingAction]);
 
   const commitPendingAction = useCallback(
     async (pendingAction: PendingProgressAction) => {
@@ -529,6 +592,8 @@ export default function PipelineApplicants() {
         delete pendingTimersRef.current[pendingAction.id];
       }
 
+      clearPendingActionCountdown(pendingAction.id);
+
       try {
         setProcessingCandidateId(pendingAction.candidateApplicationId);
         await defaultAxios.post("/api/candidate/pipeline/progress/", {
@@ -539,12 +604,16 @@ export default function PipelineApplicants() {
 
         toast.success(
           `${pendingAction.candidateName} marked as ${pendingAction.outcome === "pass" ? "Pass" : "Fail"}.`,
-          { position: DEFERRED_ACTION_TOAST_POSITION },
+          {
+            position: DEFERRED_ACTION_TOAST_POSITION,
+            style: DEFERRED_ACTION_TOAST_STYLE,
+          },
         );
       } catch (error) {
         console.error("Unable to update candidate pipeline progress.", error);
         toast.error("Unable to submit candidate progress update.", {
           position: DEFERRED_ACTION_TOAST_POSITION,
+          style: DEFERRED_ACTION_TOAST_STYLE,
         });
       } finally {
         removePendingAction(pendingAction.id);
@@ -552,18 +621,18 @@ export default function PipelineApplicants() {
         await refetch();
       }
     },
-    [refetch, removePendingAction],
+    [clearPendingActionCountdown, refetch, removePendingAction],
   );
 
-  const showDeferredActionToast = useCallback(
-    (pendingAction: PendingProgressAction) => {
+  const renderDeferredActionToast = useCallback(
+    (pendingAction: PendingProgressAction, secondsLeft: number) => {
       const actionLabel = pendingAction.outcome === "pass" ? "Pass" : "Fail";
 
-      const toastId = toast.info(
+      return (
         <div className="space-y-2">
           <p className="text-sm leading-5">
             <span className="font-semibold">{pendingAction.candidateName}</span>{" "}
-            queued for {actionLabel}. Auto-submit in 5 seconds.
+            queued for {actionLabel}. Auto-submit in {secondsLeft} second{secondsLeft === 1 ? "" : "s"}.
           </p>
           <Button
             type="button"
@@ -574,17 +643,67 @@ export default function PipelineApplicants() {
           >
             Undo
           </Button>
-        </div>,
+        </div>
+      );
+    },
+    [handleUndoPendingAction],
+  );
+
+  const showDeferredActionToast = useCallback(
+    (pendingAction: PendingProgressAction) => {
+      const startingSeconds = Math.ceil(GRACE_PERIOD_MS / 1000);
+      let secondsLeft = startingSeconds;
+
+      const toastId = toast.info(
+        renderDeferredActionToast(pendingAction, startingSeconds),
         {
           autoClose: GRACE_PERIOD_MS,
           closeButton: false,
           position: DEFERRED_ACTION_TOAST_POSITION,
+          style: DEFERRED_ACTION_TOAST_STYLE,
         },
       );
 
+      pendingCountdownIntervalsRef.current[pendingAction.id] = window.setInterval(() => {
+        secondsLeft -= 1;
+
+        if (secondsLeft <= 0) {
+          clearPendingActionCountdown(pendingAction.id);
+          return;
+        }
+
+        toast.update(toastId, {
+          render: renderDeferredActionToast(pendingAction, secondsLeft),
+        });
+      }, 1000);
+
       return toastId;
     },
-    [handleUndoPendingAction],
+    [clearPendingActionCountdown, renderDeferredActionToast],
+  );
+
+  const isCandidateProgressActionDisabled = useCallback(
+    (candidate: { id: number | string; stepInterviewerId?: number }) => {
+      const candidateId =
+        typeof candidate.id === "number"
+          ? candidate.id
+          : Number.parseInt(candidate.id, 10);
+
+      if (Number.isNaN(candidateId)) {
+        return true;
+      }
+
+      if (processingCandidateId === candidateId) {
+        return true;
+      }
+
+      if (!candidate.stepInterviewerId) {
+        return true;
+      }
+
+      return user?.id !== candidate.stepInterviewerId;
+    },
+    [processingCandidateId, user?.id],
   );
 
   const handleCandidateProgress = (
@@ -698,6 +817,11 @@ export default function PipelineApplicants() {
       },
     );
   };
+
+  const handleOpenResumePreview = () => {
+    // Not used: preview handled by ResumeScreeningTable component
+  };
+  
 
   const handleCloseScheduleModal = () => {
     if (isSavingSchedule) {
@@ -889,7 +1013,126 @@ export default function PipelineApplicants() {
     return "border-gray-300 text-gray-600";
   };
 
-  const interviewTableColumnCount = isInterviewScheduleStage ? 6 : isPassFailStage ? 5 : 6;
+  const jobNonNegotiables = useMemo(() => {
+    const nv = (jobDetail as any)?.non_negotiable?.non_negotiable
+      ?? (jobDetail as any)?.application_form?.non_negotiable?.non_negotiable
+      ?? (jobDetail as any)?.non_negotiable
+      ?? [];
+    return Array.isArray(nv) ? nv : [];
+  }, [jobDetail]);
+
+  const isFirstPipelineStep = useMemo(() => {
+    return pipelineSteps.length > 0 && selectedType === pipelineSteps[0].process_type;
+  }, [pipelineSteps, selectedType]);
+
+  const showNonNegotiableColumn = useMemo(() => {
+    return jobNonNegotiables.length > 0 && isFirstPipelineStep;
+  }, [jobNonNegotiables, isFirstPipelineStep]);
+
+  const candidateNonNegotiableMap = useMemo(() => {
+    const buildSubmissionValues = (snapshot: any) => {
+      if (!snapshot || typeof snapshot !== 'object') return {};
+
+      const personal_info = snapshot.personal_info || {};
+      const job_details = snapshot.job_details || {};
+      const education_work = snapshot.education_work || {};
+      const acknowledgement = snapshot.acknowledgement || {};
+
+      const values: Record<string, any> = {
+        first_name: personal_info.firstName || personal_info.first_name || '',
+        last_name: personal_info.lastName || personal_info.last_name || '',
+        gender: personal_info.gender,
+        primary_contact_number: personal_info.primaryContact || personal_info.primary_contact_number,
+        secondary_contact_number: personal_info.secondaryContact || personal_info.secondary_contact_number,
+        email: personal_info.email,
+        linkedin_profile: personal_info.linkedinProfile || personal_info.linkedin_profile,
+        address: personal_info.addressLine1 || personal_info.address,
+        expected_salary: job_details.expectedSalary ?? job_details.expected_salary,
+        willing_to_work_onsite: job_details.willingToWorkOnsite ?? job_details.willing_to_work_onsite,
+        preferred_interview_schedule: job_details.interviewSchedule ?? job_details.preferred_interview_schedule,
+        education_attained: education_work.highestEducation ?? education_work.education_attained,
+        year_graduated: education_work.yearGraduated ?? education_work.year_graduated,
+        university: education_work.institution ?? education_work.university,
+        course: education_work.program ?? education_work.course,
+        work_experience: education_work.workExperience ?? education_work.work_experience,
+        how_did_you_hear_about_us: acknowledgement.howDidYouLearn ?? acknowledgement.how_did_you_hear_about_us,
+        agreement: acknowledgement.certificationAccepted ?? acknowledgement.agreement,
+        signature: acknowledgement.signature,
+      };
+
+      if (snapshot.questionnaire_answers && typeof snapshot.questionnaire_answers === 'object') {
+        Object.assign(values, snapshot.questionnaire_answers);
+      }
+
+      return values;
+    };
+
+    const evaluateRule = (actual: any, expected: any, operator?: string) => {
+      const normOp = (operator || '').toString().trim().toUpperCase();
+
+      const coerceBool = (v: any) => {
+        if (typeof v === 'boolean') return v;
+        if (typeof v === 'string') {
+          const s = v.trim().toLowerCase();
+          if (['true','1','yes','y','on'].includes(s)) return true;
+          if (['false','0','no','n','off'].includes(s)) return false;
+        }
+        if (typeof v === 'number') return v === 1;
+        return null;
+      };
+
+      if (['GREATER_THAN','>'].includes(normOp)) {
+        const a = Number(actual); const b = Number(expected); return !Number.isNaN(a) && !Number.isNaN(b) && a > b;
+      }
+      if (['LESS_THAN','<'].includes(normOp)) {
+        const a = Number(actual); const b = Number(expected); return !Number.isNaN(a) && !Number.isNaN(b) && a < b;
+      }
+      if (['NOT_EQUALS','!='].includes(normOp)) {
+        return String(actual).trim().toLowerCase() !== String(expected).trim().toLowerCase();
+      }
+
+      const boolA = coerceBool(actual);
+      const boolB = coerceBool(expected);
+      if (boolA !== null && boolB !== null) return boolA === boolB;
+
+      if (Array.isArray(actual) && Array.isArray(expected)) {
+        return expected.every((val: any) => actual.includes(val));
+      }
+
+      return String(actual ?? '').trim().toLowerCase() === String(expected ?? '').toString().trim().toLowerCase();
+    };
+
+    const map = new Map<number, any[]>();
+    for (const step of pipelineSteps) {
+      for (const candidate of step.candidateApplications) {
+        const id = candidate.id as number;
+        const snapshot = (candidate as any).applicationFormSnapshot || {};
+        const values = buildSubmissionValues(snapshot);
+
+        const mismatches: any[] = [];
+        for (const rule of jobNonNegotiables) {
+          const field = rule?.field;
+          if (!field) continue;
+          if (field === 'expected_salary') continue;
+
+          const expected = rule?.value;
+          const operator = rule?.operator;
+          const actual = values[field];
+
+          const passed = evaluateRule(actual, expected, operator);
+          if (!passed) {
+            mismatches.push({ field, expected, actual, operator });
+          }
+        }
+
+        if (mismatches.length > 0) map.set(id, mismatches);
+      }
+    }
+
+    return map;
+  }, [pipelineSteps, jobNonNegotiables]);
+
+  const interviewTableColumnCount = (isInterviewScheduleStage ? 6 : isPassFailStage ? 5 : 6) + (showNonNegotiableColumn ? 1 : 0) + (showResumeColumn ? 1 : 0);
 
   return (
     <>
@@ -962,6 +1205,28 @@ export default function PipelineApplicants() {
             )}
 
             {!isLoading && !isError && processTypes.length > 0 && (
+              selectedType === "resume_screening" ? (
+                <ResumeScreeningTable
+                  candidates={selectedStepCandidates}
+                  isPassFailDisabled={isCandidateProgressActionDisabled}
+                  onPass={(candidate) =>
+                    handleCandidateProgress(
+                      Number(candidate.id),
+                      candidate.name,
+                      candidate.pipelineStepId,
+                      "pass",
+                    )
+                  }
+                  onFail={(candidate) =>
+                    handleCandidateProgress(
+                      Number(candidate.id),
+                      candidate.name,
+                      candidate.pipelineStepId,
+                      "fail",
+                    )
+                  }
+                />
+              ) : (
               <div className="mt-4 rounded-md border bg-white overflow-x-auto">
                 <Table className="w-full table-fixed text-xs">
                   <TableHeader>
@@ -972,6 +1237,11 @@ export default function PipelineApplicants() {
                       <TableHead className="text-center border border-gray-200 py-2 px-3 w-36 text-xs whitespace-normal wrap-break-word lg:text-sm lg:py-3 lg:px-4">
                         Full Name
                       </TableHead>
+                      {showResumeColumn ? (
+                        <TableHead className="border border-gray-200 py-2 px-3 w-24 text-center text-xs whitespace-normal wrap-break-word lg:text-sm lg:py-3 lg:px-4">
+                          Resume
+                        </TableHead>
+                      ) : null}
 
                       {isInterviewScheduleStage ? (
                         <>
@@ -1010,6 +1280,12 @@ export default function PipelineApplicants() {
                       <TableHead className="text-center border border-gray-200 py-2 px-3 w-20 text-xs lg:text-sm lg:py-3 lg:px-4">
                         Department
                       </TableHead>
+
+                      {showNonNegotiableColumn ? (
+                        <TableHead className="border border-gray-200 py-2 px-3 w-28 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
+                          Non-Negotiable
+                        </TableHead>
+                      ) : null}
 
                       {!isInterviewScheduleStage && !isPassFailStage ? (
                         <TableHead className="border border-gray-200 py-2 px-3 w-24 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
@@ -1068,6 +1344,19 @@ export default function PipelineApplicants() {
                             </div>
                           </TableCell>
 
+                          {showResumeColumn ? (
+                            <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full px-2 text-xs lg:text-sm text-slate-700 border-slate-300 bg-white hover:bg-slate-900 hover:text-white"
+                                onClick={() => handleOpenResumePreview()}
+                              >
+                                View Resume
+                              </Button>
+                            </TableCell>
+                          ) : null}
+
                           {isInterviewScheduleStage ? (
                             <>
                               <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
@@ -1113,7 +1402,7 @@ export default function PipelineApplicants() {
                                   variant="outline"
                                   size="sm"
                                   className="px-3 text-green-600 border-green-600 bg-white hover:bg-green-600 hover:text-white"
-                                  disabled={processingCandidateId === candidate.id}
+                                  disabled={isCandidateProgressActionDisabled(candidate)}
                                   onClick={() =>
                                     handleCandidateProgress(
                                       candidate.id,
@@ -1131,7 +1420,7 @@ export default function PipelineApplicants() {
                                   variant="outline"
                                   size="sm"
                                   className="px-3 text-red-600 border-red-600 bg-white hover:bg-red-600 hover:text-white"
-                                  disabled={processingCandidateId === candidate.id}
+                                  disabled={isCandidateProgressActionDisabled(candidate)}
                                   onClick={() =>
                                     handleCandidateProgress(
                                       candidate.id,
@@ -1178,6 +1467,20 @@ export default function PipelineApplicants() {
                             </span>
                           </TableCell>
 
+                          {showNonNegotiableColumn ? (
+                            <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
+                              {candidateNonNegotiableMap.get(candidate.id) ? (
+                                <Badge variant="outline" className="border-red-500 text-red-600">
+                                  Mismatch
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="border-green-500 text-green-600">
+                                  OK
+                                </Badge>
+                              )}
+                            </TableCell>
+                          ) : null}
+
                           {!isInterviewScheduleStage && !isPassFailStage ? (
                             <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
                               <Button
@@ -1195,6 +1498,7 @@ export default function PipelineApplicants() {
                   </TableBody>
                 </Table>
               </div>
+              )
             )}
 
             {searchTerm && (
@@ -1206,6 +1510,8 @@ export default function PipelineApplicants() {
           </div>
         </div>
       </div>
+
+      
 
       <Dialog open={scheduleModalState.open} onOpenChange={handleCloseScheduleModal}>
         <DialogContent className="sm:max-w-4xl">

@@ -26,6 +26,25 @@ function formatDisplayDate(dateValue?: string | null): string {
   });
 }
 
+function resolveMediaUrl(rawUrl?: string | null): string | undefined {
+  if (!rawUrl) {
+    return undefined;
+  }
+
+  if (/^(?:https?:\/\/|data:|blob:)/i.test(rawUrl)) {
+    return rawUrl;
+  }
+
+  const backendBaseUrl = import.meta.env.VITE_BACKEND_URL as string | undefined;
+  if (!backendBaseUrl) {
+    return rawUrl;
+  }
+
+  const trimmedBaseUrl = backendBaseUrl.replace(/\/$/, "");
+  const normalizedPath = rawUrl.startsWith("/") ? rawUrl : `/${rawUrl}`;
+  return `${trimmedBaseUrl}${normalizedPath}`;
+}
+
 const toJobListItem = (jobPosting: JobPostingResponseDto): JobListItem => ({
   id: String(jobPosting.id),
   title: jobPosting.job_title,
@@ -145,8 +164,16 @@ function toPipelineStep(
               : undefined,
           photoUrl:
             typeof candidate.photo_url === "string"
-              ? candidate.photo_url
+              ? resolveMediaUrl(candidate.photo_url)
               : undefined,
+          resumeUrl:
+            typeof candidate.resume_url === "string"
+              ? resolveMediaUrl(candidate.resume_url)
+              : undefined,
+          applicationFormSnapshot:
+            typeof (candidate as any).application_form_snapshot === "object"
+              ? (candidate as any).application_form_snapshot
+              : (candidate as any).applicationFormSnapshot ?? {},
         }))
     : [];
 
