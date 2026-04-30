@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { ArrowLeft, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -250,11 +251,14 @@ export default function InterviewEvaluationForm() {
     setInterviewerId(routeState?.interviewerId ?? null);
   }, [routeState]);
 
-  // If route state is missing, try to fetch prefill values using the candidate and pipeline ids from params
+  const { user } = useAuth();
+  const isEditable = Boolean(user && interviewerId && user.id === interviewerId);
+
+  // Fetch prefill whenever interviewer ownership is unknown to keep editability accurate.
   useEffect(() => {
     let mounted = true;
 
-    const shouldFetch = !routeState && params.candidateApplicationId;
+    const shouldFetch = !interviewerId && params.candidateApplicationId && params.interviewId;
     if (!shouldFetch) return;
 
     const fetchPrefill = async () => {
@@ -275,7 +279,10 @@ export default function InterviewEvaluationForm() {
 
         if (data.applicant_name) setApplicantName(data.applicant_name);
         if (data.job_title) setPositionApplyingFor(data.job_title);
-        if (data.scheduled_for) setInterviewDate(toDateInputValue(data.scheduled_for));
+        if (data.scheduled_for) {
+          setInterviewDate(toDateInputValue(data.scheduled_for));
+          setScheduledForDisplay(formatInterviewDate(data.scheduled_for));
+        }
         if (data.interviewer) {
           setInterviewerId(data.interviewer.id ?? null);
           setInterviewer(`${data.interviewer.first_name || ""} ${data.interviewer.last_name || ""}`.trim() || data.interviewer.email || "");
@@ -290,7 +297,7 @@ export default function InterviewEvaluationForm() {
     return () => {
       mounted = false;
     };
-  }, [params.candidateApplicationId, params.interviewId, routeState]);
+  }, [interviewerId, params.candidateApplicationId, params.interviewId]);
 
   useEffect(() => {
     let mounted = true;
@@ -342,7 +349,7 @@ export default function InterviewEvaluationForm() {
     setScheduledForDisplay(formatInterviewDate(pendingExistingForm.scheduled_for || routeState?.scheduledFor));
     setPositionApplyingFor(pendingExistingForm.data?.position_applying_for || routeState?.jobTitle || "");
     setInterviewer(pendingExistingForm.data?.interviewer || routeState?.interviewerName || routeState?.interviewerEmail || "");
-    setInterviewerId(pendingExistingForm.interviewer ?? routeState?.interviewerId ?? null);
+    // Keep interviewer ownership from pipeline context/prefill, not from IEF payload.
     setAiSummary(pendingExistingForm.ai_summary || "");
     setInterviewerNotes(pendingExistingForm.interviewer_notes || "");
 
@@ -408,6 +415,10 @@ export default function InterviewEvaluationForm() {
   );
 
   const updateRow = (sectionKey: string, rowId: string, field: keyof IefRow, value: string) => {
+    if (!isEditable) {
+      return;
+    }
+
     setSections((previous) =>
       previous.map((section) => {
         if (section.key !== sectionKey) {
@@ -430,6 +441,10 @@ export default function InterviewEvaluationForm() {
   };
 
   const addRow = (sectionKey: string) => {
+    if (!isEditable) {
+      return;
+    }
+
     setSections((previous) =>
       previous.map((section) =>
         section.key === sectionKey
@@ -443,6 +458,10 @@ export default function InterviewEvaluationForm() {
   };
 
   const removeRow = (sectionKey: string, rowId: string) => {
+    if (!isEditable) {
+      return;
+    }
+
     setSections((previous) =>
       previous.map((section) => {
         if (section.key !== sectionKey) {
@@ -471,6 +490,11 @@ export default function InterviewEvaluationForm() {
   };
 
   const handleSubmit = async () => {
+    if (!isEditable) {
+      toast.error("Only the assigned pipeline interviewer can edit this form.");
+      return;
+    }
+
     const candidateApplicationId = routeState?.candidateApplicationId ?? (params.candidateApplicationId ? Number(params.candidateApplicationId) : undefined);
     const pipelineStepId = routeState?.pipelineStepId ?? (params.interviewId ? Number(params.interviewId) : undefined);
 
@@ -602,7 +626,7 @@ export default function InterviewEvaluationForm() {
           <div className="grid gap-4 rounded-2xl border border-slate-200 bg-white/80 p-4 lg:grid-cols-[1fr_1fr]">
             <div className="space-y-2">
               <Label className="text-sm font-medium text-slate-700">Template</Label>
-              <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId} disabled={isLoadingTemplates}>
+              <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId} disabled={isLoadingTemplates || !isEditable}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a template or keep the default sections" />
                 </SelectTrigger>
@@ -633,6 +657,12 @@ export default function InterviewEvaluationForm() {
             </div>
           </div>
 
+          {!isEditable ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              View-only mode: only the assigned pipeline interviewer can edit and submit this IEF.
+            </div>
+          ) : null}
+
           <div className="space-y-5">
             {sections.map((section) => (
               <Card key={section.key} className="border-slate-200 shadow-sm">
@@ -648,7 +678,7 @@ export default function InterviewEvaluationForm() {
                       <Badge variant="outline" className="rounded-full border-slate-300 text-slate-600">
                         Average {sectionAverage(section.rows)}%
                       </Badge>
-                      <Button variant="outline" size="sm" onClick={() => addRow(section.key)}>
+                      <Button variant="outline" size="sm" onClick={() => addRow(section.key)} disabled={!isEditable}>
                         <Plus className="mr-2 h-4 w-4" />
                         Add Row
                       </Button>
@@ -668,6 +698,8 @@ export default function InterviewEvaluationForm() {
                           value={row.skill}
                           onChange={(event) => updateRow(section.key, row.id, "skill", event.target.value)}
                           placeholder="Enter a skill or competency"
+                          readOnly={!isEditable}
+                          disabled={!isEditable}
                         />
                       </div>
                       <div className="space-y-2">
@@ -680,6 +712,8 @@ export default function InterviewEvaluationForm() {
                           onChange={(event) => updateRow(section.key, row.id, "rating", event.target.value)}
                           placeholder="0 - 100"
                           className="w-full"
+                          readOnly={!isEditable}
+                          disabled={!isEditable}
                         />
                       </div>
                       <div className="space-y-2">
@@ -689,6 +723,8 @@ export default function InterviewEvaluationForm() {
                           onChange={(event) => updateRow(section.key, row.id, "remarks", event.target.value)}
                           placeholder="Add interviewer notes for this skill"
                           className="min-h-24"
+                          readOnly={!isEditable}
+                          disabled={!isEditable}
                         />
                       </div>
                       <div className="flex items-start justify-end lg:pt-8">
@@ -698,7 +734,7 @@ export default function InterviewEvaluationForm() {
                           size="icon"
                           onClick={() => removeRow(section.key, row.id)}
                           className="text-slate-500 hover:bg-red-50 hover:text-red-600"
-                          disabled={section.rows.length === 1}
+                          disabled={section.rows.length === 1 || !isEditable}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -724,6 +760,8 @@ export default function InterviewEvaluationForm() {
                   onChange={(event) => setAiSummary(event.target.value)}
                   placeholder="Optional AI-generated summary"
                   className="min-h-40"
+                  readOnly={!isEditable}
+                  disabled={!isEditable}
                 />
               </CardContent>
             </Card>
@@ -741,6 +779,8 @@ export default function InterviewEvaluationForm() {
                   onChange={(event) => setInterviewerNotes(event.target.value)}
                   placeholder="Add interviewer notes"
                   className="min-h-40"
+                  readOnly={!isEditable}
+                  disabled={!isEditable}
                 />
               </CardContent>
             </Card>
@@ -750,7 +790,8 @@ export default function InterviewEvaluationForm() {
             <Button
               className="min-w-40 bg-slate-900 text-white hover:bg-slate-800"
               onClick={() => void handleSubmit()}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !isEditable}
+              title={!isEditable ? "Only the assigned pipeline interviewer can edit this form." : undefined}
             >
               {isSubmitting ? "Saving..." : "Submit Evaluation"}
             </Button>

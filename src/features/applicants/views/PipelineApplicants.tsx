@@ -793,6 +793,7 @@ export default function PipelineApplicants() {
       scheduledFor?: string;
       interviewerName?: string;
       interviewerEmail?: string;
+      stepInterviewerId?: number;
     },
     jobTitle?: string,
   ) => {
@@ -812,6 +813,7 @@ export default function PipelineApplicants() {
           scheduledFor: candidate.scheduledFor,
           interviewerName: candidate.interviewerName,
           interviewerEmail: candidate.interviewerEmail,
+          interviewerId: candidate.stepInterviewerId,
           jobTitle,
         },
       },
@@ -1365,7 +1367,16 @@ export default function PipelineApplicants() {
                                   size="sm"
                                   className="w-full text-yellow-600 border-yellow-500 bg-white hover:bg-yellow-500 hover:text-white"
                                   onClick={() => handleOpenScheduleModal(candidate, resolvedJobTitle)}
-                                  disabled={isSavingSchedule}
+                                  disabled={
+                                    isSavingSchedule ||
+                                    !candidate.stepInterviewerId ||
+                                    user?.id !== candidate.stepInterviewerId
+                                  }
+                                  title={
+                                    !candidate.stepInterviewerId || user?.id !== candidate.stepInterviewerId
+                                      ? 'Only the assigned interviewer can schedule or reschedule this initial interview.'
+                                      : undefined
+                                  }
                                 >
                                   {candidate.scheduledFor ? "Reschedule" : "Set Schedule"}
                                 </Button>
