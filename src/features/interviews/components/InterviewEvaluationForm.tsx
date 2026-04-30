@@ -19,6 +19,7 @@ import {
   type InterviewEvaluationFormTemplate,
   type InterviewEvaluationFormRecord,
 } from "../services/interviewEvaluationFormService";
+import { candidateService } from "@/features/applicants/services/candidateService";
 import { defaultAxios } from "@/config/axios";
 
 interface InterviewRouteState {
@@ -232,6 +233,7 @@ export default function InterviewEvaluationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmittingPass, setIsSubmittingPass] = useState(false);
   const [isSubmittingFail, setIsSubmittingFail] = useState(false);
+  const [isSubmittingShortlist, setIsSubmittingShortlist] = useState(false);
   const [applicantName, setApplicantName] = useState(routeState?.candidateName ?? "");
   const [interviewDate, setInterviewDate] = useState(toDateInputValue(routeState?.scheduledFor));
   const [scheduledForDisplay, setScheduledForDisplay] = useState(formatInterviewDate(routeState?.scheduledFor));
@@ -650,6 +652,40 @@ export default function InterviewEvaluationForm() {
     }
   };
 
+  const handleShortlist = async () => {
+    if (!isEditable) {
+      toast.error("Only the assigned pipeline interviewer can shortlist a candidate.");
+      return;
+    }
+
+    const candidateApplicationId = routeState?.candidateApplicationId ?? (params.candidateApplicationId ? Number(params.candidateApplicationId) : undefined);
+    const pipelineStepId = routeState?.pipelineStepId ?? (params.interviewId ? Number(params.interviewId) : undefined);
+
+    if (!candidateApplicationId || !pipelineStepId) {
+      toast.error("Interview context is missing candidate or pipeline step details.");
+      return;
+    }
+
+    setIsSubmittingShortlist(true);
+
+    try {
+      await candidateService.markAsShortlisted(candidateApplicationId, pipelineStepId, "");
+      toast.success("Candidate shortlisted successfully.");
+
+      if (params.jobId) {
+        navigate(`/${params.jobId}/applicants`);
+      } else {
+        navigate(-1);
+      }
+    } catch (error) {
+      console.error("Unable to shortlist candidate.", error);
+      const errorMessage = error instanceof Error ? error.message : "Unable to shortlist candidate.";
+      toast.error(errorMessage);
+    } finally {
+      setIsSubmittingShortlist(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6 mt-20">
       <div className="mx-auto max-w-6xl">
@@ -862,14 +898,14 @@ export default function InterviewEvaluationForm() {
           <div className="flex flex-col gap-4">
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
               <p className="font-medium mb-2">Evaluation Actions</p>
-              <p className="text-xs">Submit Evaluation to save your feedback. Use Pass/Fail to make a final decision and move the candidate to the next stage.</p>
+              <p className="text-xs">Submit Evaluation to save your feedback. Use Pass, Shortlist, or Fail to make a final decision and move the candidate to the next stage.</p>
             </div>
             <div className="flex flex-wrap justify-end gap-3">
               <Button
                 variant="outline"
                 className="min-w-40"
                 onClick={() => void handleSubmit()}
-                disabled={isSubmitting || isSubmittingPass || isSubmittingFail || !isEditable}
+                disabled={isSubmitting || isSubmittingPass || isSubmittingShortlist || isSubmittingFail || !isEditable}
                 title={!isEditable ? "Only the assigned pipeline interviewer can edit this form." : undefined}
               >
                 {isSubmitting ? "Saving..." : "Submit Evaluation"}
@@ -877,15 +913,24 @@ export default function InterviewEvaluationForm() {
               <Button
                 className="min-w-40 bg-green-600 text-white hover:bg-green-700"
                 onClick={() => void handlePass()}
-                disabled={isSubmitting || isSubmittingPass || isSubmittingFail || !isEditable}
+                disabled={isSubmitting || isSubmittingPass || isSubmittingShortlist || isSubmittingFail || !isEditable}
                 title={!isEditable ? "Only the assigned pipeline interviewer can pass a candidate." : undefined}
               >
                 {isSubmittingPass ? "Processing..." : "Pass Candidate"}
               </Button>
               <Button
+                className="min-w-40 border border-blue-600 bg-white text-blue-600 hover:bg-blue-600 hover:text-white"
+                variant="outline"
+                onClick={() => void handleShortlist()}
+                disabled={isSubmitting || isSubmittingPass || isSubmittingShortlist || isSubmittingFail || !isEditable}
+                title={!isEditable ? "Only the assigned pipeline interviewer can shortlist a candidate." : undefined}
+              >
+                {isSubmittingShortlist ? "Processing..." : "Shortlist"}
+              </Button>
+              <Button
                 className="min-w-40 bg-red-600 text-white hover:bg-red-700"
                 onClick={() => void handleFail()}
-                disabled={isSubmitting || isSubmittingPass || isSubmittingFail || !isEditable}
+                disabled={isSubmitting || isSubmittingPass || isSubmittingShortlist || isSubmittingFail || !isEditable}
                 title={!isEditable ? "Only the assigned pipeline interviewer can fail a candidate." : undefined}
               >
                 {isSubmittingFail ? "Processing..." : "Fail Candidate"}

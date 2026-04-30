@@ -56,6 +56,7 @@ export type Candidate = {
 type Props = {
   candidates: Candidate[];
   onPass?: (candidate: Candidate) => void;
+  onShortlist?: (candidate: Candidate) => void;
   onFail?: (candidate: Candidate) => void;
   isPassFailDisabled?: (candidate: Candidate) => boolean;
   className?: string;
@@ -64,6 +65,7 @@ type Props = {
 export default function ResumeScreeningTable({
   candidates,
   onPass,
+  onShortlist,
   onFail,
   isPassFailDisabled,
   className,
@@ -174,6 +176,7 @@ export default function ResumeScreeningTable({
               <TableHead className="text-center border border-gray-200 py-2 px-3 w-36 text-xs whitespace-normal wrap-break-word lg:text-sm lg:py-3 lg:px-4">Full Name</TableHead>
               <TableHead className="border border-gray-200 py-2 px-3 w-24 text-center text-xs whitespace-normal wrap-break-word lg:text-sm lg:py-3 lg:px-4">Resume</TableHead>
               <TableHead className="border border-gray-200 py-2 px-3 w-20 text-center text-xs lg:text-sm lg:py-3 lg:px-4">Pass</TableHead>
+              <TableHead className="border border-gray-200 py-2 px-3 w-24 text-center text-xs lg:text-sm lg:py-3 lg:px-4">Shortlist</TableHead>
               <TableHead className="border border-gray-200 py-2 px-3 w-20 text-center text-xs lg:text-sm lg:py-3 lg:px-4">Fail</TableHead>
               <TableHead className="text-center border border-gray-200 py-2 px-3 w-24 text-xs lg:text-sm lg:py-3 lg:px-4">Department</TableHead>
             </TableRow>
@@ -235,6 +238,18 @@ export default function ResumeScreeningTable({
                     <Button
                       variant="outline"
                       size="sm"
+                      className="px-3 text-blue-600 border-blue-600 bg-white hover:bg-blue-600 hover:text-white"
+                      disabled={isPassFailDisabled?.(candidate) ?? false}
+                      onClick={() => onShortlist?.(candidate)}
+                    >
+                      Shortlist
+                    </Button>
+                  </TableCell>
+
+                  <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
+                    <Button
+                      variant="outline"
+                      size="sm"
                       className="px-3 text-red-600 border-red-600 bg-white hover:bg-red-600 hover:text-white"
                       disabled={isPassFailDisabled?.(candidate) ?? false}
                       onClick={() => onFail?.(candidate)}
@@ -250,7 +265,7 @@ export default function ResumeScreeningTable({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="border border-gray-200 p-6 lg:p-8 text-center text-gray-500 text-xs lg:text-sm">
+                <TableCell colSpan={7} className="border border-gray-200 p-6 lg:p-8 text-center text-gray-500 text-xs lg:text-sm">
                   No applicants found in this stage.
                 </TableCell>
               </TableRow>

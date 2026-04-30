@@ -56,7 +56,7 @@ import {
 
 import ResumeScreeningTable from "@/features/applicants/components/ResumeScreeningTable";
 
-type PipelineProgressOutcome = "pass" | "fail";
+type PipelineProgressOutcome = "pass" | "fail" | "shortlist";
 
 interface PendingProgressAction {
   id: string;
@@ -106,10 +106,6 @@ interface InterviewEmailPreviewResponse {
 
 const GRACE_PERIOD_MS = 5000;
 const DEFERRED_ACTION_TOAST_POSITION = "top-center" as const;
-const DEFERRED_ACTION_TOAST_STYLE = {
-  top: "50%",
-  transform: "translateY(-50%)",
-};
 
 const toDateInputValue = (isoDateTime?: string): string => {
   if (!isoDateTime) {
@@ -606,24 +602,34 @@ export default function PipelineApplicants() {
 
       try {
         setProcessingCandidateId(pendingAction.candidateApplicationId);
-        await defaultAxios.post("/api/candidate/pipeline/progress/", {
-          candidate_application_id: pendingAction.candidateApplicationId,
-          pipeline_step_id: pendingAction.pipelineStepId,
-          outcome: pendingAction.outcome,
-        });
-
-        toast.success(
-          `${pendingAction.candidateName} marked as ${pendingAction.outcome === "pass" ? "Pass" : "Fail"}.`,
-          {
+        if (pendingAction.outcome === "shortlist") {
+          await candidateService.markAsShortlisted(
+            pendingAction.candidateApplicationId,
+            pendingAction.pipelineStepId,
+            "",
+          );
+          toast.success(`${pendingAction.candidateName} shortlisted.`, {
             position: DEFERRED_ACTION_TOAST_POSITION,
-            style: DEFERRED_ACTION_TOAST_STYLE,
-          },
-        );
+
+          });
+        } else {
+          await defaultAxios.post("/api/candidate/pipeline/progress/", {
+            candidate_application_id: pendingAction.candidateApplicationId,
+            pipeline_step_id: pendingAction.pipelineStepId,
+            outcome: pendingAction.outcome,
+          });
+
+          toast.success(
+            `${pendingAction.candidateName} marked as ${pendingAction.outcome === "pass" ? "Pass" : "Fail"}.`,
+            {
+              position: DEFERRED_ACTION_TOAST_POSITION,
+            },
+          );
+        }
       } catch (error) {
         console.error("Unable to update candidate pipeline progress.", error);
         toast.error("Unable to submit candidate progress update.", {
           position: DEFERRED_ACTION_TOAST_POSITION,
-          style: DEFERRED_ACTION_TOAST_STYLE,
         });
       } finally {
         removePendingAction(pendingAction.id);
@@ -636,7 +642,11 @@ export default function PipelineApplicants() {
 
   const renderDeferredActionToast = useCallback(
     (pendingAction: PendingProgressAction, secondsLeft: number) => {
-      const actionLabel = pendingAction.outcome === "pass" ? "Pass" : "Fail";
+      const actionLabel = pendingAction.outcome === "pass"
+        ? "Pass"
+        : pendingAction.outcome === "fail"
+          ? "Fail"
+          : "Shortlist";
 
       return (
         <div className="space-y-2">
@@ -670,7 +680,6 @@ export default function PipelineApplicants() {
           autoClose: GRACE_PERIOD_MS,
           closeButton: false,
           position: DEFERRED_ACTION_TOAST_POSITION,
-          style: DEFERRED_ACTION_TOAST_STYLE,
         },
       );
 
@@ -800,7 +809,6 @@ export default function PipelineApplicants() {
         );
         toast.success(`${shortlistCandidateName} marked as shortlisted.`, {
           position: DEFERRED_ACTION_TOAST_POSITION,
-          style: DEFERRED_ACTION_TOAST_STYLE,
         });
       } else if (shortlistAction === "approve") {
         await candidateService.approveShortlist(
@@ -810,7 +818,6 @@ export default function PipelineApplicants() {
         );
         toast.success(`${shortlistCandidateName} approved from shortlist.`, {
           position: DEFERRED_ACTION_TOAST_POSITION,
-          style: DEFERRED_ACTION_TOAST_STYLE,
         });
       } else if (shortlistAction === "reject") {
         await candidateService.rejectShortlist(
@@ -820,7 +827,6 @@ export default function PipelineApplicants() {
         );
         toast.success(`${shortlistCandidateName} rejected from shortlist.`, {
           position: DEFERRED_ACTION_TOAST_POSITION,
-          style: DEFERRED_ACTION_TOAST_STYLE,
         });
       }
 
@@ -830,7 +836,6 @@ export default function PipelineApplicants() {
       console.error("Unable to process shortlist action.", error);
       toast.error("Unable to submit shortlist action.", {
         position: DEFERRED_ACTION_TOAST_POSITION,
-        style: DEFERRED_ACTION_TOAST_STYLE,
       });
     } finally {
       setIsProcessingShortlist(false);
@@ -1307,6 +1312,14 @@ export default function PipelineApplicants() {
                       candidate.name,
                       candidate.pipelineStepId,
                       "pass",
+                    )
+                  }
+                  onShortlist={(candidate) =>
+                    handleCandidateProgress(
+                      Number(candidate.id),
+                      candidate.name,
+                      candidate.pipelineStepId,
+                      "shortlist",
                     )
                   }
                   onFail={(candidate) =>
