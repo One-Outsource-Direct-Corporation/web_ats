@@ -58,6 +58,26 @@ export interface InterviewEvaluationFormRecord {
   updated_at?: string;
 }
 
+export interface CandidatePipelineProgressRequest {
+  candidate_application_id: number;
+  pipeline_step_id: number;
+  outcome: "pass" | "fail";
+  remarks?: string;
+}
+
+export interface CandidatePipelineProgressResponse {
+  candidate_application_id: number;
+  previous_pipeline_step_id: number | null;
+  previous_status: string | null;
+  previous_status_label: string | null;
+  outcome: string;
+  current_pipeline_step_id: number | null;
+  current_pipeline_process_type: string | null;
+  current_status: string;
+  current_status_label: string;
+  message: string;
+}
+
 const unwrapResults = <T,>(responseData: T[] | { results?: T[] } | undefined): T[] => {
   if (Array.isArray(responseData)) {
     return responseData;
@@ -122,5 +142,18 @@ export const interviewEvaluationFormService = {
     });
 
     return unwrapSingleOrList<InterviewEvaluationFormRecord>(response.data);
+  },
+
+  async progressCandidate(
+    payload: CandidatePipelineProgressRequest,
+    options?: { httpClient?: AxiosInstance },
+  ) {
+    const httpClient = options?.httpClient ?? defaultAxios;
+    const response = await httpClient.post<CandidatePipelineProgressResponse>(
+      "/api/candidate/pipeline/progress/",
+      payload,
+    );
+
+    return response.data;
   },
 };

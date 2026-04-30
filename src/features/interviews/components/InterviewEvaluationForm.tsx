@@ -230,6 +230,8 @@ export default function InterviewEvaluationForm() {
   const [sections, setSections] = useState<IefSection[]>(createDefaultSections());
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmittingPass, setIsSubmittingPass] = useState(false);
+  const [isSubmittingFail, setIsSubmittingFail] = useState(false);
   const [applicantName, setApplicantName] = useState(routeState?.candidateName ?? "");
   const [interviewDate, setInterviewDate] = useState(toDateInputValue(routeState?.scheduledFor));
   const [scheduledForDisplay, setScheduledForDisplay] = useState(formatInterviewDate(routeState?.scheduledFor));
@@ -489,18 +491,12 @@ export default function InterviewEvaluationForm() {
     return Math.round(values.reduce((total, value) => total + value, 0) / values.length);
   };
 
-  const handleSubmit = async () => {
-    if (!isEditable) {
-      toast.error("Only the assigned pipeline interviewer can edit this form.");
-      return;
-    }
-
+  const prepareAndValidateForm = () => {
     const candidateApplicationId = routeState?.candidateApplicationId ?? (params.candidateApplicationId ? Number(params.candidateApplicationId) : undefined);
     const pipelineStepId = routeState?.pipelineStepId ?? (params.interviewId ? Number(params.interviewId) : undefined);
 
     if (!candidateApplicationId || !pipelineStepId) {
-      toast.error("Interview context is missing candidate or pipeline step details.");
-      return;
+      throw new Error("Interview context is missing candidate or pipeline step details.");
     }
 
     const hasInvalidRating = sections.some((section) =>
@@ -511,69 +507,146 @@ export default function InterviewEvaluationForm() {
     );
 
     if (hasInvalidRating) {
-      toast.error("Each skill row needs a name and a rating from 0 to 100.");
+      throw new Error("Each skill row needs a name and a rating from 0 to 100.");
+    }
+
+    // Remove entirely-empty rows (no skill and no rating) before submission.
+    const cleanedSections = sections.map((section) => ({
+      ...section,
+      rows: section.rows.filter((row) => row.skill.trim().length > 0 || String(row.rating).trim().length > 0),
+    }));
+
+    // Ensure there is at least one filled row overall
+    const hasAnyFilledRow = cleanedSections.some((s) => s.rows.length > 0);
+    if (!hasAnyFilledRow) {
+      throw new Error("Please add at least one skill row with a rating.");
+    }
+
+    // Convert ratings to numbers and include all fields in payload
+    const sectionsWithNumberRatings = cleanedSections.map((section) => ({
+      key: section.key,
+      title: section.title,
+      description: section.description,
+      rows: section.rows.map((row) => ({
+        id: row.id,
+        skill: row.skill,
+        rating: row.rating ? Number(row.rating) : null,
+        remarks: row.remarks,
+      })),
+    }));
+
+    const payload = {
+      candidate_application: candidateApplicationId,
+      candidate_pipeline_step: pipelineStepId,
+      template: selectedTemplate?.id ?? null,
+      interviewer: interviewerId,
+      scheduled_for: routeState?.scheduledFor ?? new Date().toISOString(),
+      data: {
+        sections: sectionsWithNumberRatings,
+        applicant_name: applicantName,
+        interview_date: interviewDate,
+        position_applying_for: positionApplyingFor,
+        interviewer,
+      },
+      ai_summary: aiSummary,
+      interviewer_notes: interviewerNotes,
+    };
+
+    return { candidateApplicationId, pipelineStepId, payload };
+  };
+
+  const saveIEF = async (payload: any) => {
+    if (existingFormId) {
+      await defaultAxios.patch(`/api/candidate/ief/${existingFormId}/`, payload);
+    } else {
+      await interviewEvaluationFormService.createForm(payload);
+    }
+  };
+
+  const progressCandidate = async (candidateApplicationId: number, pipelineStepId: number, outcome: "pass" | "fail") => {
+    await interviewEvaluationFormService.progressCandidate({
+      candidate_application_id: candidateApplicationId,
+      pipeline_step_id: pipelineStepId,
+      outcome,
+    });
+  };
+
+  const handleSubmit = async () => {
+    if (!isEditable) {
+      toast.error("Only the assigned pipeline interviewer can edit this form.");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-        // Remove entirely-empty rows (no skill and no rating) before submission.
-        const cleanedSections = sections.map((section) => ({
-          ...section,
-          rows: section.rows.filter((row) => row.skill.trim().length > 0 || String(row.rating).trim().length > 0),
-        }));
-
-        // Ensure there is at least one filled row overall
-        const hasAnyFilledRow = cleanedSections.some((s) => s.rows.length > 0);
-        if (!hasAnyFilledRow) {
-          toast.error("Please add at least one skill row with a rating.");
-          setIsSubmitting(false);
-          return;
-        }
-
-        // Convert ratings to numbers and include all fields in payload
-        const sectionsWithNumberRatings = cleanedSections.map((section) => ({
-          key: section.key,
-          title: section.title,
-          description: section.description,
-          rows: section.rows.map((row) => ({
-            id: row.id,
-            skill: row.skill,
-            rating: row.rating ? Number(row.rating) : null,
-            remarks: row.remarks,
-          })),
-        }));
-
-        const payload = {
-          candidate_application: candidateApplicationId,
-          candidate_pipeline_step: pipelineStepId,
-          template: selectedTemplate?.id ?? null,
-          interviewer: interviewerId,
-          scheduled_for: routeState?.scheduledFor ?? new Date().toISOString(),
-          data: {
-            sections: sectionsWithNumberRatings,
-            applicant_name: applicantName,
-            interview_date: interviewDate,
-            position_applying_for: positionApplyingFor,
-            interviewer,
-          },
-          ai_summary: aiSummary,
-          interviewer_notes: interviewerNotes,
-        };
-
-      if (existingFormId) {
-        await defaultAxios.patch(`/api/candidate/ief/${existingFormId}/`, payload);
-      } else {
-        await interviewEvaluationFormService.createForm(payload);
-      }
-
+      const { payload } = prepareAndValidateForm();
+      await saveIEF(payload);
       toast.success("Interview evaluation form saved.");
     } catch (error) {
       console.error("Unable to save the interview evaluation form.", error);
-      toast.error("Unable to save the interview evaluation form.");
+      const errorMessage = error instanceof Error ? error.message : "Unable to save the interview evaluation form.";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handlePass = async () => {
+    if (!isEditable) {
+      toast.error("Only the assigned pipeline interviewer can pass a candidate.");
+      return;
+    }
+
+    setIsSubmittingPass(true);
+
+    try {
+      const { candidateApplicationId, pipelineStepId, payload } = prepareAndValidateForm();
+      await saveIEF(payload);
+      await progressCandidate(candidateApplicationId, pipelineStepId, "pass");
+      toast.success("Candidate passed and moved to the next pipeline step.");
+      
+      // Navigate back to pipeline applicants after successful pass
+      if (params.jobId) {
+        navigate(`/${params.jobId}/applicants`);
+      } else {
+        navigate(-1);
+      }
+    } catch (error) {
+      console.error("Unable to pass candidate.", error);
+      const errorMessage = error instanceof Error ? error.message : "Unable to pass candidate.";
+      toast.error(errorMessage);
+    } finally {
+      setIsSubmittingPass(false);
+    }
+  };
+
+  const handleFail = async () => {
+    if (!isEditable) {
+      toast.error("Only the assigned pipeline interviewer can fail a candidate.");
+      return;
+    }
+
+    setIsSubmittingFail(true);
+
+    try {
+      const { candidateApplicationId, pipelineStepId, payload } = prepareAndValidateForm();
+      await saveIEF(payload);
+      await progressCandidate(candidateApplicationId, pipelineStepId, "fail");
+      toast.success("Candidate marked as failed and rejected.");
+      
+      // Navigate back to pipeline applicants after successful fail
+      if (params.jobId) {
+        navigate(`/${params.jobId}/applicants`);
+      } else {
+        navigate(-1);
+      }
+    } catch (error) {
+      console.error("Unable to fail candidate.", error);
+      const errorMessage = error instanceof Error ? error.message : "Unable to fail candidate.";
+      toast.error(errorMessage);
+    } finally {
+      setIsSubmittingFail(false);
     }
   };
 
@@ -786,15 +859,38 @@ export default function InterviewEvaluationForm() {
             </Card>
           </div>
 
-          <div className="flex justify-end">
-            <Button
-              className="min-w-40 bg-slate-900 text-white hover:bg-slate-800"
-              onClick={() => void handleSubmit()}
-              disabled={isSubmitting || !isEditable}
-              title={!isEditable ? "Only the assigned pipeline interviewer can edit this form." : undefined}
-            >
-              {isSubmitting ? "Saving..." : "Submit Evaluation"}
-            </Button>
+          <div className="flex flex-col gap-4">
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <p className="font-medium mb-2">Evaluation Actions</p>
+              <p className="text-xs">Submit Evaluation to save your feedback. Use Pass/Fail to make a final decision and move the candidate to the next stage.</p>
+            </div>
+            <div className="flex flex-wrap justify-end gap-3">
+              <Button
+                variant="outline"
+                className="min-w-40"
+                onClick={() => void handleSubmit()}
+                disabled={isSubmitting || isSubmittingPass || isSubmittingFail || !isEditable}
+                title={!isEditable ? "Only the assigned pipeline interviewer can edit this form." : undefined}
+              >
+                {isSubmitting ? "Saving..." : "Submit Evaluation"}
+              </Button>
+              <Button
+                className="min-w-40 bg-green-600 text-white hover:bg-green-700"
+                onClick={() => void handlePass()}
+                disabled={isSubmitting || isSubmittingPass || isSubmittingFail || !isEditable}
+                title={!isEditable ? "Only the assigned pipeline interviewer can pass a candidate." : undefined}
+              >
+                {isSubmittingPass ? "Processing..." : "Pass Candidate"}
+              </Button>
+              <Button
+                className="min-w-40 bg-red-600 text-white hover:bg-red-700"
+                onClick={() => void handleFail()}
+                disabled={isSubmitting || isSubmittingPass || isSubmittingFail || !isEditable}
+                title={!isEditable ? "Only the assigned pipeline interviewer can fail a candidate." : undefined}
+              >
+                {isSubmittingFail ? "Processing..." : "Fail Candidate"}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

@@ -43,6 +43,7 @@ import { Label } from "@/shared/components/ui/label.tsx";
 import { Textarea } from "@/shared/components/ui/textarea.tsx";
 import { defaultAxios } from "@/config/axios";
 import { emailTemplateService } from "@/features/library/services/emailTemplate.service";
+import { candidateService } from "@/features/applicants/services/candidateService";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 
 import { useJobDetailQuery } from "@/features/jobs/hooks/useJobs";
@@ -326,6 +327,15 @@ export default function PipelineApplicants() {
   const [isLoadingEmailPreview, setIsLoadingEmailPreview] = useState(false);
   const [emailPreview, setEmailPreview] = useState<InterviewEmailPreviewResponse | null>(null);
   const subjectEditedRef = useRef(false);
+
+  // Shortlist modal state
+  const [shortlistModalOpen, setShortlistModalOpen] = useState(false);
+  const [shortlistAction, setShortlistAction] = useState<"shortlist" | "approve" | "reject" | null>(null);
+  const [shortlistCandidateId, setShortlistCandidateId] = useState<number | null>(null);
+  const [shortlistCandidateName, setShortlistCandidateName] = useState<string>("");
+  const [shortlistPipelineStepId, setShortlistPipelineStepId] = useState<number | null>(null);
+  const [shortlistRemarks, setShortlistRemarks] = useState<string>("");
+  const [isProcessingShortlist, setIsProcessingShortlist] = useState(false);
 
   const { data: jobDetail, isLoading, isError, refetch } = useJobDetailQuery(jobId);
 
@@ -745,6 +755,86 @@ export default function PipelineApplicants() {
     pendingTimersRef.current[pendingAction.id] = window.setTimeout(() => {
       void commitPendingAction(pendingAction);
     }, GRACE_PERIOD_MS);
+  };
+
+  const handleOpenShortlistModal = (
+    candidateApplicationId: number,
+    candidateName: string,
+    pipelineStepId: number | undefined,
+    action: "shortlist" | "approve" | "reject",
+  ) => {
+    if (!pipelineStepId || Number.isNaN(pipelineStepId)) {
+      return;
+    }
+
+    setShortlistCandidateId(candidateApplicationId);
+    setShortlistCandidateName(candidateName);
+    setShortlistPipelineStepId(pipelineStepId);
+    setShortlistAction(action);
+    setShortlistRemarks("");
+    setShortlistModalOpen(true);
+  };
+
+  const handleCloseShortlistModal = () => {
+    setShortlistModalOpen(false);
+    setShortlistCandidateId(null);
+    setShortlistCandidateName("");
+    setShortlistPipelineStepId(null);
+    setShortlistAction(null);
+    setShortlistRemarks("");
+  };
+
+  const handleSubmitShortlistAction = async () => {
+    if (!shortlistCandidateId || !shortlistPipelineStepId || !shortlistAction) {
+      return;
+    }
+
+    try {
+      setIsProcessingShortlist(true);
+
+      if (shortlistAction === "shortlist") {
+        await candidateService.markAsShortlisted(
+          shortlistCandidateId,
+          shortlistPipelineStepId,
+          shortlistRemarks,
+        );
+        toast.success(`${shortlistCandidateName} marked as shortlisted.`, {
+          position: DEFERRED_ACTION_TOAST_POSITION,
+          style: DEFERRED_ACTION_TOAST_STYLE,
+        });
+      } else if (shortlistAction === "approve") {
+        await candidateService.approveShortlist(
+          shortlistCandidateId,
+          shortlistPipelineStepId,
+          shortlistRemarks,
+        );
+        toast.success(`${shortlistCandidateName} approved from shortlist.`, {
+          position: DEFERRED_ACTION_TOAST_POSITION,
+          style: DEFERRED_ACTION_TOAST_STYLE,
+        });
+      } else if (shortlistAction === "reject") {
+        await candidateService.rejectShortlist(
+          shortlistCandidateId,
+          shortlistPipelineStepId,
+          shortlistRemarks,
+        );
+        toast.success(`${shortlistCandidateName} rejected from shortlist.`, {
+          position: DEFERRED_ACTION_TOAST_POSITION,
+          style: DEFERRED_ACTION_TOAST_STYLE,
+        });
+      }
+
+      handleCloseShortlistModal();
+      await refetch();
+    } catch (error) {
+      console.error("Unable to process shortlist action.", error);
+      toast.error("Unable to submit shortlist action.", {
+        position: DEFERRED_ACTION_TOAST_POSITION,
+        style: DEFERRED_ACTION_TOAST_STYLE,
+      });
+    } finally {
+      setIsProcessingShortlist(false);
+    }
   };
 
   const handleOpenScheduleModal = (
