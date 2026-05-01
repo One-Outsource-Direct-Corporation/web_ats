@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { ArrowLeft, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
@@ -15,6 +15,7 @@ import { Textarea } from "@/shared/components/ui/textarea";
 
 import {
   interviewEvaluationFormService,
+  type InterviewEvaluationFormPayload,
   type InterviewEvaluationFormDataSection,
   type InterviewEvaluationFormTemplate,
   type InterviewEvaluationFormRecord,
@@ -31,6 +32,18 @@ interface InterviewRouteState {
   interviewerEmail?: string;
   interviewerId?: number;
   jobTitle?: string;
+}
+
+type IefProgressOutcome = "pass" | "fail" | "shortlist";
+
+interface PendingIefAction {
+  id: string;
+  candidateApplicationId: number;
+  candidateName: string;
+  pipelineStepId: number;
+  outcome: IefProgressOutcome;
+  submissionPayload: InterviewEvaluationFormPayload;
+  toastId?: string | number;
 }
 
 interface IefRow {
@@ -82,6 +95,9 @@ const createDefaultSections = (): IefSection[] =>
     description: section.description,
     rows: section.rows.map((skill) => createRow(skill)),
   }));
+
+const GRACE_PERIOD_MS = 5000;
+const DEFERRED_ACTION_TOAST_POSITION = "top-center" as const;
 
 const toDateInputValue = (isoDateTime?: string): string => {
   if (!isoDateTime) {
@@ -231,9 +247,7 @@ export default function InterviewEvaluationForm() {
   const [sections, setSections] = useState<IefSection[]>(createDefaultSections());
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmittingPass, setIsSubmittingPass] = useState(false);
-  const [isSubmittingFail, setIsSubmittingFail] = useState(false);
-  const [isSubmittingShortlist, setIsSubmittingShortlist] = useState(false);
+  const [pendingActions, setPendingActions] = useState<PendingIefAction[]>([]);
   const [applicantName, setApplicantName] = useState(routeState?.candidateName ?? "");
   const [interviewDate, setInterviewDate] = useState(toDateInputValue(routeState?.scheduledFor));
   const [scheduledForDisplay, setScheduledForDisplay] = useState(formatInterviewDate(routeState?.scheduledFor));
@@ -245,6 +259,9 @@ export default function InterviewEvaluationForm() {
   const [existingFormId, setExistingFormId] = useState<number | null>(null);
   const [pendingExistingForm, setPendingExistingForm] = useState<InterviewEvaluationFormRecord | null>(null);
   const hasHydratedExistingFormRef = useRef(false);
+  const pendingTimersRef = useRef<Record<string, ReturnType<typeof window.setTimeout>>>({});
+  const pendingCountdownIntervalsRef = useRef<Record<string, ReturnType<typeof window.setInterval>>>({});
+  const pendingActionsRef = useRef<PendingIefAction[]>([]);
 
   useEffect(() => {
     setApplicantName(routeState?.candidateName ?? "");
@@ -257,6 +274,24 @@ export default function InterviewEvaluationForm() {
 
   const { user } = useAuth();
   const isEditable = Boolean(user && interviewerId && user.id === interviewerId);
+
+  useEffect(() => {
+    pendingActionsRef.current = pendingActions;
+  }, [pendingActions]);
+
+  useEffect(() => {
+    return () => {
+      for (const timerId of Object.values(pendingTimersRef.current)) {
+        window.clearTimeout(timerId);
+      }
+      pendingTimersRef.current = {};
+
+      for (const intervalId of Object.values(pendingCountdownIntervalsRef.current)) {
+        window.clearInterval(intervalId);
+      }
+      pendingCountdownIntervalsRef.current = {};
+    };
+  }, []);
 
   // Fetch prefill whenever interviewer ownership is unknown to keep editability accurate.
   useEffect(() => {
@@ -493,12 +528,18 @@ export default function InterviewEvaluationForm() {
     return Math.round(values.reduce((total, value) => total + value, 0) / values.length);
   };
 
-  const prepareAndValidateForm = () => {
+  const buildSubmissionPayload = (): InterviewEvaluationFormPayload | null => {
+    if (!isEditable) {
+      toast.error("Only the assigned pipeline interviewer can edit this form.");
+      return null;
+    }
+
     const candidateApplicationId = routeState?.candidateApplicationId ?? (params.candidateApplicationId ? Number(params.candidateApplicationId) : undefined);
     const pipelineStepId = routeState?.pipelineStepId ?? (params.interviewId ? Number(params.interviewId) : undefined);
 
     if (!candidateApplicationId || !pipelineStepId) {
-      throw new Error("Interview context is missing candidate or pipeline step details.");
+      toast.error("Interview context is missing candidate or pipeline step details.");
+      return null;
     }
 
     const hasInvalidRating = sections.some((section) =>
@@ -509,22 +550,21 @@ export default function InterviewEvaluationForm() {
     );
 
     if (hasInvalidRating) {
-      throw new Error("Each skill row needs a name and a rating from 0 to 100.");
+      toast.error("Each skill row needs a name and a rating from 0 to 100.");
+      return null;
     }
 
-    // Remove entirely-empty rows (no skill and no rating) before submission.
     const cleanedSections = sections.map((section) => ({
       ...section,
       rows: section.rows.filter((row) => row.skill.trim().length > 0 || String(row.rating).trim().length > 0),
     }));
 
-    // Ensure there is at least one filled row overall
-    const hasAnyFilledRow = cleanedSections.some((s) => s.rows.length > 0);
+    const hasAnyFilledRow = cleanedSections.some((section) => section.rows.length > 0);
     if (!hasAnyFilledRow) {
-      throw new Error("Please add at least one skill row with a rating.");
+      toast.error("Please add at least one skill row with a rating.");
+      return null;
     }
 
-    // Convert ratings to numbers and include all fields in payload
     const sectionsWithNumberRatings = cleanedSections.map((section) => ({
       key: section.key,
       title: section.title,
@@ -537,9 +577,9 @@ export default function InterviewEvaluationForm() {
       })),
     }));
 
-    const payload = {
-      candidate_application: candidateApplicationId,
-      candidate_pipeline_step: pipelineStepId,
+    return {
+      candidate_application: candidateApplicationId as number,
+      candidate_pipeline_step: pipelineStepId as number,
       template: selectedTemplate?.id ?? null,
       interviewer: interviewerId,
       scheduled_for: routeState?.scheduledFor ?? new Date().toISOString(),
@@ -553,137 +593,216 @@ export default function InterviewEvaluationForm() {
       ai_summary: aiSummary,
       interviewer_notes: interviewerNotes,
     };
-
-    return { candidateApplicationId, pipelineStepId, payload };
   };
 
-  const saveIEF = async (payload: any) => {
-    if (existingFormId) {
-      await defaultAxios.patch(`/api/candidate/ief/${existingFormId}/`, payload);
-    } else {
-      await interviewEvaluationFormService.createForm(payload);
-    }
-  };
-
-  const progressCandidate = async (candidateApplicationId: number, pipelineStepId: number, outcome: "pass" | "fail") => {
-    await interviewEvaluationFormService.progressCandidate({
-      candidate_application_id: candidateApplicationId,
-      pipeline_step_id: pipelineStepId,
-      outcome,
-    });
-  };
-
-  const handleSubmit = async () => {
-    if (!isEditable) {
-      toast.error("Only the assigned pipeline interviewer can edit this form.");
-      return;
-    }
-
+  const persistEvaluation = async (
+    payload: InterviewEvaluationFormPayload,
+    options?: { showSuccessToast?: boolean },
+  ): Promise<boolean> => {
     setIsSubmitting(true);
 
     try {
-      const { payload } = prepareAndValidateForm();
-      await saveIEF(payload);
-      toast.success("Interview evaluation form saved.");
+      if (existingFormId) {
+        await defaultAxios.patch(`/api/candidate/ief/${existingFormId}/`, payload);
+      } else {
+        await interviewEvaluationFormService.createForm(payload);
+      }
+
+      if (options?.showSuccessToast !== false) {
+        toast.success("Interview evaluation form saved.");
+      }
+
+      return true;
     } catch (error) {
       console.error("Unable to save the interview evaluation form.", error);
-      const errorMessage = error instanceof Error ? error.message : "Unable to save the interview evaluation form.";
-      toast.error(errorMessage);
+      toast.error("Unable to save the interview evaluation form.");
+      return false;
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handlePass = async () => {
-    if (!isEditable) {
-      toast.error("Only the assigned pipeline interviewer can pass a candidate.");
+  const clearPendingActionCountdown = useCallback((actionId: string) => {
+    const intervalId = pendingCountdownIntervalsRef.current[actionId];
+    if (!intervalId) {
       return;
     }
 
-    setIsSubmittingPass(true);
+    window.clearInterval(intervalId);
+    delete pendingCountdownIntervalsRef.current[actionId];
+  }, []);
 
-    try {
-      const { candidateApplicationId, pipelineStepId, payload } = prepareAndValidateForm();
-      await saveIEF(payload);
-      await progressCandidate(candidateApplicationId, pipelineStepId, "pass");
-      toast.success("Candidate passed and moved to the next pipeline step.");
-      
-      // Navigate back to pipeline applicants after successful pass
-      if (params.jobId) {
-        navigate(`/${params.jobId}/applicants`);
-      } else {
-        navigate(-1);
-      }
-    } catch (error) {
-      console.error("Unable to pass candidate.", error);
-      const errorMessage = error instanceof Error ? error.message : "Unable to pass candidate.";
-      toast.error(errorMessage);
-    } finally {
-      setIsSubmittingPass(false);
+  const removePendingAction = useCallback((actionId: string) => {
+    setPendingActions((previousValue) => previousValue.filter((action) => action.id !== actionId));
+  }, []);
+
+  const handleUndoPendingAction = useCallback((actionId: string) => {
+    const timerId = pendingTimersRef.current[actionId];
+    if (timerId) {
+      window.clearTimeout(timerId);
+      delete pendingTimersRef.current[actionId];
     }
+
+    clearPendingActionCountdown(actionId);
+
+    const existingAction = pendingActionsRef.current.find((pendingAction) => pendingAction.id === actionId);
+    removePendingAction(actionId);
+
+    if (existingAction?.toastId !== undefined) {
+      toast.dismiss(existingAction.toastId);
+    }
+  }, [clearPendingActionCountdown, removePendingAction]);
+
+  const commitPendingAction = useCallback(
+    async (pendingAction: PendingIefAction) => {
+      if (!pendingActionsRef.current.some((action) => action.id === pendingAction.id)) {
+        return;
+      }
+
+      const timerId = pendingTimersRef.current[pendingAction.id];
+      if (timerId) {
+        window.clearTimeout(timerId);
+        delete pendingTimersRef.current[pendingAction.id];
+      }
+
+      clearPendingActionCountdown(pendingAction.id);
+
+      if (pendingAction.toastId !== undefined) {
+        toast.dismiss(pendingAction.toastId);
+      }
+
+      try {
+        const saved = await persistEvaluation(pendingAction.submissionPayload, { showSuccessToast: false });
+        if (!saved) {
+          removePendingAction(pendingAction.id);
+          return;
+        }
+
+        if (pendingAction.outcome === "shortlist") {
+          await candidateService.markAsShortlisted(
+            pendingAction.candidateApplicationId,
+            pendingAction.pipelineStepId,
+            pendingAction.submissionPayload.interviewer_notes ?? "",
+          );
+          toast.success(`${pendingAction.candidateName} shortlisted.`);
+        } else {
+          await interviewEvaluationFormService.progressCandidate({
+            candidate_application_id: pendingAction.candidateApplicationId,
+            pipeline_step_id: pendingAction.pipelineStepId,
+            outcome: pendingAction.outcome,
+            remarks: pendingAction.submissionPayload.interviewer_notes ?? "",
+          });
+          toast.success(`${pendingAction.candidateName} marked as ${pendingAction.outcome === "pass" ? "Passed" : "Failed"}.`);
+        }
+
+        removePendingAction(pendingAction.id);
+        navigate(-1);
+      } catch (error) {
+        console.error("Unable to update candidate pipeline progress.", error);
+        toast.error("Unable to update candidate pipeline progress.");
+        removePendingAction(pendingAction.id);
+      }
+    },
+    [clearPendingActionCountdown, navigate, persistEvaluation, removePendingAction],
+  );
+
+  const renderDeferredActionToast = useCallback(
+    (pendingAction: PendingIefAction, secondsLeft: number) => {
+      const actionLabel =
+        pendingAction.outcome === "pass"
+          ? "Pass"
+          : pendingAction.outcome === "fail"
+            ? "Fail"
+            : "Shortlist";
+
+      return (
+        <div className="space-y-2">
+          <p className="text-sm leading-5">
+            <span className="font-semibold">{pendingAction.candidateName}</span>{" "}
+            queued for {actionLabel}. Auto-submit in {secondsLeft} second{secondsLeft === 1 ? "" : "s"}.
+          </p>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8"
+            onClick={() => handleUndoPendingAction(pendingAction.id)}
+          >
+            Undo
+          </Button>
+        </div>
+      );
+    },
+    [handleUndoPendingAction],
+  );
+
+  const showDeferredActionToast = useCallback(
+    (pendingAction: PendingIefAction) => {
+      const startingSeconds = Math.ceil(GRACE_PERIOD_MS / 1000);
+      let secondsLeft = startingSeconds;
+
+      const toastId = toast.info(
+        renderDeferredActionToast(pendingAction, startingSeconds),
+        {
+          autoClose: false,
+          closeButton: false,
+          position: DEFERRED_ACTION_TOAST_POSITION,
+        },
+      );
+
+      pendingCountdownIntervalsRef.current[pendingAction.id] = window.setInterval(() => {
+        secondsLeft -= 1;
+
+        if (secondsLeft <= 0) {
+          clearPendingActionCountdown(pendingAction.id);
+          toast.dismiss(toastId);
+          return;
+        }
+
+        toast.update(toastId, {
+          render: renderDeferredActionToast(pendingAction, secondsLeft),
+        });
+      }, 1000);
+
+      return toastId;
+    },
+    [clearPendingActionCountdown, renderDeferredActionToast],
+  );
+
+  const handleSubmit = async () => {
+    const payload = buildSubmissionPayload();
+    if (!payload) {
+      return;
+    }
+
+    await persistEvaluation(payload);
   };
 
-  const handleFail = async () => {
-    if (!isEditable) {
-      toast.error("Only the assigned pipeline interviewer can fail a candidate.");
+  const handleProgressAction = (outcome: IefProgressOutcome) => {
+    if (!isEditable || pendingActionsRef.current.length > 0) {
       return;
     }
 
-    setIsSubmittingFail(true);
-
-    try {
-      const { candidateApplicationId, pipelineStepId, payload } = prepareAndValidateForm();
-      await saveIEF(payload);
-      await progressCandidate(candidateApplicationId, pipelineStepId, "fail");
-      toast.success("Candidate marked as failed and rejected.");
-      
-      // Navigate back to pipeline applicants after successful fail
-      if (params.jobId) {
-        navigate(`/${params.jobId}/applicants`);
-      } else {
-        navigate(-1);
-      }
-    } catch (error) {
-      console.error("Unable to fail candidate.", error);
-      const errorMessage = error instanceof Error ? error.message : "Unable to fail candidate.";
-      toast.error(errorMessage);
-    } finally {
-      setIsSubmittingFail(false);
-    }
-  };
-
-  const handleShortlist = async () => {
-    if (!isEditable) {
-      toast.error("Only the assigned pipeline interviewer can shortlist a candidate.");
+    const payload = buildSubmissionPayload();
+    if (!payload) {
       return;
     }
 
-    const candidateApplicationId = routeState?.candidateApplicationId ?? (params.candidateApplicationId ? Number(params.candidateApplicationId) : undefined);
-    const pipelineStepId = routeState?.pipelineStepId ?? (params.interviewId ? Number(params.interviewId) : undefined);
+    const pendingAction: PendingIefAction = {
+      id: `${payload.candidate_application}-${payload.candidate_pipeline_step}-${Date.now()}-${outcome}`,
+      candidateApplicationId: payload.candidate_application as number,
+      candidateName: applicantName || routeState?.candidateName || "Candidate",
+      pipelineStepId: payload.candidate_pipeline_step as number,
+      outcome,
+      submissionPayload: payload,
+    };
 
-    if (!candidateApplicationId || !pipelineStepId) {
-      toast.error("Interview context is missing candidate or pipeline step details.");
-      return;
-    }
+    pendingAction.toastId = showDeferredActionToast(pendingAction);
+    setPendingActions((previousValue) => [...previousValue, pendingAction]);
 
-    setIsSubmittingShortlist(true);
-
-    try {
-      await candidateService.markAsShortlisted(candidateApplicationId, pipelineStepId, "");
-      toast.success("Candidate shortlisted successfully.");
-
-      if (params.jobId) {
-        navigate(`/${params.jobId}/applicants`);
-      } else {
-        navigate(-1);
-      }
-    } catch (error) {
-      console.error("Unable to shortlist candidate.", error);
-      const errorMessage = error instanceof Error ? error.message : "Unable to shortlist candidate.";
-      toast.error(errorMessage);
-    } finally {
-      setIsSubmittingShortlist(false);
-    }
+    pendingTimersRef.current[pendingAction.id] = window.setTimeout(() => {
+      void commitPendingAction(pendingAction);
+    }, GRACE_PERIOD_MS);
   };
 
   return (
@@ -895,47 +1014,44 @@ export default function InterviewEvaluationForm() {
             </Card>
           </div>
 
-          <div className="flex flex-col gap-4">
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              <p className="font-medium mb-2">Evaluation Actions</p>
-              <p className="text-xs">Submit Evaluation to save your feedback. Use Pass, Shortlist, or Fail to make a final decision and move the candidate to the next stage.</p>
-            </div>
-            <div className="flex flex-wrap justify-end gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
-                className="min-w-40"
-                onClick={() => void handleSubmit()}
-                disabled={isSubmitting || isSubmittingPass || isSubmittingShortlist || isSubmittingFail || !isEditable}
+                className="border-green-600 text-green-700 hover:bg-green-600 hover:text-white"
+                onClick={() => void handleProgressAction("pass")}
+                disabled={isSubmitting || pendingActions.length > 0 || !isEditable}
                 title={!isEditable ? "Only the assigned pipeline interviewer can edit this form." : undefined}
               >
-                {isSubmitting ? "Saving..." : "Submit Evaluation"}
+                Pass
               </Button>
               <Button
-                className="min-w-40 bg-green-600 text-white hover:bg-green-700"
-                onClick={() => void handlePass()}
-                disabled={isSubmitting || isSubmittingPass || isSubmittingShortlist || isSubmittingFail || !isEditable}
-                title={!isEditable ? "Only the assigned pipeline interviewer can pass a candidate." : undefined}
-              >
-                {isSubmittingPass ? "Processing..." : "Pass Candidate"}
-              </Button>
-              <Button
-                className="min-w-40 border border-blue-600 bg-white text-blue-600 hover:bg-blue-600 hover:text-white"
                 variant="outline"
-                onClick={() => void handleShortlist()}
-                disabled={isSubmitting || isSubmittingPass || isSubmittingShortlist || isSubmittingFail || !isEditable}
-                title={!isEditable ? "Only the assigned pipeline interviewer can shortlist a candidate." : undefined}
+                className="border-red-600 text-red-700 hover:bg-red-600 hover:text-white"
+                onClick={() => void handleProgressAction("fail")}
+                disabled={isSubmitting || pendingActions.length > 0 || !isEditable}
+                title={!isEditable ? "Only the assigned pipeline interviewer can edit this form." : undefined}
               >
-                {isSubmittingShortlist ? "Processing..." : "Shortlist"}
+                Fail
               </Button>
               <Button
-                className="min-w-40 bg-red-600 text-white hover:bg-red-700"
-                onClick={() => void handleFail()}
-                disabled={isSubmitting || isSubmittingPass || isSubmittingShortlist || isSubmittingFail || !isEditable}
-                title={!isEditable ? "Only the assigned pipeline interviewer can fail a candidate." : undefined}
+                variant="outline"
+                className="border-amber-600 text-amber-700 hover:bg-amber-600 hover:text-white"
+                onClick={() => void handleProgressAction("shortlist")}
+                disabled={isSubmitting || pendingActions.length > 0 || !isEditable}
+                title={!isEditable ? "Only the assigned pipeline interviewer can edit this form." : undefined}
               >
-                {isSubmittingFail ? "Processing..." : "Fail Candidate"}
+                Shortlist
               </Button>
             </div>
+            <Button
+              className="min-w-40 bg-slate-900 text-white hover:bg-slate-800"
+              onClick={() => void handleSubmit()}
+              disabled={isSubmitting || pendingActions.length > 0 || !isEditable}
+              title={!isEditable ? "Only the assigned pipeline interviewer can edit this form." : undefined}
+            >
+              {isSubmitting ? "Saving..." : "Submit Evaluation"}
+            </Button>
           </div>
         </div>
       </div>
