@@ -1,6 +1,8 @@
 import Applicants from "../views/Applicants";
 import PoolApplicants from "../views/PoolApplicants";
 import PipelineApplicants from "../views/PipelineApplicants";
+import PipelineApplicantStatusPage from "../views/PipelineApplicantStatusPage";
+import ExamForm from "../views/Exam-Form.tsx";
 import OfferAndFinalization from "../views/OfferAndFinalization";
 import Onboarding from "../views/Onboarding";
 import Warm from "../views/Warm";
@@ -24,6 +26,14 @@ export const applicantsRoutes = [
   {
     path: ":jobId/applicants",
     element: <PipelineApplicants />,
+  },
+  {
+    path: ":jobId/exam-form/:applicantId",
+    element: <ExamForm />,
+  },
+  {
+    path: ":jobId/applicants/status",
+    element: <PipelineApplicantStatusPage />,
   },
   // Legacy stage routes mapped to the unified applicants page
   {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Avatar,
   AvatarFallback,
@@ -26,67 +26,30 @@ import { Calendar } from "@/shared/components/ui/calendar.tsx";
 import { ArrowLeft, Search, MoreHorizontal } from "lucide-react";
 import { Navbar } from "@/shared/components/reusables/Navbar.tsx";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import ExamForm from "./Exam-Form.tsx";
+import { useJobDetailQuery } from "@/features/jobs/hooks/useJobs";
+import { extractPipelineStepsFromJobDetail } from "@/features/jobs/services/jobService";
+import ExamForm from "./Exam-Form";
 
 // Sample applicant data with status
-const applicants = [
-  {
-    id: "001",
-    name: "John Doe",
-    avatar: "https://i.pravatar.cc/32?u=001",
-    department: "Engineering",
-    status: "In Progress",
-  },
-  {
-    id: "002",
-    name: "Sarah Johnson",
-    avatar: "https://i.pravatar.cc/32?u=002",
-    department: "Engineering",
-    status: "Completed",
-  },
-  {
-    id: "003",
-    name: "Mike Chen",
-    avatar: "https://i.pravatar.cc/32?u=003",
-    department: "Engineering",
-    status: "In Progress",
-  },
-  {
-    id: "004",
-    name: "Emily Rodriguez",
-    avatar: "https://i.pravatar.cc/32?u=004",
-    department: "Engineering",
-    status: "Completed",
-  },
-  {
-    id: "005",
-    name: "David Kim",
-    avatar: "https://i.pravatar.cc/32?u=005",
-    department: "Engineering",
-    status: "In Progress",
-  },
-  {
-    id: "006",
-    name: "Lisa Wang",
-    avatar: "https://i.pravatar.cc/32?u=006",
-    department: "Engineering",
-    status: "Completed",
-  },
-  {
-    id: "007",
-    name: "Alex Thompson",
-    avatar: "https://i.pravatar.cc/32?u=007",
-    department: "Engineering",
-    status: "In Progress",
-  },
-  {
-    id: "008",
-    name: "Maria Garcia",
-    avatar: "https://i.pravatar.cc/32?u=008",
-    department: "Engineering",
-    status: "Completed",
-  },
-];
+const getApplicantsFromPipeline = (pipelineSteps: any[]) => {
+  const assessmentSteps = pipelineSteps.filter(
+    (step) => step.process_type === "assessments"
+  );
+
+  if (assessmentSteps.length === 0) {
+    return [];
+  }
+
+  const step = assessmentSteps[0];
+  return (step.candidateApplications || []).map((candidate: any) => ({
+    id: String(candidate.id).padStart(3, "0"),
+    name: candidate.name,
+    department: candidate.department || "Unknown",
+    status: candidate.pipelineStatusLabel || candidate.statusLabel || "Pending",
+    pipelineStepId: candidate.pipelineStepId || step.id,
+    photoUrl: candidate.photoUrl,
+  }));
+};
 
 const statusStyles = {
   active: "bg-green-100 text-green-800 border-green-300 hover:bg-green-200",
@@ -233,10 +196,23 @@ function Sidebar() {
 
 export default function JobManagement() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFilter, setSelectedFilter] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState("assessments");
   const [jobStatus, setJobStatus] = useState("active");
-
+  const { jobId } = useParams<{ jobId: string }>();
+  const navigate = useNavigate();
   const location = useLocation();
+
+  // Fetch job detail and extract pipeline
+  const { data: jobDetail, isLoading, isError } = useJobDetailQuery(jobId);
+  const pipelineSteps = useMemo(
+    () => extractPipelineStepsFromJobDetail(jobDetail),
+    [jobDetail],
+  );
+
+  // Get applicants from pipeline
+  const applicants = useMemo(() => {
+    return getApplicantsFromPipeline(pipelineSteps);
+  }, [pipelineSteps]);
 
   // Check if we're on the exam form route
   const isExamFormRoute = location.pathname.includes("/exam-form/");
@@ -247,7 +223,7 @@ export default function JobManagement() {
   }
 
   // Filter applicants based on search term
-  const filteredApplicants = applicants.filter((applicant) =>
+  const filteredApplicants = applicants.filter((applicant: any) =>
     applicant.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -270,11 +246,8 @@ export default function JobManagement() {
       : "Unknown Job";
   };
 
-  const { jobId } = useParams<{ jobId: string }>();
   const resolvedJobTitle = formatJobTitle(jobId);
   const previousPath = location.state?.from;
-  const navigate = useNavigate();
-  const customStage = "Failed";
 
   return (
     <>
@@ -311,7 +284,7 @@ export default function JobManagement() {
 
                     <Select value={jobStatus} onValueChange={setJobStatus}>
                       <SelectTrigger
-                        className={`mt-10 sm:mt-0 w-auto min-w-[80px] text-xs font-medium border rounded px-2 py-0.5 ${
+                        className={`mt-10 sm:mt-0 w-auto min-w-20 text-xs font-medium border rounded px-2 py-0.5 ${
                           statusStyles[jobStatus as keyof typeof statusStyles]
                         }`}
                       >
@@ -353,7 +326,7 @@ export default function JobManagement() {
                       }
                     }}
                   >
-                    <SelectTrigger className="min-w-[160px] border-none shadow-none font-bold text-black text-sm">
+                    <SelectTrigger className="min-w-40 border-none shadow-none font-bold text-black text-sm">
                       <SelectValue placeholder="Shortlisted" />
                     </SelectTrigger>
                     <SelectContent>
@@ -399,31 +372,50 @@ export default function JobManagement() {
               </div>
 
               {/* Applicants Table */}
+              {isLoading && (
+                <div className="mt-4 rounded-md border bg-white p-6 text-center text-gray-500">
+                  Loading assessment data...
+                </div>
+              )}
+
+              {isError && (
+                <div className="mt-4 rounded-md border bg-red-50 p-6 text-center text-red-600">
+                  Unable to load assessment data.
+                </div>
+              )}
+
+              {!isLoading && !isError && applicants.length === 0 && (
+                <div className="mt-4 rounded-md border bg-white p-6 text-center text-gray-500">
+                  No candidates in the assessment stage.
+                </div>
+              )}
+
+              {!isLoading && !isError && applicants.length > 0 && (
               <div className="mt-4 rounded-md border bg-white overflow-x-auto">
-                <Table className="table-fixed w-full text-xs lg:min-w-[800px]">
+                <Table className="table-fixed w-full text-xs lg:min-w-200">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="text-center align-center w-16 border border-gray-200 py-2 px-3 text-xs lg:text-sm lg:py-3 lg:px-4">
                         ID
                       </TableHead>
 
-                      <TableHead className="text-center align-center border border-gray-200 py-2 px-3 w-32 lg:min-w-[200px] text-xs lg:text-sm lg:py-3 lg:px-4">
+                      <TableHead className="text-center align-center border border-gray-200 py-2 px-3 w-32 lg:min-w-50 text-xs lg:text-sm lg:py-3 lg:px-4">
                         Full Name
                       </TableHead>
-                      <TableHead className="border border-gray-200 py-2 px-3 w-32 lg:min-w-[140px] text-center text-xs lg:text-sm lg:py-3 lg:px-4">
+                      <TableHead className="border border-gray-200 py-2 px-3 w-32 lg:min-w-35 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
                         Action
                       </TableHead>
-                      <TableHead className="border border-gray-200 py-2 px-3 w-32 lg:min-w-[140px] text-center text-xs lg:text-sm lg:py-3 lg:px-4">
+                      <TableHead className="border border-gray-200 py-2 px-3 w-32 lg:min-w-35 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
                         Status
                       </TableHead>
-                      <TableHead className="border border-gray-200 py-2 px-3 w-32 lg:min-w-[140px] text-center text-xs lg:text-sm lg:py-3 lg:px-4">
+                      <TableHead className="border border-gray-200 py-2 px-3 w-32 lg:min-w-35 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
                         View <br></br> Assessment
                       </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredApplicants.length > 0 ? (
-                      filteredApplicants.map((applicant) => (
+                      filteredApplicants.map((applicant: any) => (
                         <TableRow
                           key={applicant.id}
                           className="hover:bg-gray-50 h-16 lg:h-20"
@@ -434,19 +426,19 @@ export default function JobManagement() {
 
                           <TableCell className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 w-48 align-middle">
                             <div className="flex items-center justify-center gap-2 lg:gap-3">
-                              <Avatar className="h-6 w-6 lg:h-8 lg:w-8 flex-shrink-0">
+                              <Avatar className="h-6 w-6 lg:h-8 lg:w-8 shrink-0">
                                 <AvatarImage
-                                  src={applicant.avatar || "/placeholder.svg"}
+                                  src={applicant.photoUrl || "/placeholder.svg"}
                                 />
                                 <AvatarFallback className="text-xs lg:text-sm">
                                   {applicant.name
                                     .split(" ")
-                                    .map((n) => n[0])
+                                    .map((n: string) => n[0])
                                     .join("")}
                                 </AvatarFallback>
                               </Avatar>
                               <span
-                                className="font-medium text-xs lg:text-sm break-words leading-tight lg:whitespace-nowrap"
+                                className="font-medium text-xs lg:text-sm wrap-break-word leading-tight lg:whitespace-nowrap"
                                 title={applicant.name}
                               >
                                 {applicant.name}
@@ -470,13 +462,7 @@ export default function JobManagement() {
                                 size="sm"
                                 className="px-3 bg-white text-red-600 border border-red-600 hover:bg-red-600 hover:text-white text-xs h-8"
                                 onClick={() =>
-                                  navigate(`/job/stage/${customStage}`, {
-                                    state: {
-                                      jobTitle: resolvedJobTitle,
-                                      jobId,
-                                      from: location.pathname,
-                                    },
-                                  })
+                                  navigate(`/job/stage/Failed`)
                                 }
                               >
                                 Fail
@@ -498,11 +484,8 @@ export default function JobManagement() {
                             <button
                               className="text-blue-600 hover:text-blue-800 text-xs lg:text-sm underline"
                               onClick={() => {
-                                console.log(
-                                  `Navigating to: /job/${jobId}/exam-form/${applicant.id}`
-                                );
                                 navigate(
-                                  `/job/${jobId}/exam-form/${applicant.id}`
+                                  `/job/${jobId}/exam-form/${applicant.id}?type=assessments`
                                 );
                               }}
                             >
@@ -524,6 +507,7 @@ export default function JobManagement() {
                   </TableBody>
                 </Table>
               </div>
+              )}
 
               {/* Results Summary */}
               {searchTerm && (

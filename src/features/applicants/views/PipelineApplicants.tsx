@@ -5,7 +5,7 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, BarChart3, Search, FileText, Plus } from "lucide-react";
 import { toast } from "react-toastify";
 
 import {
@@ -75,6 +75,42 @@ interface InterviewScheduleModalState {
   existingSchedule?: string;
   jobTitle?: string;
 }
+
+interface AssessmentModalState {
+  open: boolean;
+  candidateApplicationId: number;
+  candidateName: string;
+  pipelineStepId: number;
+  candidateAssessmentId?: number;
+  mode: "preview" | "grade";
+  assessment?: {
+    id: number;
+    name?: string | null;
+    file?: {
+      filename?: string | null;
+      file?: string | null;
+    };
+  };
+}
+
+interface CandidateAssessmentData {
+  id: number;
+  status: "assigned" | "submitted" | "graded" | "not_assigned";
+  score?: number | null;
+  notes?: string | null;
+  assessmentId?: number;
+  assessmentName?: string | null;
+}
+
+interface PipelineAssessment {
+  id: number;
+  name?: string | null;
+  file?: {
+    filename?: string | null;
+    file?: string | null;
+  };
+}
+
 
 
 
@@ -278,6 +314,8 @@ const normalizeStatusTag = (value?: string): string => {
     .replace(/[^a-z_]/g, "");
 };
 
+  const ACTIVE_PIPELINE_STATUSES = new Set(["pending", "scheduled", "in_progress"]);
+
 export default function PipelineApplicants() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -302,6 +340,18 @@ export default function PipelineApplicants() {
     existingSchedule: undefined,
     jobTitle: undefined,
   });
+
+  const [assessmentModalState, setAssessmentModalState] = useState<AssessmentModalState>({
+    open: false,
+    candidateApplicationId: 0,
+    candidateName: "",
+    pipelineStepId: 0,
+    mode: "preview",
+  });
+
+  const [assessmentGradeForm, setAssessmentGradeForm] = useState({ score: "", notes: "" });
+  const [candidateAssessments, setCandidateAssessments] = useState<Map<number, CandidateAssessmentData>>(new Map());
+  const [stepAssessment, setStepAssessment] = useState<PipelineAssessment | null>(null);
   const [scheduleForm, setScheduleForm] = useState<InterviewScheduleFormState>({
     scheduledDate: "",
     scheduledTime: "09:00",
@@ -328,6 +378,20 @@ export default function PipelineApplicants() {
   useEffect(() => {
     pendingActionsRef.current = pendingActions;
   }, [pendingActions]);
+
+  // Track navigation to/from IEF pages and trigger a refetch when returning
+  const prevPathRef = useRef<string>(location.pathname);
+  useEffect(() => {
+    const prev = prevPathRef.current;
+    const current = location.pathname;
+
+    // If we navigated away from an IEF route back to the pipeline view, refresh data
+    if (prev.includes("/ief") && !current.includes("/ief")) {
+      void refetch();
+    }
+
+    prevPathRef.current = current;
+  }, [location.pathname, refetch]);
 
   useEffect(() => {
     return () => {
@@ -393,6 +457,7 @@ export default function PipelineApplicants() {
     selectedType === "resume_screening" ||
     selectedType === "phone_call_interview" ||
     selectedType === "initial_interview";
+  const isAssessmentStage = selectedType === "assessments";
   const showResumeColumn = selectedType === "resume_screening";
 
   const resolvePhotoUrl = (rawUrl?: string) => {
@@ -441,6 +506,11 @@ export default function PipelineApplicants() {
 
     for (const step of selectedSteps) {
       for (const candidate of step.candidateApplications) {
+        const normalizedPipelineStatus = normalizeStatusTag(candidate.pipelineStatus);
+        if (!ACTIVE_PIPELINE_STATUSES.has(normalizedPipelineStatus)) {
+          continue;
+        }
+
         if (!candidatesById.has(candidate.id)) {
           const resolvedPipelineStepId = candidate.pipelineStepId
             ? candidate.pipelineStepId
@@ -451,7 +521,7 @@ export default function PipelineApplicants() {
             name: candidate.name,
             department: candidate.department || "-",
             statusLabel: candidate.pipelineStatusLabel || candidate.statusLabel,
-            pipelineStatus: normalizeStatusTag(candidate.pipelineStatus),
+            pipelineStatus: normalizedPipelineStatus,
             resumeUrl: (candidate as { resumeUrl?: string }).resumeUrl,
             scheduledFor: candidate.scheduledFor,
             interviewerName:
@@ -493,20 +563,6 @@ export default function PipelineApplicants() {
           });
         }
       }
-
-      for (const candidateId of step.candidateApplicationIds) {
-        if (!candidatesById.has(candidateId)) {
-          const fallbackStepId = Number.parseInt(step.id, 10);
-          candidatesById.set(candidateId, {
-            id: candidateId,
-            name: `Candidate #${candidateId}`,
-            department: "-",
-            statusLabel: "Pending",
-            pipelineStatus: "pending",
-            pipelineStepId: Number.isNaN(fallbackStepId) ? undefined : fallbackStepId,
-          });
-        }
-      }
     }
 
     return Array.from(candidatesById.values())
@@ -539,6 +595,21 @@ export default function PipelineApplicants() {
 
   const handleTypeChange = (nextType: string) => {
     setSearchParams({ type: nextType });
+  };
+
+  const handleOpenStatusPage = () => {
+    if (!jobId) {
+      return;
+    }
+
+    const nextParams = new URLSearchParams();
+    nextParams.set("type", selectedType);
+
+    if (searchTerm.trim().length > 0) {
+      nextParams.set("q", searchTerm);
+    }
+
+    navigate(`/job/${jobId}/applicants/status?${nextParams.toString()}`);
   };
 
   const clearPendingActionCountdown = useCallback((actionId: string) => {
@@ -830,6 +901,188 @@ export default function PipelineApplicants() {
 
   const handleOpenResumePreview = () => {
     // Not used: preview handled by ResumeScreeningTable component
+  };
+
+  const loadCandidateAssessments = useCallback(async () => {
+    if (!isAssessmentStage || selectedStepCandidates.length === 0) {
+      return;
+    }
+
+    // Extract assessment from the pipeline step
+    const selectedSteps = pipelineSteps.filter(
+      (step) => step.process_type === selectedType,
+    );
+    
+    if (selectedSteps.length > 0) {
+      const step = selectedSteps[0];
+      const assessmentData = (step as any).assessments?.[0];
+      if (assessmentData) {
+        setStepAssessment({
+          id: assessmentData.id,
+          name: assessmentData.name,
+          file: assessmentData.file,
+        });
+      }
+    }
+
+    try {
+      const assessmentMap = new Map<number, CandidateAssessmentData>();
+
+      for (const candidate of selectedStepCandidates) {
+        try {
+          const response = await defaultAxios.get("/api/candidate/assessments/", {
+            params: {
+              candidate_application_id: candidate.id,
+              pipeline_step_id: candidate.pipelineStepId,
+            },
+          });
+
+          const items = Array.isArray(response.data) ? response.data : [];
+          if (items.length > 0) {
+            const assessment = items[0];
+            assessmentMap.set(candidate.id, {
+              id: assessment.id,
+              status: assessment.status || "not_assigned",
+              score: assessment.score,
+              notes: assessment.notes,
+              assessmentId: assessment.assessment?.id,
+              assessmentName: assessment.assessment?.name,
+            });
+          } else {
+            assessmentMap.set(candidate.id, {
+              id: 0,
+              status: "not_assigned",
+            });
+          }
+        } catch (err) {
+          assessmentMap.set(candidate.id, {
+            id: 0,
+            status: "not_assigned",
+          });
+        }
+      }
+
+      setCandidateAssessments(assessmentMap);
+    } catch (error) {
+      console.error("Failed to load candidate assessments:", error);
+    }
+  }, [isAssessmentStage, selectedStepCandidates, selectedType, pipelineSteps]);
+
+  useEffect(() => {
+    if (isAssessmentStage) {
+      void loadCandidateAssessments();
+    }
+  }, [isAssessmentStage, loadCandidateAssessments]);
+
+  const handleOpenAssessmentModal = (
+    candidate: { id: number; name: string; pipelineStepId?: number },
+    mode: "preview" | "grade",
+    assessmentId?: number,
+  ) => {
+    if (!candidate.pipelineStepId) {
+      toast.error("Pipeline step not found.");
+      return;
+    }
+
+    if (mode === "preview" && !stepAssessment) {
+      toast.error("No assessment configured for this pipeline step.");
+      return;
+    }
+
+    setAssessmentModalState({
+      open: true,
+      candidateApplicationId: candidate.id,
+      candidateName: candidate.name,
+      pipelineStepId: candidate.pipelineStepId,
+      candidateAssessmentId: assessmentId,
+      mode,
+      assessment: stepAssessment || undefined,
+    });
+
+    if (mode === "grade") {
+      const assessment = candidateAssessments.get(candidate.id);
+      if (assessment) {
+        setAssessmentGradeForm({
+          score: String(assessment.score ?? ""),
+          notes: assessment.notes ?? "",
+        });
+      }
+    }
+  };
+
+  const handleCloseAssessmentModal = () => {
+    setAssessmentModalState((prev) => ({ ...prev, open: false }));
+    setAssessmentGradeForm({ score: "", notes: "" });
+  };
+
+  const handleAssignAssessment = async () => {
+    if (!stepAssessment) {
+      toast.error("No assessment configured for this pipeline step.");
+      return;
+    }
+
+    try {
+      await defaultAxios.post("/api/candidate/assessments/", {
+        candidate_application_id: assessmentModalState.candidateApplicationId,
+        pipeline_step_id: assessmentModalState.pipelineStepId,
+        assessment: stepAssessment.id,
+      });
+
+      toast.success(`Assessment assigned to ${assessmentModalState.candidateName}.`);
+      handleCloseAssessmentModal();
+      await loadCandidateAssessments();
+    } catch (error) {
+      console.error("Failed to assign assessment:", error);
+      toast.error("Unable to assign assessment.");
+    }
+  };
+
+  const handleSubmitGrade = async () => {
+    if (!assessmentModalState.candidateAssessmentId || !assessmentGradeForm.score) {
+      toast.error("Please enter a score.");
+      return;
+    }
+
+    try {
+      await defaultAxios.patch(
+        `/api/candidate/assessments/${assessmentModalState.candidateAssessmentId}/`,
+        {
+          score: Number(assessmentGradeForm.score),
+          notes: assessmentGradeForm.notes,
+        },
+      );
+
+      toast.success(`Assessment graded for ${assessmentModalState.candidateName}.`);
+      handleCloseAssessmentModal();
+      await loadCandidateAssessments();
+    } catch (error) {
+      console.error("Failed to submit grade:", error);
+      toast.error("Unable to submit grade.");
+    }
+  };
+
+  const handleViewAssessment = (candidate: { id: number }) => {
+    if (!jobId) return;
+    navigate(`/job/${jobId}/exam-form/${candidate.id}`);
+  };
+
+  const getAssessmentStatusBadge = (status: string) => {
+    const statusConfig: Record<
+      string,
+      { label: string; className: string }
+    > = {
+      not_assigned: { label: "Not Assigned", className: "border-gray-300 text-gray-600" },
+      assigned: { label: "Assigned", className: "border-yellow-400 text-yellow-700" },
+      submitted: { label: "Submitted", className: "border-blue-400 text-blue-700" },
+      graded: { label: "Graded", className: "border-green-500 text-green-600" },
+    };
+
+    const config = statusConfig[status] || statusConfig.not_assigned;
+    return (
+      <Badge variant="outline" className={config.className}>
+        {config.label}
+      </Badge>
+    );
   };
   
 
@@ -1142,7 +1395,7 @@ export default function PipelineApplicants() {
     return map;
   }, [pipelineSteps, jobNonNegotiables]);
 
-  const interviewTableColumnCount = (isInterviewScheduleStage ? 6 : isPassFailStage ? 5 : 6) + (showNonNegotiableColumn ? 1 : 0) + (showResumeColumn ? 1 : 0);
+  const interviewTableColumnCount = (isInterviewScheduleStage ? 6 : isPassFailStage ? 5 : isAssessmentStage ? 6 : 6) + (showNonNegotiableColumn ? 1 : 0) + (showResumeColumn ? 1 : 0);
 
   return (
     <>
@@ -1170,22 +1423,35 @@ export default function PipelineApplicants() {
 
           <div className="rounded-md border bg-white p-4 space-y-3">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <Select
-                value={processTypes.length > 0 ? selectedType : undefined}
-                onValueChange={handleTypeChange}
-                disabled={processTypes.length === 0}
-              >
-                <SelectTrigger className="w-full sm:w-75">
-                  <SelectValue placeholder="Select stage type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {processTypes.map((processType) => (
-                    <SelectItem key={processType} value={processType}>
-                      {getProcessTypeLabel(processType)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center">
+                  <Select
+                    value={processTypes.length > 0 ? selectedType : undefined}
+                    onValueChange={handleTypeChange}
+                    disabled={processTypes.length === 0}
+                  >
+                    <SelectTrigger className="w-full sm:w-75">
+                      <SelectValue placeholder="Select stage type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {processTypes.map((processType) => (
+                        <SelectItem key={processType} value={processType}>
+                          {getProcessTypeLabel(processType)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                    onClick={handleOpenStatusPage}
+                    disabled={processTypes.length === 0 || !jobId}
+                  >
+                    <BarChart3 className="h-4 w-4" />
+                    View status page
+                  </Button>
+                </div>
 
               <div className="relative w-full sm:w-65">
                 <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-gray-400" />
@@ -1272,6 +1538,18 @@ export default function PipelineApplicants() {
                           </TableHead>
                           <TableHead className="border border-gray-200 py-2 px-3 w-20 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
                             Fail
+                          </TableHead>
+                        </>
+                      ) : isAssessmentStage ? (
+                        <>
+                          <TableHead className="border border-gray-200 py-2 px-3 w-24 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
+                            Assessment Status
+                          </TableHead>
+                          <TableHead className="border border-gray-200 py-2 px-3 w-24 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
+                            Score
+                          </TableHead>
+                          <TableHead className="border border-gray-200 py-2 px-3 w-28 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
+                            Actions
                           </TableHead>
                         </>
                       ) : (
@@ -1451,6 +1729,67 @@ export default function PipelineApplicants() {
                                 >
                                   Fail
                                 </Button>
+                              </TableCell>
+                            </>
+                          ) : isAssessmentStage ? (
+                            <>
+                              <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
+                                {getAssessmentStatusBadge(
+                                  candidateAssessments.get(candidate.id)?.status || "not_assigned"
+                                )}
+                              </TableCell>
+                              <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
+                                <span className="text-xs lg:text-sm font-medium">
+                                  {candidateAssessments.get(candidate.id)?.score !== undefined &&
+                                  candidateAssessments.get(candidate.id)?.score !== null
+                                    ? `${candidateAssessments.get(candidate.id)?.score}/100`
+                                    : "-"}
+                                </span>
+                              </TableCell>
+                              <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
+                                <div className="flex flex-col gap-2">
+                                  {candidateAssessments.get(candidate.id)?.status === "not_assigned" ? (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="w-full text-xs lg:text-sm px-2"
+                                      onClick={() =>
+                                        handleOpenAssessmentModal(candidate, "preview")
+                                      }
+                                    >
+                                      <Plus className="h-3 w-3 mr-1" />
+                                      Preview & Assign
+                                    </Button>
+                                  ) : (
+                                    <>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full text-xs lg:text-sm px-2 text-slate-700 border-slate-300 bg-white hover:bg-slate-900 hover:text-white"
+                                        onClick={() => handleViewAssessment(candidate)}
+                                      >
+                                        <FileText className="h-3 w-3 mr-1" />
+                                        View
+                                      </Button>
+                                      {candidateAssessments.get(candidate.id)?.status === "submitted" && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="w-full text-xs lg:text-sm px-2 text-blue-600 border-blue-500 bg-white hover:bg-blue-500 hover:text-white"
+                                          onClick={() =>
+                                            handleOpenAssessmentModal(
+                                              candidate,
+                                              "grade",
+                                              candidateAssessments.get(candidate.id)?.id,
+                                            )
+                                          }
+                                        >
+                                          Grade
+                                        </Button>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
                               </TableCell>
                             </>
                           ) : (
@@ -1835,6 +2174,102 @@ export default function PipelineApplicants() {
               onClick={() => setIsEmailPreviewOpen(false)}
             >
               Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={assessmentModalState.open} onOpenChange={handleCloseAssessmentModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {assessmentModalState.mode === "preview" ? "Assessment Preview" : "Grade Assessment"}
+            </DialogTitle>
+            <DialogDescription>
+              {assessmentModalState.mode === "preview"
+                ? `Review the assessment details before assigning to ${assessmentModalState.candidateName}.`
+                : `Enter the score and notes for ${assessmentModalState.candidateName}.`}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {assessmentModalState.mode === "preview" ? (
+              <>
+                <div className="space-y-2">
+                  <Label className="font-semibold">Assessment Name</Label>
+                  <p className="text-sm text-gray-700">
+                    {assessmentModalState.assessment?.name || "Unnamed Assessment"}
+                  </p>
+                </div>
+                {assessmentModalState.assessment?.file?.filename && (
+                  <div className="space-y-2">
+                    <Label className="font-semibold">Assessment File</Label>
+                    <p className="text-sm text-gray-700">
+                      {assessmentModalState.assessment.file.filename}
+                    </p>
+                  </div>
+                )}
+                <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                  <p className="text-sm text-blue-700">
+                    Click <strong>"Confirm & Assign"</strong> to assign this assessment to {assessmentModalState.candidateName}.
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="assessment-score">Score (0-100)</Label>
+                  <Input
+                    id="assessment-score"
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={assessmentGradeForm.score}
+                    onChange={(e) =>
+                      setAssessmentGradeForm((prev) => ({
+                        ...prev,
+                        score: e.target.value,
+                      }))
+                    }
+                    placeholder="Enter score..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="assessment-notes">Private Notes (Staff Only)</Label>
+                  <Textarea
+                    id="assessment-notes"
+                    value={assessmentGradeForm.notes}
+                    onChange={(e) =>
+                      setAssessmentGradeForm((prev) => ({
+                        ...prev,
+                        notes: e.target.value,
+                      }))
+                    }
+                    placeholder="Enter grading notes..."
+                    className="min-h-24"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCloseAssessmentModal}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={
+                assessmentModalState.mode === "preview"
+                  ? handleAssignAssessment
+                  : handleSubmitGrade
+              }
+            >
+              {assessmentModalState.mode === "preview" ? "Confirm & Assign" : "Submit Grade"}
             </Button>
           </DialogFooter>
         </DialogContent>

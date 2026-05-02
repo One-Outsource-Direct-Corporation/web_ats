@@ -223,9 +223,12 @@ export function extractPipelineStepsFromJobDetail(
 
 export async function getJobDetailResponse(
   jobId: number | string,
+  includeAllStatuses?: boolean,
 ): Promise<JobDetailResponseDto> {
+  const params = includeAllStatuses ? { include_all_statuses: true } : {};
   const response = await defaultAxios.get<JobDetailResponseDto>(
     `/api/job/${jobId}/`,
+    { params },
   );
   return response.data;
 }

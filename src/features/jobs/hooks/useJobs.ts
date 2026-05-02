@@ -11,10 +11,10 @@ export function useJobsQuery() {
   });
 }
 
-export function useJobDetailQuery(jobId?: string | number) {
+export function useJobDetailQuery(jobId?: string | number, includeAllStatuses?: boolean) {
   return useQuery({
-    queryKey: queryKeys.jobs.detail(jobId ?? "unknown"),
-    queryFn: () => getJobDetailResponse(jobId as string | number),
+    queryKey: queryKeys.jobs.detail(jobId ?? "unknown", includeAllStatuses),
+    queryFn: () => getJobDetailResponse(jobId as string | number, includeAllStatuses),
     enabled: jobId !== undefined && jobId !== null && jobId !== "",
   });
 }
