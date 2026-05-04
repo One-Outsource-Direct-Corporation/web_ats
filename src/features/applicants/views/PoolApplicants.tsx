@@ -15,7 +15,7 @@ const applicants = [
     email: "michael.taylor@email.com",
     avatar: "https://i.pravatar.cc/80?u=1",
     status: "Failed",
-    badge: "Warm",
+    badge: "Shortlisted",
     position: "Lead Developer",
     evaluation: "Failed",
     skills: ["Photoshop", "Illustrator", "Agile", "HTML", "CSS"],
@@ -37,7 +37,7 @@ const applicants = [
     email: "nathan.wood@email.com",
     avatar: "https://i.pravatar.cc/80?u=3",
     status: "Passed",
-    badge: "Warm",
+    badge: "Shortlisted",
     position: "Software Developer",
     evaluation: "Passed",
     skills: ["HTML", "CSS", "Java", "Illustrator"],
@@ -174,7 +174,7 @@ export default function PoolApplicants() {
                       {applicant.badge && (
                         <span
                           className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                            applicant.badge === "Warm"
+                            applicant.badge === "Shortlisted"
                               ? "bg-yellow-100 text-yellow-800"
                               : applicant.badge === "For Job Offer"
                               ? "bg-green-100 text-green-800"

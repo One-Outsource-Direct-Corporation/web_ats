@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { ArrowUp, ArrowLeft } from "lucide-react";
+import { ArrowUp, ArrowLeft, LogIn, UserPlus, Briefcase } from "lucide-react";
 import { Button } from "@/shared/components/ui/button.tsx";
 import { useNavigate } from "react-router-dom";
 import { useParams } from "react-router-dom";
@@ -7,11 +7,16 @@ import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import DOMPurify from "dompurify";
 import formatName from "@/shared/utils/formatName";
 import { useJobPublicDetail } from "../hooks/useJobPublicDetail";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
 export default function CareerDescription() {
   const navigate = useNavigate();
   const params = useParams();
   const { jobPublicDetail, loading, error } = useJobPublicDetail(params.jobId);
+  const { user, isAuth } = useAuth();
+
+  const isCandidate = isAuth && user?.role === "candidate";
+  const isLoggedInNonCandidate = isAuth && user?.role !== "candidate";
 
   useEffect(() => {
     document.title = jobPublicDetail?.job_title
@@ -71,24 +76,65 @@ export default function CareerDescription() {
             </div>
           )}
 
-          {/* Action Buttons */}
-          <div className="flex gap-4 ml-9 flex-wrap">
-            {/* Added flex-wrap for responsiveness */}
+          {/* Action Buttons - Auth Aware */}
+          <div className="flex gap-4 ml-9 flex-wrap items-center">
+            {isCandidate ? (
+              <Button
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
+                onClick={() => {
+                  if (params.jobId) {
+                    navigate(`/jobs/${params.jobId}/apply`);
+                  }
+                }}
+              >
+                <Briefcase className="h-4 w-4 mr-2" />
+                Apply Now
+              </Button>
+            ) : isLoggedInNonCandidate ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 max-w-md">
+                <p className="text-amber-800 text-sm">
+                  You are logged in as a <strong>{user?.role}</strong>. 
+                  Please use a candidate account to apply for this position.
+                </p>
+                <div className="flex gap-2 mt-3">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                    onClick={() => navigate("/candidate/register")}
+                  >
+                    <UserPlus className="h-4 w-4 mr-1" />
+                    Create Candidate Account
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
+                  onClick={() => {
+                    navigate(`/login`, { state: { from: `/jobs/${params.jobId}/apply`, role: "candidate" } });
+                  }}
+                >
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Login to Apply
+                </Button>
+                <Button
+                  variant="outline"
+                  className="px-6 py-2 text-blue-600 border-blue-600 hover:bg-blue-50"
+                  onClick={() => navigate("/candidate/register")}
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Create Account
+                </Button>
+              </>
+            )}
             <Button
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
-              onClick={() => {
-                if (params.jobId) {
-                  navigate(`/jobs/${params.jobId}/apply`);
-                }
-              }}
-            >
-              Apply Now
-            </Button>
-            <Button
-              className="px-6 py-2 text-blue-600 border-blue-600 border-1 hover:bg-blue-50 bg-transparent"
+              variant="ghost"
+              className="px-6 py-2 text-gray-600 hover:text-gray-900"
               onClick={() => navigate("/")}
             >
-              View Other Opening
+              View Other Openings
             </Button>
           </div>
         </div>

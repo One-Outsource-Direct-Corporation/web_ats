@@ -16,7 +16,6 @@ const PROCESS_TYPE_LABELS: Record<string, string> = {
   for_job_offer: "For Job Offer",
   pre_onboarding: "Pre-Onboarding",
   onboarding: "Onboarding",
-  warm: "Warm",
   failed: "Failed",
 };
 
@@ -39,7 +38,6 @@ const PROCESS_TYPE_ROUTE_SEGMENTS: Record<
     customFinalStage: true,
   },
   onboarding: { segment: "Onboarding", customFinalStage: true },
-  warm: { segment: "Warm", customFinalStage: true },
   failed: { segment: "Failed", customFinalStage: true },
 };
 
@@ -98,8 +96,8 @@ export function formatStageSlug(stageName: string): string {
  */
 export const CUSTOM_STAGE_ROUTES: Record<string, string> = {
   "For Offer and Finalization": "OfferAndFinalization",
+  "Pre-Onboarding": "PreOnboarding",
   Onboarding: "Onboarding",
-  Warm: "Warm",
   Failed: "Failed",
 };
 

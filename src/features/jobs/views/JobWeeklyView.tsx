@@ -108,7 +108,7 @@ export default function JobWeeklyView() {
       { id: "s3-11", name: "Sarah Johnson", time: "Nov 30", rating: 0 },
       { id: "s3-12", name: "Sarah Davis", time: "Nov 28", rating: 0 },
     ],
-    warm: [
+    preOnboarding: [
       { id: "s3-13", name: "Christian Edwards", time: "1h ago", rating: 0 },
       { id: "s3-14", name: "Clara Lopez", time: "1h ago", rating: 0 },
       { id: "s3-15", name: "John Clark", time: "4h ago", rating: 0 },
@@ -145,7 +145,7 @@ export default function JobWeeklyView() {
         { title: "For Job Offer", id: "job-offer" },
         { title: "Job Offer & Finalization", id: "job-offer-finalization" },
         { title: "Onboarding", id: "onboarding" },
-        { title: "Warm", id: "warm" },
+        { title: "Pre-Onboarding", id: "pre-onboarding" },
         { title: "Failed", id: "failed" },
       ],
       isMultiRow: true,

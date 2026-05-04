@@ -4,7 +4,6 @@ import type {
   CandidateApplicationSubmissionFiles,
   CandidateApplicationSubmissionPayload,
   CandidateApplicationSubmissionResponse,
-  CandidateApplicationTrackResponse,
   PublicApplyJobDetailResponse,
 } from "@/features/jobs/public/types/jobApply.types";
 import type { PublicJobDetailResponse } from "@/features/jobs/public/types/jobPublicDetail.types";
@@ -69,12 +68,4 @@ export const careersService = {
     return response.data;
   },
 
-  async trackCandidateApplication(
-    trackingCode: string,
-  ): Promise<CandidateApplicationTrackResponse> {
-    const response = await defaultAxios.post("/api/candidate/track/", {
-      tracking_code: trackingCode,
-    });
-    return response.data;
-  },
 };

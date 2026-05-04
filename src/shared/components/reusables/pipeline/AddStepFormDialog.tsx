@@ -26,6 +26,21 @@ import { Field, FieldGroup, FieldLabel } from "../../ui/field";
 import { Textarea } from "../../ui/textarea";
 import type { User } from "@/features/auth/types/auth.types";
 
+const MANDATORY_STAGE_04_TYPES = [
+  "for_job_offer",
+  "pre_onboarding",
+  "onboarding",
+];
+
+function isMandatoryStage04Step(
+  step: Omit<PipelineStep, "id" | "tempId">,
+): boolean {
+  return (
+    step.stage === 4 &&
+    MANDATORY_STAGE_04_TYPES.includes(step.process_type)
+  );
+}
+
 interface AddStepFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -88,10 +103,14 @@ export function AddStepFormDialog({
           <Field>
             <FieldLabel className="text-sm font-medium text-gray-700 mb-2 block">
               Process Type
+              {isMandatoryStage04Step(stepData) && (
+                <span className="text-xs text-gray-400 ml-2">(locked)</span>
+              )}
             </FieldLabel>
             <ProcessTypeSelect
               value={stepData.process_type}
               onValueChange={(value) => onStepDataChange("process_type", value)}
+              disabled={isMandatoryStage04Step(stepData)}
             />
           </Field>
 
@@ -123,21 +142,23 @@ export function AddStepFormDialog({
             />
           </Field>
 
-          {/* Assessment Section */}
-          <Field>
-            <FieldLabel className="text-sm font-medium text-gray-700 mb-2 block">
-              Assessment
-            </FieldLabel>
-            <AssessmentSection
-              assessments={stepData.assessments}
-              onChange={updateAssessment}
-              onAdd={addAssessment}
-              onDelete={deleteAssessment}
-              onReorder={(reorderedAssessments) =>
-                onStepDataChange("assessments", reorderedAssessments)
-              }
-            />
-          </Field>
+          {/* Assessment Section — hidden for mandatory Stage 04 steps */}
+          {!isMandatoryStage04Step(stepData) && (
+            <Field>
+              <FieldLabel className="text-sm font-medium text-gray-700 mb-2 block">
+                Assessment
+              </FieldLabel>
+              <AssessmentSection
+                assessments={stepData.assessments}
+                onChange={updateAssessment}
+                onAdd={addAssessment}
+                onDelete={deleteAssessment}
+                onReorder={(reorderedAssessments) =>
+                  onStepDataChange("assessments", reorderedAssessments)
+                }
+              />
+            </Field>
+          )}
 
           <HumanResourcesMember
             interviewer={stepData.interviewer}

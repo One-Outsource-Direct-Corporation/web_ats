@@ -2,29 +2,22 @@ import { Button } from "@/shared/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 interface ApplicationCompleteModalProps {
-  onTrackApplication: () => void;
-  trackingCode: string;
+  onViewDashboard: () => void;
 }
 
 export const ApplicationCompleteModal: React.FC<
   ApplicationCompleteModalProps
-> = ({ onTrackApplication, trackingCode }) => {
+> = ({ onViewDashboard }) => {
   const navigate = useNavigate();
   return (
     <div className="fixed inset-0 bg-gray-900/65 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 text-center max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-bold text-gray-900 mb-4">
-          Application Complete!
+          Application Submitted!
         </h2>
-        <p className="text-gray-600 text-sm leading-relaxed mb-4">
-          Congratulations! Your application has been submitted. Please save the
-          tracking code below and use it in the Track Application section to
-          monitor your application status.
+        <p className="text-gray-600 text-sm leading-relaxed mb-6">
+          Congratulations! Your application has been submitted successfully. You can view and track the status of all your applications from your candidate dashboard.
         </p>
-        <div className="bg-blue-50 p-3 rounded-lg mb-6">
-          <p className="text-sm text-gray-600 mb-1">Your tracking code:</p>
-          <p className="text-lg font-bold text-blue-600">{trackingCode}</p>
-        </div>
         <div className="flex gap-3">
           <Button
             onClick={() => navigate("/", { replace: true })}
@@ -33,10 +26,10 @@ export const ApplicationCompleteModal: React.FC<
             Back to Home
           </Button>
           <Button
-            onClick={onTrackApplication}
+            onClick={onViewDashboard}
             className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
           >
-            Track Application
+            View Dashboard
           </Button>
         </div>
       </div>

@@ -24,6 +24,7 @@ import {
 } from "@/shared/components/ui/table.tsx";
 import { Badge } from "@/shared/components/ui/badge.tsx";
 import { Calendar } from "@/shared/components/ui/calendar.tsx";
+import { Textarea } from "@/shared/components/ui/textarea.tsx";
 import { ArrowLeft, Search, MoreHorizontal, X } from "lucide-react";
 import { Navbar } from "@/shared/components/reusables/Navbar.tsx";
 import { Label } from "@/shared/components/ui/label.tsx";
@@ -1022,12 +1023,57 @@ function JobOfferFormModal({
             </div>
           </div>
 
+          {/* Email Configuration */}
+          <div className="mt-6 pt-6 border-t">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Email Configuration
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Email Template
+                </Label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select email template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="default">Default Offer Template</SelectItem>
+                    <SelectItem value="custom">Custom Template</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Subject
+                </Label>
+                <Input placeholder="Enter email subject" />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Body
+                </Label>
+                <Textarea
+                  placeholder="Enter email body"
+                  style={{ minHeight: 120 }}
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Action Buttons */}
           <div className="flex justify-end gap-3 mt-8">
             <Button
               variant="outline"
-              onClick={onClose}
+              onClick={() => console.log("Preview")}
               className="bg-white text-blue-600 border-blue-600 hover:bg-blue-50"
+            >
+              Preview
+            </Button>
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
             >
               Cancel
             </Button>
@@ -1976,16 +2022,6 @@ export default function JobOfferManagement() {
                                 }
                               >
                                 Accepted
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  handleRejectOffer(applicant.name)
-                                }
-                                className="lg: h-10 bg-white text-red-700 border border-red-500 hover:bg-red-500 hover:text-white rounded-lg px-3 py-1 text-xs"
-                              >
-                                Rejected
                               </Button>
                               <Button
                                 variant="outline"

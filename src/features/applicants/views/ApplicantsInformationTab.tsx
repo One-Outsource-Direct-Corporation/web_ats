@@ -68,7 +68,7 @@ const applicantsData = {
     phone: "+1 (555) 345-6789",
     address: "789 Pine St, Seattle, WA",
     avatar: "https://i.pravatar.cc/64?img=3",
-    status: "Warm",
+    status: "Shortlisted",
   },
   "jessica-gonzalez": {
     name: "Jessica Gonzalez",

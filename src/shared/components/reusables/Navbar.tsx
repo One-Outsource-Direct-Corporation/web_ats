@@ -205,6 +205,17 @@ export function Navbar() {
                     <LogOut className="h-4 w-4" />
                     <span>Log Out</span>
                   </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-2"
+                    onClick={() => {
+                      navigate("/profile");
+                      setUserMenuOpen(false);
+                    }}
+                  >
+                    <Users className="h-4 w-4" />
+                    <span>My Profile</span>
+                  </Button>
                 </div>
               </PopoverContent>
             </Popover>

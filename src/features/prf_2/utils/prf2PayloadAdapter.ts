@@ -175,6 +175,30 @@ export function adaptLegacyPrfToPrf2FormData(
   const immediateSupervisorDisplay =
     getImmediateSupervisorDisplay(immediateSupervisor);
 
+  // Handle business_unit as either number or object from backend
+  const sourceBusinessUnit = (source as Record<string, unknown>).business_unit;
+  const businessUnitId =
+    typeof sourceBusinessUnit === "number"
+      ? sourceBusinessUnit
+      : isRecord(sourceBusinessUnit) && typeof sourceBusinessUnit.id === "number"
+        ? sourceBusinessUnit.id
+        : null;
+
+  // Handle department as either number or object from backend
+  const sourceDepartment = sourceJobPosting.department;
+  const departmentId =
+    typeof sourceDepartment === "number"
+      ? sourceDepartment
+      : isRecord(sourceDepartment) && typeof sourceDepartment.id === "number"
+        ? sourceDepartment.id
+        : department?.id ?? "";
+  const departmentName =
+    typeof sourceJobPosting.department_display === "string"
+      ? sourceJobPosting.department_display
+      : isRecord(sourceDepartment) && typeof sourceDepartment.name === "string"
+        ? sourceDepartment.name
+        : department?.name ?? null;
+
   const adapted: PRFFormData = {
     ...base,
     job_posting: {
@@ -192,14 +216,8 @@ export function adaptLegacyPrfToPrf2FormData(
       experience_level: toStringOrEmpty(sourceJobPosting.experience_level) as
         | PRFFormData["job_posting"]["experience_level"]
         | "",
-      department:
-        typeof sourceJobPosting.department === "number"
-          ? sourceJobPosting.department
-          : (department?.id ?? ""),
-      department_display:
-        typeof sourceJobPosting.department_display === "string"
-          ? sourceJobPosting.department_display
-          : (department?.name ?? null),
+      department: departmentId,
+      department_display: departmentName,
       employment_type: toStringOrEmpty(sourceJobPosting.employment_type) as
         | PRFFormData["job_posting"]["employment_type"]
         | "",
@@ -225,8 +243,7 @@ export function adaptLegacyPrfToPrf2FormData(
     },
     prf_input: {
       ...base.prf_input,
-      business_unit: (toNumberOrNull(source.business_unit) ??
-        "") as PRFFormData["prf_input"]["business_unit"],
+      business_unit: (businessUnitId ?? "") as PRFFormData["prf_input"]["business_unit"],
       immediate_supervisor:
         typeof source.immediate_supervisor === "number"
           ? source.immediate_supervisor
@@ -240,9 +257,35 @@ export function adaptLegacyPrfToPrf2FormData(
     application_form_input: isRecord(source.application_form)
       ? (source.application_form as PRFFormData["application_form_input"])
       : base.application_form_input,
-    pipeline_input: Array.isArray(source.pipeline)
-      ? (source.pipeline as PRFFormData["pipeline_input"])
-      : [],
+    pipeline_input: (() => {
+      const steps = Array.isArray(source.pipeline)
+        ? (source.pipeline as PRFFormData["pipeline_input"])
+        : [];
+      // Enforce mandatory Stage 04 steps
+      const mandatoryTypes = ["for_job_offer", "pre_onboarding", "onboarding"];
+      const existingTypes = new Set(steps.filter((s) => s.stage === 4).map((s) => s.process_type));
+      const missing = mandatoryTypes.filter((t) => !existingTypes.has(t));
+      missing.forEach((process_type, index) => {
+        const order = steps.filter((s) => s.stage === 4).length + index + 1;
+        steps.push({
+          tempId: `default-${process_type}-${Date.now()}-${index}`,
+          process_type,
+          process_title: process_type === "for_job_offer" ? "For Job Offer" : process_type === "pre_onboarding" ? "Pre-Onboarding" : "Onboarding",
+          description: "",
+          order,
+          stage: 4,
+          interviewer: null,
+          passedEmailTemplateId: null,
+          failedEmailTemplateId: null,
+          notification_templates: [
+            { action_type: "send_email", trigger_outcome: "passed", subject: "", body: "" },
+            { action_type: "send_email", trigger_outcome: "failed", subject: "", body: "" },
+          ],
+          assessments: [],
+        } as any);
+      });
+      return steps;
+    })(),
   };
 
   return adapted;

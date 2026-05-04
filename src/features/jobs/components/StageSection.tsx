@@ -18,7 +18,7 @@ export function StageSection({
     // Special layout for Stage 3 with 5 columns
     const firstRow = columns.slice(0, 3);
     const secondRow = [
-      { title: "Warm", id: "warm" },
+      { title: "Pre-Onboarding", id: "pre-onboarding" },
       { title: "Failed", id: "failed" },
     ];
 

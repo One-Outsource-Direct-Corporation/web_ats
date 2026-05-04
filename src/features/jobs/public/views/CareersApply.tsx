@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import { useJobDetail } from "../hooks/useJobDetail";
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import { Button } from "@/shared/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, LogIn, UserPlus } from "lucide-react";
 import {
   DocumentUploadModal,
   type UploadedDocumentsPayload,
@@ -20,10 +20,12 @@ import Step03 from "../components/steps/Step03";
 import Step04 from "../components/steps/Step04";
 import type { WorkExperienceEntry } from "../types/application_form.types";
 import { useCandidateApplicationSubmission } from "../hooks/useCandidateApplicationSubmission";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
 export default function CareersApply() {
   const params = useParams();
   const navigate = useNavigate();
+  const { user, isAuth } = useAuth();
 
   const { jobDetail, loading, error } = useJobDetail(params.jobId);
 
@@ -31,7 +33,6 @@ export default function CareersApply() {
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [coverLetterFile, setCoverLetterFile] = useState<File | null>(null);
-  const [trackingCode, setTrackingCode] = useState("");
 
   const { submitCandidateApplication, isSubmitting } =
     useCandidateApplicationSubmission();
@@ -112,8 +113,8 @@ export default function CareersApply() {
     navigate("/");
   };
 
-  const handleTrackApplication = () => {
-    navigate("/applicationtracker");
+  const handleViewDashboard = () => {
+    navigate("/candidate/dashboard");
   };
 
   const handleLogoClick = () => {
@@ -197,7 +198,6 @@ export default function CareersApply() {
         },
       });
 
-      setTrackingCode(response.tracking_code);
       setShowCompletionModal(true);
     } catch (submissionError: unknown) {
       const message =
@@ -249,6 +249,105 @@ export default function CareersApply() {
             Back to Home
           </button>
         </div>
+      </div>
+    );
+  }
+
+  // Auth gate: only candidates can apply
+  const isCandidate = isAuth && user?.role === "candidate";
+  const isLoggedInNonCandidate = isAuth && user?.role !== "candidate";
+
+  if (!isCandidate) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <header className="bg-white shadow-sm p-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex justify-center mb-6 cursor-pointer">
+              <img
+                src="/OODC%20logo3.png"
+                alt="OODC Logo"
+                className="h-16"
+                onClick={handleLogoClick}
+              />
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-1 flex items-center justify-center p-6">
+          <div className="bg-white rounded-lg shadow-sm p-8 max-w-md w-full text-center">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <LogIn className="h-8 w-8 text-blue-600" />
+            </div>
+
+            {isLoggedInNonCandidate ? (
+              <>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  Candidate Account Required
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  You are logged in as a <strong>{user?.role}</strong>. 
+                  To apply for this position, you need a candidate account.
+                </p>
+                <div className="flex flex-col gap-3">
+                  <Button
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={() => navigate("/candidate/register")}
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Create Candidate Account
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => navigate(`/jobs/${params.jobId}`)}
+                  >
+                    Back to Job Description
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  Login Required
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  Please log in or create a candidate account to apply for this position.
+                </p>
+                <div className="flex flex-col gap-3">
+                  <Button
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={() =>
+                      navigate("/login", {
+                        state: {
+                          from: `/jobs/${params.jobId}/apply`,
+                          role: "candidate",
+                        },
+                      })
+                    }
+                  >
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Login to Apply
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full text-blue-600 border-blue-600 hover:bg-blue-50"
+                    onClick={() => navigate("/candidate/register")}
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Create Account
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full text-gray-600"
+                    onClick={() => navigate(`/jobs/${params.jobId}`)}
+                  >
+                    Back to Job Description
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </main>
       </div>
     );
   }
@@ -330,8 +429,7 @@ export default function CareersApply() {
       {/* Application Complete Modal */}
       {showCompletionModal && (
         <ApplicationCompleteModal
-          onTrackApplication={handleTrackApplication}
-          trackingCode={trackingCode}
+          onViewDashboard={handleViewDashboard}
         />
       )}
     </div>

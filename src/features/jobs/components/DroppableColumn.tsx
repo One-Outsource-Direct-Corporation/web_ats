@@ -65,8 +65,8 @@ export function DroppableColumn({
       "Final Interview": "finalinterview",
       "For Job Offer": "forjoboffer",
       "Job Offer & Finalization": "OfferAndFinalization",
+      "Pre-Onboarding": "PreOnboarding",
       Onboarding: "Onboarding",
-      Warm: "Warm",
       Failed: "Failed",
     };
 
@@ -74,8 +74,8 @@ export function DroppableColumn({
     if (routeSegment) {
       const isCustomFinalStage = [
         "OfferAndFinalization",
+        "PreOnboarding",
         "Onboarding",
-        "Warm",
         "Failed",
       ].includes(routeSegment);
 

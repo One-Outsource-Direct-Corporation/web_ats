@@ -12,6 +12,9 @@ export type UserRole =
   | "admin"
   | "hr"
   | "recruiter"
+  | "candidate"
+  | "supervisor"
+  | "human_resources"
   | string;
 
 export const MANAGER_DASHBOARD_POSITIONS_ROLES: UserRole[] = ["manager"];
@@ -32,6 +35,8 @@ export const APPLICANTS_VISIBLE_ROLES: UserRole[] = [
   "supervisor",
 ];
 
+export const CANDIDATE_ROLE: UserRole = "candidate";
+
 export const isManagerDashboardOnlyRole = (
   role: string | undefined
 ): boolean => {
@@ -48,9 +53,21 @@ export const isRestrictedManager = (role: string | undefined): boolean => {
 };
 
 /**
+ * Check if a user role is a candidate
+ */
+export const isCandidate = (role: string | undefined): boolean => {
+  if (!role) return false;
+  return role === CANDIDATE_ROLE;
+};
+
+/**
  * Get the default landing page for a user based on their role
  */
 export const getDefaultLandingPage = (role: string | undefined): string => {
+  if (isCandidate(role)) {
+    return "/candidate/dashboard";
+  }
+
   if (isManagerDashboardOnlyRole(role)) {
     return "/dashboard";
   }
@@ -70,6 +87,19 @@ export const canAccessRoute = (
   role: string | undefined
 ): boolean => {
   if (!role) return false;
+
+  // Candidates can only access candidate routes and public pages
+  if (isCandidate(role)) {
+    return (
+      route === "/" ||
+      route.startsWith("/candidate") ||
+      route.startsWith("/jobs") ||
+      route.startsWith("/careers") ||
+      route === "/track" ||
+      route === "/login" ||
+      route === "/logout"
+    );
+  }
 
   // Manager can only access dashboard and positions.
   if (isManagerDashboardOnlyRole(role)) {
@@ -106,6 +136,10 @@ export const getAccessibleRoutes = (role: string | undefined) => {
     { path: "/requests", label: "Requests" },
     { path: "/library", label: "Library" },
   ];
+
+  if (isCandidate(role)) {
+    return []; // Candidates don't see HR nav routes
+  }
 
   if (isManagerDashboardOnlyRole(role)) {
     return allRoutes.filter(

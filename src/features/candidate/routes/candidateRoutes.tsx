@@ -1,12 +1,17 @@
 import CandidateDashboard from "@/features/candidate/views/CandidateDashboard";
 import CandidateRegister from "@/features/candidate/views/CandidateRegister";
 import CandidateApplicationDetail from "@/features/candidate/views/CandidateApplicationDetail";
+import CandidateOfferPage from "@/features/candidate/views/CandidateOfferPage";
 import ProtectedRoutes from "@/features/auth/components/ProtectedRoutes";
 
 export const candidateRoutes = [
   {
     path: "candidate/register",
     element: <CandidateRegister />,
+  },
+  {
+    path: "offer/:trackingCode",
+    element: <CandidateOfferPage />,
   },
   {
     path: "candidate/dashboard",

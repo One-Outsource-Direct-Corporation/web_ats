@@ -1,12 +1,12 @@
 import { Button } from "@/shared/components/ui/button";
 import { Edit, Trash2 } from "lucide-react";
-import formatName from "@/shared/utils/formatName";
+
 import type {
   PipelineStep,
   PipelineStepInDb,
   PipelineStepLocal,
 } from "@/shared/types/pipeline.types";
-import { ProcessTypeIcon } from "./ProcessTypeIcon";
+import { ProcessTypeIcon, getProcessTypeLabel } from "./ProcessTypeIcon";
 
 interface StepCardProps {
   step: PipelineStep;
@@ -69,7 +69,7 @@ export function StepCard({
             className="text-blue-600"
           />
           <span className="text-sm font-medium">
-            {formatName(step.process_type)}
+            {getProcessTypeLabel(step.process_type)}
           </span>
         </div>
         <div className="space-x-2">

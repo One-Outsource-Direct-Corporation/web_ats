@@ -228,8 +228,8 @@ export default function Failed() {
   const handleStageChange = (value: string) => {
     const customFinalStages = [
       "OfferAndFinalization",
+      "PreOnboarding",
       "Onboarding",
-      "Warm",
       "Failed",
     ];
 
@@ -321,11 +321,11 @@ export default function Failed() {
                 <SelectItem value="OfferAndFinalization">
                   <span className="font-bold">For Offer And Finalization</span>
                 </SelectItem>
+                <SelectItem value="PreOnboarding">
+                  <span className="font-bold">Pre-Onboarding</span>
+                </SelectItem>
                 <SelectItem value="Onboarding">
                   <span className="font-bold">Onboarding</span>
-                </SelectItem>
-                <SelectItem value="Warm">
-                  <span className="font-bold">Warm</span>
                 </SelectItem>
                 <SelectItem value="Failed">
                   <span className="font-bold">Failed</span>
