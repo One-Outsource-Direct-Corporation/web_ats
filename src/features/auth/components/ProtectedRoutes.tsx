@@ -7,11 +7,15 @@ import {
   getDefaultLandingPage,
 } from "../utils/rolePermissions";
 
+interface ProtectedRoutesProps {
+  children: JSX.Element;
+  allowedRoles?: string[];
+}
+
 export default function ProtectedRoutes({
   children,
-}: {
-  children: JSX.Element;
-}) {
+  allowedRoles,
+}: ProtectedRoutesProps) {
   const { user } = useAuth();
   const location = useLocation();
   const isNonProduction = import.meta.env.VITE_REACT_ENV !== "production";
@@ -22,6 +26,12 @@ export default function ProtectedRoutes({
     }
 
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Role-based access control
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    const defaultPage = getDefaultLandingPage(user.role);
+    return <Navigate to={defaultPage} replace />;
   }
 
   // Check if user has access to the current route

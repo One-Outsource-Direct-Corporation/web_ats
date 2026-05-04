@@ -1,12 +1,14 @@
 import axios from "axios";
+import { getTenantSlug } from "@/shared/utils/tenant";
 
 const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
-export default axios.create({
+const defaultAxios = axios.create({
   baseURL: BASE_URL,
+  withCredentials: true,
 });
 
-export const axiosPrivate = axios.create({
+const axiosPrivate = axios.create({
   baseURL: BASE_URL,
   withCredentials: true,
   headers: {
@@ -14,7 +16,22 @@ export const axiosPrivate = axios.create({
   },
 });
 
-export const defaultAxios = axios.create({
-  baseURL: BASE_URL,
-  withCredentials: true,
-});
+// Attach X-Tenant-Slug header to all requests
+function attachTenantHeader(instance: typeof axios) {
+  instance.interceptors.request.use(
+    (config) => {
+      const slug = getTenantSlug();
+      if (slug) {
+        config.headers["X-Tenant-Slug"] = slug;
+      }
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
+}
+
+attachTenantHeader(defaultAxios);
+attachTenantHeader(axiosPrivate);
+
+export { defaultAxios, axiosPrivate };
+export default defaultAxios;

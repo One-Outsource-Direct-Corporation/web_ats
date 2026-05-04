@@ -105,7 +105,7 @@ export default function PRFSummary({ formData }: PRFSummaryProps) {
             <div className="flex justify-between items-center py-2 border-b border-gray-100">
               <span className="text-gray-600 font-medium">Business Unit</span>
               <span className="text-gray-900">
-                {formData.business_unit?.toUpperCase()}
+                {formData.business_unit?.name.toUpperCase()}
               </span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-100">

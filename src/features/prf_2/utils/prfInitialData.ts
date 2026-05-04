@@ -30,7 +30,7 @@ export function createInitialPRF2Data(user?: User | null): PRFFormData {
       type: JobPostingType.PRF,
     },
     prf_input: {
-      business_unit: user?.business_unit || "",
+      business_unit: user?.business_unit?.id || "",
       immediate_supervisor: "",
       immediate_supervisor_display: null,
       category: "",

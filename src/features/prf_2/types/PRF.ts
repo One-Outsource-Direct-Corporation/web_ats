@@ -1,4 +1,3 @@
-import type { BusinessUnit } from "@/features/prf_2/types/enums/BusinessUnit.ts";
 import type { CategoryChoices } from "@/features/prf_2/types/enums/CategoryChoices.ts";
 import type { User } from "@/features/auth/types/auth.types";
 import type {
@@ -14,7 +13,7 @@ export type ImmediateSupervisorObject = Pick<
 export type DepartmentObject = DepartmentEntity | DepartmentEntitySimple;
 
 export interface PRFCreatePayload {
-  business_unit: BusinessUnit | "";
+  business_unit: number | "";
   immediate_supervisor: number | "";
   immediate_supervisor_display: string | null; // For display purposes only, not sent to backend
   category: CategoryChoices | "";

@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import { departmentService } from "@/features/department/services/department.service";
 import type { CreateDepartmentPayload } from "@/features/department/types/department.types";
+import { useBusinessUnitsQuery } from "@/features/prf_2/hooks/useBusinessUnits";
 import { Button } from "@/shared/components/ui/button";
 import {
   Dialog,
@@ -22,8 +23,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@radix-ui/react-dialog";
-import {RadioGroupItem} from "@/shared/components/ui/radio-group.tsx";
-import {RadioGroup} from "@radix-ui/react-radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select.tsx";
 
 export default function DepartmentAddModal({
   onDepartmentAdded,
@@ -41,6 +47,7 @@ export default function DepartmentAddModal({
   );
 
   const axiosPrivate = useAxiosPrivate();
+  const { businessUnits } = useBusinessUnitsQuery();
 
   const resetForm = () => {
     setDepartmentForm({ name: "", business_unit: null });
@@ -119,33 +126,26 @@ export default function DepartmentAddModal({
           </Field>
           <Field>
             <FieldLabel>Business Unit</FieldLabel>
-            <RadioGroup
-                value={departmentForm.business_unit ?? ""}
-                onValueChange={(value: string) =>
-                    setDepartmentForm((prev) => ({
-                      ...prev,
-                      business_unit: value as "oodc" | "oors" | null,
-                    }))
-                }
-                className="space-y-2"
+            <Select
+              value={departmentForm.business_unit?.toString() ?? ""}
+              onValueChange={(value: string) =>
+                setDepartmentForm((prev) => ({
+                  ...prev,
+                  business_unit: value ? Number(value) : null,
+                }))
+              }
             >
-              <div className="flex items-center gap-3">
-                <RadioGroupItem
-                    value="oodc"
-                    id="oodc"
-                    className="text-blue-500 border-blue-500 [&_svg]:fill-blue-500"
-                />
-                <FieldLabel htmlFor="oodc">OODC</FieldLabel>
-              </div>
-              <div className="flex items-center gap-3">
-                <RadioGroupItem
-                    value="oors"
-                    id="oors"
-                    className="text-blue-500 border-blue-500 [&_svg]:fill-blue-500"
-                />
-                <FieldLabel htmlFor="oors">OORS</FieldLabel>
-              </div>
-            </RadioGroup>
+              <SelectTrigger>
+                <SelectValue placeholder="Select business unit" />
+              </SelectTrigger>
+              <SelectContent>
+                {businessUnits.map((bu) => (
+                  <SelectItem key={bu.id} value={bu.id.toString()}>
+                    {bu.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {errors.business_unit && <FieldError>{errors.business_unit}</FieldError>}
           </Field>
         </FieldGroup>

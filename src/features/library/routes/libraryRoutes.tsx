@@ -1,6 +1,7 @@
 import Library from "../views/Library";
 import IEFTemplateLibrary from "../views/IEFTemplateLibrary";
 import IEFTemplateEditor from "../views/IEFTemplateEditor";
+import BusinessUnitLibrary from "../views/BusinessUnitLibrary";
 
 export const libraryRoutes = [
   {
@@ -9,6 +10,10 @@ export const libraryRoutes = [
       {
         index: true,
         element: <Library />,
+      },
+      {
+        path: "business-units",
+        element: <BusinessUnitLibrary />,
       },
       {
         path: "ief-templates",

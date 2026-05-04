@@ -1,14 +1,21 @@
-// export interface User {
-//   id: string;
-//   email: string;
-//   name: string;
-//   role: "admin" | "applicant" | "hr";
-//   avatar?: string;
-// }
-
 import type { ClientEntity } from "@/features/client";
 import type { DepartmentEntity } from "@/features/department";
-import type { BusinessUnit } from "@/features/prf_2/types/enums/BusinessUnit";
+
+export interface Company {
+  id: number;
+  name: string;
+  slug: string;
+  logo?: string;
+  address?: string;
+  contact?: string;
+}
+
+export interface BusinessUnit {
+  id: number;
+  name: string;
+  slug: string;
+  company?: Company;
+}
 
 export interface User {
   id: number;
@@ -16,12 +23,12 @@ export interface User {
   first_name: string;
   middle_name: string | null;
   last_name: string;
-  business_unit: BusinessUnit;
+  company: Company | null;
+  business_unit: BusinessUnit | null;
   department: DepartmentEntity;
   client: ClientEntity | null;
   role: string;
   is_staff: boolean;
-  // access: string;
 }
 
 export interface AuthState {
@@ -31,6 +38,13 @@ export interface AuthState {
 export interface LoginCredentials {
   email: string;
   password: string;
+}
+
+export interface RegisterCredentials {
+  email: string;
+  password: string;
+  first_name: string;
+  last_name: string;
 }
 
 export interface AuthResponse {

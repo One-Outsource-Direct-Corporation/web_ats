@@ -16,7 +16,7 @@ const PROCESS_TYPES = [
   { value: "assessments", label: "Assessments" },
   { value: "final_interview", label: "Final Interview" },
   { value: "for_job_offer", label: "For Job Offer" },
-  { value: "for_offer_and_finalization", label: "For Offer and Finalization" },
+  { value: "pre_onboarding", label: "Pre-Onboarding" },
   { value: "onboarding", label: "Onboarding" },
 ];
 

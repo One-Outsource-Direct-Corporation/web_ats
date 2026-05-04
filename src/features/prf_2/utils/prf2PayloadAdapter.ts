@@ -34,7 +34,7 @@ interface PrfSubmitPayload {
     status: string | null;
     type: "prf";
   };
-  business_unit: string | null;
+  business_unit: number | null;
   immediate_supervisor: number | null;
   category: string | null;
   hardware_required: Record<string, boolean>;
@@ -225,7 +225,7 @@ export function adaptLegacyPrfToPrf2FormData(
     },
     prf_input: {
       ...base.prf_input,
-      business_unit: (toNullableString(source.business_unit) ??
+      business_unit: (toNumberOrNull(source.business_unit) ??
         "") as PRFFormData["prf_input"]["business_unit"],
       immediate_supervisor:
         typeof source.immediate_supervisor === "number"
@@ -292,7 +292,7 @@ export function buildPrfSubmitPayload(formData: PRFFormData): PrfSubmitPayload {
         JobPostingStatus.PENDING,
       type: "prf",
     },
-    business_unit: toNullableString(formData.prf_input.business_unit),
+    business_unit: toNumberOrNull(formData.prf_input.business_unit),
     immediate_supervisor: immediateSupervisorId,
     category: toNullableString(formData.prf_input.category),
     hardware_required: normalizeBooleanRecord(

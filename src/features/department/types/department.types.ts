@@ -1,4 +1,4 @@
-import type {BusinessUnit} from "@/features/prf_2/types/enums/BusinessUnit.ts";
+import type { BusinessUnit } from "@/features/auth/types/auth.types";
 
 export interface DepartmentBase {
   name: string;
@@ -49,7 +49,7 @@ export interface DepartmentListQueryParams {
   page?: number;
   search?: string;
   nested?: boolean;
-  business_unit?: BusinessUnit;
+  business_unit?: string;
 }
 
 export type CreateDepartmentPayload = DepartmentBase;

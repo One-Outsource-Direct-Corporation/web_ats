@@ -1,4 +1,5 @@
 import type { PRFFormData } from "@/features/prf_2/types/PRFFormData.ts";
+import { useBusinessUnitsQuery } from "@/features/prf_2/hooks/useBusinessUnits";
 import { useState } from "react";
 import formatName from "@/shared/utils/formatName.ts";
 import { formatDate, formatTime } from "@/shared/utils/formatDate.ts";
@@ -14,6 +15,10 @@ export default function PRFSidebarPreview({
   formData,
 }: PRFSidebarPreview) {
   const [showMore, setShowMore] = useState<boolean>(false);
+  const { businessUnits } = useBusinessUnitsQuery();
+  const buName = businessUnits.find(
+    (bu) => bu.id === formData.prf_input.business_unit,
+  )?.name;
 
   const selectedHardware = Object.entries(formData.prf_input.hardware_required)
     .filter(([, selected]) => selected)
@@ -56,7 +61,7 @@ export default function PRFSidebarPreview({
         </h2>
         <p>
           <strong>Business Unit:</strong>{" "}
-          {formData.prf_input.business_unit?.toUpperCase() || "Not specified"}
+          {buName?.toUpperCase() || "Not specified"}
         </p>
         <p>
           <strong>Department Name:</strong>{" "}

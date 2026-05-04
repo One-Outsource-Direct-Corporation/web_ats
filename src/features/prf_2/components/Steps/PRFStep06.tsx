@@ -1,4 +1,5 @@
 import type { PRFFormData } from "@/features/prf_2/types/PRFFormData";
+import { useBusinessUnitsQuery } from "@/features/prf_2/hooks/useBusinessUnits";
 import formatMoney from "@/shared/utils/formatMoney";
 import formatName from "@/shared/utils/formatName";
 import { formatDate, formatTime } from "@/shared/utils/formatDate";
@@ -10,6 +11,10 @@ interface PRFStep06Props {
 }
 
 export default function PRFStep06({ formData }: PRFStep06Props) {
+  const { businessUnits } = useBusinessUnitsQuery();
+  const buName = businessUnits.find(
+    (bu) => bu.id === formData.prf_input.business_unit,
+  )?.name;
   const selectedHardware = Object.entries(formData.prf_input.hardware_required)
     .filter(([, selected]) => selected)
     .map(([hardware]) => formatName(hardware));
@@ -87,7 +92,7 @@ export default function PRFStep06({ formData }: PRFStep06Props) {
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-gray-600 font-medium">Business Unit</span>
                 <span className="text-gray-900">
-                {formData.prf_input.business_unit?.toUpperCase()}
+                {buName?.toUpperCase() || "Not specified"}
               </span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-gray-100">

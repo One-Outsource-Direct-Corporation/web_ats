@@ -826,6 +826,26 @@ export default function PipelineApplicants() {
     }, GRACE_PERIOD_MS);
   };
 
+  const handleCandidateShortlist = async (
+    candidateApplicationId: number,
+    pipelineStepId: number | undefined,
+  ) => {
+    if (!pipelineStepId || Number.isNaN(pipelineStepId)) {
+      return;
+    }
+
+    try {
+      await defaultAxios.post("/api/candidate/pipeline/shortlist/", {
+        candidate_application_id: candidateApplicationId,
+        pipeline_step_id: pipelineStepId,
+      });
+      toast.success("Candidate shortlisted successfully.");
+      void refetch();
+    } catch {
+      toast.error("Failed to shortlist candidate.");
+    }
+  };
+
   const handleOpenScheduleModal = (
     candidate: {
       id: number;
@@ -1491,6 +1511,12 @@ export default function PipelineApplicants() {
                       candidate.name,
                       candidate.pipelineStepId,
                       "pass",
+                    )
+                  }
+                  onShortlist={(candidate) =>
+                    void handleCandidateShortlist(
+                      Number(candidate.id),
+                      candidate.pipelineStepId,
                     )
                   }
                   onFail={(candidate) =>

@@ -265,6 +265,15 @@ export default function Library() {
       onClick: () => setPath((prev) => [...prev, "departments"]),
     },
     {
+      label: "Business Units",
+      folderColor: "text-gray-800 group-hover:text-teal-600",
+      icon: (
+        <Building2 className="text-gray-800 group-hover:text-teal-600" />
+      ),
+      textColor: "text-gray-800 group-hover:text-teal-600",
+      onClick: () => navigate("/library/business-units"),
+    },
+    {
       label: "Application Form Questionnaire",
       folderColor: "text-gray-800 group-hover:text-amber-600",
       icon: <BookOpen className="text-gray-800 group-hover:text-amber-600" />,
@@ -828,7 +837,7 @@ export default function Library() {
                             </TableCell>
                             <TableCell className="p-4 text-gray-600">
                               {department.business_unit
-                                ? department.business_unit.toUpperCase()
+                                ? department.business_unit.name.toUpperCase()
                                 : "-"}
                             </TableCell>
                             <TableCell className="p-4 text-gray-600">

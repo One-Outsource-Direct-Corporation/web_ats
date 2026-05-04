@@ -23,7 +23,7 @@ const processTypeIcons: Record<string, LucideIcon> = {
   assessments: ClipboardCheck,
   final_interview: Briefcase,
   for_job_offer: FileCheck,
-  for_offer_and_finalization: FileCheck,
+  pre_onboarding: FileCheck,
   onboarding: UserCheck,
 };
 
@@ -44,7 +44,7 @@ export function getProcessTypeLabel(processType: string): string {
     assessments: "Assessments",
     final_interview: "Final Interview",
     for_job_offer: "For Job Offer",
-    for_offer_and_finalization: "For Offer and Finalization",
+    pre_onboarding: "Pre-Onboarding",
     onboarding: "Onboarding",
   };
 

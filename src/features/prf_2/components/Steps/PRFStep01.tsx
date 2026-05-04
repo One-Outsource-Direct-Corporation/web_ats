@@ -28,10 +28,10 @@ import {
 import type { User } from "@/features/auth/types/auth.types.ts";
 import type { PRFFormData } from "@/features/prf_2/types/PRFFormData.ts";
 import React from "react";
-import type { BusinessUnit } from "@/features/prf_2/types/enums/BusinessUnit.ts";
 import type { ImmediateSupervisorObject } from "@/features/prf_2/types/PRF";
 import { useDepartmentByBusinessUnit } from "@/features/department/hooks/useDepartmentByBusinessUnit.ts";
 import { useUsersByDepartment } from "@/features/prf_2/hooks/useUsers";
+import { useBusinessUnitsQuery } from "@/features/prf_2/hooks/useBusinessUnits";
 import {
   getDepartmentName,
   getImmediateSupervisorDisplay,
@@ -63,24 +63,33 @@ export default function PRFStep01({
   updateFormData,
   errors,
 }: PRFStep01Props) {
-  const selectedBusinessUnit = formData.prf_input.business_unit || undefined;
+  const selectedBusinessUnitId =
+    typeof formData.prf_input.business_unit === "number"
+      ? formData.prf_input.business_unit
+      : undefined;
   const selectedDepartmentId =
     typeof formData.job_posting.department === "number"
       ? formData.job_posting.department
       : 0;
 
+  const { businessUnits, loading: buLoading } = useBusinessUnitsQuery();
+  const selectedBusinessUnitSlug = businessUnits.find(
+    (bu) => bu.id === selectedBusinessUnitId,
+  )?.slug;
+
   const { departments, loading: departmentsLoading } =
-    useDepartmentByBusinessUnit(selectedBusinessUnit);
+    useDepartmentByBusinessUnit(selectedBusinessUnitSlug);
 
   const { users, loading: usersLoading } = useUsersByDepartment({
-    business_unit: selectedBusinessUnit ?? "all",
+    business_unit: selectedBusinessUnitSlug ?? "all",
     department: selectedDepartmentId,
     include: "supervisor",
   });
 
   const supervisors = users.filter((user) => user.role === "supervisor");
 
-  const handleBusinessUnitChange = (value: BusinessUnit) => {
+  const handleBusinessUnitChange = (value: string) => {
+    const buId = value ? Number(value) : "";
     updateFormData((prev) => ({
       ...prev,
       job_posting: {
@@ -90,7 +99,7 @@ export default function PRFStep01({
       },
       prf_input: {
         ...prev.prf_input,
-        business_unit: value,
+        business_unit: buId,
         immediate_supervisor: "",
         immediate_supervisor_display: null,
       },
@@ -340,29 +349,31 @@ export default function PRFStep01({
         <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Field>
             <FieldLabel>Business Unit</FieldLabel>
-            <RadioGroup
-              value={formData.prf_input.business_unit || ""}
-              onValueChange={(value: BusinessUnit) =>
-                handleBusinessUnitChange(value)
-              }
+            <Select
+              value={formData.prf_input.business_unit?.toString() || ""}
+              onValueChange={(value: string) => handleBusinessUnitChange(value)}
             >
-              <div className="flex items-center gap-3">
-                <RadioGroupItem
-                  value="oodc"
-                  id="oodc"
-                  className="text-blue-500 border-blue-500 [&_svg]:fill-blue-500"
-                />
-                <FieldLabel htmlFor="oodc">OODC</FieldLabel>
-              </div>
-              <div className="flex items-center gap-3">
-                <RadioGroupItem
-                  value="oors"
-                  id="oors"
-                  className="text-blue-500 border-blue-500 [&_svg]:fill-blue-500"
-                />
-                <FieldLabel htmlFor="oors">OORS</FieldLabel>
-              </div>
-            </RadioGroup>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select Business Unit" />
+              </SelectTrigger>
+              <SelectContent>
+                {buLoading && (
+                  <SelectItem value="bu-loading" disabled>
+                    Loading...
+                  </SelectItem>
+                )}
+                {!buLoading && businessUnits.length === 0 && (
+                  <SelectItem value="bu-empty" disabled>
+                    No business units available
+                  </SelectItem>
+                )}
+                {businessUnits.map((bu: { id: number; name: string; slug: string }) => (
+                  <SelectItem key={bu.id} value={bu.id.toString()}>
+                    {bu.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {businessUnitError && <FieldError>{businessUnitError}</FieldError>}
           </Field>
 
@@ -376,19 +387,19 @@ export default function PRFStep01({
                 <SelectValue placeholder="Select Department" />
               </SelectTrigger>
               <SelectContent>
-                {!selectedBusinessUnit && (
+                {!selectedBusinessUnitId && (
                   <SelectItem value="business-unit-required" disabled>
                     Select a business unit first
                   </SelectItem>
                 )}
 
-                {selectedBusinessUnit && departmentsLoading && (
+                {selectedBusinessUnitId && departmentsLoading && (
                   <SelectItem value="department-loading" disabled>
                     Loading departments...
                   </SelectItem>
                 )}
 
-                {selectedBusinessUnit &&
+                {selectedBusinessUnitId &&
                   !departmentsLoading &&
                   departments.length === 0 && (
                     <SelectItem value="department-empty" disabled>

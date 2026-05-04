@@ -14,6 +14,7 @@ import PersistLogin from "@/features/auth/components/PersistLogin";
 import { publicJobsRoutes } from "@/features/jobs/public/routes/careersRoute";
 import { requestRoutes } from "@/features/requests/routes/requestRoutes";
 import ApplicationTracker from "@/features/jobs/public/views/ApplicationTracker";
+import { candidateRoutes } from "@/features/candidate/routes/candidateRoutes";
 
 export const router = createBrowserRouter([
   {
@@ -21,6 +22,7 @@ export const router = createBrowserRouter([
     element: <PersistLogin />,
     children: [
       ...publicJobsRoutes,
+      ...candidateRoutes,
       {
         path: "login",
         children: [

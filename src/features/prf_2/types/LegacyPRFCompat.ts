@@ -1,4 +1,4 @@
-import type { User } from "@/features/auth/types/auth.types";
+import type { User, BusinessUnit } from "@/features/auth/types/auth.types";
 import type {
   ApprovalStatusDb,
   ApproverDb,
@@ -23,7 +23,7 @@ export interface PRFHiringManagerResponse {
 }
 
 export interface PRFBase {
-  business_unit: string | null;
+  business_unit: BusinessUnit | null;
   immediate_supervisor: number | null;
   immediate_supervisor_display: User | null;
   category: string | null;

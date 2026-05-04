@@ -1,16 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import { departmentService } from "@/features/department/services/department.service";
-import type { BusinessUnit } from "@/features/prf_2/types/enums/BusinessUnit.ts";
 
 const departmentListQueryKeys = {
   all: ["department", "list"] as const,
-  businessUnit: (businessUnit: BusinessUnit | "all") =>
+  businessUnit: (businessUnit: string | "all") =>
     [...departmentListQueryKeys.all, businessUnit] as const,
 };
 
 export function useDepartmentByBusinessUnit(
-  business_unit: BusinessUnit | undefined,
+  business_unit: string | undefined,
 ) {
   const axiosPrivate = useAxiosPrivate();
 
@@ -20,7 +19,7 @@ export function useDepartmentByBusinessUnit(
     queryFn: ({ signal }) =>
       departmentService
         .getDepartmentsResponse(
-          { business_unit: business_unit as BusinessUnit },
+          { business_unit: business_unit as string },
           {
             httpClient: axiosPrivate,
             signal,
