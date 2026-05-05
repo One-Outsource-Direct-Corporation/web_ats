@@ -2,7 +2,8 @@ import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
 import type { JobDetailsFormData } from "../../types/application_form.types";
-import { Plus, Trash2, Upload } from "lucide-react";
+import type { CandidateDetailsFile } from "@/features/candidate/services/candidateProfile.service";
+import { Plus, Trash2, Upload, Eye, X, FileText } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Field, FieldLabel, FieldSet } from "@/shared/components/ui/field";
 import type { ApplicationFormBase } from "@/shared/types/application_form.types";
@@ -14,6 +15,8 @@ interface JobDetailsSectionProps {
     value: string | string[] | number | File | null,
   ) => void;
   applicationForm: ApplicationFormBase;
+  profilePhoto?: CandidateDetailsFile | null;
+  profileMedicalCertificate?: CandidateDetailsFile | null;
 }
 
 const MAX_INTERVIEW_SCHEDULE_OPTIONS = 3;
@@ -66,6 +69,8 @@ export const JobDetailsSection = ({
   formData,
   onInputChange,
   applicationForm,
+  profilePhoto,
+  profileMedicalCertificate,
 }: JobDetailsSectionProps) => {
   const isScheduleDisabled =
     applicationForm.preferred_interview_schedule === "disabled";
@@ -195,52 +200,180 @@ export const JobDetailsSection = ({
           <FieldLabel className="text-sm font-medium text-gray-700 mb-2 block">
             Upload Recent 2x2 Photo
           </FieldLabel>
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) =>
-                onInputChange("photo", e.target.files?.[0] || null)
-              }
-              className="hidden"
-              id="photo-upload"
-              disabled={applicationForm.photo_2x2 === "disabled"}
-              required={applicationForm.photo_2x2 === "required"}
-            />
-            <label htmlFor="photo-upload" className="cursor-pointer">
-              <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <span className="text-sm text-gray-600">
-                {formData.photo ? formData.photo.name : "Click to upload photo"}
-              </span>
-            </label>
-          </div>
+          {formData.photo ? (
+            <div className="border rounded-lg p-4 bg-gray-50">
+              <div className="flex justify-center mb-3">
+                <img
+                  src={URL.createObjectURL(formData.photo)}
+                  alt="Photo preview"
+                  className="w-24 h-24 rounded-lg object-cover border border-gray-200"
+                />
+              </div>
+              <p className="text-sm font-medium text-gray-900 truncate text-center mb-1">
+                {formData.photo.name}
+              </p>
+              <p className="text-xs text-gray-500 text-center mb-3">New upload</p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full text-xs text-gray-500 hover:text-red-500"
+                onClick={() => onInputChange("photo", null)}
+              >
+                <X className="h-3 w-3 mr-1" />
+                Cancel and use profile photo
+              </Button>
+            </div>
+          ) : profilePhoto ? (
+            <div className="border rounded-lg p-4 bg-gray-50">
+              <div className="flex justify-center mb-3">
+                <img
+                  src={profilePhoto.url}
+                  alt="2x2 Photo"
+                  className="w-24 h-24 rounded-lg object-cover border border-gray-200"
+                />
+              </div>
+              <p className="text-sm font-medium text-gray-900 truncate text-center mb-1">
+                {profilePhoto.filename}
+              </p>
+              <p className="text-xs text-gray-500 text-center mb-3">From profile</p>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 text-xs h-8"
+                  onClick={() => window.open(profilePhoto.url, "_blank")}
+                >
+                  <Eye className="h-3 w-3 mr-1" />
+                  View
+                </Button>
+                <label
+                  htmlFor="photo-upload-replace"
+                  className="flex-1 text-xs h-8 flex items-center justify-center rounded-md border border-blue-600 text-blue-600 hover:bg-blue-50 cursor-pointer"
+                >
+                  <Upload className="h-3 w-3 mr-1" />
+                  Replace
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) =>
+                    onInputChange("photo", e.target.files?.[0] || null)
+                  }
+                  className="hidden"
+                  id="photo-upload-replace"
+                  disabled={applicationForm.photo_2x2 === "disabled"}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) =>
+                  onInputChange("photo", e.target.files?.[0] || null)
+                }
+                className="hidden"
+                id="photo-upload"
+                disabled={applicationForm.photo_2x2 === "disabled"}
+                required={applicationForm.photo_2x2 === "required"}
+              />
+              <label htmlFor="photo-upload" className="cursor-pointer">
+                <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                <span className="text-sm text-gray-600">Click to upload photo</span>
+              </label>
+            </div>
+          )}
         </Field>
 
         <Field>
           <FieldLabel className="text-sm font-medium text-gray-700 mb-2 block">
             Upload Medical Certificate (Optional)
           </FieldLabel>
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
-            <input
-              type="file"
-              accept=".pdf,.doc,.docx"
-              onChange={(e) =>
-                onInputChange("medicalCertificate", e.target.files?.[0] || null)
-              }
-              className="hidden"
-              id="medical-upload"
-              disabled={applicationForm.upload_med_cert === "disabled"}
-              required={applicationForm.upload_med_cert === "required"}
-            />
-            <label htmlFor="medical-upload" className="cursor-pointer">
-              <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <span className="text-sm text-gray-600">
-                {formData.medicalCertificate
-                  ? formData.medicalCertificate.name
-                  : "Click to upload certificate"}
-              </span>
-            </label>
-          </div>
+          {formData.medicalCertificate ? (
+            <div className="border rounded-lg p-4 bg-gray-50">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{formData.medicalCertificate.name}</p>
+                  <p className="text-xs text-gray-500">New upload</p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full text-xs text-gray-500 hover:text-red-500"
+                onClick={() => onInputChange("medicalCertificate", null)}
+              >
+                <X className="h-3 w-3 mr-1" />
+                Cancel and use profile certificate
+              </Button>
+            </div>
+          ) : profileMedicalCertificate ? (
+            <div className="border rounded-lg p-4 bg-gray-50">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{profileMedicalCertificate.filename}</p>
+                  <p className="text-xs text-gray-500">From profile</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 text-xs h-8"
+                  onClick={() => window.open(profileMedicalCertificate.url, "_blank")}
+                >
+                  <Eye className="h-3 w-3 mr-1" />
+                  View
+                </Button>
+                <label
+                  htmlFor="medical-upload-replace"
+                  className="flex-1 text-xs h-8 flex items-center justify-center rounded-md border border-blue-600 text-blue-600 hover:bg-blue-50 cursor-pointer"
+                >
+                  <Upload className="h-3 w-3 mr-1" />
+                  Replace
+                </label>
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={(e) =>
+                    onInputChange("medicalCertificate", e.target.files?.[0] || null)
+                  }
+                  className="hidden"
+                  id="medical-upload-replace"
+                  disabled={applicationForm.upload_med_cert === "disabled"}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx"
+                onChange={(e) =>
+                  onInputChange("medicalCertificate", e.target.files?.[0] || null)
+                }
+                className="hidden"
+                id="medical-upload"
+                disabled={applicationForm.upload_med_cert === "disabled"}
+                required={applicationForm.upload_med_cert === "required"}
+              />
+              <label htmlFor="medical-upload" className="cursor-pointer">
+                <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                <span className="text-sm text-gray-600">Click to upload certificate</span>
+              </label>
+            </div>
+          )}
         </Field>
 
         <Field>

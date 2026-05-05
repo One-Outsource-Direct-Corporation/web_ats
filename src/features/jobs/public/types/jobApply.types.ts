@@ -58,7 +58,7 @@ export interface CandidateApplicationSubmissionPayload {
 }
 
 export interface CandidateApplicationSubmissionFiles {
-  resume: File;
+  resume?: File | null;
   coverLetter?: File | null;
   photo?: File | null;
   medicalCertificate?: File | null;

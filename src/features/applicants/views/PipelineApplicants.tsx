@@ -1898,7 +1898,7 @@ export default function PipelineApplicants() {
       
 
       <Dialog open={scheduleModalState.open} onOpenChange={handleCloseScheduleModal}>
-        <DialogContent className="sm:max-w-4xl">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>
               {scheduleModalState.mode === "reschedule"
@@ -2042,7 +2042,7 @@ export default function PipelineApplicants() {
 
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">Interview Set-up</Label>
-                  <div className="flex items-center gap-3 text-sm">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-sm">
                     <label className="flex items-center gap-1">
                       <input
                         type="radio"
@@ -2094,14 +2094,14 @@ export default function PipelineApplicants() {
                         </SelectContent>
                       </Select>
                       <Input
-                        value={scheduleForm.meetingLink}
-                        onChange={(event) => handleScheduleInputChange("meetingLink", event.target.value)}
-                        placeholder="Link"
-                      />
-                      <Input
                         value={scheduleForm.meetingLinkName}
                         onChange={(event) => handleScheduleInputChange("meetingLinkName", event.target.value)}
                         placeholder="Link Name"
+                      />
+                      <Input
+                        value={scheduleForm.meetingLink}
+                        onChange={(event) => handleScheduleInputChange("meetingLink", event.target.value)}
+                        placeholder="Link"
                       />
                     </>
                   ) : null}
@@ -2127,7 +2127,7 @@ export default function PipelineApplicants() {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-col gap-2 sm:flex-row">
             <Button
               type="button"
               variant="outline"
@@ -2160,7 +2160,7 @@ export default function PipelineApplicants() {
       </Dialog>
 
       <Dialog open={isEmailPreviewOpen} onOpenChange={setIsEmailPreviewOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Email Preview</DialogTitle>
             <DialogDescription>
@@ -2180,7 +2180,7 @@ export default function PipelineApplicants() {
               <div className="text-xs font-semibold text-gray-600 uppercase">Rendered HTML</div>
               <iframe
                 title="Interview Email HTML Preview"
-                className="w-full h-80 bg-white rounded border border-gray-200"
+                className="w-full h-64 sm:h-80 bg-white rounded border border-gray-200"
                 srcDoc={emailPreview?.html_body || ""}
               />
             </div>

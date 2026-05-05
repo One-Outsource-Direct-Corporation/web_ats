@@ -22,7 +22,9 @@ function buildCandidateApplicationFormData(
   const formData = new FormData();
   formData.append("data", JSON.stringify(payload));
 
-  formData.append("resume", files.resume);
+  if (files.resume) {
+    formData.append("resume", files.resume);
+  }
 
   if (files.coverLetter) {
     formData.append("cover_letter", files.coverLetter);

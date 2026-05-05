@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useJobDetail } from "../hooks/useJobDetail";
+import { useCandidatePrefill } from "@/features/candidate/hooks/useCandidateDetails";
 import LoadingComponent from "@/shared/components/reusables/LoadingComponent";
 import { Button } from "@/shared/components/ui/button";
 import { ArrowLeft, LogIn, UserPlus } from "lucide-react";
@@ -18,7 +19,7 @@ import Step01 from "../components/steps/Step01";
 import Step02 from "../components/steps/Step02";
 import Step03 from "../components/steps/Step03";
 import Step04 from "../components/steps/Step04";
-import type { WorkExperienceEntry } from "../types/application_form.types";
+import type { WorkExperienceEntry, ApplicationFormData } from "../types/application_form.types";
 import { useCandidateApplicationSubmission } from "../hooks/useCandidateApplicationSubmission";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 
@@ -28,6 +29,19 @@ export default function CareersApply() {
   const { user, isAuth } = useAuth();
 
   const { jobDetail, loading, error } = useJobDetail(params.jobId);
+  const { prefill, loading: prefillLoading } = useCandidatePrefill(params.jobId);
+
+  const prefillFormData = useMemo<Partial<ApplicationFormData> | undefined>(() => {
+    if (!prefill) return undefined;
+    return {
+      personalInfo: prefill.personal_info as ApplicationFormData["personalInfo"],
+      jobDetails: prefill.job_details as ApplicationFormData["jobDetails"],
+      educationWork: prefill.education_work as ApplicationFormData["educationWork"],
+      acknowledgement: prefill.acknowledgement as ApplicationFormData["acknowledgement"],
+    };
+  }, [prefill]);
+
+  const hasProfileResume = !!prefill?.files?.resume;
 
   const [showUploadModal, setShowUploadModal] = useState(true);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
@@ -51,7 +65,7 @@ export default function CareersApply() {
     handleQuestionnaireCheckboxInput,
     goToNextStage,
     goToPreviousStage,
-  } = useApplicationForm(jobDetail?.job_posting?.job_title ?? "");
+  } = useApplicationForm(jobDetail?.job_posting?.job_title ?? "", prefillFormData);
 
   // Wrapper functions to handle type compatibility
   const handleJobDetailsChange = (
@@ -142,7 +156,7 @@ export default function CareersApply() {
       return;
     }
 
-    if (!resumeFile) {
+    if (!resumeFile && !hasProfileResume) {
       toast.error("Resume is required. Please upload your resume to continue.");
       setShowUploadModal(true);
       return;
@@ -172,7 +186,7 @@ export default function CareersApply() {
         : formData.acknowledgement.signature?.name ?? null;
 
     try {
-      const response = await submitCandidateApplication({
+      await submitCandidateApplication({
         payload: {
           job_posting: jobDetail.job_posting.id,
           source: "careers_page",
@@ -212,12 +226,13 @@ export default function CareersApply() {
     currentStage,
     formData,
     goToNextStage,
+    hasProfileResume,
     jobDetail,
     resumeFile,
     submitCandidateApplication,
   ]);
 
-  if (loading) {
+  if (loading || prefillLoading) {
     return <LoadingComponent />;
   }
 
@@ -361,6 +376,7 @@ export default function CareersApply() {
             <DocumentUploadModal
               onClose={handleDocumentModalClose}
               onDocumentsUploaded={handleDocumentsUploadComplete}
+              hasProfileResume={hasProfileResume}
             />
           </div>
         </div>
@@ -392,6 +408,8 @@ export default function CareersApply() {
               formData={formData.jobDetails}
               onInputChange={handleJobDetailsChange}
               applicationForm={jobDetail.application_form.application_form}
+              profilePhoto={prefill?.files?.photo_2x2 ?? null}
+              profileMedicalCertificate={prefill?.files?.medical_certificate ?? null}
             />
           )}
           {currentStage === 3 && (

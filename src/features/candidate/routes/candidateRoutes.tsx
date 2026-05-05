@@ -2,6 +2,7 @@ import CandidateDashboard from "@/features/candidate/views/CandidateDashboard";
 import CandidateRegister from "@/features/candidate/views/CandidateRegister";
 import CandidateApplicationDetail from "@/features/candidate/views/CandidateApplicationDetail";
 import CandidateOfferPage from "@/features/candidate/views/CandidateOfferPage";
+import CandidateProfile from "@/features/candidate/views/CandidateProfile";
 import ProtectedRoutes from "@/features/auth/components/ProtectedRoutes";
 
 export const candidateRoutes = [
@@ -26,6 +27,14 @@ export const candidateRoutes = [
     element: (
       <ProtectedRoutes allowedRoles={["candidate"]}>
         <CandidateApplicationDetail />
+      </ProtectedRoutes>
+    ),
+  },
+  {
+    path: "candidate/profile",
+    element: (
+      <ProtectedRoutes allowedRoles={["candidate"]}>
+        <CandidateProfile />
       </ProtectedRoutes>
     ),
   },

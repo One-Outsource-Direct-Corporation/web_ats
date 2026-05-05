@@ -7,12 +7,9 @@ import {
   Briefcase,
   MapPin,
   Mail,
-  Phone,
   CalendarDays,
   Clock,
   FileText,
-  CheckCircle2,
-  XCircle,
   Upload,
   ChevronLeft,
   ChevronRight,
@@ -22,11 +19,8 @@ import { Button } from "@/shared/components/ui/button";
 
 interface Application {
   id: number;
-  job_posting: number;
-  job_title?: string;
+  job_title: string;
   status: string;
-  email: string;
-  source: string;
   submitted_at: string;
 }
 
@@ -63,6 +57,15 @@ interface CalendarEvent {
   type: "interview" | "exam" | "orientation";
 }
 
+interface DashboardData {
+  first_name: string;
+  last_name: string;
+  email: string;
+  photo_url: string | null;
+  applications: Application[];
+  events: CalendarEvent[];
+}
+
 const STATUS_COLORS: Record<string, string> = {
   received: "bg-emerald-50 text-emerald-700 border-emerald-200",
   "on_hold": "bg-amber-50 text-amber-700 border-amber-200",
@@ -97,10 +100,6 @@ const MOCK_OFFERS: JobOffer[] = [
   { id: 3, job_title: "Business Analyst", job_req: "R-20202", date: "2025-02-16", documents_count: 0 },
 ];
 
-const MOCK_EVENTS: CalendarEvent[] = [
-  { id: 1, date: "2025-02-03", time: "01:00 - 02:00 PM", title: "Interview", location: "3/F CLF1 Building, 1167 Chino Roces Ave, Makati, Metro Manila", type: "interview" },
-];
-
 function getDaysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
 }
@@ -123,10 +122,40 @@ function StatusBadge({ status }: { status: string }) {
 export default function CandidateDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [applications, setApplications] = useState<Application[]>([]);
+  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchCode, setSearchCode] = useState("");
   const [activeTab, setActiveTab] = useState<"progress" | "documents">("progress");
+
+  // Single BFF call — replaces 3 separate API requests
+  useEffect(() => {
+    axiosPrivate
+      .get("/api/candidate/me/")
+      .then((res) => {
+        const data = res.data as DashboardData;
+        // Map backend events to CalendarEvent shape
+        const mappedEvents: CalendarEvent[] = (
+          data.events as Array<Record<string, unknown>>
+        ).map((event) => {
+          const dt = new Date(event.scheduled_for as string);
+          return {
+            id: event.id as number,
+            date: dt.toISOString().split("T")[0],
+            time: dt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+            title: `${event.process_type_label} - ${event.job_title}`,
+            location: "",
+            type: event.event_type as CalendarEvent["type"],
+          };
+        });
+        setDashboard({ ...data, events: mappedEvents });
+      })
+      .catch(() => setDashboard(null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const profilePhotoUrl = dashboard?.photo_url;
+  const applications = dashboard?.applications ?? [];
+  const events = dashboard?.events ?? [];
 
   // Calendar state
   const today = new Date();
@@ -135,17 +164,6 @@ export default function CandidateDashboard() {
   const daysInMonth = getDaysInMonth(calYear, calMonth);
   const firstDay = getFirstDayOfMonth(calYear, calMonth);
   const monthName = new Date(calYear, calMonth).toLocaleString("default", { month: "long", year: "numeric" });
-
-  useEffect(() => {
-    axiosPrivate
-      .get("/api/candidate/me/applications/")
-      .then((res) => {
-        const data = res.data.results || res.data || [];
-        setApplications(data);
-      })
-      .catch(() => setApplications([]))
-      .finally(() => setLoading(false));
-  }, []);
 
   const filteredApplications = applications.filter((app) =>
     searchCode
@@ -190,10 +208,24 @@ export default function CandidateDashboard() {
             >
               Job Openings
             </Link>
-            <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold">
-              {user?.first_name?.[0]}
-              {user?.last_name?.[0]}
-            </div>
+            <Link
+              to="/candidate/profile"
+              className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+            >
+              My Profile
+            </Link>
+            {profilePhotoUrl ? (
+              <img
+                src={profilePhotoUrl}
+                alt="Profile"
+                className="w-8 h-8 rounded-full object-cover border border-gray-200"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold">
+                {user?.first_name?.[0]}
+                {user?.last_name?.[0]}
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -238,22 +270,30 @@ export default function CandidateDashboard() {
               <div className="flex-1 h-px bg-gray-300" />
             </div>
             <div className="bg-white rounded-lg shadow-sm border p-6 flex items-center gap-6">
-              <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                <User className="h-8 w-8" />
-              </div>
+              {profilePhotoUrl ? (
+                <img
+                  src={profilePhotoUrl}
+                  alt="Profile"
+                  className="w-16 h-16 rounded-full object-cover border border-gray-200"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                  <User className="h-8 w-8" />
+                </div>
+              )}
               <div className="flex-1">
                 <h3 className="text-lg font-bold text-gray-900">
-                  {user?.first_name} {user?.last_name}
+                  {dashboard?.first_name} {dashboard?.last_name}
                 </h3>
                 <div className="flex flex-wrap gap-x-6 gap-y-1 mt-2 text-sm text-gray-600">
                   <span className="flex items-center gap-1">
                     <Briefcase className="h-4 w-4 text-gray-400" />
                     Candidate
                   </span>
-                  {user?.email && (
+                  {dashboard?.email && (
                     <span className="flex items-center gap-1">
                       <Mail className="h-4 w-4 text-gray-400" />
-                      {user.email}
+                      {dashboard.email}
                     </span>
                   )}
                 </div>
@@ -560,7 +600,13 @@ export default function CandidateDashboard() {
               <div className="flex-1 h-px bg-gray-300" />
             </div>
             <div className="space-y-3">
-              {MOCK_EVENTS.map((event) => (
+              {events.length === 0 ? (
+                <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center">
+                  <CalendarDays className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                  <p className="text-sm text-gray-400">No upcoming events</p>
+                </div>
+              ) : (
+                events.map((event) => (
                 <div key={event.id} className="bg-white rounded-lg shadow-sm border p-4 flex gap-4">
                   <div className="flex-shrink-0 w-14 h-14 bg-blue-50 rounded-lg flex flex-col items-center justify-center border border-blue-100">
                     <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
@@ -583,23 +629,20 @@ export default function CandidateDashboard() {
                         {event.type}
                       </span>
                     </div>
+                    <p className="text-sm font-medium text-gray-900 mb-1">{event.title}</p>
                     <div className="flex items-center gap-1 text-xs text-gray-600 mb-1">
                       <Clock className="h-3 w-3" />
                       {event.time}
                     </div>
-                    <div className="flex items-start gap-1 text-xs text-gray-500">
-                      <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                      <span className="line-clamp-2">{event.location}</span>
-                    </div>
+                    {event.location && (
+                      <div className="flex items-start gap-1 text-xs text-gray-500">
+                        <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                        <span className="line-clamp-2">{event.location}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
-              ))}
-
-              {/* Empty state for more events */}
-              <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center">
-                <CalendarDays className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                <p className="text-sm text-gray-400">No more upcoming events</p>
-              </div>
+              )))}
             </div>
           </div>
         </div>

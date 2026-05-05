@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import type {
   PersonalFormData,
   JobDetailsFormData,
@@ -64,10 +64,30 @@ const data = {
 
 // TODO: Add localStorage data persistence
 
-export const useApplicationForm = (jobTitle?: string) => {
+export const useApplicationForm = (
+  jobTitle?: string,
+  prefillData?: Partial<ApplicationFormData>,
+) => {
   const [formData, setFormData] = useState<ApplicationFormData>(data);
   const [currentStage, setCurrentStage] = useState(1);
   const [acceptTerms, setAcceptTerms] = useState(false);
+
+  // Apply prefill data when it becomes available (e.g. after async load).
+  // A ref guard ensures we only merge once so user edits are not overwritten
+  // on subsequent parent re-renders.
+  const prefillAppliedRef = useRef(false);
+  useEffect(() => {
+    if (!prefillAppliedRef.current && prefillData) {
+      setFormData((prev) => ({
+        personalInfo: { ...prev.personalInfo, ...prefillData.personalInfo },
+        jobDetails: { ...prev.jobDetails, ...prefillData.jobDetails },
+        educationWork: { ...prev.educationWork, ...prefillData.educationWork },
+        acknowledgement: { ...prev.acknowledgement, ...prefillData.acknowledgement },
+        questionnaire: { ...prev.questionnaire, ...prefillData.questionnaire },
+      }));
+      prefillAppliedRef.current = true;
+    }
+  }, [prefillData]);
 
   if (jobTitle && !formData.jobDetails.positionApplyingFor) {
     setFormData((prev) => ({

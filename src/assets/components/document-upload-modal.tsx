@@ -17,7 +17,7 @@ const RESUME_ACCEPT_ATTRIBUTE = ALLOWED_DOCUMENT_EXTENSIONS.join(",");
 const RESUME_HELPER_TEXT = "Supported: DOC, DOCX, PDF, JPG, JPEG, PNG (Max 10MB)";
 
 export interface UploadedDocumentsPayload {
-  resumeFile: File;
+  resumeFile?: File | null;
   coverLetterFile?: File | null;
 }
 
@@ -26,11 +26,13 @@ interface DocumentUploadModalProps {
   onDocumentsUploaded: (
     documents: UploadedDocumentsPayload,
   ) => Promise<void> | void;
+  hasProfileResume?: boolean;
 }
 
 export function DocumentUploadModal({
   onClose,
   onDocumentsUploaded,
+  hasProfileResume = false,
 }: DocumentUploadModalProps) {
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [coverLetterFile, setCoverLetterFile] = useState<File | null>(null);
@@ -53,7 +55,7 @@ export function DocumentUploadModal({
 
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "resume" | "cover"
+    type: "resume" | "cover",
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -77,7 +79,7 @@ export function DocumentUploadModal({
   };
 
   const handleContinue = async () => {
-    if (!resumeFile) {
+    if (!hasProfileResume && !resumeFile) {
       return;
     }
 
@@ -103,8 +105,9 @@ export function DocumentUploadModal({
       </div>
 
       <p className="text-gray-600 mb-4">
-        Please upload your resume and cover letter. We’ll extract the
-        information to help fill out your application.
+        {hasProfileResume
+          ? "Your profile resume will be used for this application. You may also upload an optional cover letter."
+          : "Please upload your resume and cover letter. We'll extract the information to help fill out your application."}
       </p>
 
       {errorMessage ? (
@@ -113,7 +116,8 @@ export function DocumentUploadModal({
         </div>
       ) : null}
 
-      {/* Resume Upload */}
+      {/* Resume Upload — only shown when candidate has no profile resume */}
+      {!hasProfileResume && (
       <div className="mb-6">
         <h3 className="text-sm font-medium text-gray-900 mb-2">Resume / CV</h3>
         <div className="border-2 border-dashed rounded-lg p-6 text-center relative bg-white">
@@ -163,10 +167,11 @@ export function DocumentUploadModal({
           )}
         </div>
       </div>
+      )}
 
       {/* Cover Letter Upload */}
       <div className="mb-6">
-        <h3 className="text-sm font-medium text-gray-900 mb-2">Cover Letter</h3>
+        <h3 className="text-sm font-medium text-gray-900 mb-2">Cover Letter (Optional)</h3>
         <div className="border-2 border-dashed rounded-lg p-6 text-center relative bg-white">
           <div className="text-4xl mb-2">📋</div>
           {!coverLetterFile ? (
@@ -238,7 +243,7 @@ export function DocumentUploadModal({
         </Button>
         <Button
           onClick={handleContinue}
-          disabled={!resumeFile || isProcessing}
+          disabled={(!hasProfileResume && !resumeFile) || isProcessing}
           className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
         >
           {isProcessing ? "Processing..." : "Continue"}

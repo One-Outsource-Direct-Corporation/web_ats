@@ -24,6 +24,10 @@ export const ApplicationSidebar = ({
         </span>
       </div>
 
+      <p className="text-sm font-semibold text-gray-900 hidden lg:block mb-4 px-1">
+        {jobTitle}
+      </p>
+
       <div className="flex-1">
         <ApplicationProgressSteps currentStage={currentStage} />
       </div>
