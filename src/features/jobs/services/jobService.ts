@@ -171,9 +171,22 @@ function toPipelineStep(
               ? resolveMediaUrl(candidate.resume_url)
               : undefined,
           applicationFormSnapshot:
-            typeof (candidate as any).application_form_snapshot === "object"
-              ? (candidate as any).application_form_snapshot
-              : (candidate as any).applicationFormSnapshot ?? {},
+            typeof (candidate as unknown as Record<string, unknown>).application_form_snapshot === "object"
+              ? (candidate as unknown as Record<string, unknown>).application_form_snapshot as Record<string, unknown>
+              : (candidate as unknown as { applicationFormSnapshot?: Record<string, unknown> }).applicationFormSnapshot ?? {},
+        }))
+    : [];
+
+  const assessments = Array.isArray(step.assessments)
+    ? step.assessments
+        .filter(
+          (a) => typeof a?.id === "number",
+        )
+        .map((a) => ({
+          id: a.id,
+          type_label: a.type_label ?? null,
+          type: a.type ?? null,
+          file: a.file ?? null,
         }))
     : [];
 
@@ -188,6 +201,7 @@ function toPipelineStep(
     interviewerId: step.interviewer?.id,
     candidateApplicationIds,
     candidateApplications,
+    assessments,
   };
 }
 

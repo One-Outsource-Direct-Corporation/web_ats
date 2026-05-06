@@ -14,7 +14,7 @@ import {
   PopoverTrigger,
 } from "@/shared/components/ui/popover";
 import { Field, FieldLabel } from "../../ui/field";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AssessmentTemplate } from "@/shared/types/pipeline.types";
 
@@ -26,6 +26,7 @@ interface TemplateSelectorProps {
   hasMore: boolean;
   loadMore: () => void;
   onSearch: (value: string) => void;
+  onAddTemplate: () => void;
 }
 
 export function TemplateSelector({
@@ -36,6 +37,7 @@ export function TemplateSelector({
   hasMore,
   loadMore,
   onSearch,
+  onAddTemplate,
 }: TemplateSelectorProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -50,95 +52,108 @@ export function TemplateSelector({
       <FieldLabel className="text-sm font-medium text-gray-700 mb-2 block">
         Select Template
       </FieldLabel>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className="w-full justify-between"
-          >
-            {selectedTemplate
-              ? templates.find(
-                  (template) => String(template.id) === selectedTemplate,
-                )?.name || "Browse Templates"
-              : "Browse Templates"}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-full p-0">
-          <Command shouldFilter={false}>
-            <CommandInput
-              placeholder="Search templates..."
-              className="h-9"
-              onValueChange={onSearch}
-            />
-            <CommandList
-              onScroll={(e) => {
-                const target = e.currentTarget;
-                if (
-                  target.scrollHeight - target.scrollTop <=
-                    target.clientHeight + 100 &&
-                  hasMore &&
-                  !templatesLoading
-                ) {
-                  loadMore();
-                }
-              }}
-              className="max-h-[300px] overflow-y-auto"
+      <div className="flex gap-2">
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className="flex-1 justify-between"
             >
-              <CommandEmpty>
-                {templatesLoading ? "Loading..." : "No template found."}
-              </CommandEmpty>
-              <CommandGroup>
-                {templates.map((template) => {
-                  const templateId = template.id;
-                  const templateKey = template.id;
+              {selectedTemplate
+                ? templates.find(
+                    (template) => String(template.id) === selectedTemplate,
+                  )?.name || "Browse Templates"
+                : "Browse Templates"}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-full p-0">
+            <Command shouldFilter={false}>
+              <CommandInput
+                placeholder="Search templates..."
+                className="h-9"
+                onValueChange={onSearch}
+              />
+              <CommandList
+                onScroll={(e) => {
+                  const target = e.currentTarget;
+                  if (
+                    target.scrollHeight - target.scrollTop <=
+                      target.clientHeight + 100 &&
+                    hasMore &&
+                    !templatesLoading
+                  ) {
+                    loadMore();
+                  }
+                }}
+                className="max-h-[300px] overflow-y-auto"
+              >
+                <CommandEmpty>
+                  {templatesLoading ? "Loading..." : "No template found."}
+                </CommandEmpty>
+                <CommandGroup>
+                  {templates.map((template) => {
+                    const templateId = template.id;
+                    const templateKey = template.id;
 
-                  return (
+                    return (
+                      <CommandItem
+                        key={templateKey}
+                        value={String(templateId)}
+                        onSelect={() => handleSelect(String(templateId))}
+                      >
+                        <div className="flex flex-col flex-1">
+                          <span className="font-medium">{template.name}</span>
+                          <span className="text-xs text-gray-500">
+                            {template.type}
+                          </span>
+                        </div>
+                        <Check
+                          className={cn(
+                            "ml-auto h-4 w-4 flex-shrink-0",
+                            selectedTemplate === String(templateId)
+                              ? "opacity-100"
+                              : "opacity-0",
+                          )}
+                        />
+                      </CommandItem>
+                    );
+                  })}
+                  {hasMore && !templatesLoading && (
                     <CommandItem
-                      key={templateKey}
-                      value={String(templateId)}
-                      onSelect={() => handleSelect(String(templateId))}
+                      disabled
+                      className="justify-center text-sm text-gray-500"
                     >
-                      <div className="flex flex-col flex-1">
-                        <span className="font-medium">{template.name}</span>
-                        <span className="text-xs text-gray-500">
-                          {template.type}
-                        </span>
-                      </div>
-                      <Check
-                        className={cn(
-                          "ml-auto h-4 w-4 flex-shrink-0",
-                          selectedTemplate === String(templateId)
-                            ? "opacity-100"
-                            : "opacity-0",
-                        )}
-                      />
+                      Scroll for more...
                     </CommandItem>
-                  );
-                })}
-                {hasMore && !templatesLoading && (
-                  <CommandItem
-                    disabled
-                    className="justify-center text-sm text-gray-500"
-                  >
-                    Scroll for more...
-                  </CommandItem>
-                )}
-                {templatesLoading && (
-                  <CommandItem
-                    disabled
-                    className="justify-center text-sm text-gray-500"
-                  >
-                    Loading more...
-                  </CommandItem>
-                )}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+                  )}
+                  {templatesLoading && (
+                    <CommandItem
+                      disabled
+                      className="justify-center text-sm text-gray-500"
+                    >
+                      Loading more...
+                    </CommandItem>
+                  )}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-10 w-10 shrink-0"
+          onClick={onAddTemplate}
+          title="Create new template"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
       {selectedTemplate && (
         <Button
           type="button"

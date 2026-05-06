@@ -27,10 +27,11 @@ interface Application {
 interface Task {
   id: number;
   job_title: string;
-  job_req: string;
-  task_title: string;
-  task_status: "pending" | "done" | "in_progress";
+  assessment_type_label: string;
+  task_status: "pending" | "done" | "submitted" | "graded";
   scheduled_date: string;
+  score?: number | null;
+  candidate_application_id: number;
 }
 
 interface JobOffer {
@@ -64,6 +65,7 @@ interface DashboardData {
   photo_url: string | null;
   applications: Application[];
   events: CalendarEvent[];
+  tasks: Task[];
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -86,12 +88,6 @@ const DOCUMENTS: DocumentItem[] = [
   { id: "birth", name: "Photocopy of Birth Certificate", required: true, status: "pending" },
   { id: "dependent", name: "Photocopy of Dependents Birth Certificate (if applicable)", required: false, status: "pending" },
   { id: "marriage", name: "Photocopy of Marriage Contract (if applicable)", required: false, status: "pending" },
-];
-
-const MOCK_TASKS: Task[] = [
-  { id: 1, job_title: "Lead Developer", job_req: "R-80808", task_title: "Examination", task_status: "done", scheduled_date: "2025-02-16" },
-  { id: 2, job_title: "Quality Assurance", job_req: "R-10101", task_title: "Online Interview", task_status: "pending", scheduled_date: "2025-02-16" },
-  { id: 3, job_title: "Business Analyst", job_req: "R-20202", task_title: "Upload Documents", task_status: "pending", scheduled_date: "2025-02-16" },
 ];
 
 const MOCK_OFFERS: JobOffer[] = [
@@ -127,15 +123,15 @@ export default function CandidateDashboard() {
   const [searchCode, setSearchCode] = useState("");
   const [activeTab, setActiveTab] = useState<"progress" | "documents">("progress");
 
-  // Single BFF call — replaces 3 separate API requests
+  // Single BFF call
   useEffect(() => {
     axiosPrivate
       .get("/api/candidate/me/")
       .then((res) => {
-        const data = res.data as DashboardData;
+        const data = res.data as Record<string, unknown>;
         // Map backend events to CalendarEvent shape
         const mappedEvents: CalendarEvent[] = (
-          data.events as Array<Record<string, unknown>>
+          (data.events as Array<Record<string, unknown>>) || []
         ).map((event) => {
           const dt = new Date(event.scheduled_for as string);
           return {
@@ -147,7 +143,29 @@ export default function CandidateDashboard() {
             type: event.event_type as CalendarEvent["type"],
           };
         });
-        setDashboard({ ...data, events: mappedEvents });
+
+        // Map backend tasks
+        const mappedTasks: Task[] = (
+          (data.tasks as Array<Record<string, unknown>>) || []
+        ).map((task) => ({
+          id: task.id as number,
+          job_title: task.job_title as string || '',
+          assessment_type_label: task.assessment_type_label as string || 'Assessment',
+          task_status: (task.task_status as Task['task_status']) || 'pending',
+          scheduled_date: task.scheduled_date as string || '',
+          score: task.score as number | null | undefined,
+          candidate_application_id: task.candidate_application_id as number,
+        }));
+
+        setDashboard({
+          first_name: data.first_name as string || '',
+          last_name: data.last_name as string || '',
+          email: data.email as string || '',
+          photo_url: data.photo_url as string | null || null,
+          applications: (data.applications as Application[]) || [],
+          events: mappedEvents,
+          tasks: mappedTasks,
+        });
       })
       .catch(() => setDashboard(null))
       .finally(() => setLoading(false));
@@ -156,6 +174,7 @@ export default function CandidateDashboard() {
   const profilePhotoUrl = dashboard?.photo_url;
   const applications = dashboard?.applications ?? [];
   const events = dashboard?.events ?? [];
+  const tasks = dashboard?.tasks ?? [];
 
   // Calendar state
   const today = new Date();
@@ -405,25 +424,34 @@ export default function CandidateDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {MOCK_TASKS.map((task) => (
-                        <tr key={task.id} className="border-t hover:bg-gray-50">
-                          <td className="px-4 py-3">
-                            <div className="font-medium text-gray-900">{task.job_title}</div>
-                            <div className="text-xs text-gray-500">{task.job_req}</div>
-                          </td>
-                          <td className="px-4 py-3 text-gray-700">{task.task_title}</td>
-                          <td className="px-4 py-3">
-                            <StatusBadge status={task.task_status} />
-                          </td>
-                          <td className="px-4 py-3 text-gray-600">
-                            {new Date(task.scheduled_date).toLocaleDateString("en-US", {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                            })}
+                      {tasks.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="px-4 py-6 text-center text-gray-500">
+                            No tasks yet.
                           </td>
                         </tr>
-                      ))}
+                      ) : (
+                        tasks.map((task) => (
+                          <tr key={task.id} className="border-t hover:bg-gray-50">
+                            <td className="px-4 py-3">
+                              <div className="font-medium text-gray-900">{task.job_title}</div>
+                            </td>
+                            <td className="px-4 py-3 text-gray-700">{task.assessment_type_label}</td>
+                            <td className="px-4 py-3">
+                              <StatusBadge status={task.task_status} />
+                            </td>
+                            <td className="px-4 py-3 text-gray-600">
+                              {task.scheduled_date
+                                ? new Date(task.scheduled_date).toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                  })
+                                : "—"}
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>

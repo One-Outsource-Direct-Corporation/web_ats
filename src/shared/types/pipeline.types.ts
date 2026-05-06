@@ -13,7 +13,7 @@ interface FileInDb extends FileBase {
 export type FileI = FileInDb | FileBase;
 
 interface AssessmentBase {
-  name?: string | null; // For template assessments
+  type_label?: string | null;
   type: string | null;
   order: number;
   file: FileI | null;

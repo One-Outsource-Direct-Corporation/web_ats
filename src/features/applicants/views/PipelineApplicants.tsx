@@ -5,8 +5,11 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { ArrowLeft, BarChart3, Search, FileText, Plus } from "lucide-react";
+import { ArrowLeft, BarChart3, Search, FileText, Loader2 } from "lucide-react";
 import { toast } from "react-toastify";
+
+import type { PipelineAssessment } from "@/features/jobs/types/job.types";
+import { formatAssessmentType, resolveFileUrl, isImageExtension, isPdfExtension } from "@/shared/utils/assessmentUtils";
 
 import {
   Avatar,
@@ -85,7 +88,8 @@ interface AssessmentModalState {
   mode: "preview" | "grade";
   assessment?: {
     id: number;
-    name?: string | null;
+    type_label?: string | null;
+    type?: string | null;
     file?: {
       filename?: string | null;
       file?: string | null;
@@ -95,20 +99,29 @@ interface AssessmentModalState {
 
 interface CandidateAssessmentData {
   id: number;
-  status: "assigned" | "submitted" | "graded" | "not_assigned";
+  assessmentId: number;
+  status: "assigned" | "submitted" | "graded" | "sent" | "not_assigned";
   score?: number | null;
   notes?: string | null;
-  assessmentId?: number;
-  assessmentName?: string | null;
+  is_sent?: boolean;
 }
 
-interface PipelineAssessment {
-  id: number;
-  name?: string | null;
-  file?: {
-    filename?: string | null;
-    file?: string | null;
-  };
+interface SendAssessmentModalState {
+  open: boolean;
+  candidateApplicationId: number;
+  candidateName: string;
+  pipelineStepId: number;
+  subject: string;
+  body: string;
+}
+
+interface SendAssessmentPreview {
+  subject: string;
+  body: string;
+  html_body: string;
+  attachments: Array<{ filename: string; size: number }>;
+  recipient_email: string;
+  recipient_name: string;
 }
 
 
@@ -350,8 +363,22 @@ export default function PipelineApplicants() {
   });
 
   const [assessmentGradeForm, setAssessmentGradeForm] = useState({ score: "", notes: "" });
-  const [candidateAssessments, setCandidateAssessments] = useState<Map<number, CandidateAssessmentData>>(new Map());
-  const [stepAssessment, setStepAssessment] = useState<PipelineAssessment | null>(null);
+  const [candidateAssessments, setCandidateAssessments] = useState<Map<number, CandidateAssessmentData[]>>(new Map());
+  const [stepAssessments, setStepAssessments] = useState<PipelineAssessment[]>([]);
+  const [sendAssessmentModalState, setSendAssessmentModalState] = useState<SendAssessmentModalState>({
+    open: false,
+    candidateApplicationId: 0,
+    candidateName: "",
+    pipelineStepId: 0,
+    subject: "",
+    body: "",
+  });
+  const [sendPreview, setSendPreview] = useState<SendAssessmentPreview | null>(null);
+  const [isSendPreviewOpen, setIsSendPreviewOpen] = useState(false);
+  const [isSendingAssessment, setIsSendingAssessment] = useState(false);
+  const [isLoadingSendPreview, setIsLoadingSendPreview] = useState(false);
+  const [isSubmittingGrade, setIsSubmittingGrade] = useState(false);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [scheduleForm, setScheduleForm] = useState<InterviewScheduleFormState>({
     scheduledDate: "",
     scheduledTime: "09:00",
@@ -928,25 +955,17 @@ export default function PipelineApplicants() {
       return;
     }
 
-    // Extract assessment from the pipeline step
     const selectedSteps = pipelineSteps.filter(
       (step) => step.process_type === selectedType,
     );
     
     if (selectedSteps.length > 0) {
       const step = selectedSteps[0];
-      const assessmentData = (step as any).assessments?.[0];
-      if (assessmentData) {
-        setStepAssessment({
-          id: assessmentData.id,
-          name: assessmentData.name,
-          file: assessmentData.file,
-        });
-      }
+      setStepAssessments(step.assessments || []);
     }
 
     try {
-      const assessmentMap = new Map<number, CandidateAssessmentData>();
+      const assessmentMap = new Map<number, CandidateAssessmentData[]>();
 
       for (const candidate of selectedStepCandidates) {
         try {
@@ -958,27 +977,16 @@ export default function PipelineApplicants() {
           });
 
           const items = Array.isArray(response.data) ? response.data : [];
-          if (items.length > 0) {
-            const assessment = items[0];
-            assessmentMap.set(candidate.id, {
-              id: assessment.id,
-              status: assessment.status || "not_assigned",
-              score: assessment.score,
-              notes: assessment.notes,
-              assessmentId: assessment.assessment?.id,
-              assessmentName: assessment.assessment?.name,
-            });
-          } else {
-            assessmentMap.set(candidate.id, {
-              id: 0,
-              status: "not_assigned",
-            });
-          }
-        } catch (err) {
-          assessmentMap.set(candidate.id, {
-            id: 0,
-            status: "not_assigned",
-          });
+          assessmentMap.set(candidate.id, items.map((a: Record<string, unknown>) => ({
+            id: a.id as number,
+            status: ((a.status as string) || "not_assigned") as CandidateAssessmentData["status"],
+            score: a.score as number | null | undefined,
+            notes: a.notes as string | null | undefined,
+            is_sent: a.is_sent as boolean | undefined,
+            assessmentId: (a.assessment as Record<string, unknown> | undefined)?.id as number,
+          })));
+        } catch {
+          assessmentMap.set(candidate.id, []);
         }
       }
 
@@ -998,14 +1006,24 @@ export default function PipelineApplicants() {
     candidate: { id: number; name: string; pipelineStepId?: number },
     mode: "preview" | "grade",
     assessmentId?: number,
+    candidateAssessmentId?: number,
   ) => {
     if (!candidate.pipelineStepId) {
       toast.error("Pipeline step not found.");
       return;
     }
 
-    if (mode === "preview" && !stepAssessment) {
-      toast.error("No assessment configured for this pipeline step.");
+    if (mode === "preview" && stepAssessments.length === 0) {
+      toast.error("No assessments configured for this pipeline step.");
+      return;
+    }
+
+    const targetAssessment = assessmentId
+      ? stepAssessments.find((a) => a.id === assessmentId)
+      : stepAssessments[0];
+
+    if (!targetAssessment && mode === "preview") {
+      toast.error("Assessment not found.");
       return;
     }
 
@@ -1014,17 +1032,31 @@ export default function PipelineApplicants() {
       candidateApplicationId: candidate.id,
       candidateName: candidate.name,
       pipelineStepId: candidate.pipelineStepId,
-      candidateAssessmentId: assessmentId,
+      candidateAssessmentId: candidateAssessmentId,
       mode,
-      assessment: stepAssessment || undefined,
+      assessment: targetAssessment
+        ? {
+            id: targetAssessment.id,
+            type_label: targetAssessment.type_label,
+            type: targetAssessment.type,
+            file: targetAssessment.file
+              ? {
+                  filename: targetAssessment.file.filename,
+                  file: targetAssessment.file.file,
+                }
+              : undefined,
+          }
+        : undefined,
     });
+    setIsPreviewLoading(true);
 
-    if (mode === "grade") {
-      const assessment = candidateAssessments.get(candidate.id);
-      if (assessment) {
+    if (mode === "grade" && candidateAssessmentId) {
+      const candidateAssessmentsList = candidateAssessments.get(candidate.id) || [];
+      const found = candidateAssessmentsList.find((a) => a.id === candidateAssessmentId);
+      if (found) {
         setAssessmentGradeForm({
-          score: String(assessment.score ?? ""),
-          notes: assessment.notes ?? "",
+          score: String(found.score ?? ""),
+          notes: found.notes ?? "",
         });
       }
     }
@@ -1033,28 +1065,7 @@ export default function PipelineApplicants() {
   const handleCloseAssessmentModal = () => {
     setAssessmentModalState((prev) => ({ ...prev, open: false }));
     setAssessmentGradeForm({ score: "", notes: "" });
-  };
-
-  const handleAssignAssessment = async () => {
-    if (!stepAssessment) {
-      toast.error("No assessment configured for this pipeline step.");
-      return;
-    }
-
-    try {
-      await defaultAxios.post("/api/candidate/assessments/", {
-        candidate_application_id: assessmentModalState.candidateApplicationId,
-        pipeline_step_id: assessmentModalState.pipelineStepId,
-        assessment: stepAssessment.id,
-      });
-
-      toast.success(`Assessment assigned to ${assessmentModalState.candidateName}.`);
-      handleCloseAssessmentModal();
-      await loadCandidateAssessments();
-    } catch (error) {
-      console.error("Failed to assign assessment:", error);
-      toast.error("Unable to assign assessment.");
-    }
+    setIsSubmittingGrade(false);
   };
 
   const handleSubmitGrade = async () => {
@@ -1063,6 +1074,7 @@ export default function PipelineApplicants() {
       return;
     }
 
+    setIsSubmittingGrade(true);
     try {
       await defaultAxios.patch(
         `/api/candidate/assessments/${assessmentModalState.candidateAssessmentId}/`,
@@ -1078,12 +1090,109 @@ export default function PipelineApplicants() {
     } catch (error) {
       console.error("Failed to submit grade:", error);
       toast.error("Unable to submit grade.");
+    } finally {
+      setIsSubmittingGrade(false);
     }
   };
 
   const handleViewAssessment = (candidate: { id: number }) => {
     if (!jobId) return;
     navigate(`/job/${jobId}/exam-form/${candidate.id}`);
+  };
+
+  const handleOpenSendAssessmentModal = (
+    candidate: { id: number; name: string; pipelineStepId?: number },
+  ) => {
+    if (!candidate.pipelineStepId) {
+      toast.error("Pipeline step not found.");
+      return;
+    }
+
+    if (stepAssessments.length === 0) {
+      toast.error("No assessments configured for this pipeline step.");
+      return;
+    }
+
+    const interviewerFullName = user
+      ? [user.first_name, user.last_name].filter(Boolean).join(" ") || user.email
+      : "";
+    const interviewerRoleLabel = user?.role
+      ? user.role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+      : "";
+    const companyName = user?.company?.name || "";
+
+    const signatureBlock = [interviewerFullName, interviewerRoleLabel, companyName]
+      .filter(Boolean)
+      .join("\n");
+
+    setSendAssessmentModalState({
+      open: true,
+      candidateApplicationId: candidate.id,
+      candidateName: candidate.name,
+      pipelineStepId: candidate.pipelineStepId,
+      subject: `Assessment - ${resolvedJobTitle || "Job Application"}`,
+      body: `Hello ${candidate.name},\n\nPlease find attached the assessment materials for your application.\n\nPlease complete and submit them at your earliest convenience.\n\nThank you.\n\nBest regards,\n${signatureBlock}`,
+    });
+    setSendPreview(null);
+  };
+
+  const handleCloseSendAssessmentModal = () => {
+    setSendAssessmentModalState((prev) => ({ ...prev, open: false }));
+    setSendPreview(null);
+    setIsSendPreviewOpen(false);
+  };
+
+  const handleSendPreview = async () => {
+    const assessmentIds = stepAssessments.map((a) => a.id).filter(Boolean);
+    if (assessmentIds.length === 0) {
+      toast.error("No assessments to send.");
+      return;
+    }
+
+    setIsLoadingSendPreview(true);
+    try {
+      const response = await defaultAxios.post("/api/candidate/assessments/send/preview/", {
+        assessment_ids: assessmentIds,
+        candidate_application_id: sendAssessmentModalState.candidateApplicationId,
+        pipeline_step_id: sendAssessmentModalState.pipelineStepId,
+        subject: sendAssessmentModalState.subject,
+        body: sendAssessmentModalState.body,
+      });
+      setSendPreview(response.data);
+      setIsSendPreviewOpen(true);
+    } catch (error) {
+      console.error("Failed to generate preview:", error);
+      toast.error("Unable to generate email preview.");
+    } finally {
+      setIsLoadingSendPreview(false);
+    }
+  };
+
+  const handleSendAssessment = async () => {
+    const assessmentIds = stepAssessments.map((a) => a.id).filter(Boolean);
+    if (assessmentIds.length === 0) {
+      toast.error("No assessments to send.");
+      return;
+    }
+
+    setIsSendingAssessment(true);
+    try {
+      await defaultAxios.post("/api/candidate/assessments/send/", {
+        assessment_ids: assessmentIds,
+        candidate_application_id: sendAssessmentModalState.candidateApplicationId,
+        pipeline_step_id: sendAssessmentModalState.pipelineStepId,
+        subject: sendAssessmentModalState.subject,
+        body: sendAssessmentModalState.body,
+      });
+      toast.success(`Assessment email sent to ${sendAssessmentModalState.candidateName}.`);
+      handleCloseSendAssessmentModal();
+      await loadCandidateAssessments();
+    } catch (error) {
+      console.error("Failed to send assessment:", error);
+      toast.error("Unable to send assessment email.");
+    } finally {
+      setIsSendingAssessment(false);
+    }
   };
 
   const getAssessmentStatusBadge = (status: string) => {
@@ -1093,8 +1202,10 @@ export default function PipelineApplicants() {
     > = {
       not_assigned: { label: "Not Assigned", className: "border-gray-300 text-gray-600" },
       assigned: { label: "Assigned", className: "border-yellow-400 text-yellow-700" },
+      sent: { label: "Sent", className: "border-blue-400 text-blue-700" },
       submitted: { label: "Submitted", className: "border-blue-400 text-blue-700" },
       graded: { label: "Graded", className: "border-green-500 text-green-600" },
+      partially_graded: { label: "Partially Graded", className: "border-amber-400 text-amber-700" },
     };
 
     const config = statusConfig[status] || statusConfig.not_assigned;
@@ -1104,7 +1215,6 @@ export default function PipelineApplicants() {
       </Badge>
     );
   };
-  
 
   const handleCloseScheduleModal = () => {
     if (isSavingSchedule) {
@@ -1568,14 +1678,11 @@ export default function PipelineApplicants() {
                         </>
                       ) : isAssessmentStage ? (
                         <>
-                          <TableHead className="border border-gray-200 py-2 px-3 w-24 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
-                            Assessment Status
+                          <TableHead className="border border-gray-200 py-2 px-3 text-center text-xs lg:text-sm lg:py-3 lg:px-4 w-56">
+                            Assessments
                           </TableHead>
-                          <TableHead className="border border-gray-200 py-2 px-3 w-24 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
-                            Score
-                          </TableHead>
-                          <TableHead className="border border-gray-200 py-2 px-3 w-28 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
-                            Actions
+                          <TableHead className="border border-gray-200 py-2 px-3 w-16 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
+                            Send
                           </TableHead>
                         </>
                       ) : (
@@ -1601,7 +1708,7 @@ export default function PipelineApplicants() {
                         </TableHead>
                       ) : null}
 
-                      {!isInterviewScheduleStage && !isPassFailStage ? (
+                      {isInterviewScheduleStage ? (
                         <TableHead className="border border-gray-200 py-2 px-3 w-24 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
                           Interview Evaluation
                           <br />
@@ -1759,63 +1866,106 @@ export default function PipelineApplicants() {
                             </>
                           ) : isAssessmentStage ? (
                             <>
-                              <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
-                                {getAssessmentStatusBadge(
-                                  candidateAssessments.get(candidate.id)?.status || "not_assigned"
-                                )}
-                              </TableCell>
-                              <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
-                                <span className="text-xs lg:text-sm font-medium">
-                                  {candidateAssessments.get(candidate.id)?.score !== undefined &&
-                                  candidateAssessments.get(candidate.id)?.score !== null
-                                    ? `${candidateAssessments.get(candidate.id)?.score}/100`
-                                    : "-"}
-                                </span>
-                              </TableCell>
-                              <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
-                                <div className="flex flex-col gap-2">
-                                  {candidateAssessments.get(candidate.id)?.status === "not_assigned" ? (
+                              <TableCell className="border border-gray-200 py-3 px-2 text-center align-top">
+                                <div className="flex flex-col gap-1 overflow-x-auto">
+                                  {stepAssessments.length === 0 ? (
+                                    <span className="text-xs text-gray-400">No assessments configured</span>
+                                  ) : (
+                                    stepAssessments.map((sa) => {
+                                      const candidateAssessment = (candidateAssessments.get(candidate.id) || []).find(
+                                        (ca) => ca.assessmentId === sa.id
+                                      );
+                                      const status = candidateAssessment?.status || "not_assigned";
+                                      const displayName = formatAssessmentType(sa.type);
+                                      return (
+                                        <div key={sa.id} className="flex items-center gap-1 rounded border border-gray-200 bg-gray-50 px-1.5 py-1 text-left shrink-0 min-w-0">
+                                          <span className="text-xs font-medium text-gray-700 whitespace-nowrap shrink-0">
+                                            {displayName}
+                                          </span>
+                                          <span className="text-[10px] text-gray-400 truncate shrink" title={sa.file?.filename || undefined}>
+                                            {sa.file?.filename || ""}
+                                          </span>
+                                          <div className="flex-1" />
+                                          {candidateAssessment ? getAssessmentStatusBadge(status) : (
+                                            <Badge variant="outline" className="border-gray-300 text-gray-500 text-[10px] whitespace-nowrap">Not Sent</Badge>
+                                          )}
+                                          {candidateAssessment && (
+                                            <span className="text-[10px] text-gray-500 whitespace-nowrap">
+                                              {candidateAssessment.score !== undefined && candidateAssessment.score !== null
+                                                ? `${candidateAssessment.score}/100`
+                                                : ""}
+                                            </span>
+                                          )}
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-6 text-[10px] px-2 shrink-0"
+                                            onClick={() => handleOpenAssessmentModal(candidate, "preview", sa.id)}
+                                          >
+                                            <FileText className="h-3 w-3 mr-1" />
+                                            Preview
+                                          </Button>
+                                          {candidateAssessment && (
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              className="h-6 text-[10px] px-2 shrink-0"
+                                              onClick={() => handleViewAssessment(candidate)}
+                                            >
+                                              View
+                                            </Button>
+                                          )}
+                                          {status === "submitted" && (
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              className="h-6 text-[10px] px-2 text-blue-600 border-blue-500 bg-white hover:bg-blue-500 hover:text-white shrink-0"
+                                              onClick={() =>
+                                                handleOpenAssessmentModal(candidate, "grade", sa.id, candidateAssessment?.id)
+                                              }
+                                              disabled={!candidate.stepInterviewerId || user?.id !== candidate.stepInterviewerId}
+                                              title={
+                                                !candidate.stepInterviewerId || user?.id !== candidate.stepInterviewerId
+                                                  ? 'Only the assigned interviewer can grade.'
+                                                  : undefined
+                                              }
+                                            >
+                                              Grade
+                                            </Button>
+)}
+                                         </div>
+                                       );
+                                     })
+                                   )}
+                                 </div>
+                               </TableCell>
+                              <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle w-16">
+                                {stepAssessments.length > 0 ? (() => {
+                                  const candidateAssessmentsList = candidateAssessments.get(candidate.id) || [];
+                                  const alreadySent = candidateAssessmentsList.some((ca) => ca.is_sent);
+                                  const isInterviewer = candidate.stepInterviewerId && user?.id === candidate.stepInterviewerId;
+                                  const disabled = alreadySent || !isInterviewer;
+                                  return (
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="w-full text-xs lg:text-sm px-2"
-                                      onClick={() =>
-                                        handleOpenAssessmentModal(candidate, "preview")
+                                      className="w-full text-xs lg:text-sm px-2 text-green-600 border-green-500 bg-white hover:bg-green-500 hover:text-white"
+                                      onClick={() => handleOpenSendAssessmentModal(candidate)}
+                                      disabled={disabled}
+                                      title={
+                                        alreadySent
+                                          ? 'Assessment already sent.'
+                                          : !isInterviewer
+                                            ? 'Only the assigned interviewer can send assessments.'
+                                            : undefined
                                       }
                                     >
-                                      <Plus className="h-3 w-3 mr-1" />
-                                      Preview & Assign
+                                      Send
                                     </Button>
-                                  ) : (
-                                    <>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="w-full text-xs lg:text-sm px-2 text-slate-700 border-slate-300 bg-white hover:bg-slate-900 hover:text-white"
-                                        onClick={() => handleViewAssessment(candidate)}
-                                      >
-                                        <FileText className="h-3 w-3 mr-1" />
-                                        View
-                                      </Button>
-                                      {candidateAssessments.get(candidate.id)?.status === "submitted" && (
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          className="w-full text-xs lg:text-sm px-2 text-blue-600 border-blue-500 bg-white hover:bg-blue-500 hover:text-white"
-                                          onClick={() =>
-                                            handleOpenAssessmentModal(
-                                              candidate,
-                                              "grade",
-                                              candidateAssessments.get(candidate.id)?.id,
-                                            )
-                                          }
-                                        >
-                                          Grade
-                                        </Button>
-                                      )}
-                                    </>
-                                  )}
-                                </div>
+                                  );
+                                })() : (
+                                  <span className="text-xs text-gray-400">-</span>
+                                )}
                               </TableCell>
                             </>
                           ) : (
@@ -1865,63 +2015,51 @@ export default function PipelineApplicants() {
                             </TableCell>
                           ) : null}
 
-                          {!isInterviewScheduleStage && !isPassFailStage ? (
+                          {isInterviewScheduleStage ? (
                             <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
                               <Button
                                 variant="outline"
                                 size="sm"
                                 className="w-full px-2 text-xs lg:text-sm"
+                                onClick={() =>
+                                  handleOpenInterviewEvaluationForm(candidate, resolvedJobTitle)
+                                }
                               >
                                 View
                               </Button>
                             </TableCell>
                           ) : null}
                         </TableRow>
-                      ))
+))
                     )}
                   </TableBody>
                 </Table>
               </div>
-              )
-            )}
-
-            {searchTerm && (
-              <div className="text-xs lg:text-sm text-gray-600">
-                Showing {visibleStepCandidates.length} applicants
-                {searchTerm && ` for "${searchTerm}"`}
-              </div>
-            )}
+            )
+          )}
           </div>
-        </div>
-      </div>
+         </div>
+       </div>
 
-      
+       <Dialog
+        open={scheduleModalState.open}
+        onOpenChange={(open) => {
+          if (!open) handleCloseScheduleModal();
+        }}
+      >
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>
+                  {scheduleModalState.mode === "reschedule" ? "Reschedule Interview" : "Schedule Interview"}
+                </DialogTitle>
+                <DialogDescription>
+                  {scheduleModalState.candidateName
+                    ? `Candidate: ${scheduleModalState.candidateName}`
+                    : "Set up the interview details."}
+                </DialogDescription>
+</DialogHeader>
 
-      <Dialog open={scheduleModalState.open} onOpenChange={handleCloseScheduleModal}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader>
-            <DialogTitle>
-              {scheduleModalState.mode === "reschedule"
-                ? "Reschedule Interview"
-                : "Schedule Interview"}
-            </DialogTitle>
-            <DialogDescription>
-              Plan, organize and schedule interview.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-3">
-            <div className="max-w-56">
-              <Input
-                id="interview-schedule-date"
-                type="date"
-                value={scheduleForm.scheduledDate}
-                onChange={(event) =>
-                  handleScheduleInputChange("scheduledDate", event.target.value)
-                }
-              />
-            </div>
-            <div className="rounded-md border border-gray-200 p-3 space-y-3">
+              <div className="rounded-md border border-gray-200 p-3 space-y-3">
               <div className="grid grid-cols-1 gap-2 md:grid-cols-[140px_140px_1fr]">
                 <Select
                   value={scheduleForm.scheduledTime}
@@ -2123,11 +2261,10 @@ export default function PipelineApplicants() {
                     <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
-              )}
-            </div>
-          </div>
+)}
+           </div>
 
-          <DialogFooter className="flex-col gap-2 sm:flex-row">
+           <DialogFooter className="flex-col gap-2 sm:flex-row">
             <Button
               type="button"
               variant="outline"
@@ -2213,7 +2350,7 @@ export default function PipelineApplicants() {
             </DialogTitle>
             <DialogDescription>
               {assessmentModalState.mode === "preview"
-                ? `Review the assessment details before assigning to ${assessmentModalState.candidateName}.`
+                ? `Preview assessment file for ${assessmentModalState.candidateName}.`
                 : `Enter the score and notes for ${assessmentModalState.candidateName}.`}
             </DialogDescription>
           </DialogHeader>
@@ -2222,23 +2359,66 @@ export default function PipelineApplicants() {
             {assessmentModalState.mode === "preview" ? (
               <>
                 <div className="space-y-2">
-                  <Label className="font-semibold">Assessment Name</Label>
-                  <p className="text-sm text-gray-700">
-                    {assessmentModalState.assessment?.name || "Unnamed Assessment"}
-                  </p>
-                </div>
-                {assessmentModalState.assessment?.file?.filename && (
-                  <div className="space-y-2">
-                    <Label className="font-semibold">Assessment File</Label>
-                    <p className="text-sm text-gray-700">
-                      {assessmentModalState.assessment.file.filename}
-                    </p>
-                  </div>
-                )}
-                <div className="bg-blue-50 border border-blue-200 rounded p-3">
-                  <p className="text-sm text-blue-700">
-                    Click <strong>"Confirm & Assign"</strong> to assign this assessment to {assessmentModalState.candidateName}.
-                  </p>
+                  <Label className="font-semibold">
+                    {formatAssessmentType(assessmentModalState.assessment?.type)}
+                  </Label>
+                  {assessmentModalState.assessment?.file?.file ? (
+                    (() => {
+                      const assessment = assessmentModalState.assessment!;
+                      const file = assessment.file!;
+                      const previewUrl = resolveFileUrl(file.file);
+                      const ext = file.filename?.split('.').pop() || null;
+                      if (isPdfExtension(ext) && previewUrl) {
+                        return (
+                          <div className="relative">
+                            {isPreviewLoading && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded border z-10">
+                                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                              </div>
+                            )}
+                            <iframe
+                              src={previewUrl}
+                              className="w-full h-96 rounded border border-gray-200"
+                              title="Assessment preview"
+                              onLoad={() => setIsPreviewLoading(false)}
+                            />
+                          </div>
+                        );
+                      }
+                      if (isImageExtension(ext) && previewUrl) {
+                        return (
+                          <div className="rounded border border-gray-200 bg-gray-100 flex items-center justify-center min-h-[200px]">
+                            {isPreviewLoading && (
+                              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                            )}
+                            <img
+                              src={previewUrl}
+                              alt="Assessment preview"
+                              className="max-w-full max-h-96 object-contain"
+                              style={{ display: isPreviewLoading ? 'none' : undefined }}
+                              onLoad={() => setIsPreviewLoading(false)}
+                              onError={() => setIsPreviewLoading(false)}
+                            />
+                          </div>
+                        );
+                      }
+                      return (
+                        <div className="flex flex-col gap-2 items-center p-8 bg-gray-50 rounded border border-dashed border-gray-300">
+                          <FileText className="h-10 w-10 text-gray-400" />
+                          <p className="text-sm text-gray-500">{file.filename}</p>
+                          {previewUrl && (
+                            <Button asChild variant="outline" size="sm">
+                              <a href={previewUrl} target="_blank" rel="noreferrer">Download File</a>
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <div className="p-8 bg-gray-50 rounded border border-dashed border-gray-300 text-center">
+                      <p className="text-sm text-gray-500">No file uploaded for this assessment.</p>
+                    </div>
+                  )}
                 </div>
               </>
             ) : (
@@ -2284,18 +2464,167 @@ export default function PipelineApplicants() {
               type="button"
               variant="outline"
               onClick={handleCloseAssessmentModal}
+              disabled={isSubmittingGrade}
+            >
+              {assessmentModalState.mode === "preview" ? "Close" : "Cancel"}
+            </Button>
+            {assessmentModalState.mode === "grade" && (
+              <Button
+                type="button"
+                onClick={handleSubmitGrade}
+                disabled={isSubmittingGrade}
+              >
+                {isSubmittingGrade ? "Submitting..." : "Submit Grade"}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={sendAssessmentModalState.open} onOpenChange={handleCloseSendAssessmentModal}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle>Send Assessment Email</DialogTitle>
+            <DialogDescription>
+              Send assessment materials to {sendAssessmentModalState.candidateName} via email.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="send-assessment-subject">Email Subject</Label>
+              <Input
+                id="send-assessment-subject"
+                value={sendAssessmentModalState.subject}
+                onChange={(e) =>
+                  setSendAssessmentModalState((prev) => ({ ...prev, subject: e.target.value }))
+                }
+                placeholder="Assessment email subject..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="send-assessment-body">Email Body</Label>
+              <Textarea
+                id="send-assessment-body"
+                value={sendAssessmentModalState.body}
+                onChange={(e) =>
+                  setSendAssessmentModalState((prev) => ({ ...prev, body: e.target.value }))
+                }
+                placeholder="Assessment email body..."
+                className="min-h-28"
+              />
+              <p className="text-xs text-gray-500">
+                Available placeholders: {"{candidate_name}"}, {"{job_title}"}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="font-semibold">Assessments to Send</Label>
+              <div className="rounded border border-gray-200 bg-gray-50 p-3 space-y-1">
+                {stepAssessments.length === 0 ? (
+                  <p className="text-sm text-gray-500">No assessments configured.</p>
+                ) : (
+                  stepAssessments.map((sa) => (
+                    <div key={sa.id} className="flex items-center justify-between text-sm">
+                      <span className="text-gray-700">
+                        {formatAssessmentType(sa.type)}
+                      </span>
+                      <Badge variant="outline" className="text-xs">
+                        {sa.file?.filename || "No file"}
+                      </Badge>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="flex-col gap-2 sm:flex-row">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCloseSendAssessmentModal}
+              disabled={isSendingAssessment}
             >
               Cancel
             </Button>
             <Button
               type="button"
-              onClick={
-                assessmentModalState.mode === "preview"
-                  ? handleAssignAssessment
-                  : handleSubmitGrade
-              }
+              variant="outline"
+              onClick={handleSendPreview}
+              disabled={isSendingAssessment || isLoadingSendPreview}
             >
-              {assessmentModalState.mode === "preview" ? "Confirm & Assign" : "Submit Grade"}
+              {isLoadingSendPreview ? "Loading..." : "Preview Email"}
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSendAssessment}
+              disabled={isSendingAssessment}
+            >
+              {isSendingAssessment ? "Sending..." : "Confirm & Send"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isSendPreviewOpen} onOpenChange={setIsSendPreviewOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle>Email Preview</DialogTitle>
+            <DialogDescription>
+              This is what will be sent to the candidate.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-gray-600 uppercase">To</div>
+              <div className="text-sm bg-white p-3 rounded border border-gray-200">
+                {sendPreview?.recipient_name} ({sendPreview?.recipient_email})
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-gray-600 uppercase">Subject</div>
+              <div className="text-sm bg-white p-3 rounded border border-gray-200 wrap-break-word">
+                {sendPreview?.subject}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-gray-600 uppercase">Rendered HTML</div>
+              <iframe
+                title="Assessment Email HTML Preview"
+                className="w-full h-64 sm:h-80 bg-white rounded border border-gray-200"
+                srcDoc={sendPreview?.html_body || ""}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-gray-600 uppercase">Attachments</div>
+              <div className="text-sm bg-white p-3 rounded border border-gray-200">
+                {sendPreview?.attachments && sendPreview.attachments.length > 0 ? (
+                  <ul className="list-disc list-inside space-y-1">
+                    {sendPreview!.attachments.map((att, idx) => (
+                      <li key={idx}>
+                        {att.filename} ({Math.round(att.size / 1024)} KB)
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-500">No attachments</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsSendPreviewOpen(false)}
+            >
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

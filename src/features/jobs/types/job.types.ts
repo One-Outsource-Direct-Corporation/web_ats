@@ -52,6 +52,24 @@ export interface JobPipelineStepResponseDto {
   } | null;
   candidate_application_ids?: number[] | null;
   candidate_applications?: JobPipelineCandidateResponseDto[] | null;
+  assessments?: AssessmentResponseDto[] | null;
+}
+
+export interface AssessmentFileResponseDto {
+  id: number;
+  filename?: string | null;
+  file?: string | null;
+  file_extension?: string | null;
+}
+
+export interface AssessmentResponseDto {
+  id: number;
+  type_label?: string | null;
+  type?: string | null;
+  order?: number;
+  is_required?: boolean;
+  is_active?: boolean;
+  file?: AssessmentFileResponseDto | null;
 }
 
 export interface JobPipelineCandidateResponseDto {
@@ -111,4 +129,17 @@ export interface JobPipelineStep {
   interviewerId?: number;
   candidateApplicationIds: number[];
   candidateApplications: JobPipelineCandidate[];
+  assessments: PipelineAssessment[];
+}
+
+export interface PipelineAssessment {
+  id: number;
+  type_label?: string | null;
+  type?: string | null;
+  file?: {
+    id?: number;
+    filename?: string | null;
+    file?: string | null;
+    file_extension?: string | null;
+  } | null;
 }

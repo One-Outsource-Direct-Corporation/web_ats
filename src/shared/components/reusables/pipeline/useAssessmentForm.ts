@@ -40,7 +40,6 @@ export function useAssessmentForm({
   const [assessmentForm, setAssessmentForm] = useState<
     Omit<Assessment, "id" | "tempId">
   >({
-    name: null,
     type: "",
     order: 0,
     file: null,
@@ -61,7 +60,6 @@ export function useAssessmentForm({
   useEffect(() => {
     if (editingAssessment) {
       setAssessmentForm({
-        name: editingAssessment.name || null,
         type: editingAssessment.type,
         order: editingAssessment.order,
         file: editingAssessment.file || null,
@@ -120,7 +118,6 @@ export function useAssessmentForm({
 
   const resetForm = () => {
     setAssessmentForm({
-      name: null,
       type: "",
       order: 0,
       file: null,
@@ -218,7 +215,6 @@ export function useAssessmentForm({
         setAssessmentForm((prev) => ({
           ...prev,
           type: template.type,
-          name: null,
           file: template.file,
         }));
 
@@ -273,7 +269,6 @@ export function useAssessmentForm({
       setAssessmentForm((prev) => ({
         ...prev,
         file: null,
-        name: null,
       }));
       setFilePreview(null);
       setIsUsingTemplateFile(false);

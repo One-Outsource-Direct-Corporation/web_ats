@@ -5,7 +5,6 @@ import type {
 
 export interface PipelineAssessmentInputPayload {
   id?: number;
-  name?: string | null;
   type: string | null;
   order: number;
   file_id?: number;
