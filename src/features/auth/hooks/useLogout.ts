@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import { clearAllAuthStorage } from "../utils/authStorage";
 
 export const useLogout = () => {
-  const { setUser, setPersist, setIsAuth } = useAuth();
+  const { setUser, setIsAuth } = useAuth();
 
   const logout = useCallback(async () => {
     try {
@@ -14,10 +14,9 @@ export const useLogout = () => {
     } finally {
       setUser(null);
       setIsAuth(false);
-      setPersist(false);
       clearAllAuthStorage();
     }
-  }, [setIsAuth, setPersist, setUser]);
+  }, [setIsAuth, setUser]);
 
   return { logout };
 };

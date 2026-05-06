@@ -3,13 +3,12 @@ import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Button } from "@/shared/components/ui/button";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
-import { Checkbox } from "@/shared/components/ui/checkbox";
 import { useAuth } from "../hooks/useAuth";
 import { toast } from "react-toastify";
 import { defaultAxios } from "@/config/axios";
 
 const LoginForm: React.FC = () => {
-  const { setUser, persist, setPersist, setIsAuth } = useAuth();
+  const { setUser, setIsAuth } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -46,10 +45,6 @@ const LoginForm: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const togglePersist = () => {
-    setPersist((prev) => !prev);
   };
 
   return (
@@ -117,21 +112,6 @@ const LoginForm: React.FC = () => {
             )}
           </Button>
         </div>
-      </div>
-
-      {/* Remember Me */}
-      <div className="mb-6 flex items-center space-x-3">
-        <Checkbox
-          id="keep-logged-in"
-          checked={persist}
-          // onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-          onCheckedChange={togglePersist}
-          className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
-          disabled={isLoading}
-        />
-        <label htmlFor="keep-logged-in" className="text-lg">
-          Trust this device
-        </label>
       </div>
 
       <Button

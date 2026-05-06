@@ -19,6 +19,7 @@ import { Label } from "@/shared/components/ui/label.tsx";
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group.tsx";
 import { Textarea } from "@/shared/components/ui/textarea.tsx";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
+import { useDeferredAction } from "@/features/applicants/hooks/useDeferredAction";
 
 interface Candidate {
   id: number;
@@ -56,10 +57,10 @@ export default function ShortlistStatusModal({
 }: ShortlistStatusModalProps) {
   const [status, setStatus] = useState<"passed" | "failed">("passed");
   const [remarks, setRemarks] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const axiosPrivate = useAxiosPrivate();
+  const { queueAction } = useDeferredAction();
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!candidate || !canChangeStatus || !candidateApplicationId || !pipelineStepId) {
       toast.error("Only the assigned interviewer can change this status.", {
         position: "top-right",
@@ -68,59 +69,57 @@ export default function ShortlistStatusModal({
       return;
     }
 
-    setIsLoading(true);
+    const endpoint =
+      status === "passed"
+        ? "/api/candidate/pipeline/shortlist/approve/"
+        : "/api/candidate/pipeline/shortlist/reject/";
 
-    try {
-      const endpoint =
-        status === "passed"
-          ? "/api/candidate/pipeline/shortlist/approve/"
-          : "/api/candidate/pipeline/shortlist/reject/";
+    const payload = {
+      candidate_application_id: candidateApplicationId,
+      pipeline_step_id: pipelineStepId,
+      remarks: remarks.trim(),
+    };
 
-      const payload = {
-        candidate_application_id: candidateApplicationId,
-        pipeline_step_id: pipelineStepId,
-        remarks: remarks.trim(),
-      };
+    const candidateName = candidate.name;
+    const targetStatus = status;
 
-      const response = await axiosPrivate.post(endpoint, payload);
+    setStatus("passed");
+    setRemarks("");
+    onClose();
 
-      if (response.status === 200) {
-        toast.success(
-          `Candidate marked as ${status === "passed" ? "Passed" : "Failed"}`,
-          {
+    queueAction({
+      candidateName,
+      label: targetStatus === "passed" ? "Shortlist Approve" : "Shortlist Reject",
+      onCommit: async () => {
+        try {
+          const response = await axiosPrivate.post(endpoint, payload);
+          if (response.status === 200) {
+            toast.success(
+              `Candidate marked as ${targetStatus === "passed" ? "Passed" : "Failed"}`,
+              {
+                position: "top-right",
+                autoClose: 3000,
+              },
+            );
+            onStatusChange?.();
+          }
+        } catch (error: any) {
+          const errorMessage =
+            error?.response?.data?.error || "Failed to update candidate status";
+          toast.error(errorMessage, {
             position: "top-right",
             autoClose: 3000,
-          }
-        );
-
-        // Reset form
-        setStatus("passed");
-        setRemarks("");
-        onClose();
-
-        // Notify parent to refetch data
-        onStatusChange?.();
-      }
-    } catch (error: any) {
-      const errorMessage =
-        error?.response?.data?.error || "Failed to update candidate status";
-      toast.error(errorMessage, {
-        position: "top-right",
-        autoClose: 3000,
-      });
-
-      console.error("Error updating candidate status:", error);
-    } finally {
-      setIsLoading(false);
-    }
+          });
+          console.error("Error updating candidate status:", error);
+        }
+      },
+    });
   };
 
   const handleClose = () => {
-    if (!isLoading) {
-      setStatus("passed");
-      setRemarks("");
-      onClose();
-    }
+    setStatus("passed");
+    setRemarks("");
+    onClose();
   };
 
   return (
@@ -195,7 +194,6 @@ export default function ShortlistStatusModal({
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
                 className="min-h-24 resize-none"
-                disabled={isLoading}
               />
             </div>
 
@@ -216,16 +214,15 @@ export default function ShortlistStatusModal({
           <Button
             variant="outline"
             onClick={handleClose}
-            disabled={isLoading}
           >
             Cancel
           </Button>
           <Button
             onClick={handleSubmit}
-              disabled={isLoading || !canChangeStatus}
+            disabled={!canChangeStatus}
             className={status === "passed" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}
           >
-            {isLoading ? "Processing..." : `Mark as ${status === "passed" ? "Passed" : "Failed"}`}
+            {`Mark as ${status === "passed" ? "Passed" : "Failed"}`}
           </Button>
         </DialogFooter>
       </DialogContent>

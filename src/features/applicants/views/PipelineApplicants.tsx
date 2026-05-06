@@ -57,16 +57,7 @@ import {
 
 import ResumeScreeningTable from "@/features/applicants/components/ResumeScreeningTable";
 
-type PipelineProgressOutcome = "pass" | "fail";
-
-interface PendingProgressAction {
-  id: string;
-  candidateApplicationId: number;
-  candidateName: string;
-  pipelineStepId: number;
-  outcome: PipelineProgressOutcome;
-  toastId?: string | number;
-}
+import { useDeferredAction } from "@/features/applicants/hooks/useDeferredAction";
 
 interface InterviewScheduleModalState {
   open: boolean;
@@ -162,9 +153,6 @@ interface InterviewEmailPreviewResponse {
   html_body: string;
   scheduled_for: string;
 }
-
-const GRACE_PERIOD_MS = 5000;
-const DEFERRED_ACTION_TOAST_POSITION = "top-center" as const;
 
 const toDateInputValue = (isoDateTime?: string): string => {
   if (!isoDateTime) {
@@ -338,7 +326,7 @@ const normalizeStatusTag = (value?: string): string => {
     .replace(/[^a-z_]/g, "");
 };
 
-  const ACTIVE_PIPELINE_STATUSES = new Set(["pending", "scheduled", "in_progress"]);
+  const ACTIVE_PIPELINE_STATUSES = new Set(["pending", "scheduled", "in_progress", "assessment_sent", "assessment_partially_graded", "assessment_graded"]);
 
 export default function PipelineApplicants() {
   const navigate = useNavigate();
@@ -349,13 +337,7 @@ export default function PipelineApplicants() {
   const { user } = useAuth();
   const axiosPrivate = useAxiosPrivate();
   const queryClient = useQueryClient();
-
-  const [pendingActions, setPendingActions] = useState<PendingProgressAction[]>([]);
-  const pendingTimersRef = useRef<Record<string, ReturnType<typeof window.setTimeout>>>({});
-  const pendingCountdownIntervalsRef = useRef<Record<string, ReturnType<typeof window.setInterval>>>({});
-  const pendingActionsRef = useRef<PendingProgressAction[]>([]);
-
-  const [processingCandidateId, setProcessingCandidateId] = useState<number | null>(null);
+  const { queueAction, processingId, pendingCandidateIds } = useDeferredAction();
 
   const [scheduleModalState, setScheduleModalState] = useState<InterviewScheduleModalState>({
     open: false,
@@ -388,7 +370,6 @@ export default function PipelineApplicants() {
   });
   const [sendPreview, setSendPreview] = useState<SendAssessmentPreview | null>(null);
   const [isSendPreviewOpen, setIsSendPreviewOpen] = useState(false);
-  const [isSendingAssessment, setIsSendingAssessment] = useState(false);
   const [isLoadingSendPreview, setIsLoadingSendPreview] = useState(false);
   const [isSubmittingGrade, setIsSubmittingGrade] = useState(false);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
@@ -415,10 +396,6 @@ export default function PipelineApplicants() {
 
   const { data: jobDetail, isLoading, isError, refetch } = useJobDetailQuery(jobId);
 
-  useEffect(() => {
-    pendingActionsRef.current = pendingActions;
-  }, [pendingActions]);
-
   // Track navigation to/from IEF pages and trigger a refetch when returning
   const prevPathRef = useRef<string>(location.pathname);
   useEffect(() => {
@@ -432,20 +409,6 @@ export default function PipelineApplicants() {
 
     prevPathRef.current = current;
   }, [location.pathname, refetch]);
-
-  useEffect(() => {
-    return () => {
-      for (const timerId of Object.values(pendingTimersRef.current)) {
-        window.clearTimeout(timerId);
-      }
-      pendingTimersRef.current = {};
-
-      for (const intervalId of Object.values(pendingCountdownIntervalsRef.current)) {
-        window.clearInterval(intervalId);
-      }
-      pendingCountdownIntervalsRef.current = {};
-    };
-  }, []);
 
   const pipelineSteps = useMemo(
     () => extractPipelineStepsFromJobDetail(jobDetail),
@@ -616,11 +579,6 @@ export default function PipelineApplicants() {
       .sort((left, right) => left.id - right.id);
   }, [pipelineSteps, selectedType, searchTerm]);
 
-  const pendingCandidateIds = useMemo(
-    () => new Set(pendingActions.map((pendingAction) => pendingAction.candidateApplicationId)),
-    [pendingActions],
-  );
-
   const visibleStepCandidates = useMemo(
     () =>
       selectedStepCandidates.filter(
@@ -652,154 +610,6 @@ export default function PipelineApplicants() {
     navigate(`/job/${jobId}/applicants/status?${nextParams.toString()}`);
   };
 
-  const clearPendingActionCountdown = useCallback((actionId: string) => {
-    const intervalId = pendingCountdownIntervalsRef.current[actionId];
-    if (!intervalId) {
-      return;
-    }
-
-    window.clearInterval(intervalId);
-    delete pendingCountdownIntervalsRef.current[actionId];
-  }, []);
-
-  const removePendingAction = useCallback((actionId: string) => {
-    setPendingActions((previousValue) =>
-      previousValue.filter((action) => action.id !== actionId),
-    );
-  }, []);
-
-  const handleUndoPendingAction = useCallback((actionId: string) => {
-    const timerId = pendingTimersRef.current[actionId];
-    if (timerId) {
-      window.clearTimeout(timerId);
-      delete pendingTimersRef.current[actionId];
-    }
-
-    clearPendingActionCountdown(actionId);
-
-    const existingAction = pendingActionsRef.current.find(
-      (pendingAction) => pendingAction.id === actionId,
-    );
-    removePendingAction(actionId);
-
-    if (existingAction?.toastId !== undefined) {
-      toast.dismiss(existingAction.toastId);
-    }
-  }, [clearPendingActionCountdown, removePendingAction]);
-
-  const commitPendingAction = useCallback(
-    async (pendingAction: PendingProgressAction) => {
-      if (!pendingActionsRef.current.some((action) => action.id === pendingAction.id)) {
-        return;
-      }
-
-      const timerId = pendingTimersRef.current[pendingAction.id];
-      if (timerId) {
-        window.clearTimeout(timerId);
-        delete pendingTimersRef.current[pendingAction.id];
-      }
-
-      clearPendingActionCountdown(pendingAction.id);
-      // Dismiss the info toast for this pending action so it doesn't linger
-      if (pendingAction.toastId !== undefined) {
-        try {
-          toast.dismiss(pendingAction.toastId);
-        } catch (e) {
-          // ignore
-        }
-      }
-
-      try {
-        setProcessingCandidateId(pendingAction.candidateApplicationId);
-        await axiosPrivate.post("/api/candidate/pipeline/progress/", {
-          candidate_application_id: pendingAction.candidateApplicationId,
-          pipeline_step_id: pendingAction.pipelineStepId,
-          outcome: pendingAction.outcome,
-        });
-
-        toast.success(
-          `${pendingAction.candidateName} marked as ${pendingAction.outcome === "pass" ? "Pass" : "Fail"}.`,
-          {
-            position: DEFERRED_ACTION_TOAST_POSITION,
-          },
-        );
-      } catch (error) {
-        console.error("Unable to update candidate pipeline progress.", error);
-        toast.error("Unable to submit candidate progress update.", {
-          position: DEFERRED_ACTION_TOAST_POSITION,
-        });
-      } finally {
-        removePendingAction(pendingAction.id);
-        setProcessingCandidateId(null);
-        await refetch();
-      }
-    },
-    [clearPendingActionCountdown, refetch, removePendingAction],
-  );
-
-  const renderDeferredActionToast = useCallback(
-    (pendingAction: PendingProgressAction, secondsLeft: number) => {
-      const actionLabel = pendingAction.outcome === "pass" ? "Pass" : "Fail";
-
-      return (
-        <div className="space-y-2">
-          <p className="text-sm leading-5">
-            <span className="font-semibold">{pendingAction.candidateName}</span>{" "}
-            queued for {actionLabel}. Auto-submit in {secondsLeft} second{secondsLeft === 1 ? "" : "s"}.
-          </p>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-8"
-            onClick={() => handleUndoPendingAction(pendingAction.id)}
-          >
-            Undo
-          </Button>
-        </div>
-      );
-    },
-    [handleUndoPendingAction],
-  );
-
-  const showDeferredActionToast = useCallback(
-    (pendingAction: PendingProgressAction) => {
-      const startingSeconds = Math.ceil(GRACE_PERIOD_MS / 1000);
-      let secondsLeft = startingSeconds;
-
-      const toastId = toast.info(
-        renderDeferredActionToast(pendingAction, startingSeconds),
-        {
-          // Disable react-toastify autoClose to avoid internal timer resets
-          autoClose: false,
-          closeButton: false,
-          position: DEFERRED_ACTION_TOAST_POSITION,
-        },
-      );
-
-      pendingCountdownIntervalsRef.current[pendingAction.id] = window.setInterval(() => {
-        secondsLeft -= 1;
-
-        if (secondsLeft <= 0) {
-          // countdown finished: clear interval and remove the info toast
-          clearPendingActionCountdown(pendingAction.id);
-          try {
-            toast.dismiss(toastId);
-          } catch (e) {
-            // ignore
-          }
-          return;
-        }
-
-        toast.update(toastId, {
-          render: renderDeferredActionToast(pendingAction, secondsLeft),
-        });
-      }, 1000);
-
-      return toastId;
-    },
-    [clearPendingActionCountdown, renderDeferredActionToast],
-  );
 
   const isCandidateProgressActionDisabled = useCallback(
     (candidate: { id: number | string; stepInterviewerId?: number }) => {
@@ -812,7 +622,7 @@ export default function PipelineApplicants() {
         return true;
       }
 
-      if (processingCandidateId === candidateId) {
+      if (processingId !== null) {
         return true;
       }
 
@@ -822,68 +632,71 @@ export default function PipelineApplicants() {
 
       return user?.id !== candidate.stepInterviewerId;
     },
-    [processingCandidateId, user?.id],
+    [processingId, user?.id],
   );
 
   const handleCandidateProgress = (
     candidateApplicationId: number,
     candidateName: string,
     pipelineStepId: number | undefined,
-    outcome: PipelineProgressOutcome,
+    outcome: "pass" | "fail",
   ) => {
     if (!pipelineStepId || Number.isNaN(pipelineStepId)) {
       return;
     }
 
-    if (processingCandidateId === candidateApplicationId) {
-      return;
-    }
-
-    const hasPendingAction = pendingActions.some(
-      (pendingAction) =>
-        pendingAction.candidateApplicationId === candidateApplicationId &&
-        pendingAction.pipelineStepId === pipelineStepId,
-    );
-    if (hasPendingAction) {
-      return;
-    }
-
-    const actionId = `${candidateApplicationId}-${pipelineStepId}-${Date.now()}-${outcome}`;
-
-    const pendingAction: PendingProgressAction = {
-      id: actionId,
-      candidateApplicationId,
+    queueAction({
       candidateName,
-      pipelineStepId,
-      outcome,
-    };
-
-    pendingAction.toastId = showDeferredActionToast(pendingAction);
-
-    setPendingActions((previousValue) => [...previousValue, pendingAction]);
-    pendingTimersRef.current[pendingAction.id] = window.setTimeout(() => {
-      void commitPendingAction(pendingAction);
-    }, GRACE_PERIOD_MS);
+      label: outcome === "pass" ? "Pass" : "Fail",
+      dedupKey: `progress-${candidateApplicationId}-${pipelineStepId}`,
+      candidateId: candidateApplicationId,
+      onCommit: async () => {
+        try {
+          await axiosPrivate.post("/api/candidate/pipeline/progress/", {
+            candidate_application_id: candidateApplicationId,
+            pipeline_step_id: pipelineStepId,
+            outcome,
+          });
+          toast.success(
+            `${candidateName} marked as ${outcome === "pass" ? "Pass" : "Fail"}.`,
+          );
+          await refetch();
+        } catch (error) {
+          console.error("Unable to update candidate pipeline progress.", error);
+          toast.error("Unable to submit candidate progress update.");
+          await refetch();
+        }
+      },
+    });
   };
 
-  const handleCandidateShortlist = async (
+  const handleCandidateShortlist = (
     candidateApplicationId: number,
+    candidateName: string,
     pipelineStepId: number | undefined,
   ) => {
     if (!pipelineStepId || Number.isNaN(pipelineStepId)) {
       return;
     }
 
-    try {
-      await axiosPrivate.post("/api/candidate/pipeline/shortlist/", {
-        candidate_application_id: candidateApplicationId,
-        pipeline_step_id: pipelineStepId,
-      });
-      toast.success("Candidate shortlisted successfully.");
-      void refetch();
-    } catch {
-      toast.error("Failed to shortlist candidate.");
-    }
+    queueAction({
+      candidateName,
+      label: "Shortlist",
+      dedupKey: `shortlist-${candidateApplicationId}-${pipelineStepId}`,
+      candidateId: candidateApplicationId,
+      onCommit: async () => {
+        try {
+          await axiosPrivate.post("/api/candidate/pipeline/shortlist/", {
+            candidate_application_id: candidateApplicationId,
+            pipeline_step_id: pipelineStepId,
+          });
+          toast.success("Candidate shortlisted successfully.");
+          await refetch();
+        } catch {
+          toast.error("Failed to shortlist candidate.");
+        }
+      },
+    });
   };
 
   const handleOpenScheduleModal = (
@@ -1192,31 +1005,41 @@ export default function PipelineApplicants() {
     }
   };
 
-  const handleSendAssessment = async () => {
+  const handleSendAssessment = () => {
     const assessmentIds = stepAssessments.map((a) => a.id).filter(Boolean);
     if (assessmentIds.length === 0) {
       toast.error("No assessments to send.");
       return;
     }
 
-    setIsSendingAssessment(true);
-    try {
-      await axiosPrivate.post("/api/candidate/assessments/send/", {
-        assessment_ids: assessmentIds,
-        candidate_application_id: sendAssessmentModalState.candidateApplicationId,
-        pipeline_step_id: sendAssessmentModalState.pipelineStepId,
-        subject: sendAssessmentModalState.subject,
-        body: sendAssessmentModalState.body,
-      });
-      toast.success(`Assessment email sent to ${sendAssessmentModalState.candidateName}.`);
-      handleCloseSendAssessmentModal();
-      await queryClient.invalidateQueries({ queryKey: ["candidate-assessments"] });
-    } catch (error) {
-      console.error("Failed to send assessment:", error);
-      toast.error("Unable to send assessment email.");
-    } finally {
-      setIsSendingAssessment(false);
-    }
+    const candidateAppId = sendAssessmentModalState.candidateApplicationId;
+    const stepId = sendAssessmentModalState.pipelineStepId;
+    const subject = sendAssessmentModalState.subject;
+    const body = sendAssessmentModalState.body;
+    const candidateName = sendAssessmentModalState.candidateName;
+
+    handleCloseSendAssessmentModal();
+
+    queueAction({
+      candidateName,
+      label: "Send Assessment",
+      onCommit: async () => {
+        try {
+          await axiosPrivate.post("/api/candidate/assessments/send/", {
+            assessment_ids: assessmentIds,
+            candidate_application_id: candidateAppId,
+            pipeline_step_id: stepId,
+            subject,
+            body,
+          });
+          toast.success(`Assessment email sent to ${candidateName}.`);
+          await queryClient.invalidateQueries({ queryKey: ["candidate-assessments"] });
+        } catch (error) {
+          console.error("Failed to send assessment:", error);
+          toast.error("Unable to send assessment email.");
+        }
+      },
+    });
   };
 
   const getAssessmentStatusBadge = (status: string) => {
@@ -1549,7 +1372,7 @@ export default function PipelineApplicants() {
     return map;
   }, [pipelineSteps, jobNonNegotiables]);
 
-  const interviewTableColumnCount = (isInterviewScheduleStage ? 6 : isPassFailStage ? 5 : isAssessmentStage ? 6 : 6) + (showNonNegotiableColumn ? 1 : 0) + (showResumeColumn ? 1 : 0);
+  const interviewTableColumnCount = (isInterviewScheduleStage ? 6 : isPassFailStage ? 5 : isAssessmentStage ? 5 : 5) + (showNonNegotiableColumn ? 1 : 0) + (showResumeColumn ? 1 : 0);
 
   return (
     <>
@@ -1650,6 +1473,7 @@ export default function PipelineApplicants() {
                   onShortlist={(candidate) =>
                     void handleCandidateShortlist(
                       Number(candidate.id),
+                      candidate.name,
                       candidate.pipelineStepId,
                     )
                   }
@@ -1663,7 +1487,7 @@ export default function PipelineApplicants() {
                   }
                 />
               ) : (
-              <div className="mt-4 rounded-md border bg-white overflow-x-auto">
+              <div className="mt-4 rounded-md border bg-white overflow-x-auto w-full">
                 <Table className="w-full table-fixed text-xs">
                   <TableHeader>
                     <TableRow>
@@ -1705,8 +1529,8 @@ export default function PipelineApplicants() {
                           <TableHead className="border border-gray-200 py-2 px-3 text-center text-xs lg:text-sm lg:py-3 lg:px-4 w-56">
                             Assessments
                           </TableHead>
-                          <TableHead className="border border-gray-200 py-2 px-3 w-16 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
-                            Send
+                          <TableHead className="border border-gray-200 py-2 px-3 w-36 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
+                            Actions
                           </TableHead>
                         </>
                       ) : (
@@ -1893,7 +1717,9 @@ export default function PipelineApplicants() {
                               <TableCell className="border border-gray-200 py-3 px-2 text-center align-top">
                                 <div className="flex flex-col gap-1 overflow-x-auto">
                                   {stepAssessments.length === 0 ? (
-                                    <span className="text-xs text-gray-400">No assessments configured</span>
+                                    <div className="flex items-center gap-1 rounded border border-gray-200 bg-gray-50 px-1.5 py-1 text-left">
+                                      <span className="text-xs text-gray-400">No assessments configured</span>
+                                    </div>
                                   ) : (
                                     stepAssessments.map((sa) => {
                                       const candidateAssessment = (candidateAssessments.get(candidate.id) || []).find(
@@ -1963,32 +1789,86 @@ export default function PipelineApplicants() {
                                    )}
                                  </div>
                                </TableCell>
-                              <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle w-16">
+                              <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle w-36">
                                 {stepAssessments.length > 0 ? (() => {
                                   const candidateAssessmentsList = candidateAssessments.get(candidate.id) || [];
                                   const alreadySent = candidateAssessmentsList.some((ca) => ca.is_sent);
                                   const isInterviewer = candidate.stepInterviewerId && user?.id === candidate.stepInterviewerId;
-                                  const disabled = alreadySent || !isInterviewer;
+                                  const isAllGraded = candidate.pipelineStatus === "assessment_graded";
+                                  const isAssessmentProgressed = alreadySent || candidate.pipelineStatus === "assessment_sent" || candidate.pipelineStatus === "assessment_partially_graded" || candidate.pipelineStatus === "assessment_graded";
                                   return (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="w-full text-xs lg:text-sm px-2 text-green-600 border-green-500 bg-white hover:bg-green-500 hover:text-white"
-                                      onClick={() => handleOpenSendAssessmentModal(candidate)}
-                                      disabled={disabled}
-                                      title={
-                                        alreadySent
-                                          ? 'Assessment already sent.'
-                                          : !isInterviewer
-                                            ? 'Only the assigned interviewer can send assessments.'
-                                            : undefined
-                                      }
-                                    >
-                                      Send
-                                    </Button>
+                                    <div className="flex flex-col items-center gap-1.5">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full text-xs px-2 text-green-600 border-green-500 bg-white hover:bg-green-500 hover:text-white"
+                                        onClick={() => handleOpenSendAssessmentModal(candidate)}
+                                        disabled={isAssessmentProgressed || !isInterviewer}
+                                        title={
+                                          isAssessmentProgressed
+                                            ? 'Assessment already sent or graded.'
+                                            : !isInterviewer
+                                              ? 'Only the assigned interviewer can send assessments.'
+                                              : undefined
+                                        }
+                                      >
+                                        Send
+                                      </Button>
+                                      <div className="flex gap-1">
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="px-2 text-[10px] text-green-600 border-green-600 bg-white hover:bg-green-600 hover:text-white"
+                                          disabled={!isAllGraded || isCandidateProgressActionDisabled(candidate)}
+                                          onClick={() =>
+                                            handleCandidateProgress(
+                                              candidate.id,
+                                              candidate.name,
+                                              candidate.pipelineStepId,
+                                              "pass",
+                                            )
+                                          }
+                                        >
+                                          Pass
+                                        </Button>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="px-2 text-[10px] text-blue-600 border-blue-600 bg-white hover:bg-blue-600 hover:text-white"
+                                          disabled={!isAllGraded || isCandidateProgressActionDisabled(candidate)}
+                                          onClick={() =>
+                                            void handleCandidateShortlist(
+                                              candidate.id,
+                                              candidate.name,
+                                              candidate.pipelineStepId,
+                                            )
+                                          }
+                                        >
+                                          Shortlist
+                                        </Button>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="px-2 text-[10px] text-red-600 border-red-600 bg-white hover:bg-red-600 hover:text-white"
+                                          disabled={!isAllGraded || isCandidateProgressActionDisabled(candidate)}
+                                          onClick={() =>
+                                            handleCandidateProgress(
+                                              candidate.id,
+                                              candidate.name,
+                                              candidate.pipelineStepId,
+                                              "fail",
+                                            )
+                                          }
+                                        >
+                                          Fail
+                                        </Button>
+                                      </div>
+                                    </div>
                                   );
                                 })() : (
-                                  <span className="text-xs text-gray-400">-</span>
+                                  <div className="flex items-center justify-center rounded border border-gray-200 bg-gray-50 px-1.5 py-1">
+                                    <span className="text-xs text-gray-400">-</span>
+                                  </div>
                                 )}
                               </TableCell>
                             </>
@@ -2568,7 +2448,6 @@ export default function PipelineApplicants() {
               type="button"
               variant="outline"
               onClick={handleCloseSendAssessmentModal}
-              disabled={isSendingAssessment}
             >
               Cancel
             </Button>
@@ -2576,16 +2455,15 @@ export default function PipelineApplicants() {
               type="button"
               variant="outline"
               onClick={handleSendPreview}
-              disabled={isSendingAssessment || isLoadingSendPreview}
+              disabled={isLoadingSendPreview}
             >
               {isLoadingSendPreview ? "Loading..." : "Preview Email"}
             </Button>
             <Button
               type="button"
               onClick={handleSendAssessment}
-              disabled={isSendingAssessment}
             >
-              {isSendingAssessment ? "Sending..." : "Confirm & Send"}
+              Confirm & Send
             </Button>
           </DialogFooter>
         </DialogContent>

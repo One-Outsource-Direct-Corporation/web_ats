@@ -9,7 +9,7 @@ import LoadingComponent from "../../../shared/components/reusables/LoadingCompon
 export default function PersistLogin() {
   const [isLoading, setIsLoading] = useState(true);
   const refresh = useRefreshToken();
-  const { persist, setUser, setPersist, setIsAuth } = useAuth();
+  const { setUser, setIsAuth } = useAuth();
   const hasInitialized = useRef(false);
   const showDevBanner = import.meta.env.VITE_REACT_ENV !== "production";
 
@@ -18,14 +18,6 @@ export default function PersistLogin() {
     hasInitialized.current = true;
 
     const handlePersistLogin = async () => {
-      if (!persist) {
-        setUser(null);
-        setIsAuth(false);
-        clearAllAuthStorage();
-        setIsLoading(false);
-        return;
-      }
-
       try {
         const response = await checkAuth();
         setUser(response.data?.user ?? null);
@@ -35,7 +27,6 @@ export default function PersistLogin() {
         if (!refreshedUser) {
           setUser(null);
           setIsAuth(false);
-          setPersist(false);
           clearAllAuthStorage();
         }
       }
@@ -44,7 +35,7 @@ export default function PersistLogin() {
     };
 
     handlePersistLogin();
-  }, [persist, refresh, setIsAuth, setPersist, setUser]);
+  }, [refresh, setIsAuth, setUser]);
 
   if (isLoading) {
     return (
