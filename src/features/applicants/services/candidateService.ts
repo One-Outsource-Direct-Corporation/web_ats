@@ -1,4 +1,5 @@
-import { defaultAxios } from "@/config/axios";
+import { axiosPrivate } from "@/config/axios";
+import type { AxiosInstance } from "axios";
 
 interface ShortlistActionResponse {
   candidate_application_id: number;
@@ -25,8 +26,10 @@ export const candidateService = {
     candidateApplicationId: number,
     pipelineStepId: number,
     remarks?: string,
+    options?: { httpClient?: AxiosInstance },
   ): Promise<ShortlistActionResponse> {
-    const response = await defaultAxios.post(
+    const httpClient = options?.httpClient ?? axiosPrivate;
+    const response = await httpClient.post(
       "/api/candidate/pipeline/shortlist/",
       {
         candidate_application_id: candidateApplicationId,
@@ -41,8 +44,10 @@ export const candidateService = {
     candidateApplicationId: number,
     pipelineStepId: number,
     remarks?: string,
+    options?: { httpClient?: AxiosInstance },
   ): Promise<ShortlistApproveResponse> {
-    const response = await defaultAxios.post(
+    const httpClient = options?.httpClient ?? axiosPrivate;
+    const response = await httpClient.post(
       "/api/candidate/pipeline/shortlist/approve/",
       {
         candidate_application_id: candidateApplicationId,
@@ -57,8 +62,10 @@ export const candidateService = {
     candidateApplicationId: number,
     pipelineStepId: number,
     remarks?: string,
+    options?: { httpClient?: AxiosInstance },
   ): Promise<ShortlistActionResponse> {
-    const response = await defaultAxios.post(
+    const httpClient = options?.httpClient ?? axiosPrivate;
+    const response = await httpClient.post(
       "/api/candidate/pipeline/shortlist/reject/",
       {
         candidate_application_id: candidateApplicationId,

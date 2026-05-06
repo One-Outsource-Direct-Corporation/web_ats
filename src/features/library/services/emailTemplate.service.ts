@@ -1,6 +1,6 @@
 import type { AxiosInstance } from "axios";
 
-import { defaultAxios } from "@/config/axios";
+import { axiosPrivate } from "@/config/axios";
 
 const buildQuery = (params: { page?: number; pageSize?: number; search?: string }) => {
   const query = new URLSearchParams();
@@ -16,7 +16,7 @@ export const emailTemplateService = {
     params: { page?: number; pageSize?: number; search?: string },
     options?: { httpClient?: AxiosInstance; signal?: AbortSignal },
   ) {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const query = buildQuery(params);
     const endpoint = query ? `/api/candidate/templates/?${query}` : "/api/candidate/templates/";
     const response = await httpClient.get(endpoint, { signal: options?.signal });
@@ -24,7 +24,7 @@ export const emailTemplateService = {
   },
 
   async detailResponse(id: number, options?: { httpClient?: AxiosInstance; signal?: AbortSignal }) {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const response = await httpClient.get(`/api/candidate/templates/${id}/`, { signal: options?.signal });
     return response.data;
   },
@@ -39,7 +39,7 @@ export const emailTemplateService = {
     },
     options?: { httpClient?: AxiosInstance },
   ) {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const response = await httpClient.post("/api/candidate/templates/", payload);
     return response.data;
   },
@@ -55,13 +55,13 @@ export const emailTemplateService = {
     },
     options?: { httpClient?: AxiosInstance },
   ) {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const response = await httpClient.patch(`/api/candidate/templates/${id}/`, payload);
     return response.data;
   },
 
   async deleteTemplate(id: number, options?: { httpClient?: AxiosInstance }) {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     await httpClient.delete(`/api/candidate/templates/${id}/`);
   },
 };

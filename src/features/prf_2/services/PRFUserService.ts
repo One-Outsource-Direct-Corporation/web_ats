@@ -1,4 +1,4 @@
-import { defaultAxios } from "@/config/axios";
+import { axiosPrivate } from "@/config/axios";
 import type { AxiosInstance } from "axios";
 import type { User } from "@/features/auth/types/auth.types";
 
@@ -31,7 +31,7 @@ export const prfUserService = {
     params: GetUsersByDepartmentParams,
     options?: { httpClient?: AxiosInstance; signal?: AbortSignal },
   ): Promise<UsersResponse> {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const query = buildUsersQuery(params);
     const response = await httpClient.get(`/api/user/?${query}`, {
       signal: options?.signal,
@@ -43,7 +43,7 @@ export const prfUserService = {
     _params?: GetUsersParams,
     options?: { httpClient?: AxiosInstance; signal?: AbortSignal },
   ): Promise<UsersResponse> {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const response = await httpClient.get(`/api/user/`, {
       signal: options?.signal,
     });

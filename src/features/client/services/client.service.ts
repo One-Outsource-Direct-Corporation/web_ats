@@ -1,4 +1,4 @@
-import { defaultAxios } from "@/config/axios";
+import { axiosPrivate } from "@/config/axios";
 import type { AxiosInstance } from "axios";
 import type {
   ClientEntity,
@@ -26,7 +26,7 @@ export const clientService = {
     params: ClientListQueryParams = {},
     options?: { httpClient?: AxiosInstance; signal?: AbortSignal },
   ): Promise<ClientListResponse> {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const query = buildClientListQuery(params);
     const url = query ? `/api/client/?${query}` : "/api/client/";
 
@@ -41,7 +41,7 @@ export const clientService = {
     params: Omit<ClientListQueryParams, "page"> = {},
     options?: { httpClient?: AxiosInstance; signal?: AbortSignal },
   ): Promise<ClientEntity[]> {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const firstPage = await clientService.getClientsResponse(
       {
         ...params,

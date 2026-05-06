@@ -1,6 +1,6 @@
 import type { AxiosInstance } from "axios";
 
-import { defaultAxios } from "@/config/axios";
+import { axiosPrivate } from "@/config/axios";
 
 export interface InterviewEvaluationFormTemplate {
   id: number;
@@ -108,7 +108,7 @@ const unwrapSingleOrList = <T,>(responseData: T[] | T | { results?: T[] } | null
 
 export const interviewEvaluationFormService = {
   async listTemplates(options?: { httpClient?: AxiosInstance; signal?: AbortSignal }) {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const response = await httpClient.get("/api/candidate/ief/templates/", {
       signal: options?.signal,
     });
@@ -120,7 +120,7 @@ export const interviewEvaluationFormService = {
     payload: InterviewEvaluationFormPayload,
     options?: { httpClient?: AxiosInstance },
   ) {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const response = await httpClient.post("/api/candidate/ief/", payload);
 
     return response.data;
@@ -130,7 +130,7 @@ export const interviewEvaluationFormService = {
     params: { candidateId: number; pipelineStepId?: number },
     options?: { httpClient?: AxiosInstance; signal?: AbortSignal },
   ) {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const query = new URLSearchParams();
     query.set("candidate_id", String(params.candidateId));
     if (params.pipelineStepId) {
@@ -148,7 +148,7 @@ export const interviewEvaluationFormService = {
     payload: CandidatePipelineProgressRequest,
     options?: { httpClient?: AxiosInstance },
   ) {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const response = await httpClient.post<CandidatePipelineProgressResponse>(
       "/api/candidate/pipeline/progress/",
       payload,

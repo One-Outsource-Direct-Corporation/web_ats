@@ -1,4 +1,4 @@
-import { defaultAxios } from "@/config/axios";
+import { axiosPrivate } from "@/config/axios";
 import type { AxiosInstance } from "axios";
 import type {
   UpdatePrfPayload,
@@ -19,7 +19,7 @@ export const requestService = {
     payload: UpdatePrfPayload,
     options?: { httpClient?: AxiosInstance },
   ) {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     return httpClient.patch(`/api/prf/${params.id}/`, payload);
   },
 
@@ -28,7 +28,7 @@ export const requestService = {
     payload: UpdatePositionPayload,
     options?: { httpClient?: AxiosInstance },
   ) {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     return httpClient.patch(`/api/position/${params.id}/`, payload);
   },
 };

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
+import useAxiosMultipart from "@/features/auth/hooks/useAxiosMultipart";
 import type {
   Assessment,
   AssessmentTemplate,
@@ -46,6 +47,7 @@ export default function useAssessment(params?: UseAssessmentParams) {
   const [totalCount, setTotalCount] = useState<number>(0);
 
   const axiosPrivate = useAxiosPrivate();
+  const axiosMultipart = useAxiosMultipart();
   const controllerRef = useRef<AbortController | null>(null);
 
   const fetchAssessments = useCallback(
@@ -137,14 +139,9 @@ export default function useAssessment(params?: UseAssessmentParams) {
         const uploadFormData = new FormData();
         uploadFormData.append("file", file);
 
-        const uploadResponse = await axiosPrivate.post<FileUploadResponse>(
+        const uploadResponse = await axiosMultipart.post<FileUploadResponse>(
           "/api/assessment/file-upload/",
           uploadFormData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          },
         );
 
         fileId = uploadResponse.data?.file?.id ?? null;

@@ -1,4 +1,4 @@
-import { defaultAxios } from "@/config/axios";
+import { axiosPrivate } from "@/config/axios";
 import type { AxiosInstance } from "axios";
 import type {
   CreateDepartmentPayload,
@@ -37,7 +37,7 @@ export const departmentService = {
     params: DepartmentListQueryParams = {},
     options?: { httpClient?: AxiosInstance; signal?: AbortSignal },
   ): Promise<DepartmentListResponse> {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const query = buildDepartmentListQuery(params);
     const url = query ? `/api/department/?${query}` : "/api/department/";
 
@@ -52,7 +52,7 @@ export const departmentService = {
     params: Omit<DepartmentListQueryParams, "page"> = {},
     options?: { httpClient?: AxiosInstance; signal?: AbortSignal },
   ): Promise<DepartmentEntity[]> {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const firstPage = await departmentService.getDepartmentsResponse(
       {
         ...params,
@@ -80,7 +80,7 @@ export const departmentService = {
     payload: CreateDepartmentPayload,
     options?: { httpClient?: AxiosInstance; signal?: AbortSignal },
   ): Promise<DepartmentEntity> {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const response = await httpClient.post<DepartmentEntity>(
       "/api/department/",
       payload,

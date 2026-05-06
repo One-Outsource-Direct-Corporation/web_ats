@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Building2, Plus, Search, ArrowLeft, Pencil, Trash2, Eye } from "lucide-react";
 import { Button } from "@/shared/components/ui/button.tsx";
 import { Input } from "@/shared/components/ui/input";
@@ -19,7 +20,8 @@ import {
   DialogFooter,
 } from "@/shared/components/ui/dialog.tsx";
 import { toast } from "react-toastify";
-import { axiosPrivate } from "@/config/axios";
+import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
+import { queryKeys } from "@/shared/query-keys";
 
 interface BusinessUnit {
   id: number;
@@ -32,30 +34,53 @@ interface BusinessUnit {
 
 export default function BusinessUnitLibrary() {
   const navigate = useNavigate();
-  const [units, setUnits] = useState<BusinessUnit[]>([]);
-  const [loading, setLoading] = useState(true);
+  const axiosPrivate = useAxiosPrivate();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"create" | "edit" | "view">("create");
   const [selectedUnit, setSelectedUnit] = useState<BusinessUnit | null>(null);
   const [form, setForm] = useState({ name: "", slug: "" });
-  const [saving, setSaving] = useState(false);
 
-  const fetchUnits = async () => {
-    setLoading(true);
-    try {
+  const { data: units = [], isLoading } = useQuery({
+    queryKey: queryKeys.businessUnits.listing(),
+    queryFn: async () => {
       const res = await axiosPrivate.get("/api/core/business-unit/");
-      setUnits(res.data.results || res.data || []);
-    } catch {
-      toast.error("Failed to load business units.");
-    } finally {
-      setLoading(false);
-    }
-  };
+      return (res.data.results || res.data || []) as BusinessUnit[];
+    },
+  });
 
-  useEffect(() => {
-    fetchUnits();
-  }, []);
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      if (dialogMode === "create") {
+        await axiosPrivate.post("/api/core/business-unit/", form);
+      } else if (dialogMode === "edit" && selectedUnit) {
+        await axiosPrivate.patch(`/api/core/business-unit/${selectedUnit.id}/`, form);
+      }
+    },
+    onSuccess: () => {
+      toast.success(dialogMode === "create" ? "Business unit created." : "Business unit updated.");
+      setIsDialogOpen(false);
+      setForm({ name: "", slug: "" });
+      queryClient.invalidateQueries({ queryKey: queryKeys.businessUnits.listing() });
+    },
+    onError: () => {
+      toast.error("Failed to save business unit.");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await axiosPrivate.delete(`/api/core/business-unit/${id}/`);
+    },
+    onSuccess: () => {
+      toast.success("Business unit deactivated.");
+      queryClient.invalidateQueries({ queryKey: queryKeys.businessUnits.listing() });
+    },
+    onError: () => {
+      toast.error("Failed to deactivate business unit.");
+    },
+  });
 
   const filtered = units.filter(
     (u) =>
@@ -63,39 +88,17 @@ export default function BusinessUnitLibrary() {
       u.slug.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!form.name.trim() || !form.slug.trim()) {
       toast.error("Name and slug are required.");
       return;
     }
-    setSaving(true);
-    try {
-      if (dialogMode === "create") {
-        await axiosPrivate.post("/api/core/business-unit/", form);
-        toast.success("Business unit created.");
-      } else if (dialogMode === "edit" && selectedUnit) {
-        await axiosPrivate.patch(`/api/core/business-unit/${selectedUnit.id}/`, form);
-        toast.success("Business unit updated.");
-      }
-      setIsDialogOpen(false);
-      setForm({ name: "", slug: "" });
-      fetchUnits();
-    } catch {
-      toast.error("Failed to save business unit.");
-    } finally {
-      setSaving(false);
-    }
+    saveMutation.mutate();
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = (id: number) => {
     if (!confirm("Are you sure you want to deactivate this business unit?")) return;
-    try {
-      await axiosPrivate.delete(`/api/core/business-unit/${id}/`);
-      toast.success("Business unit deactivated.");
-      fetchUnits();
-    } catch {
-      toast.error("Failed to deactivate business unit.");
-    }
+    deleteMutation.mutate(id);
   };
 
   const openCreate = () => {
@@ -157,7 +160,7 @@ export default function BusinessUnitLibrary() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading ? (
+            {isLoading ? (
               <TableRow>
                 <TableCell colSpan={5} className="p-6 text-center">
                   Loading...
@@ -244,8 +247,8 @@ export default function BusinessUnitLibrary() {
               Close
             </Button>
             {dialogMode !== "view" && (
-              <Button className="bg-emerald-600 text-white hover:bg-emerald-700" onClick={handleSave} disabled={saving}>
-                {saving ? "Saving..." : "Save"}
+              <Button className="bg-emerald-600 text-white hover:bg-emerald-700" onClick={handleSave} disabled={saveMutation.isPending}>
+                {saveMutation.isPending ? "Saving..." : "Save"}
               </Button>
             )}
           </DialogFooter>

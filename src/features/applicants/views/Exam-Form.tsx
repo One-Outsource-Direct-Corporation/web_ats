@@ -7,7 +7,8 @@ import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
 import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
-import { defaultAxios } from "@/config/axios";
+import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
+import useAxiosMultipart from "@/features/auth/hooks/useAxiosMultipart";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { formatAssessmentType } from "@/shared/utils/assessmentUtils";
 
@@ -76,6 +77,8 @@ export default function ExamForm() {
   const { jobId, applicantId } = useParams<{ jobId: string; applicantId: string }>();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const axiosPrivate = useAxiosPrivate();
+  const axiosMultipart = useAxiosMultipart();
 
   const [records, setRecords] = useState<CandidateAssessmentRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,7 +98,7 @@ export default function ExamForm() {
     setLoading(true);
 
     try {
-      const response = await defaultAxios.get<CandidateAssessmentRecord[]>(
+      const response = await axiosPrivate.get<CandidateAssessmentRecord[]>(
         "/api/candidate/assessments/",
         {
           params: {
@@ -169,9 +172,7 @@ export default function ExamForm() {
       const formData = new FormData();
       formData.append("answer_file", state.answerFile);
 
-      await defaultAxios.patch(`/api/candidate/assessments/${recordId}/`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await axiosMultipart.patch(`/api/candidate/assessments/${recordId}/`, formData);
 
       toast.success("Assessment answer uploaded.");
       updatePerAssessment(recordId, { answerFile: null, savingAnswer: false });
@@ -197,9 +198,7 @@ export default function ExamForm() {
       formData.append("score", state.score);
       formData.append("notes", state.notes || "");
 
-      await defaultAxios.patch(`/api/candidate/assessments/${recordId}/`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await axiosMultipart.patch(`/api/candidate/assessments/${recordId}/`, formData);
 
       toast.success("Assessment grade saved.");
       updatePerAssessment(recordId, { savingGrade: false });

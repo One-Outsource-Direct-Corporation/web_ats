@@ -1,6 +1,6 @@
 import type { AxiosInstance } from "axios";
 
-import { defaultAxios } from "@/config/axios";
+import { axiosPrivate } from "@/config/axios";
 
 import type { IefTemplatePayload, IefTemplateRecord } from "../types/iefTemplate.types";
 
@@ -23,7 +23,7 @@ const unwrapList = (responseData: unknown): IefTemplateRecord[] => {
 
 export const iefTemplateService = {
   async listTemplates(options?: { httpClient?: AxiosInstance; signal?: AbortSignal }) {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const response = await httpClient.get("/api/candidate/ief/templates/", {
       signal: options?.signal,
     });
@@ -35,7 +35,7 @@ export const iefTemplateService = {
     templateId: number,
     options?: { httpClient?: AxiosInstance; signal?: AbortSignal },
   ) {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const response = await httpClient.get<IefTemplateRecord>(
       `/api/candidate/ief/templates/${templateId}/`,
       { signal: options?.signal },
@@ -48,7 +48,7 @@ export const iefTemplateService = {
     payload: IefTemplatePayload,
     options?: { httpClient?: AxiosInstance },
   ) {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const response = await httpClient.post<IefTemplateRecord>(
       "/api/candidate/ief/templates/",
       payload,
@@ -62,7 +62,7 @@ export const iefTemplateService = {
     payload: IefTemplatePayload,
     options?: { httpClient?: AxiosInstance },
   ) {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const response = await httpClient.patch<IefTemplateRecord>(
       `/api/candidate/ief/templates/${templateId}/`,
       payload,
@@ -75,7 +75,7 @@ export const iefTemplateService = {
     templateId: number,
     options?: { httpClient?: AxiosInstance },
   ) {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     await httpClient.delete(`/api/candidate/ief/templates/${templateId}/`, {
       signal: options?.signal,
     });

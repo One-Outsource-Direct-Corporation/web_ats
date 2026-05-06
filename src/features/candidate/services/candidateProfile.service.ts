@@ -1,4 +1,5 @@
-import { axiosPrivate } from "@/config/axios";
+import { axiosPrivate, axiosMultipart } from "@/config/axios";
+import type { AxiosInstance } from "axios";
 
 export interface CandidateDetailsFile {
   filename: string;
@@ -83,37 +84,41 @@ export interface CandidateEventData {
 }
 
 export const candidateProfileService = {
-  async getDetails(): Promise<CandidateDetailsData> {
-    const res = await axiosPrivate.get("/api/candidate/me/details/");
+  async getDetails(options?: { httpClient?: AxiosInstance }): Promise<CandidateDetailsData> {
+    const httpClient = options?.httpClient ?? axiosPrivate;
+    const res = await httpClient.get("/api/candidate/me/details/");
     return res.data;
   },
 
-  async updateDetails(formData: FormData): Promise<CandidateDetailsData> {
-    // The axiosPrivate instance has a default "Content-Type: application/json" header.
-    // When sending FormData we must explicitly remove that header so the browser
-    // can set "multipart/form-data" with the proper boundary automatically.
-    const res = await axiosPrivate.put("/api/candidate/me/details/", formData, {
-      headers: {
-        "Content-Type": undefined,
-      },
-    });
+  async updateDetails(
+    formData: FormData,
+    options?: { httpClient?: AxiosInstance },
+  ): Promise<CandidateDetailsData> {
+    const httpClient = options?.httpClient ?? axiosMultipart;
+    const res = await httpClient.put("/api/candidate/me/details/", formData);
     return res.data;
   },
 
-  async getPrefill(jobId: string | number): Promise<CandidatePrefillData> {
-    const res = await axiosPrivate.get("/api/candidate/me/details/prefill/", {
+  async getPrefill(
+    jobId: string | number,
+    options?: { httpClient?: AxiosInstance },
+  ): Promise<CandidatePrefillData> {
+    const httpClient = options?.httpClient ?? axiosPrivate;
+    const res = await httpClient.get("/api/candidate/me/details/prefill/", {
       params: { job: jobId },
     });
     return res.data;
   },
 
-  async getConfig(): Promise<CandidateProfileConfig> {
-    const res = await axiosPrivate.get("/api/candidate/me/details/config/");
+  async getConfig(options?: { httpClient?: AxiosInstance }): Promise<CandidateProfileConfig> {
+    const httpClient = options?.httpClient ?? axiosPrivate;
+    const res = await httpClient.get("/api/candidate/me/details/config/");
     return res.data;
   },
 
-  async getEvents(): Promise<CandidateEventData[]> {
-    const res = await axiosPrivate.get("/api/candidate/me/events/");
+  async getEvents(options?: { httpClient?: AxiosInstance }): Promise<CandidateEventData[]> {
+    const httpClient = options?.httpClient ?? axiosPrivate;
+    const res = await httpClient.get("/api/candidate/me/events/");
     return res.data;
   },
 };

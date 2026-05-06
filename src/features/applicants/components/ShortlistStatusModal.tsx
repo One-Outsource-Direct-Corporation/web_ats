@@ -18,7 +18,7 @@ import {
 import { Label } from "@/shared/components/ui/label.tsx";
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group.tsx";
 import { Textarea } from "@/shared/components/ui/textarea.tsx";
-import { defaultAxios } from "@/config/axios";
+import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 
 interface Candidate {
   id: number;
@@ -57,6 +57,7 @@ export default function ShortlistStatusModal({
   const [status, setStatus] = useState<"passed" | "failed">("passed");
   const [remarks, setRemarks] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const axiosPrivate = useAxiosPrivate();
 
   const handleSubmit = async () => {
     if (!candidate || !canChangeStatus || !candidateApplicationId || !pipelineStepId) {
@@ -81,7 +82,7 @@ export default function ShortlistStatusModal({
         remarks: remarks.trim(),
       };
 
-      const response = await defaultAxios.post(endpoint, payload);
+      const response = await axiosPrivate.post(endpoint, payload);
 
       if (response.status === 200) {
         toast.success(

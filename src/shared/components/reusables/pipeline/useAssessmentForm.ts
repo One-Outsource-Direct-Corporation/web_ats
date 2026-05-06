@@ -3,7 +3,7 @@ import type {
   Assessment,
   AssessmentTemplate,
 } from "@/shared/types/pipeline.types";
-import { defaultAxios } from "@/config/axios";
+import useAxiosMultipart from "@/features/auth/hooks/useAxiosMultipart";
 
 interface UseAssessmentFormProps {
   editingAssessment?: Assessment | null;
@@ -37,6 +37,7 @@ export function useAssessmentForm({
   editingAssessment,
   open,
 }: UseAssessmentFormProps) {
+  const axiosMultipart = useAxiosMultipart();
   const [assessmentForm, setAssessmentForm] = useState<
     Omit<Assessment, "id" | "tempId">
   >({
@@ -143,14 +144,9 @@ export function useAssessmentForm({
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await defaultAxios.post(
+      const response = await axiosMultipart.post(
         "/api/assessment/test-file-upload",
         formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        },
       );
 
       if (response.data?.duplicate && response.data?.existing_file) {

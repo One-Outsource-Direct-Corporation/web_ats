@@ -1,4 +1,4 @@
-import { defaultAxios } from "@/config/axios";
+import { axiosPrivate } from "@/config/axios";
 import type { AxiosInstance } from "axios";
 import { clientService } from "@/features/client/services/client.service";
 import type {
@@ -52,7 +52,7 @@ export const externalPostingService = {
     options?: { httpClient?: AxiosInstance; signal?: AbortSignal },
   ): Promise<PositionsResponse> {
     const query = buildQueryString(params);
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const response = await httpClient.get(`/api/job/?${query}`, {
       signal: options?.signal,
     });
@@ -63,7 +63,7 @@ export const externalPostingService = {
     params: GetPositionDetailParams,
     options?: { httpClient?: AxiosInstance; signal?: AbortSignal },
   ): Promise<PositionDetailResponse> {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const response = await httpClient.get(
       `/api/external_posting/${params.id}/`,
       {

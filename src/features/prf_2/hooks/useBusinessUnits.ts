@@ -1,13 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { axiosPrivate } from "@/config/axios";
-
-const businessUnitQueryKeys = {
-  all: ["business-units"] as const,
-};
+import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
+import { queryKeys } from "@/shared/query-keys";
 
 export function useBusinessUnitsQuery() {
+  const axiosPrivate = useAxiosPrivate();
+
   const query = useQuery({
-    queryKey: businessUnitQueryKeys.all,
+    queryKey: queryKeys.businessUnits.listing(),
     queryFn: async ({ signal }) => {
       const res = await axiosPrivate.get("/api/core/business-unit/", { signal });
       return res.data.results || res.data || [];

@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { type AxiosInstance } from "axios";
 import { getTenantSlug } from "@/shared/utils/tenant";
 
 const BASE_URL = import.meta.env.VITE_BACKEND_URL;
@@ -16,8 +16,13 @@ const axiosPrivate = axios.create({
   },
 });
 
+const axiosMultipart = axios.create({
+  baseURL: BASE_URL,
+  withCredentials: true,
+});
+
 // Attach X-Tenant-Slug header to all requests
-function attachTenantHeader(instance: typeof axios) {
+function attachTenantHeader(instance: AxiosInstance) {
   instance.interceptors.request.use(
     (config) => {
       const slug = getTenantSlug();
@@ -32,6 +37,7 @@ function attachTenantHeader(instance: typeof axios) {
 
 attachTenantHeader(defaultAxios);
 attachTenantHeader(axiosPrivate);
+attachTenantHeader(axiosMultipart);
 
-export { defaultAxios, axiosPrivate };
+export { defaultAxios, axiosPrivate, axiosMultipart };
 export default defaultAxios;

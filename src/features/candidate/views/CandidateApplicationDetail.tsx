@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { axiosPrivate } from "@/config/axios";
+import { useQuery } from "@tanstack/react-query";
+import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
+import { queryKeys } from "@/shared/query-keys";
 import { FileText } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 
@@ -29,18 +30,18 @@ interface ApplicationDetail {
 export default function CandidateApplicationDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [app, setApp] = useState<ApplicationDetail | null>(null);
-  const [loading, setLoading] = useState(true);
+  const axiosPrivate = useAxiosPrivate();
 
-  useEffect(() => {
-    axiosPrivate
-      .get(`/api/candidate/me/applications/${id}/`)
-      .then((res) => setApp(res.data))
-      .catch(() => setApp(null))
-      .finally(() => setLoading(false));
-  }, [id]);
+  const { data: app, isLoading } = useQuery({
+    queryKey: queryKeys.candidates.application(id!),
+    queryFn: async () => {
+      const res = await axiosPrivate.get(`/api/candidate/me/applications/${id}/`);
+      return res.data as ApplicationDetail;
+    },
+    enabled: !!id,
+  });
 
-  if (loading) return <div className="p-6">Loading...</div>;
+  if (isLoading) return <div className="p-6">Loading...</div>;
   if (!app) return <div className="p-6">Application not found.</div>;
 
   const assessments = app.assessments || [];

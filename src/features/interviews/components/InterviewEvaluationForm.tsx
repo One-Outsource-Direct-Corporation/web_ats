@@ -21,7 +21,7 @@ import {
   type InterviewEvaluationFormRecord,
 } from "../services/interviewEvaluationFormService";
 import { candidateService } from "@/features/applicants/services/candidateService";
-import { defaultAxios } from "@/config/axios";
+import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 
 interface InterviewRouteState {
   candidateApplicationId?: number;
@@ -273,6 +273,7 @@ export default function InterviewEvaluationForm() {
   }, [routeState]);
 
   const { user } = useAuth();
+  const axiosPrivate = useAxiosPrivate();
   const isEditable = Boolean(user && interviewerId && user.id === interviewerId);
 
   useEffect(() => {
@@ -306,7 +307,7 @@ export default function InterviewEvaluationForm() {
         query.set("candidate_id", String(params.candidateApplicationId));
         if (params.interviewId) query.set("pipeline_step_id", String(params.interviewId));
 
-        const resp = await defaultAxios.get(`/api/candidate/ief/prefill/?${query.toString()}`);
+        const resp = await axiosPrivate.get(`/api/candidate/ief/prefill/?${query.toString()}`);
         const data = resp.data as {
           applicant_name?: string;
           job_title?: string;
@@ -603,7 +604,7 @@ export default function InterviewEvaluationForm() {
 
     try {
       if (existingFormId) {
-        await defaultAxios.patch(`/api/candidate/ief/${existingFormId}/`, payload);
+        await axiosPrivate.patch(`/api/candidate/ief/${existingFormId}/`, payload);
       } else {
         await interviewEvaluationFormService.createForm(payload);
       }

@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { axiosPrivate } from "@/config/axios";
+import { useQuery } from "@tanstack/react-query";
+import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { queryKeys } from "@/shared/query-keys";
 import {
   Search,
   Briefcase,
@@ -119,57 +121,57 @@ export default function CandidateDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
   const [searchCode, setSearchCode] = useState("");
   const [activeTab, setActiveTab] = useState<"progress" | "documents">("progress");
 
-  // Single BFF call
-  useEffect(() => {
-    axiosPrivate
-      .get("/api/candidate/me/")
-      .then((res) => {
-        const data = res.data as Record<string, unknown>;
-        // Map backend events to CalendarEvent shape
-        const mappedEvents: CalendarEvent[] = (
-          (data.events as Array<Record<string, unknown>>) || []
-        ).map((event) => {
-          const dt = new Date(event.scheduled_for as string);
-          return {
-            id: event.id as number,
-            date: dt.toISOString().split("T")[0],
-            time: dt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-            title: `${event.process_type_label} - ${event.job_title}`,
-            location: "",
-            type: event.event_type as CalendarEvent["type"],
-          };
-        });
+  const axiosPrivate = useAxiosPrivate();
 
-        // Map backend tasks
-        const mappedTasks: Task[] = (
-          (data.tasks as Array<Record<string, unknown>>) || []
-        ).map((task) => ({
-          id: task.id as number,
-          job_title: task.job_title as string || '',
-          assessment_type_label: task.assessment_type_label as string || 'Assessment',
-          task_status: (task.task_status as Task['task_status']) || 'pending',
-          scheduled_date: task.scheduled_date as string || '',
-          score: task.score as number | null | undefined,
-          candidate_application_id: task.candidate_application_id as number,
-        }));
+  const { isLoading, isError } = useQuery({
+    queryKey: queryKeys.candidates.applications(),
+    queryFn: async () => {
+      const res = await axiosPrivate.get("/api/candidate/me/");
+      const data = res.data as Record<string, unknown>;
+      // Map backend events to CalendarEvent shape
+      const mappedEvents: CalendarEvent[] = (
+        (data.events as Array<Record<string, unknown>>) || []
+      ).map((event) => {
+        const dt = new Date(event.scheduled_for as string);
+        return {
+          id: event.id as number,
+          date: dt.toISOString().split("T")[0],
+          time: dt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+          title: `${event.process_type_label} - ${event.job_title}`,
+          location: "",
+          type: event.event_type as CalendarEvent["type"],
+        };
+      });
 
-        setDashboard({
-          first_name: data.first_name as string || '',
-          last_name: data.last_name as string || '',
-          email: data.email as string || '',
-          photo_url: data.photo_url as string | null || null,
-          applications: (data.applications as Application[]) || [],
-          events: mappedEvents,
-          tasks: mappedTasks,
-        });
-      })
-      .catch(() => setDashboard(null))
-      .finally(() => setLoading(false));
-  }, []);
+      // Map backend tasks
+      const mappedTasks: Task[] = (
+        (data.tasks as Array<Record<string, unknown>>) || []
+      ).map((task) => ({
+        id: task.id as number,
+        job_title: task.job_title as string || '',
+        assessment_type_label: task.assessment_type_label as string || 'Assessment',
+        task_status: (task.task_status as Task['task_status']) || 'pending',
+        scheduled_date: task.scheduled_date as string || '',
+        score: task.score as number | null | undefined,
+        candidate_application_id: task.candidate_application_id as number,
+      }));
+
+      const dashboardData: DashboardData = {
+        first_name: data.first_name as string || '',
+        last_name: data.last_name as string || '',
+        email: data.email as string || '',
+        photo_url: data.photo_url as string | null || null,
+        applications: (data.applications as Application[]) || [],
+        events: mappedEvents,
+        tasks: mappedTasks,
+      };
+      setDashboard(dashboardData);
+      return dashboardData;
+    },
+  });
 
   const profilePhotoUrl = dashboard?.photo_url;
   const applications = dashboard?.applications ?? [];
@@ -353,7 +355,7 @@ export default function CandidateDashboard() {
                   <div className="flex-1 h-px bg-gray-300" />
                 </div>
                 <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-                  {loading ? (
+                  {isLoading ? (
                     <div className="p-8 text-center text-gray-500">Loading applications...</div>
                   ) : filteredApplications.length === 0 ? (
                     <div className="p-8 text-center text-gray-500">

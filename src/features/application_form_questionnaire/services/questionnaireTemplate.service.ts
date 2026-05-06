@@ -1,6 +1,6 @@
 import type { AxiosInstance } from "axios";
 
-import { defaultAxios } from "@/config/axios";
+import { axiosPrivate } from "@/config/axios";
 import type {
   CreateQuestionnaireTemplatePayload,
   QuestionnaireTemplateDetail,
@@ -34,7 +34,7 @@ export const questionnaireTemplateService = {
     params: QuestionnaireTemplateListParams,
     options?: { httpClient?: AxiosInstance; signal?: AbortSignal },
   ): Promise<QuestionnaireTemplateListResponse> {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const query = buildQuery(params);
     const endpoint = query
       ? `/api/application_form_questionnaire/templates/?${query}`
@@ -51,7 +51,7 @@ export const questionnaireTemplateService = {
     params: QuestionnaireTemplateDetailParams,
     options?: { httpClient?: AxiosInstance; signal?: AbortSignal },
   ): Promise<QuestionnaireTemplateDetail> {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const response = await httpClient.get<QuestionnaireTemplateDetail>(
       `/api/application_form_questionnaire/templates/${params.id}/`,
       { signal: options?.signal },
@@ -63,7 +63,7 @@ export const questionnaireTemplateService = {
     payload: CreateQuestionnaireTemplatePayload,
     options?: { httpClient?: AxiosInstance; signal?: AbortSignal },
   ): Promise<QuestionnaireTemplateDetail> {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const response = await httpClient.post<QuestionnaireTemplateDetail>(
       "/api/application_form_questionnaire/templates/",
       payload,
@@ -77,7 +77,7 @@ export const questionnaireTemplateService = {
     payload: UpdateQuestionnaireTemplatePayload,
     options?: { httpClient?: AxiosInstance; signal?: AbortSignal },
   ): Promise<QuestionnaireTemplateDetail> {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     const response = await httpClient.patch<QuestionnaireTemplateDetail>(
       `/api/application_form_questionnaire/templates/${templateId}/`,
       payload,
@@ -90,7 +90,7 @@ export const questionnaireTemplateService = {
     templateId: number,
     options?: { httpClient?: AxiosInstance; signal?: AbortSignal },
   ): Promise<void> {
-    const httpClient = options?.httpClient ?? defaultAxios;
+    const httpClient = options?.httpClient ?? axiosPrivate;
     await httpClient.delete(
       `/api/application_form_questionnaire/templates/${templateId}/`,
       { signal: options?.signal },

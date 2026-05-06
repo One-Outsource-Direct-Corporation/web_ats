@@ -5,11 +5,9 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { ArrowLeft, BarChart3, Search, FileText, Loader2 } from "lucide-react";
+import { ArrowLeft, BarChart3, FileText, Loader2, Search } from "lucide-react";
 import { toast } from "react-toastify";
-
-import type { PipelineAssessment } from "@/features/jobs/types/job.types";
-import { formatAssessmentType, resolveFileUrl, isImageExtension, isPdfExtension } from "@/shared/utils/assessmentUtils";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   Avatar,
@@ -44,9 +42,10 @@ import {
 } from "@/shared/components/ui/dialog.tsx";
 import { Label } from "@/shared/components/ui/label.tsx";
 import { Textarea } from "@/shared/components/ui/textarea.tsx";
-import { defaultAxios } from "@/config/axios";
+import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import { emailTemplateService } from "@/features/library/services/emailTemplate.service";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { formatAssessmentType, resolveFileUrl, isImageExtension, isPdfExtension } from "@/shared/utils/assessmentUtils";
 
 import { useJobDetailQuery } from "@/features/jobs/hooks/useJobs";
 import { extractPipelineStepsFromJobDetail } from "@/features/jobs/services/jobService";
@@ -100,10 +99,22 @@ interface AssessmentModalState {
 interface CandidateAssessmentData {
   id: number;
   assessmentId: number;
-  status: "assigned" | "submitted" | "graded" | "sent" | "not_assigned";
+  assessmentName?: string | null;
+  status: "assigned" | "submitted" | "graded" | "not_assigned";
   score?: number | null;
   notes?: string | null;
   is_sent?: boolean;
+}
+
+interface PipelineAssessment {
+  id: number;
+  name?: string | null;
+  type?: string | null;
+  type_label?: string | null;
+  file?: {
+    filename?: string | null;
+    file?: string | null;
+  };
 }
 
 interface SendAssessmentModalState {
@@ -336,6 +347,8 @@ export default function PipelineApplicants() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const { user } = useAuth();
+  const axiosPrivate = useAxiosPrivate();
+  const queryClient = useQueryClient();
 
   const [pendingActions, setPendingActions] = useState<PendingProgressAction[]>([]);
   const pendingTimersRef = useRef<Record<string, ReturnType<typeof window.setTimeout>>>({});
@@ -698,7 +711,7 @@ export default function PipelineApplicants() {
 
       try {
         setProcessingCandidateId(pendingAction.candidateApplicationId);
-        await defaultAxios.post("/api/candidate/pipeline/progress/", {
+        await axiosPrivate.post("/api/candidate/pipeline/progress/", {
           candidate_application_id: pendingAction.candidateApplicationId,
           pipeline_step_id: pendingAction.pipelineStepId,
           outcome: pendingAction.outcome,
@@ -862,7 +875,7 @@ export default function PipelineApplicants() {
     }
 
     try {
-      await defaultAxios.post("/api/candidate/pipeline/shortlist/", {
+      await axiosPrivate.post("/api/candidate/pipeline/shortlist/", {
         candidate_application_id: candidateApplicationId,
         pipeline_step_id: pipelineStepId,
       });
@@ -950,26 +963,44 @@ export default function PipelineApplicants() {
     // Not used: preview handled by ResumeScreeningTable component
   };
 
-  const loadCandidateAssessments = useCallback(async () => {
-    if (!isAssessmentStage || selectedStepCandidates.length === 0) {
-      return;
-    }
+  // Load candidate assessments via useQuery when assessment stage is active
+  const candidateIdsKey = useMemo(
+    () => selectedStepCandidates.map((c) => c.id).join(","),
+    [selectedStepCandidates],
+  );
 
-    const selectedSteps = pipelineSteps.filter(
-      (step) => step.process_type === selectedType,
-    );
-    
-    if (selectedSteps.length > 0) {
-      const step = selectedSteps[0];
-      setStepAssessments(step.assessments || []);
-    }
+  useQuery({
+    queryKey: [
+      "candidate-assessments",
+      selectedType,
+      candidateIdsKey,
+    ] as const,
+    queryFn: async () => {
+      if (!isAssessmentStage || selectedStepCandidates.length === 0) {
+        return;
+      }
 
-    try {
+      const selectedSteps = pipelineSteps.filter(
+        (step) => step.process_type === selectedType,
+      );
+
+      if (selectedSteps.length > 0) {
+        const step = selectedSteps[0];
+        const assessmentsData = (step as any).assessments || [];
+        setStepAssessments(
+          assessmentsData.map((a: any) => ({
+            id: a.id,
+            name: a.name,
+            file: a.file,
+          }))
+        );
+      }
+
       const assessmentMap = new Map<number, CandidateAssessmentData[]>();
 
       for (const candidate of selectedStepCandidates) {
         try {
-          const response = await defaultAxios.get("/api/candidate/assessments/", {
+          const response = await axiosPrivate.get("/api/candidate/assessments/", {
             params: {
               candidate_application_id: candidate.id,
               pipeline_step_id: candidate.pipelineStepId,
@@ -977,13 +1008,13 @@ export default function PipelineApplicants() {
           });
 
           const items = Array.isArray(response.data) ? response.data : [];
-          assessmentMap.set(candidate.id, items.map((a: Record<string, unknown>) => ({
-            id: a.id as number,
-            status: ((a.status as string) || "not_assigned") as CandidateAssessmentData["status"],
-            score: a.score as number | null | undefined,
-            notes: a.notes as string | null | undefined,
-            is_sent: a.is_sent as boolean | undefined,
-            assessmentId: (a.assessment as Record<string, unknown> | undefined)?.id as number,
+          assessmentMap.set(candidate.id, items.map((a: any) => ({
+            id: a.id,
+            status: a.status || "not_assigned",
+            score: a.score,
+            notes: a.notes,
+            assessmentId: a.assessment?.id,
+            assessmentName: a.assessment?.name,
           })));
         } catch {
           assessmentMap.set(candidate.id, []);
@@ -991,16 +1022,9 @@ export default function PipelineApplicants() {
       }
 
       setCandidateAssessments(assessmentMap);
-    } catch (error) {
-      console.error("Failed to load candidate assessments:", error);
-    }
-  }, [isAssessmentStage, selectedStepCandidates, selectedType, pipelineSteps]);
-
-  useEffect(() => {
-    if (isAssessmentStage) {
-      void loadCandidateAssessments();
-    }
-  }, [isAssessmentStage, loadCandidateAssessments]);
+    },
+    enabled: isAssessmentStage && selectedStepCandidates.length > 0,
+  });
 
   const handleOpenAssessmentModal = (
     candidate: { id: number; name: string; pipelineStepId?: number },
@@ -1076,7 +1100,7 @@ export default function PipelineApplicants() {
 
     setIsSubmittingGrade(true);
     try {
-      await defaultAxios.patch(
+      await axiosPrivate.patch(
         `/api/candidate/assessments/${assessmentModalState.candidateAssessmentId}/`,
         {
           score: Number(assessmentGradeForm.score),
@@ -1086,7 +1110,7 @@ export default function PipelineApplicants() {
 
       toast.success(`Assessment graded for ${assessmentModalState.candidateName}.`);
       handleCloseAssessmentModal();
-      await loadCandidateAssessments();
+      await queryClient.invalidateQueries({ queryKey: ["candidate-assessments"] });
     } catch (error) {
       console.error("Failed to submit grade:", error);
       toast.error("Unable to submit grade.");
@@ -1151,7 +1175,7 @@ export default function PipelineApplicants() {
 
     setIsLoadingSendPreview(true);
     try {
-      const response = await defaultAxios.post("/api/candidate/assessments/send/preview/", {
+      const response = await axiosPrivate.post("/api/candidate/assessments/send/preview/", {
         assessment_ids: assessmentIds,
         candidate_application_id: sendAssessmentModalState.candidateApplicationId,
         pipeline_step_id: sendAssessmentModalState.pipelineStepId,
@@ -1177,7 +1201,7 @@ export default function PipelineApplicants() {
 
     setIsSendingAssessment(true);
     try {
-      await defaultAxios.post("/api/candidate/assessments/send/", {
+      await axiosPrivate.post("/api/candidate/assessments/send/", {
         assessment_ids: assessmentIds,
         candidate_application_id: sendAssessmentModalState.candidateApplicationId,
         pipeline_step_id: sendAssessmentModalState.pipelineStepId,
@@ -1186,7 +1210,7 @@ export default function PipelineApplicants() {
       });
       toast.success(`Assessment email sent to ${sendAssessmentModalState.candidateName}.`);
       handleCloseSendAssessmentModal();
-      await loadCandidateAssessments();
+      await queryClient.invalidateQueries({ queryKey: ["candidate-assessments"] });
     } catch (error) {
       console.error("Failed to send assessment:", error);
       toast.error("Unable to send assessment email.");
@@ -1325,7 +1349,7 @@ export default function PipelineApplicants() {
         },
       };
 
-      await defaultAxios.post("/api/candidate/pipeline/schedule/", payload);
+      await axiosPrivate.post("/api/candidate/pipeline/schedule/", payload);
 
       toast.success(
         scheduleModalState.mode === "reschedule"
@@ -1376,7 +1400,7 @@ export default function PipelineApplicants() {
         },
       };
 
-      const response = await defaultAxios.post<InterviewEmailPreviewResponse>(
+      const response = await axiosPrivate.post<InterviewEmailPreviewResponse>(
         "/api/candidate/pipeline/schedule/preview/",
         payload,
       );

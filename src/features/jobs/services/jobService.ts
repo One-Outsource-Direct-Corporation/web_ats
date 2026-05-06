@@ -1,4 +1,5 @@
-import { defaultAxios } from "@/config/axios";
+import { axiosPrivate } from "@/config/axios";
+import type { AxiosInstance } from "axios";
 import type {
   JobDetailResponseDto,
   JobListItem,
@@ -65,9 +66,12 @@ const toJobListItem = (jobPosting: JobPostingResponseDto): JobListItem => ({
   employmentType: jobPosting.employment_type ?? undefined,
 });
 
-export async function getJobsResponse(): Promise<JobQueryResult> {
+export async function getJobsResponse(
+  options?: { httpClient?: AxiosInstance },
+): Promise<JobQueryResult> {
+  const httpClient = options?.httpClient ?? axiosPrivate;
   const response =
-    await defaultAxios.get<JobPostingListResponseDto>("/api/job/");
+    await httpClient.get<JobPostingListResponseDto>("/api/job/");
   return response.data.results.map(toJobListItem);
 }
 
@@ -238,9 +242,11 @@ export function extractPipelineStepsFromJobDetail(
 export async function getJobDetailResponse(
   jobId: number | string,
   includeAllStatuses?: boolean,
+  options?: { httpClient?: AxiosInstance },
 ): Promise<JobDetailResponseDto> {
+  const httpClient = options?.httpClient ?? axiosPrivate;
   const params = includeAllStatuses ? { include_all_statuses: true } : {};
-  const response = await defaultAxios.get<JobDetailResponseDto>(
+  const response = await httpClient.get<JobDetailResponseDto>(
     `/api/job/${jobId}/`,
     { params },
   );
