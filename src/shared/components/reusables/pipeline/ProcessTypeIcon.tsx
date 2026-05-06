@@ -1,7 +1,6 @@
 import {
   FileText,
   Phone,
-  CheckCircle,
   Users,
   ClipboardCheck,
   Briefcase,
@@ -18,12 +17,11 @@ interface ProcessTypeIconProps {
 const processTypeIcons: Record<string, LucideIcon> = {
   resume_screening: FileText,
   phone_call_interview: Phone,
-  shortlisted: CheckCircle,
   initial_interview: Users,
   assessments: ClipboardCheck,
   final_interview: Briefcase,
   for_job_offer: FileCheck,
-  for_offer_and_finalization: FileCheck,
+  pre_onboarding: FileCheck,
   onboarding: UserCheck,
 };
 
@@ -39,12 +37,11 @@ export function getProcessTypeLabel(processType: string): string {
   const labels: Record<string, string> = {
     resume_screening: "Resume Screening",
     phone_call_interview: "Phone Call Interview",
-    shortlisted: "Shortlisted",
     initial_interview: "Initial Interview",
     assessments: "Assessments",
     final_interview: "Final Interview",
     for_job_offer: "For Job Offer",
-    for_offer_and_finalization: "For Offer and Finalization",
+    pre_onboarding: "Pre-Onboarding",
     onboarding: "Onboarding",
   };
 

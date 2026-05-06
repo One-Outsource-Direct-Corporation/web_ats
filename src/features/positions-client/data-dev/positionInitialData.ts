@@ -20,6 +20,8 @@ export const getDefaultFormData = (): PositionFormData => ({
     responsibilities: null,
     qualifications: null,
     working_site: null,
+    work_schedule_from: null,
+    work_schedule_to: null,
   },
   application_form: {
     application_form: {
@@ -73,6 +75,8 @@ export const testData = (): PositionFormData => ({
     responsibilities: "<p>qweqwe</p>",
     qualifications: "<p>qweqwe</p>",
     working_site: "123123",
+    work_schedule_from: "08:00",
+    work_schedule_to: "17:00",
   },
   application_form: {
     application_form: {
@@ -127,7 +131,7 @@ export const testData = (): PositionFormData => ({
           questionnaires: [
             {
               tempId: "temp-1762933776009",
-              name: "123",
+              question: "123",
               description: "123",
               type: "Paragraph",
               parameter: "123",
@@ -146,7 +150,7 @@ export const testData = (): PositionFormData => ({
       order: 1,
       stage: 1,
       reminder: "2025-11-26T15:55",
-      hiring_managers: [],
+      interviewer: null,
       assessments: [],
       tempId: "tmp-1762933870971",
     },
@@ -167,6 +171,7 @@ export const testData = (): PositionFormData => ({
       deployment_date: "2025-11-27",
       tempId: "tmp-1762933739785",
       location: "tmp-1762933731892",
+      district: "Makati",
     },
   ],
 });

@@ -1,5 +1,16 @@
 import Request from "../views/Request";
 import EditRequestItem from "../views/EditRequestItem";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { isRestrictedManager } from "@/features/auth/utils/rolePermissions";
+import ManagerRequest from "../views/ManagerRequest";
+import ManagersView from "@/features/prf_2/views/ManagersView";
+import ExternalPostingForm from "@/Pages/ExternalPostingForm";
+
+// Wrapper component to handle // Wrapper component to handle conditional rendering
+const RequestIndex = () => {
+  const { user } = useAuth();
+  return isRestrictedManager(user?.role) ? <ManagerRequest /> : <Request />;
+};
 
 export const requestRoutes = [
   {
@@ -7,7 +18,15 @@ export const requestRoutes = [
     children: [
       {
         index: true,
-        element: <Request />,
+        element: <RequestIndex />,
+      },
+      {
+        path: "create-new-external-posting",
+        element: <ExternalPostingForm />,
+      },
+      {
+        path: "manager/:positionId",
+        element: <ManagersView />,
       },
       {
         path: "edit/:type/:id",

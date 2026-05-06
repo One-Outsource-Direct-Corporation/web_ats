@@ -6,17 +6,33 @@ import type {
   Assessment,
   AssessmentLocal,
   AssessmentInDb,
+  PipelineStepNotificationTemplate,
 } from "@/shared/types/pipeline.types";
+import type { User } from "@/features/auth/types/auth.types";
 import { StepCard } from "./StepCard";
 import { AddStepFormDialog } from "./AddStepFormDialog";
 import { useState } from "react";
-import type { User } from "@/features/auth/types/auth.types";
+ 
+const DEFAULT_NOTIFICATION_TEMPLATES: PipelineStepNotificationTemplate[] = [
+  {
+    action_type: "send_email",
+    trigger_outcome: "passed",
+    subject: "",
+    body: "",
+  },
+  {
+    action_type: "send_email",
+    trigger_outcome: "failed",
+    subject: "",
+    body: "",
+  },
+];
 
 interface StageCardProps {
   stage: PipelineStage;
   steps: PipelineStep[];
   allSteps: PipelineStep[];
-  errors?: any;
+  errors?: unknown;
   addPipelineStep: (newStep: PipelineStepLocal) => void;
   updatePipelineStep: (id: string | number, data: PipelineStep) => void;
   deletePipelineStep: (id: string | number) => void;
@@ -38,21 +54,45 @@ export function StageCard({
       description: "",
       order: 0,
       stage: 0,
-      reminder: "",
-      hiring_managers: [],
+      interviewer: null,
+      passedEmailTemplateId: null,
+      failedEmailTemplateId: null,
+      notification_templates: DEFAULT_NOTIFICATION_TEMPLATES,
       assessments: [],
-    }
+    },
   );
   const [openDialogs, setOpenDialogs] = useState<{ [key: number]: boolean }>(
-    {}
+    {},
   );
   const [editingStep, setEditingStep] = useState<PipelineStep | null>(null);
 
   function handleStepDataChange(
     field: keyof PipelineStep,
-    value: string | number | boolean | User[] | Assessment[]
+    value:
+      | string
+      | number
+      | boolean
+      | User
+      | null
+      | Assessment[]
+      | PipelineStepNotificationTemplate[],
   ) {
     setStepData((prev) => ({ ...prev, [field]: value }));
+  }
+  function normalizeNotificationTemplates(
+    templates?: PipelineStepNotificationTemplate[],
+  ): PipelineStepNotificationTemplate[] {
+    const passedTemplate = templates?.find(
+      (template) => template.trigger_outcome === "passed",
+    );
+    const failedTemplate = templates?.find(
+      (template) => template.trigger_outcome === "failed",
+    );
+
+    return [
+      passedTemplate ?? DEFAULT_NOTIFICATION_TEMPLATES[0],
+      failedTemplate ?? DEFAULT_NOTIFICATION_TEMPLATES[1],
+    ];
   }
 
   function resetStepData() {
@@ -62,9 +102,11 @@ export function StageCard({
       description: "",
       order: 0,
       stage: 0,
-      reminder: "",
-      hiring_managers: [],
+      interviewer: null,
+      passedEmailTemplateId: null,
+      failedEmailTemplateId: null,
       assessments: [],
+      notification_templates: DEFAULT_NOTIFICATION_TEMPLATES,
     });
   }
 
@@ -84,9 +126,13 @@ export function StageCard({
       description: step.description,
       order: step.order,
       stage: step.stage,
-      reminder: step.reminder,
-      hiring_managers: step.hiring_managers,
+      interviewer: step.interviewer,
+      passedEmailTemplateId: step.passedEmailTemplateId ?? null,
+      failedEmailTemplateId: step.failedEmailTemplateId ?? null,
       assessments: step.assessments,
+      notification_templates: normalizeNotificationTemplates(
+        step.notification_templates,
+      ),
     });
     setOpenDialogs((prev) => ({ ...prev, [stage.id]: true }));
   }
@@ -100,7 +146,7 @@ export function StageCard({
 
   function handleUpdateAssessment(
     id: string | number,
-    updatedData: Partial<Assessment>
+    updatedData: Partial<Assessment>,
   ) {
     setStepData((prev) => ({
       ...prev,
@@ -125,14 +171,14 @@ export function StageCard({
         .map((assessment) =>
           typeof id === "number" && (assessment as AssessmentInDb).id === id
             ? { ...assessment, _delete: true }
-            : assessment
+            : assessment,
         )
         .filter(
           (assessment) =>
             !(
               typeof id === "string" &&
               (assessment as AssessmentLocal).tempId === id
-            )
+            ),
         ),
     }));
   }

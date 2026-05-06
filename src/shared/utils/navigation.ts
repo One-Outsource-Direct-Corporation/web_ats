@@ -16,7 +16,6 @@ interface JobData {
 interface AppState {
   currentComponent: string;
   selectedJob?: JobData;
-  trackingCode?: string;
   searchQuery?: string;
   applicationData?: any;
   currentPath?: string;
@@ -95,16 +94,6 @@ export class AppNavigationManager {
     this.notifyStateChange();
   }
 
-  goToTracker(searchCode?: string) {
-    this.appState.currentComponent = "Tracker";
-    if (searchCode) {
-      this.appState.searchQuery = searchCode;
-      this.appState.trackingCode = searchCode;
-    }
-    this.updateURL("/applicationtracker");
-    this.notifyStateChange();
-  }
-
   goToDocuments() {
     this.appState.currentComponent = "Documents";
     this.updateURL("/documents");
@@ -118,10 +107,6 @@ export class AppNavigationManager {
 
   getCurrentJob() {
     return this.appState.selectedJob;
-  }
-
-  getTrackingCode() {
-    return this.appState.trackingCode;
   }
 
   getSearchQuery() {

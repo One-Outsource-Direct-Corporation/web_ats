@@ -15,10 +15,39 @@ import type { AxiosError } from "axios";
 import { formatBackgroundStatus } from "@/shared/utils/formatBackgroundStatus";
 import { usePositionDetail } from "@/shared/hooks/usePositions";
 import { useEffect } from "react";
-import PRF from "@/features/prf/views/PRF";
-import type { PRFDb, PRFFormData } from "@/features/prf/types/prf.types";
-import type { PositionDb } from "@/features/positions-client/types/create_position.types";
-import PositionClient from "@/features/positions-client/views/PositionClient";
+import PRFCreation from "@/Pages/PRFCreation";
+import type {
+  PRFFormData,
+  PRFResponse,
+} from "@/features/prf_2/types/LegacyPRFCompat";
+import type {
+  PositionResponse,
+  PositionFormData,
+} from "@/features/external_posting";
+import ExternalPostingForm from "@/Pages/ExternalPostingForm";
+
+type EditablePosition = PRFResponse | PositionResponse;
+
+const isPrfResponse = (value: EditablePosition): value is PRFResponse =>
+  "approval_status" in value;
+
+const getAxiosErrorMessage = (
+  error: unknown,
+  fallbackMessage: string,
+): string => {
+  const axiosError = error as AxiosError<{
+    detail?: string;
+    error?: string;
+    status?: string;
+  }>;
+
+  return (
+    axiosError.response?.data?.detail ||
+    axiosError.response?.data?.error ||
+    axiosError.response?.data?.status ||
+    fallbackMessage
+  );
+};
 
 export default function EditRequestItem() {
   const { type, id } = useParams<{ type: "prf" | "position"; id: string }>();
@@ -28,6 +57,7 @@ export default function EditRequestItem() {
   const { position, loading, error, refetch } = usePositionDetail({
     id: id ? Number(id) : undefined,
     non_admin: false,
+    requestType: type,
   });
 
   useEffect(() => {
@@ -35,11 +65,11 @@ export default function EditRequestItem() {
       type === "prf" ? "Edit Internal" : "Edit Client" + " Position";
   }, [type]);
 
-  if (!position || loading) {
+  if (loading) {
     return <LoadingComponent message="Loading Data" />;
   }
 
-  if (error || !type) {
+  if (error || !position || !type) {
     return (
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="text-center">
@@ -53,6 +83,14 @@ export default function EditRequestItem() {
       </div>
     );
   }
+
+  const editablePosition = position as EditablePosition;
+  const jobPosting = editablePosition.job_posting;
+  const isPrf =
+    type === "prf" ||
+    jobPosting.type === "prf" ||
+    isPrfResponse(editablePosition);
+  const prfPosition = isPrfResponse(editablePosition) ? editablePosition : null;
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
@@ -69,44 +107,47 @@ export default function EditRequestItem() {
           </Button>
           <div className="mt-4">
             <h1 className="text-3xl font-bold text-gray-800">
-              Edit {type === "prf" ? "Internal" : "Client"} Position
+              Edit {isPrf ? "Internal" : "Client"} Position
             </h1>
             <p className="text-gray-600">
-              {position.job_posting.job_title} • ID:{" "}
-              {((position as PRFDb) || (position as PositionDb)).job_posting.id}
+              {position.job_posting.job_title} • ID: {jobPosting.id}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
+          {isPrf &&
+            prfPosition?.approval_status?.is_fully_approved &&
+            jobPosting.status !== "active" && (
+              <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-200">
+                Ready to Activate
+              </span>
+            )}
           <Select
-            value={
-              ((position as PRFDb) || (position as PositionDb)).job_posting
-                .status
-            }
+            value={jobPosting.status}
             onValueChange={async (
-              value: "draft" | "pending" | "active" | "closed" | "cancelled"
+              value: "draft" | "pending" | "active" | "closed" | "cancelled",
             ) => {
               try {
-                const endpoint =
-                  type === "prf" ? `/api/prf/${id}/` : `/api/position/${id}/`;
+                const endpoint = isPrf
+                  ? `/api/prf/${id}/`
+                  : `/api/external_posting/${id}/`;
                 await axiosPrivate.patch(endpoint, {
                   job_posting: { status: value },
                 });
-                refetch(); // Refetch to update the position data
+                refetch();
                 toast.success("Status updated successfully");
-              } catch (err: AxiosError | any) {
+              } catch (err: unknown) {
                 console.error("Error updating status:", err);
                 toast.error(
-                  err.response?.data?.detail || "Failed to update status"
+                  getAxiosErrorMessage(err, "Failed to update status"),
                 );
               }
             }}
           >
             <SelectTrigger
               className={`w-32 rounded-4xl border-0 font-semibold ${formatBackgroundStatus(
-                ((position as PRFDb) || (position as PositionDb)).job_posting
-                  .status
+                jobPosting.status,
               )}`}
             >
               <SelectValue />
@@ -119,31 +160,30 @@ export default function EditRequestItem() {
               <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
-          {((position as PRFDb) || (position as PositionDb)).job_posting
-            .status === "active" && (
+          {jobPosting.status === "active" && (
             <Select
-              value={(
-                (position as PRFDb) || (position as PositionDb)
-              ).job_posting.published.toString()}
+              value={jobPosting.published.toString()}
               onValueChange={async (value: "true" | "false") => {
                 try {
-                  const endpoint =
-                    type === "prf" ? `/api/prf/${id}/` : `/api/position/${id}/`;
+                  const endpoint = isPrf
+                    ? `/api/prf/${id}/`
+                    : `/api/external_posting/${id}/`;
                   const response = await axiosPrivate.patch(endpoint, {
                     job_posting: {
                       published: value === "true",
-                      status: ((position as PRFDb) || (position as PositionDb))
-                        .job_posting.status,
+                      status: jobPosting.status,
                     },
                   });
                   console.log(response);
                   refetch();
                   toast.success("Published status updated successfully");
-                } catch (err: AxiosError | any) {
+                } catch (err: unknown) {
                   console.error("Error updating published status:", err);
                   toast.error(
-                    err.response?.data?.detail ||
-                      "Failed to update published status"
+                    getAxiosErrorMessage(
+                      err,
+                      "Failed to update published status",
+                    ),
                   );
                 }
               }}
@@ -162,11 +202,14 @@ export default function EditRequestItem() {
 
       {/* Form Content */}
       <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-        {type === "prf" ? (
-          <PRF initialData={position as PRFFormData} updateMode={true} />
+        {isPrf ? (
+          <PRFCreation
+            initialData={editablePosition as PRFFormData}
+            updateMode={true}
+          />
         ) : (
-          <PositionClient
-            initialData={position as PositionDb}
+          <ExternalPostingForm
+            initialData={editablePosition as PositionFormData}
             updateMode={true}
           />
         )}

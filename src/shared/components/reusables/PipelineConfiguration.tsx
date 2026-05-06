@@ -12,7 +12,7 @@ interface PipelineConfigurationProps {
   addPipelineStep: (newStep: PipelineStepLocal) => void;
   updatePipelineStep: (id: string | number, data: PipelineStep) => void;
   deletePipelineStep: (id: string | number) => void;
-  errors?: any;
+  errors?: unknown;
   title?: string;
 }
 
@@ -30,16 +30,34 @@ export default function PipelineConfiguration({
     { id: 3, name: "STAGE 03" },
     { id: 4, name: "STAGE 04" },
   ];
+
+  const pipelineErrors =
+    errors && typeof errors === "object"
+      ? ((errors as { pipeline?: unknown; pipeline_input?: unknown })
+          .pipeline ??
+        (errors as { pipeline?: unknown; pipeline_input?: unknown })
+          .pipeline_input)
+      : undefined;
+
+  const normalizedErrors =
+    errors && typeof errors === "object"
+      ? {
+          ...(errors as Record<string, unknown>),
+          pipeline: pipelineErrors,
+        }
+      : errors;
+
   return (
     <Card className="p-6">
       <h3 className="text-lg font-semibold text-gray-800 mb-6">{title}</h3>
 
       <div className="flex flex-col gap-6">
-        {errors?.pipeline && typeof errors.pipeline[0] === "string" && (
-          <div className="text-red-600 text-sm">
-            <p>Add Pipeline Steps</p>
-          </div>
-        )}
+        {Array.isArray(pipelineErrors) &&
+          typeof pipelineErrors[0] === "string" && (
+            <div className="text-red-600 text-sm">
+              <p>Add Pipeline Steps</p>
+            </div>
+          )}
         {pipelineStages.map((stage) => {
           const stageSteps = pipelineSteps
             .filter((step) => step.stage === stage.id)
@@ -51,7 +69,7 @@ export default function PipelineConfiguration({
               stage={stage}
               steps={stageSteps}
               allSteps={pipelineSteps}
-              errors={errors}
+              errors={normalizedErrors}
               addPipelineStep={addPipelineStep}
               updatePipelineStep={updatePipelineStep}
               deletePipelineStep={deletePipelineStep}

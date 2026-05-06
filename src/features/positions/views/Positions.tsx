@@ -17,6 +17,7 @@ export default function Positions() {
     page: currentPage,
     my_postings: false,
     type: filters.type,
+    published: "true",
   });
 
   useEffect(() => {
@@ -38,7 +39,7 @@ export default function Positions() {
   return (
     <section className="flex flex-col">
       <div className="bg-gray-50 border-b border-gray-200 shadow-sm px-6 pt-4 pb-3">
-        <div className="max-w-7xl mx-auto space-y-3">
+        <div className="space-y-3">
           <h1 className="text-3xl font-bold text-gray-800">Positions</h1>
           <p className="text-lg text-gray-700">
             Manages job openings and related information
@@ -49,7 +50,7 @@ export default function Positions() {
 
       {/* Main content section */}
       {loading && <LoadingComponent />}
-      <div className="max-w-7xl mx-auto w-full mt-5 px-6">
+      <div className="w-full mt-5 px-6">
         {error && (
           <div className="text-red-600 text-center">
             Error loading positions

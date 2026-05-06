@@ -1,11 +1,11 @@
-import type { JobPostingAPIResponse } from "@/features/positions-client/types/create_position.types";
+import type { JobPostingListResponse } from "@/features/external_posting";
 import { Button } from "../ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PageIndicator {
   // loading: boolean;
   // error: any;
-  positions: JobPostingAPIResponse | null;
+  positions: JobPostingListResponse | null;
   currentPage: number;
   // onPageChange: (newPage: number) => void;
   handlePrevPage: () => void;
@@ -19,7 +19,7 @@ export default function PageIndicator({
   handleNextPage,
 }: PageIndicator) {
   return (
-    <div className="flex justify-center items-center mt-4 space-x-4">
+    <div className="flex justify-center items-center my-4 space-x-4">
       {positions && (
         <>
           <Button

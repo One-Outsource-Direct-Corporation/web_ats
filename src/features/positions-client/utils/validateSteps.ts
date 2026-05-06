@@ -3,6 +3,7 @@ import {
   validateJobPosting,
   validatePipeline,
   validateNonNegotiable,
+  validateQuestionnaireNonNegotiable,
   mapServerErrorsToSteps as mapServerErrors,
   hasStepErrors as checkStepErrors,
   getStepErrorSummary as getErrorSummary,
@@ -51,6 +52,8 @@ export function validateSteps(formData: PositionFormData): StepErrors {
     "number_of_vacancies",
     "min_salary",
     "max_salary",
+    "work_schedule_from",
+    "work_schedule_to",
   ];
 
   const step1JobPosting: ValidationError = {};
@@ -90,11 +93,18 @@ export function validateSteps(formData: PositionFormData): StepErrors {
   // Step 3: Non-negotiable validation
   const step3Errors: ValidationError = {};
   const nonNegotiableErrors = validateNonNegotiable(
-    formData.application_form?.non_negotiable
+    formData.application_form?.non_negotiable,
+  );
+  const questionnaireNonNegotiableErrors = validateQuestionnaireNonNegotiable(
+    formData.application_form?.questionnaire,
   );
 
   if (Object.keys(nonNegotiableErrors).length > 0) {
     Object.assign(step3Errors, nonNegotiableErrors);
+  }
+
+  if (Object.keys(questionnaireNonNegotiableErrors).length > 0) {
+    Object.assign(step3Errors, questionnaireNonNegotiableErrors);
   }
 
   if (Object.keys(step3Errors).length > 0) {
@@ -124,7 +134,7 @@ export function validateSteps(formData: PositionFormData): StepErrors {
  * Maps server validation errors to step-specific errors for Position form
  */
 export function mapServerErrorsToSteps(
-  serverErrors: ValidationError
+  serverErrors: ValidationError,
 ): StepErrors {
   const fieldMapping: { [field: string]: number } = {
     client: 1,
@@ -140,10 +150,13 @@ export function mapServerErrorsToSteps(
     "job_posting.number_of_vacancies": 1,
     "job_posting.min_salary": 1,
     "job_posting.max_salary": 1,
+    "job_posting.work_schedule_from": 1,
+    "job_posting.work_schedule_to": 1,
     "job_posting.description": 2,
     "job_posting.responsibilities": 2,
     "job_posting.qualifications": 2,
     non_negotiable: 3,
+    questionnaire: 3,
     "application_form.non_negotiable": 3,
     pipeline: 4,
   };
@@ -162,7 +175,7 @@ export function hasStepErrors(stepErrors: ValidationError | null): boolean {
  * Gets a summary of errors for a step
  */
 export function getStepErrorSummary(
-  stepErrors: ValidationError | null
+  stepErrors: ValidationError | null,
 ): string {
   return getErrorSummary(stepErrors);
 }

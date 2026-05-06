@@ -19,10 +19,27 @@ function AvatarImage({
   className,
   ...props
 }: React.ComponentProps<typeof AvatarPrimitive.Image>) {
+  const handleError = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = event.currentTarget as HTMLImageElement;
+    if (!img.dataset.fallback) {
+      img.dataset.fallback = "1";
+      img.src = "/placeholder.svg";
+    }
+
+    if (typeof props.onError === "function") {
+      try {
+        (props.onError as any)(event);
+      } catch (e) {
+        // ignore
+      }
+    }
+  };
+
   return (
     <AvatarPrimitive.Image
       data-slot="avatar-image"
-      className={cn("aspect-square size-full", className)}
+      className={cn("w-full h-full object-cover aspect-square", className)}
+      onError={handleError}
       {...props}
     />
   );

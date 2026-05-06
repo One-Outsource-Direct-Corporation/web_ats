@@ -16,14 +16,30 @@ import type {
   PipelineStage,
   AssessmentLocal,
   PipelineStepInDb,
+  PipelineStepNotificationTemplate,
 } from "@/shared/types/pipeline.types";
 import { ProcessTypeSelect } from "./ProcessTypeSelect";
 import { AssessmentSection } from "./AssessmentSection";
-import { HiringManagerMember } from "./HiringManagerMember";
+import { HumanResourcesMember } from "./HumanResourcesMember";
 import { StageActionTemplate } from "./StageActionTemplate";
 import { Field, FieldGroup, FieldLabel } from "../../ui/field";
 import { Textarea } from "../../ui/textarea";
 import type { User } from "@/features/auth/types/auth.types";
+
+const MANDATORY_STAGE_04_TYPES = [
+  "for_job_offer",
+  "pre_onboarding",
+  "onboarding",
+];
+
+function isMandatoryStage04Step(
+  step: Omit<PipelineStep, "id" | "tempId">,
+): boolean {
+  return (
+    step.stage === 4 &&
+    MANDATORY_STAGE_04_TYPES.includes(step.process_type)
+  );
+}
 
 interface AddStepFormDialogProps {
   open: boolean;
@@ -32,7 +48,14 @@ interface AddStepFormDialogProps {
   stepData: Omit<PipelineStep, "id" | "tempId">;
   onStepDataChange: (
     field: keyof PipelineStep,
-    value: string | number | boolean | User[] | Assessment[]
+    value:
+      | string
+      | number
+      | boolean
+      | User
+      | null
+      | Assessment[]
+      | PipelineStepNotificationTemplate[],
   ) => void;
   addAssessment: (assessment: AssessmentLocal) => void;
   updateAssessment: (id: string | number, data: Assessment) => void;
@@ -65,10 +88,13 @@ export function AddStepFormDialog({
           Add Step Here
         </button>
       </DialogTrigger>
-      <DialogContent className="w-[95vw] !max-w-[1200px] max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        className="w-[95vw] max-h-[90vh] overflow-y-auto"
+        style={{ maxWidth: 1200 }}
+      >
         <DialogHeader>
           <DialogTitle className="text-blue-600">
-            {isEditing ? `Edit ${stage.name ?? ""}` : stage.name ?? ""}
+            {isEditing ? `Edit ${stage.name ?? ""}` : (stage.name ?? "")}
           </DialogTitle>
         </DialogHeader>
 
@@ -77,10 +103,14 @@ export function AddStepFormDialog({
           <Field>
             <FieldLabel className="text-sm font-medium text-gray-700 mb-2 block">
               Process Type
+              {isMandatoryStage04Step(stepData) && (
+                <span className="text-xs text-gray-400 ml-2">(locked)</span>
+              )}
             </FieldLabel>
             <ProcessTypeSelect
               value={stepData.process_type}
               onValueChange={(value) => onStepDataChange("process_type", value)}
+              disabled={isMandatoryStage04Step(stepData)}
             />
           </Field>
 
@@ -107,44 +137,50 @@ export function AddStepFormDialog({
               placeholder="Enter description"
               value={stepData.description}
               onChange={(e) => onStepDataChange("description", e.target.value)}
-              className="w-full min-h-[80px] px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={{ minHeight: 80 }}
             />
           </Field>
 
-          {/* Assessment Section */}
-          <Field>
-            <FieldLabel className="text-sm font-medium text-gray-700 mb-2 block">
-              Assessment
-            </FieldLabel>
-            <AssessmentSection
-              assessments={stepData.assessments}
-              onChange={updateAssessment}
-              onAdd={addAssessment}
-              onDelete={deleteAssessment}
-              onReorder={(reorderedAssessments) =>
-                onStepDataChange("assessments", reorderedAssessments)
-              }
-            />
-          </Field>
+          {/* Assessment Section — hidden for mandatory Stage 04 steps */}
+          {!isMandatoryStage04Step(stepData) && (
+            <Field>
+              <FieldLabel className="text-sm font-medium text-gray-700 mb-2 block">
+                Assessment
+              </FieldLabel>
+              <AssessmentSection
+                assessments={stepData.assessments}
+                onChange={updateAssessment}
+                onAdd={addAssessment}
+                onDelete={deleteAssessment}
+                onReorder={(reorderedAssessments) =>
+                  onStepDataChange("assessments", reorderedAssessments)
+                }
+              />
+            </Field>
+          )}
 
-          <HiringManagerMember
-            hiringManagers={stepData.hiring_managers}
-            handleHiringManagerSelection={(manager) => {
-              onStepDataChange(
-                "hiring_managers",
-                stepData.hiring_managers?.some((hm) => hm.id === manager.id)
-                  ? stepData.hiring_managers.filter(
-                      (hm) => hm.id !== manager.id
-                    )
-                  : [...stepData.hiring_managers, manager]
-              );
+          <HumanResourcesMember
+            interviewer={stepData.interviewer}
+            handleInterviewerSelection={(interviewer) => {
+              onStepDataChange("interviewer", interviewer);
             }}
           />
 
           <StageActionTemplate
-            reminderTime={stepData.reminder || ""}
-            onReminderTimeChange={(value: string) =>
-              onStepDataChange("reminder", value)
+            notificationTemplates={stepData.notification_templates}
+            onNotificationTemplatesChange={(
+              value: PipelineStepNotificationTemplate[],
+            ) =>
+              onStepDataChange("notification_templates", value)
+            }
+            passedEmailTemplateId={stepData.passedEmailTemplateId}
+            failedEmailTemplateId={stepData.failedEmailTemplateId}
+            onPassedEmailTemplateChange={(id) =>
+              onStepDataChange("passedEmailTemplateId", id)
+            }
+            onFailedEmailTemplateChange={(id) =>
+              onStepDataChange("failedEmailTemplateId", id)
             }
           />
         </FieldGroup>

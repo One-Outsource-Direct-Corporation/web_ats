@@ -10,4 +10,12 @@ export const interviewsRoutes = [
       },
     ],
   },
+  {
+    path: "/ieform",
+    element: <IEForm />,
+  },
+  {
+    path: "/job/:jobId/applicants/:candidateApplicationId/interviews/:interviewId/ief",
+    element: <IEForm />,
+  },
 ];

@@ -1,38 +1,92 @@
-import { useEffect, useState } from "react";
-import { useJobByTitle } from "../hooks/useJobs";
+import { useEffect, useMemo, useState } from "react";
+import { useJobById, useJobDetailQuery, useJobs } from "../hooks/useJobs";
+import { extractPipelineStepsFromJobDetail } from "../services/jobService";
 import { Input } from "@/shared/components/ui/input.tsx";
 import { Button } from "@/shared/components/ui/button.tsx";
-import { ArrowLeft, LayoutGrid, List } from "lucide-react";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { ArrowLeft, LayoutGrid, List, UserRound } from "lucide-react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { formatJobTitle, getStageRoutePath } from "../utils/jobFormatters";
+import type { JobPipelineStep } from "../types/job.types";
+import {
+  getProcessTypeLabel,
+  getStageRoutePathFromProcessType,
+  groupPipelineStepsByStage,
+} from "../utils/jobFormatters";
+import formatName from "@/shared/utils/formatName";
+
+interface JobRouteState {
+  jobTitle?: string;
+  jobId?: string;
+}
 
 export default function JobDetails() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { jobtitle } = useParams<{ jobtitle: string }>();
+  const { jobId } = useParams<{ jobId: string }>();
+  const jobs = useJobs();
+  const jobById = useJobById(jobId);
+  const routeState = (location.state ?? null) as JobRouteState | null;
+  const { user } = useAuth();
 
-  const [currentJobTitle, setCurrentJobTitle] = useState<string>("");
-  const job = useJobByTitle(currentJobTitle);
   const [selectedStage, setSelectedStage] = useState<string>("");
 
-  useEffect(() => {
-    if (location.state?.jobTitle) {
-      setCurrentJobTitle(location.state.jobTitle);
-    } else if (jobtitle) {
-      setCurrentJobTitle(formatJobTitle(jobtitle));
+  const jobFromStateById = useMemo(() => {
+    if (!routeState?.jobId) {
+      return undefined;
     }
-  }, [location.state, jobtitle]);
 
-  const handleStageClick = (stageName: string) => {
+    return jobs.find((item) => item.id === String(routeState.jobId));
+  }, [jobs, routeState?.jobId]);
+
+  const jobFromStateByTitle = useMemo(() => {
+    if (!routeState?.jobTitle) {
+      return undefined;
+    }
+
+    return jobs.find((item) => item.title === routeState.jobTitle);
+  }, [jobs, routeState?.jobTitle]);
+
+  const currentJob = jobById ?? jobFromStateById ?? jobFromStateByTitle;
+  const currentJobTitle = currentJob?.title ?? routeState?.jobTitle ?? "Job Details";
+  const currentJobId =
+    jobId ??
+    currentJob?.id ??
+    (routeState?.jobId ? String(routeState.jobId) : undefined);
+
+  const {
+    data: jobDetail,
+    isLoading,
+    isError,
+  } = useJobDetailQuery(currentJobId);
+
+  const pipelineSteps = useMemo(
+    () => extractPipelineStepsFromJobDetail(jobDetail),
+    [jobDetail],
+  );
+  const groupedStages = useMemo(
+    () => groupPipelineStepsByStage(pipelineSteps),
+    [pipelineSteps],
+  );
+
+  const handleStageClick = (step: JobPipelineStep) => {
+    if (!currentJobId) {
+      return;
+    }
+
+    const stageName =
+      step.process_title || getProcessTypeLabel(step.process_type);
     setSelectedStage(stageName);
 
-    const jobSlug = currentJobTitle.toLowerCase().replace(/\s+/g, "");
-    const path = getStageRoutePath(stageName, jobSlug);
+    const path = getStageRoutePathFromProcessType(step.process_type, currentJobId);
 
-    // Navigate
+    if (!path) {
+      return;
+    }
+
     navigate(path, {
       state: {
         jobTitle: currentJobTitle,
+        jobId: currentJobId,
         stageName,
       },
     });
@@ -42,31 +96,10 @@ export default function JobDetails() {
     document.title = `Applicants - ${currentJobTitle || "Job Details"}`;
   }, [currentJobTitle]);
 
-  const stages = [
-    {
-      title: "STAGE 01 - HR Interview",
-      steps: ["Resume Screening", "Phone Call Interview", "Shortlisted"],
-    },
-    {
-      title: "STAGE 02 - Hiring Manager/Client",
-      steps: ["Initial Interview", "Assessments", "Final Interview"],
-    },
-    {
-      title: "STAGE 03 - Final Stage",
-      steps: [
-        "For Job Offer",
-        "For Offer and Finalization",
-        "Onboarding",
-        "Warm",
-        "Failed",
-      ],
-    },
-  ];
-
   return (
     <>
       <div className="min-h-screen bg-gray-50 p-6">
-        <div className="mx-auto max-w-7xl space-y-6">
+        <div className="space-y-6">
           <div className="w-full space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
@@ -74,7 +107,7 @@ export default function JobDetails() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => navigate(`/job/`)}
+                  onClick={() => navigate("/job/")}
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
@@ -88,12 +121,10 @@ export default function JobDetails() {
                   size="icon"
                   onClick={() =>
                     navigate(
-                      `/job/${currentJobTitle
-                        ?.toLowerCase()
-                        .replace(/\s+/g, "")}/weekly`,
+                      `/job/${currentJobId}/weekly`,
                       {
-                        state: { jobTitle: currentJobTitle },
-                      }
+                        state: { jobTitle: currentJobTitle, jobId: currentJobId },
+                      },
                     )
                   }
                 >
@@ -106,22 +137,26 @@ export default function JobDetails() {
             </div>
 
             {/* Job Info Display */}
-            {job && (
+            {currentJob && (
               <div className="bg-white border rounded-lg p-4">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   <div>
                     <span className="text-gray-500">Department:</span>
-                    <span className="ml-2 font-semibold">{job.department}</span>
+                    <span className="ml-2 font-semibold">
+                      {currentJob.department || "-"}
+                    </span>
                   </div>
                   <div>
                     <span className="text-gray-500">Employment Type:</span>
                     <span className="ml-2 font-semibold">
-                      {job.employmentType}
+                      {formatName(currentJob.employmentType) || "-"}
                     </span>
                   </div>
                   <div>
                     <span className="text-gray-500">Status:</span>
-                    <span className="ml-2 font-semibold">{job.status}</span>
+                    <span className="ml-2 font-semibold">
+                      {formatName(currentJob.status) || "-"}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -146,30 +181,75 @@ export default function JobDetails() {
 
             {/* Stages */}
             <div className="space-y-10">
-              {stages.map((stage) => (
-                <div key={stage.title} className="space-y-4">
-                  <h2 className="text-md font-semibold text-gray-800">
-                    {stage.title}
-                  </h2>
-                  <div className="border rounded-md divide-y">
-                    {stage.steps.map((step, index) => (
-                      <div
-                        key={index}
-                        className="flex justify-between items-center px-4 py-3 hover:bg-gray-50"
-                      >
-                        <span>{step}</span>
-                        <Button
-                          variant="link"
-                          className="text-blue-600 text-sm px-0 hover:underline"
-                          onClick={() => handleStageClick(step)}
-                        >
-                          View Applicants
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
+              {isLoading && (
+                <div className="border rounded-md p-4 text-sm text-gray-500">
+                  Loading pipeline...
                 </div>
-              ))}
+              )}
+
+              {isError && (
+                <div className="border rounded-md p-4 text-sm text-red-600">
+                  Unable to load this job pipeline right now.
+                </div>
+              )}
+
+              {!isLoading && !isError && groupedStages.length === 0 && (
+                <div className="border rounded-md p-4 text-sm text-gray-500">
+                  No pipeline is configured for this job yet.
+                </div>
+              )}
+
+              {!isLoading &&
+                !isError &&
+                groupedStages.map((stage) => (
+                  <div key={stage.stage} className="space-y-4">
+                    <h2 className="text-md font-semibold text-gray-800">
+                      {stage.title}
+                    </h2>
+                    <div className="border rounded-md divide-y">
+                      {stage.steps.map((step) => (
+                        <div
+                          key={step.id}
+                          className="flex justify-between items-center px-4 py-3 hover:bg-gray-50"
+                        >
+                          <div className="min-w-0">
+                            <span className="block truncate">
+                              {step.process_title ||
+                                getProcessTypeLabel(step.process_type)}
+                            </span>
+                            <span
+                              className="mt-1 inline-flex items-center gap-1 text-xs text-gray-500"
+                              title={`${step.process_title || getProcessTypeLabel(step.process_type)} - ${step.interviewerName || "Unassigned"}`}
+                            >
+                              <UserRound className="h-3 w-3" />
+                              {`${step.interviewerName || "Unassigned"}`}
+                            </span>
+                          </div>
+                                <div className="flex items-center gap-3">
+                                  {user && step.interviewerId && user.id === step.interviewerId && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-sm px-0 text-green-600"
+                                      onClick={() => handleStageClick(step)}
+                                    >
+                                      You (Interviewer)
+                                    </Button>
+                                  )}
+
+                                  <Button
+                                    variant="link"
+                                    className="text-blue-600 text-sm px-0 hover:underline"
+                                    onClick={() => handleStageClick(step)}
+                                  >
+                                    View Applicants
+                                  </Button>
+                                </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
             </div>
           </div>
         </div>

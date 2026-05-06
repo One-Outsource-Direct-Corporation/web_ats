@@ -1,25 +1,31 @@
 import React from "react";
 import LoginForm from "../components/LoginForm";
 import { useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { getDefaultLandingPage } from "../utils/rolePermissions";
+import { Briefcase } from "lucide-react";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const location = useLocation();
 
+  const isCandidateFlow = location.state?.role === "candidate";
+
   useEffect(() => {
-    document.title = "Log In";
-  }, []);
+    document.title = isCandidateFlow ? "Candidate Login" : "Log In";
+  }, [isCandidateFlow]);
 
   useEffect(() => {
     if (user) {
-      navigate(location.state?.from?.pathname || "/dashboard", {
-        replace: true,
-      });
+      // If there's an explicit redirect target, use it; otherwise go to role-based default
+      const from = location.state?.from;
+      const explicitPath = typeof from === "string" ? from : from?.pathname;
+      const target = explicitPath || getDefaultLandingPage(user.role);
+      navigate(target, { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, navigate, location.state]);
 
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden">
@@ -37,6 +43,26 @@ const Login: React.FC = () => {
         {/* Login Form Area */}
         <div className="w-full md:w-[55%] bg-gray-100 flex items-center justify-center px-6 sm:px-8 py-10">
           <div className="w-full max-w-2xl relative z-10">
+            {isCandidateFlow && (
+              <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
+                <Briefcase className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-blue-800 font-medium text-sm">
+                    Applying for a position?
+                  </p>
+                  <p className="text-blue-600 text-sm mt-1">
+                    Log in with your candidate account to continue your application.{" "}
+                    <Link
+                      to="/candidate/register"
+                      className="font-semibold underline hover:text-blue-800"
+                    >
+                      Create an account
+                    </Link>{" "}
+                    if you do not have one.
+                  </p>
+                </div>
+              </div>
+            )}
             <LoginForm />
           </div>
         </div>

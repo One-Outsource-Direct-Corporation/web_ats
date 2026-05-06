@@ -583,22 +583,24 @@ export default function OfferAndFinalization() {
   const handleStageChange = (value: string) => {
     const customFinalStages = [
       "OfferAndFinalization",
+      "PreOnboarding",
       "Onboarding",
-      "Warm",
       "Failed",
     ];
 
     const isCustomFinalStage = customFinalStages.includes(value);
 
     const routeSegment = slugify(value);
+    const currentJobId = location.state?.jobId;
 
     const path = isCustomFinalStage
       ? `/job/stage/${routeSegment}`
-      : `/job/${routeSegment}`;
+      : `/job/${currentJobId}/${routeSegment}`;
 
     navigate(path, {
       state: {
         jobTitle: location.state?.jobTitle,
+        jobId: currentJobId,
         jobData: location.state?.jobData,
         from: location.pathname,
       },
@@ -728,15 +730,17 @@ export default function OfferAndFinalization() {
   );
 
   const location = useLocation();
-  const jobTitleFromState = location.state?.jobTitle;
+  const jobIdFromState = location.state?.jobId;
   const from = location.state?.from;
 
   const slugify = (str: string) =>
     str.replace(/\s+/g, "").replace(/[^\w]+/g, "");
 
-  const backPath = from?.includes("/weekly")
-    ? `/job/${slugify(jobTitleFromState)}\/weekly`
-    : `/job/${slugify(jobTitleFromState)}`;
+  const backPath = jobIdFromState
+    ? from?.includes("/weekly")
+      ? `/job/${jobIdFromState}/weekly`
+      : `/job/${jobIdFromState}`
+    : "/job";
 
   return (
     <>
@@ -768,11 +772,11 @@ export default function OfferAndFinalization() {
                 <SelectItem value="OfferAndFinalization">
                   <span className="font-bold">For Offer And Finalization</span>
                 </SelectItem>
+                <SelectItem value="PreOnboarding">
+                  <span className="font-bold">Pre-Onboarding</span>
+                </SelectItem>
                 <SelectItem value="Onboarding">
                   <span className="font-bold">Onboarding</span>
-                </SelectItem>
-                <SelectItem value="Warm">
-                  <span className="font-bold">Warm</span>
                 </SelectItem>
                 <SelectItem value="Failed">
                   <span className="font-bold">Failed</span>

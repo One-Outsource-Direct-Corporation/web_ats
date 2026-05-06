@@ -4,6 +4,19 @@ import type {
   PipelineStepLocal,
 } from "../types/pipeline.types";
 
+const MANDATORY_STAGE_04_TYPES = [
+  "for_job_offer",
+  "pre_onboarding",
+  "onboarding",
+];
+
+function isMandatoryStage04Step(step: PipelineStep): boolean {
+  return (
+    step.stage === 4 &&
+    MANDATORY_STAGE_04_TYPES.includes(step.process_type)
+  );
+}
+
 export const usePipeline = (
   pipelines: PipelineStep[],
   setPipelines: (updatedPipelines: PipelineStep[]) => void
@@ -38,6 +51,17 @@ export const usePipeline = (
   }
 
   function deletePipelineStep(id: string | number) {
+    const target = pipelines.find((step) => {
+      if (typeof id === "number") {
+        return (step as PipelineStepInDb).id === id;
+      }
+      return (step as PipelineStepLocal).tempId === id;
+    });
+
+    if (target && isMandatoryStage04Step(target)) {
+      return;
+    }
+
     setPipelines(
       pipelines
         .map((step) =>

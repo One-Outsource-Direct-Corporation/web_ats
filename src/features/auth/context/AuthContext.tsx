@@ -1,5 +1,10 @@
 import { type AuthContextType, type User } from "../types/auth.types";
-import { createContext, useState } from "react";
+import { createContext, useEffect, useState } from "react";
+import {
+  getPersist,
+  setIsAuthStorage,
+  setPersistStorage,
+} from "../utils/authStorage";
 
 export const AuthContext = createContext<AuthContextType>({
   user: null,
@@ -12,12 +17,16 @@ export const AuthContext = createContext<AuthContextType>({
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [persist, setPersist] = useState<boolean>(
-    JSON.parse(localStorage.getItem("persist") || "false")
-  );
-  const [isAuth, setIsAuth] = useState<boolean>(
-    JSON.parse(localStorage.getItem("isAuth") || "false")
-  );
+  const [persist, setPersist] = useState<boolean>(() => getPersist());
+  const [isAuth, setIsAuth] = useState<boolean>(false);
+
+  useEffect(() => {
+    setPersistStorage(persist);
+  }, [persist]);
+
+  useEffect(() => {
+    setIsAuthStorage(isAuth);
+  }, [isAuth]);
 
   return (
     <AuthContext.Provider

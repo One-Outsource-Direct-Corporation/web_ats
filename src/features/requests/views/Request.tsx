@@ -12,6 +12,7 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
+  EyeIcon,
 } from "lucide-react";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import { toast } from "react-toastify";
@@ -24,12 +25,14 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
 import { formatBackgroundStatus } from "@/shared/utils/formatBackgroundStatus";
+import { ApprovalPipelineDropdown } from "../components/ApprovalPipelineDropdown";
+import type { JobPostingDbWithApprovers } from "@/features/external_posting";
 
 interface SelectedItem {
   id: number;
 }
 
-export default function Request() {
+export default function Request({ manager = false }: { manager?: boolean }) {
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({
@@ -40,7 +43,8 @@ export default function Request() {
     order_by: "desc",
   });
   const { positions, loading, error, refetch } = usePositions({
-    my_postings: true,
+    my_postings: manager ? false : true,
+    manager_approvals: manager,
     page: currentPage,
     type: filters.type,
     status: filters.status,
@@ -48,7 +52,9 @@ export default function Request() {
     work_setup: filters.work_setup,
     order_by: filters.order_by,
     published: "",
+    exclude_draft: manager ? true : false,
   });
+
   const selectAll = positions
     ? positions.results.length > 0 &&
       selectedItems.length === positions.results.length
@@ -76,7 +82,7 @@ export default function Request() {
         setSelectedItems([]);
       }
     },
-    [positions]
+    [positions],
   );
 
   // Handle individual checkbox
@@ -107,7 +113,7 @@ export default function Request() {
 
       // Check if current page will be empty after deletion
       const remainingItemsOnCurrentPage = positions.results.filter(
-        (item) => !ids.includes(item.id)
+        (item) => !ids.includes(item.id),
       );
 
       if (remainingItemsOnCurrentPage.length === 0 && currentPage > 1) {
@@ -119,7 +125,7 @@ export default function Request() {
       console.error("Error deleting items:", error);
       toast.error(
         error?.response?.data?.detail ||
-          "Failed to delete some items. Please try again."
+          "Failed to delete some items. Please try again.",
       );
     }
   }, [selectedItems, currentPage, positions.results, axiosPrivate, refetch]);
@@ -140,10 +146,10 @@ export default function Request() {
   return (
     <section className="flex flex-col">
       <div className="bg-gray-50 border-b border-gray-200 shadow-sm px-6 pt-4 pb-3">
-        <div className="max-w-7xl mx-auto space-y-3">
+        <div className="space-y-3">
           <div className="flex justify-between items-center">
             <h1 className="text-3xl font-bold text-gray-800">Request</h1>
-            {selectedItems.length > 0 && (
+            {!manager && selectedItems.length > 0 && (
               <Button
                 variant="destructive"
                 onClick={handleDelete}
@@ -165,17 +171,19 @@ export default function Request() {
       {loading ? (
         <LoadingComponent />
       ) : (
-        <div className="max-w-7xl mx-auto w-full mt-5 px-6">
+        <div className="w-full mt-6 px-6">
           <table className="min-w-full bg-white text-sm">
             <thead className="bg-gray-50 text-gray-700 text-left">
               <tr>
-                <th className="px-4 py-3 w-12">
-                  <Checkbox
-                    className="data-[state=checked]:bg-blue-700 data-[state=checked]:border-blue-700"
-                    checked={selectAll}
-                    onCheckedChange={handleSelectAll}
-                  />
-                </th>
+                {!manager && (
+                  <th className="px-4 py-3 w-12">
+                    <Checkbox
+                      className="data-[state=checked]:bg-blue-700 data-[state=checked]:border-blue-700"
+                      checked={selectAll}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </th>
+                )}
                 <th className="px-4 py-3">Position Title</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Date Requested</th>
@@ -189,7 +197,7 @@ export default function Request() {
               {error && (
                 <tr className="border-t">
                   <td
-                    colSpan={7}
+                    colSpan={manager ? 7 : 8}
                     className="text-center text-red-500 px-4 py-3"
                   >
                     {error}
@@ -202,7 +210,7 @@ export default function Request() {
                 positions.results.length === 0 && (
                   <tr className="border-t">
                     <td
-                      colSpan={7}
+                      colSpan={manager ? 7 : 8}
                       className="text-center text-gray-500 px-4 py-3"
                     >
                       This tab is empty.
@@ -213,7 +221,7 @@ export default function Request() {
                 <>
                   {positions.results.map((item) => {
                     const isSelected = selectedItems.some(
-                      (selected) => selected.id === item.id
+                      (selected) => selected.id === item.id,
                     );
 
                     return (
@@ -221,22 +229,24 @@ export default function Request() {
                         key={item.id}
                         className="border-t odd:bg-transparent even:bg-gray-50 hover:bg-gray-100"
                       >
-                        <td className="px-4 py-3">
-                          <Checkbox
-                            className="data-[state=checked]:bg-blue-700 data-[state=checked]:border-blue-700"
-                            checked={isSelected}
-                            onCheckedChange={(checked) =>
-                              handleItemSelect(item.id, checked as boolean)
-                            }
-                          />
-                        </td>
+                        {!manager && (
+                          <td className="px-4 py-3">
+                            <Checkbox
+                              className="data-[state=checked]:bg-blue-700 data-[state=checked]:border-blue-700"
+                              checked={isSelected}
+                              onCheckedChange={(checked) =>
+                                handleItemSelect(item.id, checked as boolean)
+                              }
+                            />
+                          </td>
+                        )}
                         <td className="px-4 py-3 font-medium">
                           {item.job_title}
                         </td>
                         <td className="px-4 py-3">
                           <span
                             className={`text-xs px-2 py-1 whitespace-nowrap rounded-full font-medium ${formatBackgroundStatus(
-                              item.status
+                              item.status,
                             )}`}
                           >
                             {formatName(item.status)}
@@ -256,49 +266,70 @@ export default function Request() {
                                 : "bg-neutral-700 text-neutral-100"
                             }`}
                           >
-                            {item.type_display === "PRF"
-                              ? "Internal"
-                              : "Client"}
+                            {item.type === "prf" ? "Internal" : "Client"}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-center">
-                          {item.status === "pending" ? (
-                            <span className="text-gray-400">—</span>
+                          {item.type === "prf" ? (
+                            (item as JobPostingDbWithApprovers)
+                              .approving_managers &&
+                            (item as JobPostingDbWithApprovers)
+                              .approving_managers.length > 0 ? (
+                              <ApprovalPipelineDropdown
+                                approvers={
+                                  (item as JobPostingDbWithApprovers)
+                                    .approving_managers
+                                }
+                              />
+                            ) : (
+                              <span className="text-gray-500 text-xs">
+                                No Approver
+                              </span>
+                            )
                           ) : (
-                            // Bring back when approval pipeline is available
-                            // <ApprovalPipelineDropdown
-                            //   pipeline={item.approvalPipeline}
-                            // />
                             <span className="text-gray-400">—</span>
                           )}
                         </td>
                         <td className="px-4 py-3 flex justify-center">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Ellipsis
-                                size={32}
-                                className="hover:bg-neutral-100 p-2 rounded-lg cursor-pointer"
+                          {manager ? (
+                            item.type === "prf" ? (
+                              <EyeIcon
+                                className="h-4 w-4 cursor-pointer text-neutral-600 hover:text-neutral-900"
+                                onClick={() =>
+                                  navigate(`/requests/manager/${item.id}`)
+                                }
                               />
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                              className="w-12 text-neutral-600"
-                              align="start"
-                            >
-                              <DropdownMenuGroup>
-                                <DropdownMenuItem
-                                  className="flex items-center gap-2 cursor-pointer"
-                                  onClick={() =>
-                                    navigate(
-                                      `/requests/edit/${item.type}/${item.id}`
-                                    )
-                                  }
-                                >
-                                  <SquarePen className="h-4 w-4" />
-                                  <span>Edit</span>
-                                </DropdownMenuItem>
-                              </DropdownMenuGroup>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )
+                          ) : (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Ellipsis
+                                  size={32}
+                                  className="hover:bg-neutral-100 p-2 rounded-lg cursor-pointer"
+                                />
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                className="w-12 text-neutral-600"
+                                align="start"
+                              >
+                                <DropdownMenuGroup>
+                                  <DropdownMenuItem
+                                    className="flex items-center gap-2 cursor-pointer"
+                                    onClick={() =>
+                                      navigate(
+                                        `/requests/edit/${item.type}/${item.id}`,
+                                      )
+                                    }
+                                  >
+                                    <SquarePen className="h-4 w-4" />
+                                    <span>Edit</span>
+                                  </DropdownMenuItem>
+                                </DropdownMenuGroup>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                         </td>
                       </tr>
                     );
@@ -311,7 +342,7 @@ export default function Request() {
         </div>
       )}
       {positions && positions.results.length > 0 && (
-        <div className="flex justify-center items-center mt-4 space-x-4">
+        <div className="flex justify-center items-center my-4 space-x-4">
           <Button
             variant="ghost"
             onClick={handlePrevPage}

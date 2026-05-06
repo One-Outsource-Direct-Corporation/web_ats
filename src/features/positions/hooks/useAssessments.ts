@@ -4,7 +4,7 @@ import type {
   AssessmentForm,
   AssessmentSettings,
   Question,
-} from "../../positions-client/types/create_position.types";
+} from "../../external_posting/types/externalPosting.types";
 
 export function useAssessments() {
   const [globalAssessments, setGlobalAssessments] = useState<Assessment[]>([]);
@@ -135,6 +135,8 @@ export function useAssessments() {
         [assessment.id]: {
           dueDate: assessment.dueDate || "2021-02-09",
           timeLimit: "01:00:00", // Default time limit
+          passedEmailTemplateId: assessment.passedEmailTemplateId ?? null,
+          failedEmailTemplateId: assessment.failedEmailTemplateId ?? null,
         },
       }));
     }
@@ -160,6 +162,8 @@ export function useAssessments() {
                   ...assessment,
                   dueDate: settings.dueDate,
                   timeLimit: settings.timeLimit,
+                  passedEmailTemplateId: settings.passedEmailTemplateId,
+                  failedEmailTemplateId: settings.failedEmailTemplateId,
                 }
               : assessment
           )
@@ -195,6 +199,32 @@ export function useAssessments() {
     }));
   };
 
+  const handleAssessmentPassedEmailTemplateChange = (
+    assessmentId: number,
+    passedEmailTemplateId: number | null
+  ) => {
+    setAssessmentSettings((prev) => ({
+      ...prev,
+      [assessmentId]: {
+        ...prev[assessmentId],
+        passedEmailTemplateId,
+      },
+    }));
+  };
+
+  const handleAssessmentFailedEmailTemplateChange = (
+    assessmentId: number,
+    failedEmailTemplateId: number | null
+  ) => {
+    setAssessmentSettings((prev) => ({
+      ...prev,
+      [assessmentId]: {
+        ...prev[assessmentId],
+        failedEmailTemplateId,
+      },
+    }));
+  };
+
   return {
     globalAssessments,
     setGlobalAssessments,
@@ -223,5 +253,7 @@ export function useAssessments() {
     saveAssessmentChanges,
     handleAssessmentDueDateChange,
     handleAssessmentTimeLimitChange,
+    handleAssessmentPassedEmailTemplateChange,
+    handleAssessmentFailedEmailTemplateChange,
   };
 }

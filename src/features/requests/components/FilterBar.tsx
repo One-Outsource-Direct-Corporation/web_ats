@@ -177,10 +177,10 @@ function FilterBar({
               </div>
 
               {/* Client */}
-              {user?.department === "operations-rpo" && (
+              {(user?.department === "operations-rpo" || user?.is_staff) && (
                 <div
                   className="flex flex-col items-center space-y-2 cursor-pointer group"
-                  onClick={() => navigate("/positions/create-new-position")}
+                  onClick={() => navigate("/requests/create-new-external-posting")}
                 >
                   <div className="w-16 h-16 rounded-full border border-gray-500 text-gray-600 group-hover:border-blue-500 group-hover:text-blue-500 flex items-center justify-center">
                     <Users2 className="w-6 h-6" />

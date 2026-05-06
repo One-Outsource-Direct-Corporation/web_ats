@@ -1,59 +1,25 @@
 import { defaultAxios } from "@/config/axios";
-import type { AuthResponse } from "../types/auth.types";
-import type { AxiosError } from "axios";
-// import { useRefreshToken } from "../hooks/useRefreshToken";
+import type { AuthResponse, RegisterCredentials } from "../types/auth.types";
 
 export const login = async (email: string, password: string) => {
-  try {
-    const response = await defaultAxios.post<AuthResponse>("/api/auth/login/", {
-      email,
-      password,
-    });
-    return response;
-  } catch (error: any) {
-    // Re-throw the error so it can be handled by the calling component
-    throw error;
-  }
+  return defaultAxios.post<AuthResponse>("/api/auth/login/", {
+    email,
+    password,
+  });
+};
+
+export const registerCandidate = async (data: RegisterCredentials) => {
+  return defaultAxios.post<AuthResponse>("/api/auth/candidate/register/", data);
 };
 
 // Logout function
 export const logout = async () => {
-  try {
-    const response = await defaultAxios.post("/api/auth/logout/");
-    return response;
-  } catch (error: AxiosError | any) {
-    throw error;
-  }
+  return defaultAxios.post("/api/auth/logout/");
 };
 
 // Check user authentication
-export const checkAuth = async (signal: AbortSignal) => {
-  try {
-    const requestConfig: any = {};
-    if (signal) {
-      requestConfig.signal = signal;
-    }
-    const response = await defaultAxios.post<AuthResponse>(
-      "/api/auth/check-login/",
-      requestConfig
-    );
-    return response;
-  } catch (error: any) {
-    throw error;
-  }
+export const checkAuth = async (signal?: AbortSignal) => {
+  return defaultAxios.get<AuthResponse>("/api/auth/check-login/", {
+    signal,
+  });
 };
-
-// api.interceptors.response.use(
-//   (response) => response,
-//   async (error: AxiosError | any) => {
-//     if (error.response && error.response.status === 401) {
-//       try {
-//         await refreshToken();
-//         return Promise.resolve();
-//       } catch (refreshError) {
-//         return Promise.reject(refreshError);
-//       }
-//     }
-//     return Promise.reject(error);
-//   }
-// );

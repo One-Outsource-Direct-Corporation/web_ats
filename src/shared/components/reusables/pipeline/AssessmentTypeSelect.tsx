@@ -29,11 +29,11 @@ export function AssessmentTypeSelect({
           <SelectItem value="Select Assessment Type" disabled>
             Select Assessment Type
           </SelectItem>
-          <SelectItem value="Technical Test">Technical Test</SelectItem>
-          <SelectItem value="Personality Test">Personality Test</SelectItem>
-          <SelectItem value="Skills Assessment">Skills Assessment</SelectItem>
-          <SelectItem value="Cognitive Test">Cognitive Test</SelectItem>
-          <SelectItem value="Portfolio Review">Portfolio Review</SelectItem>
+          <SelectItem value="technical_test">Technical Test</SelectItem>
+          <SelectItem value="personality_test">Personality Test</SelectItem>
+          <SelectItem value="skills_assessment">Skills Assessment</SelectItem>
+          <SelectItem value="cognitive_test">Cognitive Test</SelectItem>
+          <SelectItem value="portfolio_review">Portfolio Review</SelectItem>
         </SelectContent>
       </Select>
     </Field>

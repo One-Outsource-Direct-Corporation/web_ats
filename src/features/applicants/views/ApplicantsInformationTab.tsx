@@ -68,7 +68,7 @@ const applicantsData = {
     phone: "+1 (555) 345-6789",
     address: "789 Pine St, Seattle, WA",
     avatar: "https://i.pravatar.cc/64?img=3",
-    status: "Warm",
+    status: "Shortlisted",
   },
   "jessica-gonzalez": {
     name: "Jessica Gonzalez",
@@ -759,7 +759,7 @@ export default function ApplicantTracker() {
                         className="space-y-3 rounded-lg bg-white p-4 shadow"
                       >
                         <div className="flex items-center justify-between">
-                          <h4 className="font-semibold">{assessment.name}</h4>
+                          <h4 className="font-semibold">{assessment.type_label || assessment.type}</h4>
                           <div className="flex items-center gap-2">
                             <span
                               className={`text-lg font-bold ${

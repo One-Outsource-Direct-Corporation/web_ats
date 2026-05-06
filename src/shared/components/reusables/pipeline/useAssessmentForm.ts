@@ -1,21 +1,46 @@
 import { useState, useEffect } from "react";
-import type { Assessment } from "@/shared/types/pipeline.types";
-import { defaultAxios } from "@/config/axios";
+import type {
+  Assessment,
+  AssessmentTemplate,
+} from "@/shared/types/pipeline.types";
+import useAxiosMultipart from "@/features/auth/hooks/useAxiosMultipart";
 
 interface UseAssessmentFormProps {
   editingAssessment?: Assessment | null;
   open: boolean;
 }
 
+const resolveFilePreviewUrl = (rawUrl: string): string => {
+  if (!rawUrl) {
+    return rawUrl;
+  }
+
+  if (/^(https?:)?\/\//i.test(rawUrl)) {
+    return rawUrl;
+  }
+
+  const backendBaseUrl = import.meta.env.VITE_BACKEND_URL as
+    | string
+    | undefined;
+
+  if (!backendBaseUrl) {
+    return rawUrl;
+  }
+
+  const trimmedBaseUrl = backendBaseUrl.replace(/\/$/, "");
+  const normalizedPath = rawUrl.startsWith("/") ? rawUrl : `/${rawUrl}`;
+
+  return `${trimmedBaseUrl}${normalizedPath}`;
+};
+
 export function useAssessmentForm({
   editingAssessment,
   open,
 }: UseAssessmentFormProps) {
+  const axiosMultipart = useAxiosMultipart();
   const [assessmentForm, setAssessmentForm] = useState<
     Omit<Assessment, "id" | "tempId">
   >({
-    name: null,
-    is_template: false,
     type: "",
     order: 0,
     file: null,
@@ -36,8 +61,6 @@ export function useAssessmentForm({
   useEffect(() => {
     if (editingAssessment) {
       setAssessmentForm({
-        name: editingAssessment.name || null,
-        is_template: editingAssessment.is_template,
         type: editingAssessment.type,
         order: editingAssessment.order,
         file: editingAssessment.file || null,
@@ -67,7 +90,7 @@ export function useAssessmentForm({
           typeof editingAssessment.file.filename === "string"
         ) {
           const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(
-            editingAssessment.file.filename
+            editingAssessment.file.filename,
           );
           if (isImage && editingAssessment.file.file instanceof File) {
             const reader = new FileReader();
@@ -79,12 +102,7 @@ export function useAssessmentForm({
             isImage &&
             typeof editingAssessment.file.file === "string"
           ) {
-            // Handle DB file URLs by appending backend URL
-            setFilePreview(
-              `${import.meta.env.VITE_BACKEND_URL}${
-                editingAssessment.file.file
-              }`
-            );
+            setFilePreview(resolveFilePreviewUrl(editingAssessment.file.file));
           } else {
             setFilePreview(null);
           }
@@ -101,8 +119,6 @@ export function useAssessmentForm({
 
   const resetForm = () => {
     setAssessmentForm({
-      name: null,
-      is_template: false,
       type: "",
       order: 0,
       file: null,
@@ -115,7 +131,7 @@ export function useAssessmentForm({
 
   const updateField = (
     field: keyof Assessment,
-    value: string | boolean | File | null
+    value: string | boolean | File | null,
   ) => {
     setAssessmentForm({ ...assessmentForm, [field]: value });
   };
@@ -128,14 +144,9 @@ export function useAssessmentForm({
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await defaultAxios.post(
+      const response = await axiosMultipart.post(
         "/api/assessment/test-file-upload",
         formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
       );
 
       if (response.data?.duplicate && response.data?.existing_file) {
@@ -143,7 +154,7 @@ export function useAssessmentForm({
           duplicate: true,
           filename: response.data.existing_file.filename,
           fileId: response.data.existing_file.id,
-          fileType: response.data.existing_file.file_type,
+          fileType: response.data.existing_file.file_extension,
         });
       }
     } catch (error) {
@@ -179,7 +190,7 @@ export function useAssessmentForm({
     setDuplicateFileInfo(null);
 
     const fileInput = document.getElementById(
-      "photo-upload"
+      "photo-upload",
     ) as HTMLInputElement;
     if (fileInput) {
       fileInput.value = "";
@@ -188,31 +199,19 @@ export function useAssessmentForm({
 
   const handleTemplateSelect = (
     templateId: string,
-    templates: Assessment[]
+    templates: AssessmentTemplate[],
   ) => {
     setSelectedTemplate(templateId);
     setDuplicateFileInfo(null);
 
     if (templateId !== "") {
-      const template = templates.find((t) => {
-        if ("id" in t) {
-          return String(t.id) === templateId;
-        }
-        return false;
-      });
+      const template = templates.find((t) => String(t.id) === templateId);
 
       if (template) {
         setAssessmentForm((prev) => ({
           ...prev,
           type: template.type,
-          is_template: false,
-          name: null,
-          file:
-            template.file &&
-            typeof template.file === "object" &&
-            "id" in template.file
-              ? template.file
-              : template.file,
+          file: template.file,
         }));
 
         if (
@@ -222,8 +221,8 @@ export function useAssessmentForm({
         ) {
           setIsUsingTemplateFile(true);
 
-          const fileData = template.file as any;
-          const fileType = fileData.file_type?.toLowerCase();
+          const fileData = template.file;
+          const fileType = fileData.file_extension?.toLowerCase();
           const filename = fileData.filename;
 
           const isImageFile =
@@ -239,9 +238,7 @@ export function useAssessmentForm({
             fileData.file &&
             typeof fileData.file === "string"
           ) {
-            setFilePreview(
-              `${import.meta.env.VITE_BACKEND_URL}${fileData.file}`
-            );
+            setFilePreview(resolveFilePreviewUrl(fileData.file));
           } else {
             setFilePreview(null);
           }
@@ -268,8 +265,6 @@ export function useAssessmentForm({
       setAssessmentForm((prev) => ({
         ...prev,
         file: null,
-        is_template: false,
-        name: null,
       }));
       setFilePreview(null);
       setIsUsingTemplateFile(false);

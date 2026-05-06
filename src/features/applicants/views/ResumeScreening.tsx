@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Avatar,
   AvatarFallback,
@@ -22,59 +22,108 @@ import {
   TableHeader,
   TableRow,
 } from "@/shared/components/ui/table.tsx";
-import { ArrowLeft, Search } from "lucide-react";
+import {
+  ArrowLeft,
+  Download,
+  FileText,
+  Search,
+} from "lucide-react";
 import { Navbar } from "@/shared/components/reusables/Navbar.tsx";
 import { useLocation, useParams } from "react-router-dom";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/components/ui/dialog.tsx";
+import ResumeScreeningTable, { Candidate } from "@/features/applicants/components/ResumeScreeningTable";
+
+type ResumePreview = {
+  fileName: string;
+  summary: string;
+  experience: string[];
+  education: string[];
+  skills: string[];
+};
+
+type Applicant = {
+  id: string;
+  name: string;
+  avatar: string;
+  department: string;
+  resume: ResumePreview;
+};
+
+const buildResumePreview = (applicantName: string, department: string): ResumePreview => ({
+  fileName: `${applicantName.replace(/\s+/g, "-").toLowerCase()}-resume.html`,
+  summary: `${applicantName} is a detail-oriented professional in ${department} with experience supporting hiring workflows, documentation, and cross-functional collaboration.`,
+  experience: [
+    `Supported daily operations and reporting tasks within the ${department} team.`,
+    "Prepared structured documentation and maintained clear communication with stakeholders.",
+    "Worked on task coordination, follow-through, and process improvements.",
+  ],
+  education: ["Bachelor's Degree in a relevant field", "Professional training in workplace systems"],
+  skills: ["Communication", "Documentation", "Coordination", "Teamwork", "Process Improvement"],
+});
 
 // Sample applicant data
-const applicants = [
+const applicants: Applicant[] = [
   {
     id: "001",
     name: "John Doe",
     avatar: "https://i.pravatar.cc/32?u=001",
     department: "Engineering",
+    resume: buildResumePreview("John Doe", "Engineering"),
   },
   {
     id: "002",
     name: "Sarah Johnson",
     avatar: "https://i.pravatar.cc/32?u=002",
     department: "Engineering",
+    resume: buildResumePreview("Sarah Johnson", "Engineering"),
   },
   {
     id: "003",
     name: "Mike Chen",
     avatar: "https://i.pravatar.cc/32?u=003",
     department: "Engineering",
+    resume: buildResumePreview("Mike Chen", "Engineering"),
   },
   {
     id: "004",
     name: "Emily Rodriguez",
     avatar: "https://i.pravatar.cc/32?u=004",
     department: "Engineering",
+    resume: buildResumePreview("Emily Rodriguez", "Engineering"),
   },
   {
     id: "005",
     name: "David Kim",
     avatar: "https://i.pravatar.cc/32?u=005",
     department: "Engineering",
+    resume: buildResumePreview("David Kim", "Engineering"),
   },
   {
     id: "006",
     name: "Lisa Wang",
     avatar: "https://i.pravatar.cc/32?u=006",
     department: "Engineering",
+    resume: buildResumePreview("Lisa Wang", "Engineering"),
   },
   {
     id: "007",
     name: "Alex Thompson",
     avatar: "https://i.pravatar.cc/32?u=007",
     department: "Engineering",
+    resume: buildResumePreview("Alex Thompson", "Engineering"),
   },
   {
     id: "008",
     name: "Maria Garcia",
     avatar: "https://i.pravatar.cc/32?u=008",
     department: "Engineering",
+    resume: buildResumePreview("Maria Garcia", "Engineering"),
   },
 ];
 
@@ -89,14 +138,57 @@ export default function ResumeScreening() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("resumescreening");
   const [jobStatus, setJobStatus] = useState("active");
+  const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
   const navigate = useNavigate();
 
-  const { jobtitle } = useParams<{ jobtitle: string }>();
+  const { jobId } = useParams<{ jobId: string }>();
 
   // Filter applicants based on search term
   const filteredApplicants = applicants.filter((applicant) =>
     applicant.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleDownloadResume = (applicant: Applicant) => {
+    const resumeHtml = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${applicant.name} Resume</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 0; padding: 32px; color: #111827; }
+      h1 { margin: 0 0 8px; font-size: 28px; }
+      h2 { margin: 24px 0 8px; font-size: 16px; }
+      p, li { font-size: 14px; line-height: 1.6; }
+      ul { margin: 0; padding-left: 20px; }
+      .muted { color: #6b7280; }
+      .card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>${applicant.name}</h1>
+      <p class="muted">${applicant.department}</p>
+      <h2>Professional Summary</h2>
+      <p>${applicant.resume.summary}</p>
+      <h2>Experience</h2>
+      <ul>${applicant.resume.experience.map((item) => `<li>${item}</li>`).join("")}</ul>
+      <h2>Education</h2>
+      <ul>${applicant.resume.education.map((item) => `<li>${item}</li>`).join("")}</ul>
+      <h2>Skills</h2>
+      <ul>${applicant.resume.skills.map((item) => `<li>${item}</li>`).join("")}</ul>
+    </div>
+  </body>
+</html>`;
+
+    const blob = new Blob([resumeHtml], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = applicant.resume.fileName;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   const formatJobTitle = (slug?: string) => {
     const titleMap: Record<string, string> = {
@@ -117,11 +209,53 @@ export default function ResumeScreening() {
   };
 
   const location = useLocation();
-  const { jobtitle: jobTitleParam } = useParams<{ jobtitle: string }>();
+  const { jobId: jobTitleParam } = useParams<{ jobId: string }>();
   const jobTitleFromState = location.state?.jobTitle;
 
   const rawJobTitle = jobTitleParam || jobTitleFromState;
   const resolvedJobTitle = formatJobTitle(rawJobTitle);
+
+  // Build blob URLs for the sample applicant resumes so the preview iframe can load them.
+  const [candidateList, setCandidateList] = useState<Candidate[]>([]);
+
+  React.useEffect(() => {
+    const blobs: { id: string; url: string }[] = [];
+
+    const mapped = applicants.map((applicant) => {
+      const resumeHtml = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${applicant.name} Resume</title>
+    <style>body { font-family: Arial, sans-serif; margin: 0; padding: 32px; color: #111827; } h1 { margin: 0 0 8px; }</style>
+  </head>
+  <body>
+    <h1>${applicant.name}</h1>
+    <p>${applicant.department}</p>
+    <p>${applicant.resume.summary}</p>
+  </body>
+</html>`;
+
+      const blob = new Blob([resumeHtml], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      blobs.push({ id: applicant.id, url });
+
+      return {
+        id: applicant.id,
+        name: applicant.name,
+        department: applicant.department,
+        photoUrl: applicant.avatar,
+        resumeUrl: url,
+      } as Candidate;
+    });
+
+    setCandidateList(mapped);
+
+    return () => {
+      for (const b of blobs) URL.revokeObjectURL(b.url);
+    };
+  }, []);
 
   return (
     <>
@@ -141,7 +275,7 @@ export default function ResumeScreening() {
                   if (from?.includes("/weekly")) {
                     navigate(from);
                   } else {
-                    navigate(`/job/${jobtitle}`);
+                    navigate(`/job/${jobId}`);
                   }
                 }}
               >
@@ -151,91 +285,11 @@ export default function ResumeScreening() {
 
               <div className="flex flex-col items-center sm:flex-row sm:items-center sm:gap-3">
                 <h1 className="text-2xl font-bold">{resolvedJobTitle}</h1>
-
-                <Select value={jobStatus} onValueChange={setJobStatus}>
-                  <SelectTrigger
-                    className={`w-auto min-w-[80px] px-3 py-1 rounded text-sm font-medium border ${
-                      statusStyles[jobStatus as keyof typeof statusStyles]
-                    } mt-5 sm:mt-0`}
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Job Details - MODIFIED HERE */}
-            <div className="flex flex-col items-center text-center gap-2 text-xs text-gray-600 sm:flex-row sm:items-center sm:text-left sm:gap-4">
-              <div className="flex items-center gap-1">
-                {" "}
-                {/* Changed gap-2 to gap-1 */}
-                <span className="font-medium">Employment Type:</span>
-                <span>Full Time</span>
-              </div>
-              <div className="flex items-center gap-1">
-                {" "}
-                {/* Changed gap-2 to gap-1 */}
-                <span className="font-medium">Start Date:</span>
-                <span>January 15, 2024</span>
-              </div>
-              <div className="flex items-center gap-1">
-                {" "}
-                {/* Changed gap-2 to gap-1 */}
-                <span className="font-medium">Work Mode:</span>
-                <span>Onsite</span>
               </div>
             </div>
 
             {/* Filter and Search */}
             <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between sm:items-center">
-              <Select
-                value={selectedFilter || "resumescreening"}
-                onValueChange={(value) => {
-                  setSelectedFilter(value);
-                  if (jobtitle) {
-                    navigate(`/job/${jobtitle}/${value}`);
-                  }
-                }}
-              >
-                <SelectTrigger className="min-w-[160px] border-none shadow-none font-bold text-black text-sm">
-                  <SelectValue
-                    className="font-bold text-black"
-                    placeholder="resumescreening"
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem
-                    className="font-bold text-black"
-                    value="resumescreening"
-                  >
-                    Resume Screening
-                  </SelectItem>
-                  <SelectItem value="phonecallinterview" className="font-bold">
-                    Phone Call Interview
-                  </SelectItem>
-                  <SelectItem value="shortlisted" className="font-bold">
-                    Shortlisted
-                  </SelectItem>
-                  <SelectItem value="initialinterview" className="font-bold">
-                    Initial Interview
-                  </SelectItem>
-                  <SelectItem value="assessments" className="font-bold">
-                    Assessments
-                  </SelectItem>
-                  <SelectItem value="finalinterview" className="font-bold">
-                    Final Interview
-                  </SelectItem>
-                  <SelectItem value="forjoboffer" className="font-bold">
-                    For Job Offer
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input
@@ -248,100 +302,15 @@ export default function ResumeScreening() {
             </div>
           </div>
 
-          {/* Applicants Table */}
-          <div className="mt-6 overflow-x-auto rounded-md border bg-white">
-            <Table className="table-fixed text-xs lg:min-w-[800px]">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className=" text-center align-center w-6 border border-gray-200 py-2 px-3 text-xs lg:text-sm lg:py-3 lg:px-4">
-                    ID
-                  </TableHead>
-                  <TableHead className=" text-center align-center border border-gray-200 py-2 px-3 w-32 lg:min-w-[200px] text-xs lg:text-sm lg:py-3 lg:px-4">
-                    Full Name
-                  </TableHead>
-                  <TableHead className="border border-gray-200 py-2 px-3 w-20 lg:min-w-[120px] text-center text-xs lg:text-sm lg:py-3 lg:px-4">
-                    Pass
-                  </TableHead>
-                  <TableHead className="border border-gray-200 py-2 px-3 w-20 lg:min-w-[120px] text-center text-xs lg:text-sm lg:py-3 lg:px-4">
-                    Fail
-                  </TableHead>
-                  <TableHead className="text-center align-center border border-gray-200 py-2 px-3 w-20 lg:min-w-[120px] text-xs lg:text-sm lg:py-3 lg:px-4">
-                    Department
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredApplicants.length > 0 ? (
-                  filteredApplicants.map((applicant) => (
-                    <TableRow
-                      key={applicant.id}
-                      className="hover:bg-gray-50 h-16 lg:h-20"
-                    >
-                      <TableCell className="text-center align-center border border-gray-200 py-3 px-3 font-medium text-xs lg:text-sm align-middle">
-                        {applicant.id}
-                      </TableCell>
+          <ResumeScreeningTable
+            candidates={candidateList.filter((c) => c.name.toLowerCase().includes(searchTerm.toLowerCase()))}
+            onPass={() => navigate(`/job/${jobId}/phonecallinterview`)}
+            onFail={() => {}}
+          />
 
-                      <TableCell className="text-center align-center border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 w-32 align-middle">
-                        <div className="flex items-center justify-center gap-2 lg:gap-3">
-                          <Avatar className="h-6 w-6 lg:h-8 lg:w-8 flex-shrink-0">
-                            <AvatarImage src={applicant.avatar} />
-                            <AvatarFallback className="text-xs lg:text-sm">
-                              {applicant.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium text-xs lg:text-sm break-words leading-tight lg:whitespace-nowrap">
-                            {applicant.name}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 text-center w-20 align-middle">
-                        <Button
-                          size="sm"
-                          className="border-1 w-full px-2 lg:px-3 h-7 lg:h-8 text-xs lg:text-sm text-green-600 border-green-600 bg-white hover:bg-green-600 hover:text-white transition"
-                          onClick={() =>
-                            navigate(`/job/${jobtitle}/phonecallinterview`)
-                          }
-                        >
-                          Pass
-                        </Button>
-                      </TableCell>
-                      <TableCell className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 text-center w-20 align-middle">
-                        <Button
-                          size="sm"
-                          className="border-1 w-full px-2 lg:px-3 h-7 lg:h-8 text-xs lg:text-sm text-red-600 border-red-600 bg-white hover:bg-red-600 hover:text-white transition"
-                        >
-                          Fail
-                        </Button>
-                      </TableCell>
-                      <TableCell className="text-center align-center border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 w-20 text-xs lg:text-sm align-middle">
-                        <span className="break-words leading-tight lg:whitespace-nowrap">
-                          {applicant.department}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="border border-gray-200 p-6 lg:p-8 text-center text-gray-500 text-xs lg:text-sm"
-                    >
-                      No applicants found matching your search.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Results Summary */}
           {searchTerm && (
             <div className="text-sm text-gray-600">
-              Showing {filteredApplicants.length} of {applicants.length}{" "}
-              applicants
+              Showing {candidateList.filter((c) => c.name.toLowerCase().includes(searchTerm.toLowerCase())).length} of {applicants.length} applicants
               {searchTerm && ` for "${searchTerm}"`}
             </div>
           )}

@@ -2,6 +2,12 @@ import type { ApplicationFormData } from "../../../shared/types/application_form
 import type { BatchEntry, LocationEntry } from "./location_and_batch.types";
 import type { PipelineStep } from "../../../shared/types/pipeline.types";
 import type { User } from "@/features/auth/types/auth.types";
+export type {
+  Client,
+  ClientBase,
+  ClientResponse,
+  CreateClientPayload,
+} from "@/features/client/types/client.types";
 
 export interface StepProps {
   number: number;
@@ -26,13 +32,49 @@ export interface JobPosting {
   responsibilities: string | null;
   qualifications: string | null;
   working_site: string | null;
+  work_schedule_from: string | null;
+  work_schedule_to: string | null;
+  approving_manager?: ApproverDb[];
 }
 
-export interface JobPostingAPIResponse {
+export interface JobPostingListResponse {
   count: number;
   next: string | null;
   previous: string | null;
   results: JobPostingDb[] | [];
+}
+
+export type JobPostingResponse = JobPostingDb;
+
+export interface GetPositionsParams {
+  my_postings?: boolean;
+  page?: number;
+  type?: string;
+  status?: string;
+  employment_type?: string;
+  work_setup?: string;
+  order_by?: string;
+  published?: string;
+  no_active?: boolean;
+  exclude_draft?: boolean;
+}
+
+export interface ApproverDb {
+  id: number;
+  /** Newer API shape places the user under `user` */
+  user?: User;
+  /** Legacy/frontend shape used `approving_manager` as the user object */
+  approving_manager?: User;
+  comment: string | null;
+  status: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ApprovalStatusDb {
+  approved_count: number;
+  is_fully_approved: boolean;
+  required_count: number;
 }
 
 export interface JobPostingDb extends JobPosting {
@@ -49,18 +91,9 @@ export interface JobPostingDb extends JobPosting {
   updated_at: string;
 }
 
-export interface ClientBase {
-  name: string;
-  email: string;
-  contact_number: string;
+export interface JobPostingDbWithApprovers extends JobPostingDb {
+  approving_managers: ApproverDb[];
 }
-
-export interface ClientDb extends ClientBase {
-  id: number;
-  posted_by: string;
-}
-
-export type Client = ClientDb | ClientBase;
 
 export interface PositionBase {
   client: number | null;
@@ -74,6 +107,12 @@ export interface Position extends PositionBase {
   locations: LocationEntry[] | [];
   batches: BatchEntry[] | [];
 }
+
+export type ExternalPosting = Position;
+
+export type PositionResponse = PositionDb;
+export type CreatePositionPayload = Position;
+export type UpdatePositionPayload = Partial<Position>;
 
 export interface PositionDb extends Omit<Position, "job_posting"> {
   id: number;
@@ -89,3 +128,4 @@ export interface PositionDb extends Omit<Position, "job_posting"> {
 }
 
 export type PositionFormData = Position | PositionDb;
+export type ExternalPostingFormData = PositionFormData;

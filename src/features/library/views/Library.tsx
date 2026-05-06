@@ -1,6 +1,5 @@
 import { useState, useEffect, cloneElement } from "react";
-import { useNavigate } from "react-router-dom";
-import { Navbar } from "@/shared/components/reusables/Navbar.tsx";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Users,
   Building2,
@@ -14,6 +13,10 @@ import {
   LayoutGrid,
   List,
   ArrowLeft,
+  BookOpen,
+  Eye,
+  Pencil,
+  Search,
 } from "lucide-react";
 import {
   Dialog,
@@ -23,21 +26,221 @@ import {
   DialogFooter,
 } from "@/shared/components/ui/dialog.tsx";
 import { Button } from "@/shared/components/ui/button.tsx";
+import { toast } from "react-toastify";
+import { Input } from "@/shared/components/ui/input";
+import { Textarea } from "@/shared/components/ui/textarea.tsx";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select.tsx";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/shared/components/ui/table";
+import { useDepartmentQuery } from "@/features/department/hooks/useDepartmentQuery";
+import DepartmentAddModal from "@/features/department/components/DepartmentAddModal";
+import {
+  questionnaireTemplateService,
+  useQuestionnaireTemplateDetail,
+  useQuestionnaireTemplatesQuery,
+} from "@/features/application_form_questionnaire";
+import { emailTemplateService } from "@/features/library/services/emailTemplate.service";
+import { useEmailTemplatesQuery } from "@/features/library/hooks/useEmailTemplatesQuery";
+import type { QuestionnaireTemplateDetail } from "@/features/application_form_questionnaire";
+import type {
+  ApplicationFormQuestionnaire,
+  Section,
+  SectionDb,
+  SectionLocal,
+  QuestionnaireDb,
+  QuestionnaireLocal,
+} from "@/features/external_posting/types/questionnaire.types";
+import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
+import { SectionList } from "@/features/external_posting/components/questionnaires/SectionList";
 
 export default function Library() {
   const navigate = useNavigate();
   // Use a path array to track navigation history
   const [path, setPath] = useState<
-    ("home" | "internal" | "external" | "forms")[]
+    (
+      | "home"
+      | "forms"
+      | "departments"
+      | "questionnaire-templates"
+      | "email-templates"
+    )[]
   >(["home"]);
   const currentView = path[path.length - 1]; // The current active view
   const [selectedForms, setSelectedForms] = useState<string[]>([]);
   const [formsViewType, setFormsViewType] = useState<"grid" | "list">("grid");
   const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+  const [templateDetailId, setTemplateDetailId] = useState<number | null>(null);
+  const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
+  const [templateDialogMode, setTemplateDialogMode] = useState<
+    "view" | "edit" | "create"
+  >("view");
+  const [templateDraft, setTemplateDraft] =
+    useState<ApplicationFormQuestionnaire>({
+      name: "",
+      template: false,
+      sections: [],
+    });
+  const [templateSaveError, setTemplateSaveError] = useState<string | null>(null);
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+
+  const {
+    departments,
+    search: departmentSearch,
+    setSearch: setDepartmentSearch,
+    hasMore: hasMoreDepartments,
+    loadMore: loadMoreDepartments,
+    loading: departmentsLoading,
+    isFetchingNextPage: isFetchingDepartmentsNext,
+    totalCount: departmentsTotalCount,
+    refetch: refetchDepartments,
+  } = useDepartmentQuery({ enabled: currentView === "departments" });
+
+  const {
+    templates,
+    loading: templatesLoading,
+    hasMore: templatesHasMore,
+    loadMore: loadMoreTemplates,
+    handleSearch: handleTemplateSearch,
+    totalCount: templatesTotalCount,
+    refetch: refetchTemplates,
+  } = useQuestionnaireTemplatesQuery({ pageSize: 10 });
+
+  const {
+    templates: emailTemplates,
+    loading: emailTemplatesLoading,
+    hasMore: emailTemplatesHasMore,
+    loadMore: loadMoreEmailTemplates,
+    handleSearch: handleEmailTemplateSearch,
+    totalCount: emailTemplatesTotalCount,
+    refetch: refetchEmailTemplates,
+  } = useEmailTemplatesQuery({ pageSize: 10 });
+
+  const axiosPrivate = useAxiosPrivate();
+
+  // Email templates UI state
+  const [isEmailTemplateDialogOpen, setIsEmailTemplateDialogOpen] = useState(false);
+  const [emailTemplateDialogMode, setEmailTemplateDialogMode] = useState<"view" | "edit" | "create">("view");
+  const [emailTemplateDetailId, setEmailTemplateDetailId] = useState<number | null>(null);
+  const [emailTemplateDraft, setEmailTemplateDraft] = useState<{
+    name: string;
+    category: "general" | "interview" | "offer" | "onboarding";
+    subject: string;
+    body: string;
+    is_active: boolean;
+  }>({ name: "", category: "general", subject: "", body: "", is_active: true });
+  const [emailTemplateSaveError, setEmailTemplateSaveError] = useState<string | null>(null);
+
+  const defaultCategories = [
+    { value: "general", label: "General" },
+    { value: "interview", label: "Interview" },
+    { value: "offer", label: "Offer" },
+    { value: "onboarding", label: "Onboarding" },
+  ] as const;
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
+
+  const selectedEmailTemplate = emailTemplates.find((t) => t.id === emailTemplateDetailId);
+
+  const { template: selectedTemplate, loading: templateLoading } =
+    useQuestionnaireTemplateDetail(
+      templateDetailId ?? undefined,
+      isTemplateDialogOpen,
+    );
 
   useEffect(() => {
     document.title = "Library";
   }, []);
+
+  const location = useLocation();
+
+  // Sync internal `path` view state with URL so direct navigation works
+  useEffect(() => {
+    // support /library/email-templates and ?view=email-templates
+    const parts = location.pathname.split("/").filter(Boolean);
+    const lastSegment = parts[parts.length - 1] ?? "";
+    const q = new URLSearchParams(location.search);
+    const viewQ = q.get("view");
+
+    if (viewQ && ["home", "forms", "departments", "questionnaire-templates", "email-templates"].includes(viewQ)) {
+      setPath(["home", viewQ as any]);
+      return;
+    }
+
+    if (lastSegment === "email-templates" || lastSegment === "questionnaire-templates" || lastSegment === "departments" || lastSegment === "forms") {
+      setPath(["home", lastSegment as any]);
+      return;
+    }
+
+    // If user visited /library directly, keep the home view
+    if (lastSegment === "library") {
+      setPath(["home"]);
+      return;
+    }
+
+    // default to home
+    setPath(["home"]);
+  }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    if (!isTemplateDialogOpen) {
+      return;
+    }
+
+    setTemplateSaveError(null);
+
+    if (templateDialogMode === "create") {
+      setTemplateDraft(createEmptyTemplateDraft());
+      return;
+    }
+
+    if (templateDialogMode === "edit" && selectedTemplate) {
+      setTemplateDraft(mapTemplateToDraft(selectedTemplate));
+    }
+  }, [isTemplateDialogOpen, selectedTemplate, templateDialogMode]);
+
+  useEffect(() => {
+    if (!isEmailTemplateDialogOpen) {
+      return;
+    }
+
+    setEmailTemplateSaveError(null);
+
+    if (emailTemplateDialogMode === "create") {
+      setEmailTemplateDraft({
+        name: "",
+        category: "general",
+        subject: "",
+        body: "",
+        is_active: true,
+      });
+      return;
+    }
+
+    if (selectedEmailTemplate && emailTemplateDialogMode !== "view") {
+      setEmailTemplateDraft({
+        name: selectedEmailTemplate.name ?? "",
+        category: selectedEmailTemplate.category ?? "general",
+        subject: selectedEmailTemplate.subject ?? "",
+        body: selectedEmailTemplate.body ?? "",
+        is_active: Boolean(selectedEmailTemplate.is_active),
+      });
+    }
+  }, [
+    isEmailTemplateDialogOpen,
+    emailTemplateDialogMode,
+    selectedEmailTemplate,
+  ]);
 
   const folderStroke = 1;
   const iconStroke = 1.5;
@@ -53,11 +256,45 @@ export default function Library() {
       onClick: () => setPath((prev) => [...prev, "forms"]), // Navigate to forms view
     },
     {
+      label: "Departments",
+      folderColor: "text-gray-800 group-hover:text-emerald-600",
+      icon: (
+        <Building2 className="text-gray-800 group-hover:text-emerald-600" />
+      ),
+      textColor: "text-gray-800 group-hover:text-emerald-600",
+      onClick: () => setPath((prev) => [...prev, "departments"]),
+    },
+    {
+      label: "Business Units",
+      folderColor: "text-gray-800 group-hover:text-teal-600",
+      icon: (
+        <Building2 className="text-gray-800 group-hover:text-teal-600" />
+      ),
+      textColor: "text-gray-800 group-hover:text-teal-600",
+      onClick: () => navigate("/library/business-units"),
+    },
+    {
+      label: "Application Form Questionnaire",
+      folderColor: "text-gray-800 group-hover:text-amber-600",
+      icon: <BookOpen className="text-gray-800 group-hover:text-amber-600" />,
+      textColor: "text-gray-800 group-hover:text-amber-600",
+      onClick: () => setPath((prev) => [...prev, "questionnaire-templates"]),
+    },
+    {
       label: "Email Templates",
       folderColor: "text-gray-800 group-hover:text-blue-600",
       icon: <MailIcon className="text-gray-800 group-hover:text-blue-600" />,
       textColor: "text-gray-800 group-hover:text-blue-600",
-      onClick: () => console.log("Email Templates clicked"), // Placeholder for actual navigation
+      onClick: () => setPath((prev) => [...prev, "email-templates"]),
+    },
+    {
+      label: "IEF Templates",
+      folderColor: "text-gray-800 group-hover:text-slate-700",
+      icon: (
+        <FileTextIcon className="text-gray-800 group-hover:text-slate-700" />
+      ),
+      textColor: "text-gray-800 group-hover:text-slate-700",
+      onClick: () => navigate("/library/ief-templates"),
     },
     {
       label: "Applicants",
@@ -74,11 +311,232 @@ export default function Library() {
     "Interview Evaluation Form",
   ];
 
+  const getTemplateQuestionCount = (template: {
+    sections: Array<{ questionnaires: Array<unknown> }>;
+  }) =>
+    template.sections.reduce(
+      (total, section) => total + section.questionnaires.length,
+      0,
+    );
+
+  const createEmptyTemplateDraft = (): ApplicationFormQuestionnaire => ({
+    name: "",
+    template: false,
+    sections: [],
+  });
+
+  const mapTemplateToDraft = (
+    template: QuestionnaireTemplateDetail,
+  ): ApplicationFormQuestionnaire => ({
+    id: template.id,
+    name: template.name,
+    template: false,
+    sections: template.sections.map((section) => ({
+      id: section.id,
+      name: section.name,
+      questionnaires: section.questionnaires.map((question) => ({
+        id: question.id,
+        question: question.question,
+        description: question.description,
+        question_type: question.question_type,
+        options: question.options,
+        parameter: question.parameter,
+        is_non_negotiable: Boolean(question.is_non_negotiable),
+        non_negotiable_value: question.non_negotiable_value ?? null,
+      })),
+    })),
+  });
+
+  const getSectionId = (section: Section) =>
+    (section as SectionDb).id ?? (section as SectionLocal).tempId;
+
+  const handleTemplateNameChange = (value: string) => {
+    setTemplateDraft((prev) => ({
+      ...prev,
+      name: value,
+    }));
+  };
+
+  const handleTemplateSectionAdd = (newSection: Section) => {
+    setTemplateDraft((prev) => ({
+      ...prev,
+      sections: [...prev.sections, newSection],
+    }));
+  };
+
+  const handleTemplateSectionUpdate = (
+    id: number | string,
+    updatedSection: Section,
+  ) => {
+    setTemplateDraft((prev) => ({
+      ...prev,
+      sections: prev.sections.map((section) =>
+        getSectionId(section) === id ? updatedSection : section,
+      ),
+    }));
+  };
+
+  const handleTemplateSectionDelete = (id: number | string) => {
+    setTemplateDraft((prev) => {
+      const updatedSections = prev.sections
+        .map((section) => {
+          if (getSectionId(section) === id) {
+            if (typeof id === "number") {
+              const updatedQuestionnaires = section.questionnaires
+                .map((question) => {
+                  if ((question as QuestionnaireDb).id) {
+                    return { ...question, _delete: true };
+                  }
+                  return question;
+                })
+                .filter((question) => !(question as QuestionnaireLocal).tempId);
+
+              return {
+                ...section,
+                _delete: true,
+                questionnaires: updatedQuestionnaires,
+              };
+            }
+
+            return null;
+          }
+          return section;
+        })
+        .filter(Boolean) as Section[];
+
+      return {
+        ...prev,
+        sections: updatedSections,
+      };
+    });
+  };
+
+  const buildTemplatePayload = (draft: ApplicationFormQuestionnaire) => ({
+    name: draft?.name ? draft.name.trim() : "",
+    sections: draft.sections.map((section) => ({
+      id: (section as SectionDb).id,
+      name: section.name,
+      _delete: (section as SectionDb)._delete,
+      questionnaires: section.questionnaires.map((question) => ({
+        id: (question as QuestionnaireDb).id,
+        question: question.question,
+        description: question.description ?? "",
+        question_type: question.question_type,
+        options: question.options ?? [],
+        parameter: question.parameter ?? "",
+        is_non_negotiable: Boolean(question.is_non_negotiable),
+        non_negotiable_value: question.non_negotiable_value ?? null,
+        _delete: (question as QuestionnaireDb)._delete,
+      })),
+    })),
+  });
+
+  const handleTemplateSave = async () => {
+    const trimmedName = templateDraft?.name ? templateDraft.name.trim() : "";
+    if (!trimmedName) {
+      setTemplateSaveError("Template name is required.");
+      return;
+    }
+
+    setIsSavingTemplate(true);
+    setTemplateSaveError(null);
+
+    try {
+      const payload = buildTemplatePayload({
+        ...templateDraft,
+        name: trimmedName,
+      });
+
+      if (templateDialogMode === "create") {
+        await questionnaireTemplateService.createTemplate(payload, {
+          httpClient: axiosPrivate,
+        });
+        toast.success("Template created successfully.");
+      }
+
+      if (templateDialogMode === "edit") {
+        const templateId = templateDetailId ?? selectedTemplate?.id;
+        if (templateId) {
+          await questionnaireTemplateService.updateTemplate(
+            templateId,
+            payload,
+            {
+              httpClient: axiosPrivate,
+            },
+          );
+          toast.success("Template updated successfully.");
+        }
+      }
+
+      setIsTemplateDialogOpen(false);
+      setTemplateDetailId(null);
+      setTemplateDialogMode("view");
+      refetchTemplates();
+    } catch {
+      setTemplateSaveError("Failed to save template. Please try again.");
+      toast.error("Failed to save template.");
+    } finally {
+      setIsSavingTemplate(false);
+    }
+  };
+
+    const handleEmailTemplateSave = async () => {
+      const trimmedName = (emailTemplateDraft?.name || "").trim();
+      if (!trimmedName) {
+        setEmailTemplateSaveError("Template name is required.");
+        return;
+      }
+
+      setIsSavingTemplate(true);
+      setEmailTemplateSaveError(null);
+
+      try {
+        const payload = {
+          name: trimmedName,
+          category: emailTemplateDraft.category,
+          subject: emailTemplateDraft.subject || "",
+          body: emailTemplateDraft.body || "",
+          is_active: emailTemplateDraft.is_active,
+        };
+
+        if (emailTemplateDialogMode === "create") {
+          await emailTemplateService.createTemplate(payload, { httpClient: axiosPrivate });
+          toast.success("Email template created.");
+        } else if (emailTemplateDialogMode === "edit") {
+          const id = emailTemplateDetailId;
+          if (id) {
+            await emailTemplateService.updateTemplate(id, payload, { httpClient: axiosPrivate });
+            toast.success("Email template updated.");
+          }
+        }
+
+        setIsEmailTemplateDialogOpen(false);
+        setEmailTemplateDetailId(null);
+        setEmailTemplateDialogMode("view");
+        refetchEmailTemplates();
+      } catch (err) {
+        setEmailTemplateSaveError("Failed to save email template.");
+        toast.error("Failed to save email template.");
+      } finally {
+        setIsSavingTemplate(false);
+      }
+    };
+
+    const handleEmailTemplateDelete = async (id: number) => {
+      try {
+        await emailTemplateService.deleteTemplate(id, { httpClient: axiosPrivate });
+        toast.success("Email template deleted.");
+        refetchEmailTemplates();
+      } catch (err) {
+        toast.error("Failed to delete template.");
+      }
+    };
+
   const toggleFormSelection = (formName: string) => {
     setSelectedForms((prev) =>
       prev.includes(formName)
         ? prev.filter((name) => name !== formName)
-        : [...prev, formName]
+        : [...prev, formName],
     );
   };
 
@@ -102,11 +560,11 @@ export default function Library() {
     setIsArchiveDialogOpen(false);
   };
 
-  const isFolderView = currentView === "internal" || currentView === "external";
+  // `internal` and `external` folder views removed — items surfaced outside
 
   return (
     <>
-      <Navbar />
+      {/* <Navbar /> */}
       <div className="flex flex-col min-h-screen pt-[100px] bg-gray-50">
         {" "}
         {/* Added pt for fixed header */}
@@ -137,60 +595,102 @@ export default function Library() {
           {/* Adjusted pt for main content */}
           <div className="flex items-start justify-between py-4">
             {/* Home View */}
-            {currentView === "home" ? (
-              <div className="flex space-x-10">
-                <div
-                  onClick={() => setPath((prev) => [...prev, "internal"])} // Navigate to internal view
-                  className="flex flex-col items-center cursor-pointer group transition"
-                >
-                  <Users className="text-gray-800 group-hover:text-blue-600 w-7 h-7 group-hover:scale-110 transition-transform" />
-                  <span className="text-sm font-medium text-gray-800 group-hover:text-blue-600 mt-2">
-                    Internal
-                  </span>
-                </div>
+            {currentView === "home" && (
+              <div className="w-full space-y-8">
+                {/* removed separate Internal/External tiles - folder shortcuts shown above Quick Access */}
 
-                <div
-                  onClick={() => setPath((prev) => [...prev, "external"])} // Navigate to external view
-                  className="flex flex-col items-center cursor-pointer group transition"
-                >
-                  <Building2 className="text-gray-800 group-hover:text-blue-600 w-7 h-7 group-hover:scale-110 transition-transform" />
-                  <span className="text-sm font-medium text-gray-800 group-hover:text-blue-600 mt-2">
-                    External Client
-                  </span>
-                </div>
-              </div>
-            ) : isFolderView ? (
-              <div className="flex space-x-10">
-                {sharedFolders.map((folder, index) => (
-                  <div
-                    key={index}
-                    className="flex flex-col items-center space-y-2 group"
-                  >
+                {/* Folder shortcuts placed above Quick Access */}
+                <div className="mt-2 flex flex-wrap gap-4">
+                  {sharedFolders.map((folder, index) => (
                     <div
-                      className="cursor-pointer transition-transform hover:scale-105"
+                      key={index}
+                      className="flex items-center gap-3 cursor-pointer rounded-md border border-gray-100 bg-white p-3 shadow-sm"
                       onClick={folder.onClick}
                     >
-                      <div className="relative w-16 h-16">
-                        <FolderIcon
-                          className={`${folder.folderColor} w-full h-full`}
-                          strokeWidth={folderStroke}
-                        />
-                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                          {cloneElement(folder.icon, {
-                            strokeWidth: iconStroke,
-                            className: `${folder.icon.props.className} w-5 h-5`,
-                          })}
-                        </div>
+                      <div className="w-10 h-10 flex items-center justify-center rounded-md bg-gray-50">
+                        {cloneElement(folder.icon, { className: "w-5 h-5" })}
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{folder.label}</div>
+                        <div className="text-xs text-gray-500">Quick open</div>
                       </div>
                     </div>
-                    <span className={`text-sm font-medium ${folder.textColor}`}>
-                      {folder.label}
-                    </span>
+                  ))}
+                </div>
+
+                <div className="rounded-2xl border border-gray-200 bg-gradient-to-br from-white via-slate-50 to-amber-50 p-6 shadow-sm">
+                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                        Quick Access
+                      </p>
+                      <h2 className="text-xl font-semibold text-gray-900">
+                        Department & Questionnaire Libraries
+                      </h2>
+                      <p className="text-sm text-gray-600">
+                        Jump directly into global departments or your private
+                        template library.
+                      </p>
+                    </div>
+                    <div className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-full px-3 py-1 bg-white/80">
+                      Curated resources
+                    </div>
                   </div>
-                ))}
+                  
+                  <div className="mt-5 grid gap-4 md:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPath((prev) => [...prev, "departments"])
+                      }
+                      className="group flex items-start justify-between rounded-xl border border-emerald-200 bg-white/80 p-4 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                    >
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.2em] text-emerald-500">
+                          Departments
+                        </p>
+                        <p className="text-lg font-semibold text-gray-900">
+                          Organization Map
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          View and manage business unit departments.
+                        </p>
+                      </div>
+                      <div className="rounded-full bg-emerald-50 p-2 text-emerald-600">
+                        <Building2 className="h-5 w-5" />
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPath((prev) => [...prev, "questionnaire-templates"])
+                      }
+                      className="group flex items-start justify-between rounded-xl border border-amber-200 bg-white/80 p-4 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                    >
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.2em] text-amber-500">
+                          Application Form Questionnaire
+                        </p>
+                        <p className="text-lg font-semibold text-gray-900">
+                          My Templates
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Build reusable section and question sets.
+                        </p>
+                      </div>
+                      <div className="rounded-full bg-amber-50 p-2 text-amber-600">
+                        <BookOpen className="h-5 w-5" />
+                      </div>
+                    </button>
+                  </div>
+                </div>
               </div>
-            ) : (
-              // Forms View
+            )}
+
+            
+
+            {currentView === "forms" && (
               <div className="w-full">
                 <h2 className="text-2xl font-bold text-blue-600 mb-2">Forms</h2>
 
@@ -272,10 +772,350 @@ export default function Library() {
               </div>
             )}
 
-            {isFolderView && (
-              <div className="flex items-center space-x-1 text-blue-600 cursor-pointer hover:underline transition">
+            {currentView === "departments" && (
+              <div className="w-full space-y-6">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      Departments
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      Global list of departments across business units.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <DepartmentAddModal
+                      onDepartmentAdded={refetchDepartments}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div className="relative w-full md:max-w-sm">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <Input
+                      value={departmentSearch}
+                      onChange={(event) =>
+                        setDepartmentSearch(event.target.value)
+                      }
+                      className="pl-9"
+                      placeholder="Search departments"
+                    />
+                  </div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                    Total {departmentsTotalCount}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+                  <Table>
+                    <TableHeader className="bg-gray-50">
+                      <TableRow>
+                        <TableHead className="p-4">Department</TableHead>
+                        <TableHead className="p-4">Business Unit</TableHead>
+                        <TableHead className="p-4">Updated</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {departmentsLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={3} className="p-6 text-center">
+                            Loading departments...
+                          </TableCell>
+                        </TableRow>
+                      ) : departments.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={3} className="p-6 text-center">
+                            No departments found.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        departments.map((department) => (
+                          <TableRow key={department.id}>
+                            <TableCell className="p-4 font-medium text-gray-900">
+                              {department.name}
+                            </TableCell>
+                            <TableCell className="p-4 text-gray-600">
+                              {department.business_unit
+                                ? department.business_unit.name.toUpperCase()
+                                : "-"}
+                            </TableCell>
+                            <TableCell className="p-4 text-gray-600">
+                              {department.updated_at
+                                ? new Date(
+                                    department.updated_at,
+                                  ).toLocaleDateString()
+                                : "-"}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {hasMoreDepartments && (
+                  <div className="flex justify-center">
+                    <Button
+                      variant="outline"
+                      onClick={() => loadMoreDepartments()}
+                      disabled={isFetchingDepartmentsNext}
+                    >
+                      {isFetchingDepartmentsNext ? "Loading..." : "Load more"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {currentView === "questionnaire-templates" && (
+              <div className="w-full space-y-6">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      Application Form Questionnaires
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      Private templates visible only to your account.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      className="bg-amber-500 text-white hover:bg-amber-600"
+                      onClick={() => {
+                        setTemplateDialogMode("create");
+                        setTemplateDetailId(null);
+                        setIsTemplateDialogOpen(true);
+                      }}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      New Template
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div className="relative w-full md:max-w-sm">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <Input
+                      onChange={(event) =>
+                        handleTemplateSearch(event.target.value)
+                      }
+                      className="pl-9"
+                      placeholder="Search templates"
+                    />
+                  </div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                    Total {templatesTotalCount}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+                  <Table>
+                    <TableHeader className="bg-amber-50">
+                      <TableRow>
+                        <TableHead className="p-4">Template</TableHead>
+                        <TableHead className="p-4">Sections</TableHead>
+                        <TableHead className="p-4">Questions</TableHead>
+                        <TableHead className="p-4">Updated</TableHead>
+                        <TableHead className="p-4 text-right">
+                          Actions
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {templatesLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="p-6 text-center">
+                            Loading templates...
+                          </TableCell>
+                        </TableRow>
+                      ) : templates.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="p-6 text-center">
+                            No templates found.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        templates.map((template) => (
+                          <TableRow key={template.id}>
+                            <TableCell className="p-4 font-medium text-gray-900">
+                              {template.name}
+                            </TableCell>
+                            <TableCell className="p-4 text-gray-600">
+                              {template.sections.length}
+                            </TableCell>
+                            <TableCell className="p-4 text-gray-600">
+                              {getTemplateQuestionCount(template)}
+                            </TableCell>
+                            <TableCell className="p-4 text-gray-600">
+                              {template.updated_at
+                                ? new Date(
+                                    template.updated_at,
+                                  ).toLocaleDateString()
+                                : "-"}
+                            </TableCell>
+                            <TableCell className="p-4">
+                              <div className="flex items-center justify-end gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-gray-600 hover:text-gray-900"
+                                  onClick={() => {
+                                    setTemplateDialogMode("view");
+                                    setTemplateDetailId(template.id);
+                                    setIsTemplateDialogOpen(true);
+                                  }}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-amber-600 hover:text-amber-700"
+                                  onClick={() => {
+                                    setTemplateDialogMode("edit");
+                                    setTemplateDetailId(template.id);
+                                    setIsTemplateDialogOpen(true);
+                                  }}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {templatesHasMore && (
+                  <div className="flex justify-center">
+                    <Button
+                      variant="outline"
+                      onClick={() => loadMoreTemplates()}
+                      disabled={templatesLoading}
+                    >
+                      {templatesLoading ? "Loading..." : "Load more"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {currentView === "email-templates" && (
+              <div className="w-full space-y-6">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Email Templates</h2>
+                    <p className="text-sm text-gray-600">Manage your private email templates.</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      className="bg-blue-600 text-white hover:bg-blue-700"
+                      onClick={() => {
+                        setEmailTemplateDialogMode("create");
+                        setEmailTemplateDetailId(null);
+                        setIsEmailTemplateDialogOpen(true);
+                      }}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      New Template
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div className="relative w-full md:max-w-sm">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <Input onChange={(e) => handleEmailTemplateSearch(e.target.value)} className="pl-9" placeholder="Search email templates" />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <select value={selectedCategoryFilter ?? ""} onChange={(e) => setSelectedCategoryFilter(e.target.value || null)} className="text-sm border rounded px-2 py-1">
+                      <option value="">All categories</option>
+                      {defaultCategories.map((c) => (
+                        <option key={c.value} value={c.value}>{c.label}</option>
+                      ))}
+                    </select>
+                    <div className="text-xs uppercase tracking-[0.2em] text-gray-500">Total {emailTemplatesTotalCount}</div>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+                  <Table>
+                    <TableHeader className="bg-blue-50">
+                      <TableRow>
+                        <TableHead className="p-4">Name</TableHead>
+                        <TableHead className="p-4">Subject</TableHead>
+                        <TableHead className="p-4">Category</TableHead>
+                        <TableHead className="p-4">Updated</TableHead>
+                        <TableHead className="p-4 text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {emailTemplatesLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="p-6 text-center">Loading templates...</TableCell>
+                        </TableRow>
+                      ) : emailTemplates.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="p-6 text-center">No email templates found.</TableCell>
+                        </TableRow>
+                      ) : (
+                        emailTemplates
+                          .filter((t) => {
+                            if (!selectedCategoryFilter) return true;
+                            return t.category === selectedCategoryFilter;
+                          })
+                          .map((template) => (
+                            <TableRow key={template.id}>
+                              <TableCell className="p-4 font-medium text-gray-900">{template.name}</TableCell>
+                              <TableCell className="p-4 text-gray-600">{template.subject}</TableCell>
+                              <TableCell className="p-4 text-gray-600">{defaultCategories.find((c) => c.value === template.category)?.label ?? "-"}</TableCell>
+                              <TableCell className="p-4 text-gray-600">{template.updated_at ? new Date(template.updated_at).toLocaleDateString() : "-"}</TableCell>
+                              <TableCell className="p-4">
+                                <div className="flex items-center justify-end gap-2">
+                                  <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900" onClick={() => {
+                                    setEmailTemplateDialogMode("view");
+                                    setEmailTemplateDetailId(template.id);
+                                    setIsEmailTemplateDialogOpen(true);
+                                  }}>
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-700" onClick={() => {
+                                    setEmailTemplateDialogMode("edit");
+                                    setEmailTemplateDetailId(template.id);
+                                    setIsEmailTemplateDialogOpen(true);
+                                  }}>
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-700" onClick={() => handleEmailTemplateDelete(template.id)}>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {emailTemplatesHasMore && (
+                  <div className="flex justify-center">
+                    <Button variant="outline" onClick={() => loadMoreEmailTemplates()} disabled={emailTemplatesLoading}>
+                      {emailTemplatesLoading ? "Loading..." : "Load more"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {selectedForms.length > 0 && (
+              <div className="flex items-center space-x-1 text-blue-600 cursor-pointer hover:underline transition" onClick={() => setIsArchiveDialogOpen(true)}>
                 <Trash2 className="w-4 h-4" />
-                <span className="text-sm font-medium">Archive Folder</span>
+                <span className="text-sm font-medium">Archive</span>
               </div>
             )}
           </div>
@@ -305,6 +1145,285 @@ export default function Library() {
               Archive
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isEmailTemplateDialogOpen}
+        onOpenChange={(open) => {
+          setIsEmailTemplateDialogOpen(open);
+          if (!open) {
+            setEmailTemplateDetailId(null);
+            setEmailTemplateDialogMode("view");
+          }
+        }}
+      >
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">
+              {emailTemplateDialogMode === "create"
+                ? "Create Email Template"
+                : emailTemplateDialogMode === "edit"
+                ? "Edit Email Template"
+                : "Email Template"}
+            </DialogTitle>
+          </DialogHeader>
+
+          {emailTemplateDialogMode !== "view" ? (
+            <div className="space-y-5 pt-2">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Name</p>
+                  <Input
+                    value={emailTemplateDraft.name}
+                    onChange={(e) =>
+                      setEmailTemplateDraft((p) => ({
+                        ...p,
+                        name: e.target.value,
+                      }))
+                    }
+                    placeholder="Template name"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Category</p>
+                  <Select
+                    value={emailTemplateDraft.category}
+                    onValueChange={(value) =>
+                      setEmailTemplateDraft((p) => ({
+                        ...p,
+                        category: value as "general" | "interview" | "offer" | "onboarding",
+                      }))
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {defaultCategories.map((category) => (
+                        <SelectItem key={category.value} value={category.value}>
+                          {category.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Subject</p>
+                <Input
+                  value={emailTemplateDraft.subject}
+                  onChange={(e) =>
+                    setEmailTemplateDraft((p) => ({
+                      ...p,
+                      subject: e.target.value,
+                    }))
+                  }
+                  placeholder="Email subject"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Body</p>
+                <Textarea
+                  value={emailTemplateDraft.body}
+                  onChange={(e) =>
+                    setEmailTemplateDraft((p) => ({
+                      ...p,
+                      body: e.target.value,
+                    }))
+                  }
+                  placeholder="Write the email body"
+                  className="min-h-40 resize-y"
+                />
+              </div>
+
+              {emailTemplateSaveError && (
+                <p className="text-xs text-red-600">{emailTemplateSaveError}</p>
+              )}
+
+              <div className="flex items-center justify-end gap-2 border-t pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEmailTemplateDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-blue-600 text-white hover:bg-blue-700"
+                  onClick={handleEmailTemplateSave}
+                  disabled={isSavingTemplate}
+                >
+                  {isSavingTemplate ? "Saving..." : "Save"}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {!selectedEmailTemplate ? (
+                <p className="text-sm text-gray-500">Template not found.</p>
+              ) : (
+                <div>
+                  <div className="mb-3">
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Name</p>
+                    <p className="text-lg font-semibold text-gray-900">{selectedEmailTemplate.name}</p>
+                  </div>
+                  <div className="mb-3">
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Category</p>
+                    <p className="text-sm text-gray-700">
+                      {defaultCategories.find((c) => c.value === selectedEmailTemplate.category)?.label ?? "General"}
+                    </p>
+                  </div>
+                  <div className="mb-3">
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Subject</p>
+                    <p className="text-sm text-gray-700">{selectedEmailTemplate.subject}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Body</p>
+                    <div className="prose max-w-none mt-2">{selectedEmailTemplate.body}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isTemplateDialogOpen}
+        onOpenChange={(open) => {
+          setIsTemplateDialogOpen(open);
+          if (!open) {
+            setTemplateDetailId(null);
+            setTemplateDialogMode("view");
+          }
+        }}
+      >
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">
+              {templateDialogMode === "create"
+                ? "Create Template"
+                : templateDialogMode === "edit"
+                  ? "Edit Template"
+                  : "Template Details"}
+            </DialogTitle>
+          </DialogHeader>
+
+          {(templateDialogMode === "create" ||
+            templateDialogMode === "edit") && (
+            <div className="space-y-5">
+              {templateDialogMode === "edit" && templateLoading ? (
+                <p className="text-sm text-gray-500">Loading template...</p>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                      Template Name
+                    </p>
+                    <Input
+                      value={templateDraft?.name || ""}
+                      onChange={(event) =>
+                        handleTemplateNameChange(event.target.value)
+                      }
+                      placeholder="Enter template name"
+                    />
+                    {templateSaveError && (
+                      <p className="text-xs text-red-600">
+                        {templateSaveError}
+                      </p>
+                    )}
+                  </div>
+
+                  <SectionList
+                    sections={templateDraft.sections}
+                    addSection={handleTemplateSectionAdd}
+                    onUpdateSection={handleTemplateSectionUpdate}
+                    onDeleteSection={handleTemplateSectionDelete}
+                  />
+
+                  <DialogFooter className="justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      type="button"
+                      onClick={() => setIsTemplateDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      className="bg-amber-500 text-white hover:bg-amber-600"
+                      onClick={handleTemplateSave}
+                      disabled={isSavingTemplate}
+                    >
+                      {isSavingTemplate ? "Saving..." : "Save Template"}
+                    </Button>
+                  </DialogFooter>
+                </>
+              )}
+            </div>
+          )}
+
+          {templateDialogMode === "view" && (
+            <div className="space-y-4">
+              {templateLoading ? (
+                <p className="text-sm text-gray-500">Loading template...</p>
+              ) : !selectedTemplate ? (
+                <p className="text-sm text-gray-500">Template not found.</p>
+              ) : (
+                <div className="space-y-5">
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                      Template Name
+                    </p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {selectedTemplate.name}
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    {selectedTemplate.sections.map((section) => (
+                      <div
+                        key={section.id}
+                        className="rounded-lg border border-gray-200 bg-white p-4"
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-semibold text-gray-900">
+                            {section.name}
+                          </p>
+                          <span className="text-xs text-gray-500">
+                            {section.questionnaires.length} questions
+                          </span>
+                        </div>
+                        <div className="mt-3 space-y-2">
+                          {section.questionnaires.map((question) => (
+                            <div
+                              key={question.id}
+                              className="rounded-md border border-gray-100 bg-gray-50 p-3"
+                            >
+                              <p className="text-sm font-medium text-gray-900">
+                                {question.question}
+                              </p>
+                              {question.description && (
+                                <p className="text-xs text-gray-500">
+                                  {question.description}
+                                </p>
+                              )}
+                              <p className="text-xs uppercase tracking-[0.2em] text-gray-400">
+                                {question.question_type.replace(/_/g, " ")}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </>

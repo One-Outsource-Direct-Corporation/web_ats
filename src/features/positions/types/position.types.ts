@@ -1,14 +1,14 @@
-import type { ApplicationForm } from "@/features/careers/types/job.types";
 import type { User } from "@/features/auth/types/auth.types";
 import type { PipelineStep } from "@/shared/types/pipeline.types";
-import type { JobPostingDb } from "@/features/positions-client/types/create_position.types";
+import type { JobPostingResponse } from "@/features/external_posting";
+import type { ApplicationFormData } from "@/shared/types/application_form.types";
 
 export interface PositionData {
   id: number;
   unique_id: string;
   client: string;
   pipeline: PipelineStep[];
-  application_form: ApplicationForm;
+  application_form: ApplicationFormData;
   job_title: string;
   education_level: string;
   department: string;
@@ -110,7 +110,7 @@ export interface PositionsActions {
       | TabType
       | "publishedInternal"
       | "publishedExternal"
-      | "published"
+      | "published",
   ) => void;
   handleTabChange: (value: string) => void;
 }
@@ -131,7 +131,7 @@ export interface PositionResponse {
   // job_posting: JobPostingResponse;
   client: number;
   client_display: string;
-  application_form: ApplicationForm;
+  application_form: ApplicationFormData;
   pipeline: PipelineStepResponse[];
   education_level: string;
   experience_level: string;
@@ -141,5 +141,5 @@ export interface PositionAPIResponse {
   count: number;
   next: string | null;
   previous: string | null;
-  results: JobPostingDb[];
+  results: JobPostingResponse[];
 }

@@ -3,7 +3,7 @@ import type {
   Question,
   QuestionnaireSection,
   SavedQuestionnaire,
-} from "../../positions-client/types/create_position.types";
+} from "../../external_posting/types/externalPosting.types";
 
 export function useQuestionnaires() {
   const [sections, setSections] = useState<QuestionnaireSection[]>([]);

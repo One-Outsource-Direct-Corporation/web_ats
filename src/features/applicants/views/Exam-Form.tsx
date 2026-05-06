@@ -1,788 +1,554 @@
-import { useState } from "react";
-import { ArrowLeft, Sparkles, Check, X } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { ArrowLeft, FileDown, FileUp, Loader2, Save, Eye } from "lucide-react";
+import { toast } from "react-toastify";
+
 import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
+import { Input } from "@/shared/components/ui/input";
+import { Textarea } from "@/shared/components/ui/textarea";
+import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
+import useAxiosMultipart from "@/features/auth/hooks/useAxiosMultipart";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { formatAssessmentType } from "@/shared/utils/assessmentUtils";
 
-const getPerformanceColor = (performance: string) => {
-  switch (performance.toLowerCase()) {
-    case "excellent":
-    case "outstanding":
-      return "text-green-600";
-    case "good":
-      return "text-blue-600";
-    case "moderate":
-      return "text-yellow-600";
-    case "poor":
-      return "text-red-600";
-    default:
-      return "text-gray-600";
-  }
-};
-
-const getVerdictInfo = (score: number) => {
-  if (score >= 45)
-    return {
-      level: "Exceptional",
-      description: "Ready for leadership; minimal guidance needed",
-    };
-  if (score >= 40)
-    return {
-      level: "Strong",
-      description: "Hire with slight upskilling in 1-2 areas",
-    };
-  if (score >= 35)
-    return {
-      level: "Moderate",
-      description: "Needs coaching; may lack lead experience",
-    };
-  return { level: "Not Ready", description: "Requires significant upskilling" };
-};
-
-// Update the ExamForm component to get the applicant ID from the URL params
-export default function ExamForm() {
-  const navigate = useNavigate();
-  const { jobtitle, applicantId } = useParams<{
-    jobtitle: string;
-    applicantId: string;
-  }>();
-  const [showFullExam, setShowFullExam] = useState(false);
-
-  // You can use the applicantId to fetch specific data for this applicant
-  // For now, we'll use the mock data, but you can replace this with actual data fetching
-  const mockExamData = {
-    candidateName: getApplicantName(applicantId), // You'll need to implement this function
-    jobTitle: formatJobTitle(jobtitle),
-    assessmentType: "Technical Assessment",
-    totalScore: 42,
-    maxScore: 50,
-    percentage: 84,
-    verdict: "Strong Hire",
-    sections: [
-      {
-        name: "Multiple Choice (MCQ)",
-        description: "Fundamental concepts and theory",
-        maxScore: 20,
-        candidateScore: 16,
-        performance: "Good",
-        remarks:
-          "Strong understanding of core concepts with minor gaps in advanced topics. Missed questions on design patterns and optimization techniques.",
-      },
-      {
-        name: "Coding (Algorithm + Architecture)",
-        description: "Problem-solving and system design",
-        maxScore: 20,
-        candidateScore: 18,
-        performance: "Excellent",
-        remarks:
-          "Demonstrated excellent problem-solving skills and clean code practices. Minor deduction for not considering edge cases in one solution.",
-      },
-      {
-        name: "Checkbox (Best Practices, Debugging, Security)",
-        description: "Industry standards and security awareness",
-        maxScore: 10,
-        candidateScore: 8,
-        performance: "Good",
-        remarks:
-          "Good knowledge of best practices and security principles. Missed some advanced debugging techniques and security considerations.",
-      },
-    ],
-  };
-
-  // Helper function to get applicant name (you can replace this with actual data fetching)
-  function getApplicantName(id?: string) {
-    const applicants = {
-      "001": "John Doe",
-      "002": "Sarah Johnson",
-      "003": "Mike Chen",
-      "004": "Emily Rodriguez",
-      "005": "David Kim",
-      "006": "Lisa Wang",
-      "007": "Alex Thompson",
-      "008": "Maria Garcia",
-    };
-    return applicants[id as keyof typeof applicants] || "Unknown Applicant";
-  }
-
-  function formatJobTitle(slug?: string) {
-    const titleMap: Record<string, string> = {
-      leaddeveloper: "Lead Developer",
-      projectmanager: "Project Manager",
-      socialcontentmanager: "Social Content Manager",
-      senioruiuxdesigner: "Senior UI/UX Designer",
-      customersupport: "Customer Support",
-      qaengineer: "QA Engineer",
-      humanresourcescoordinator: "Human Resources Coordinator",
-      operationsmanager: "Operations Manager",
-      socialmediamanager: "Social Media Manager",
-      marketingspecialist: "Marketing Specialist",
-      seniorsoftwareengineer: "Senior Software Engineer",
-    };
-    return slug
-      ? titleMap[slug.toLowerCase()] || slug.replace(/([a-z])([A-Z])/g, "$1 $2")
-      : "Unknown Job";
-  }
-
-  const verdictInfo = getVerdictInfo(mockExamData.totalScore);
-
-  if (showFullExam) {
-    return <FullExamResult onBack={() => setShowFullExam(false)} />;
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-100 py-8">
-      {/* Logo */}
-      <div className="text-center mb-8">
-        <img src="/OODC logo2.png" alt="OODC Logo" className="h-32 mx-auto" />
-        <div className="hidden text-2xl font-bold text-gray-800">OODC</div>
-      </div>
-
-      {/* Paper Container */}
-      <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
-        {/* Back Button */}
-        <div className="p-6 pb-0">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2"
-            onClick={() => navigate(`/job/${jobtitle}/assessments`)}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-        </div>
-
-        {/* Main Content */}
-        <div className="p-6">
-          {/* Two Column Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            {/* Left Column - Applicant Details */}
-            <div className="space-y-4">
-              <h3 className="text-xl font-bold text-gray-800">
-                {mockExamData.jobTitle} {mockExamData.assessmentType} -
-                Evaluation Report
-              </h3>
-
-              <div className="space-y-2">
-                <p>
-                  <span className="font-semibold">Candidate Name:</span>{" "}
-                  {mockExamData.candidateName}
-                </p>
-                <p>
-                  <span className="font-semibold">Total Score:</span>{" "}
-                  {mockExamData.totalScore}/{mockExamData.maxScore}
-                  <span className="ml-2 text-sm">
-                    ({mockExamData.percentage}% - {verdictInfo.level})
-                  </span>
-                </p>
-                <button
-                  className="text-blue-600 hover:text-blue-800 underline text-sm"
-                  onClick={() => setShowFullExam(true)}
-                >
-                  View Full Exam Result
-                </button>
-              </div>
-            </div>
-
-            {/* Right Column - Grading Scale */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-semibold mb-3">Grading Scale:</h3>
-              <div className="space-y-1 text-sm">
-                <p>
-                  <span className="font-medium">45-50:</span> Exceptional (Ready
-                  for leadership; minimal guidance needed)
-                </p>
-                <p>
-                  <span className="font-medium">40-44:</span> Strong (Hire with
-                  slight upskilling in 1-2 areas)
-                </p>
-                <p>
-                  <span className="font-medium">35-39:</span> Moderate (Needs
-                  coaching; may lack lead experience)
-                </p>
-                <p>
-                  <span className="font-medium">&lt;35:</span> Not Ready
-                  (Requires significant upskilling)
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Assessment Results Table */}
-          <div className="mb-8">
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-gray-300">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">
-                      Section
-                    </th>
-                    <th className="border border-gray-300 px-4 py-3 text-center font-semibold">
-                      Number of Items
-                    </th>
-                    <th className="border border-gray-300 px-4 py-3 text-center font-semibold">
-                      Candidate Score
-                    </th>
-                    <th className="border border-gray-300 px-4 py-3 text-center font-semibold">
-                      Performance
-                    </th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">
-                      Remarks
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mockExamData.sections.map((section) => (
-                    <tr key={section.name} className="hover:bg-gray-50">
-                      <td className="border border-gray-300 px-4 py-3">
-                        <div>
-                          <div className="font-medium">{section.name}</div>
-                          <div className="text-sm text-gray-600">
-                            {section.description}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="border border-gray-300 px-4 py-3 text-center">
-                        {section.maxScore}
-                      </td>
-                      <td className="border border-gray-300 px-4 py-3 text-center font-medium">
-                        {section.candidateScore}
-                      </td>
-                      <td
-                        className={`border border-gray-300 px-4 py-3 text-center font-medium ${getPerformanceColor(
-                          section.performance
-                        )}`}
-                      >
-                        {section.performance}
-                      </td>
-                      <td className="border border-gray-300 px-4 py-3 text-sm">
-                        {section.remarks}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Final Recommendations */}
-          <div className="bg-gray-50 p-6 rounded-lg relative">
-            <h3 className="font-semibold mb-4">Final Recommendations:</h3>
-            <div className="space-y-3 text-sm">
-              <p>
-                <span className="font-semibold">Overall Score:</span>{" "}
-                {mockExamData.totalScore}/{mockExamData.maxScore} (
-                {mockExamData.percentage}%)
-              </p>
-              <p>
-                <span className="font-semibold">Recommendation:</span>{" "}
-                {mockExamData.verdict} - {verdictInfo.description}
-              </p>
-              <p>
-                The candidate demonstrates strong technical capabilities with
-                excellent coding skills and good understanding of fundamental
-                concepts. While there are minor areas for improvement in
-                advanced topics and security practices, the overall performance
-                indicates readiness for the role with minimal onboarding support
-                required.
-              </p>
-            </div>
-
-            {/* Ask AI Button */}
-            <Button
-              className="absolute bottom-4 right-4 flex items-center gap-2"
-              size="sm"
-            >
-              Ask AI
-              <Sparkles className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+interface AssessmentFile {
+  id: number;
+  filename?: string | null;
+  file?: string | null;
+  file_extension?: string | null;
 }
 
-// Full Exam Result Component
-export function FullExamResult({ onBack }: { onBack: () => void }) {
-  const mcqQuestions = [
-    {
-      id: 1,
-      question: "What is the time complexity of binary search?",
-      options: ["O(n)", "O(log n)", "O(n²)", "O(1)"],
-      correctAnswer: 1,
-      userAnswer: 1,
-      points: 2,
-    },
-    {
-      id: 2,
-      question:
-        "Which design pattern is used to create objects without specifying their concrete classes?",
-      options: ["Singleton", "Factory", "Observer", "Strategy"],
-      correctAnswer: 1,
-      userAnswer: 0,
-      points: 2,
-    },
-    {
-      id: 3,
-      question: "What does REST stand for?",
-      options: [
-        "Representational State Transfer",
-        "Remote State Transfer",
-        "Relational State Transfer",
-        "Resource State Transfer",
-      ],
-      correctAnswer: 0,
-      userAnswer: 0,
-      points: 2,
-    },
-    {
-      id: 4,
-      question: "Which HTTP method is idempotent?",
-      options: ["POST", "PUT", "PATCH", "DELETE"],
-      correctAnswer: 1,
-      userAnswer: 1,
-      points: 2,
-    },
-    {
-      id: 5,
-      question: "What is the purpose of a foreign key in a database?",
-      options: [
-        "Primary identification",
-        "Data validation",
-        "Referential integrity",
-        "Index optimization",
-      ],
-      correctAnswer: 2,
-      userAnswer: 2,
-      points: 2,
-    },
-    {
-      id: 6,
-      question:
-        "Which sorting algorithm has the best average-case time complexity?",
-      options: [
-        "Bubble Sort",
-        "Quick Sort",
-        "Selection Sort",
-        "Insertion Sort",
-      ],
-      correctAnswer: 1,
-      userAnswer: 1,
-      points: 2,
-    },
-    {
-      id: 7,
-      question:
-        "What is the main advantage of using microservices architecture?",
-      options: [
-        "Faster development",
-        "Better scalability",
-        "Reduced complexity",
-        "Lower costs",
-      ],
-      correctAnswer: 1,
-      userAnswer: 1,
-      points: 2,
-    },
-    {
-      id: 8,
-      question: "Which principle is NOT part of SOLID principles?",
-      options: [
-        "Single Responsibility",
-        "Open/Closed",
-        "Dependency Inversion",
-        "Don't Repeat Yourself",
-      ],
-      correctAnswer: 3,
-      userAnswer: 3,
-      points: 2,
-    },
-    {
-      id: 9,
-      question: "What is the purpose of indexing in databases?",
-      options: [
-        "Data backup",
-        "Query optimization",
-        "Data encryption",
-        "Schema validation",
-      ],
-      correctAnswer: 1,
-      userAnswer: 0,
-      points: 2,
-    },
-    {
-      id: 10,
-      question: "Which data structure is best for implementing a LRU cache?",
-      options: [
-        "Array",
-        "Linked List",
-        "Hash Map + Doubly Linked List",
-        "Binary Tree",
-      ],
-      correctAnswer: 2,
-      userAnswer: 2,
-      points: 2,
-    },
-  ];
+interface AssessmentItem {
+  id: number;
+  name?: string | null;
+  type?: string | null;
+  file?: AssessmentFile | null;
+}
 
-  const checkboxQuestions = [
-    {
-      id: 1,
-      question:
-        "Which of the following are best practices for secure coding? (Select all that apply)",
-      options: [
-        "Input validation",
-        "Using hardcoded passwords",
-        "SQL injection prevention",
-        "Regular security audits",
-        "Storing passwords in plain text",
-      ],
-      correctAnswers: [0, 2, 3],
-      userAnswers: [0, 2, 3],
-      points: 2,
-    },
-    {
-      id: 2,
-      question:
-        "Which debugging techniques are effective? (Select all that apply)",
-      options: [
-        "Print statements",
-        "Using debugger breakpoints",
-        "Code review",
-        "Ignoring error messages",
-        "Unit testing",
-      ],
-      correctAnswers: [0, 1, 2, 4],
-      userAnswers: [0, 1, 2],
-      points: 2,
-    },
-    {
-      id: 3,
-      question:
-        "What are characteristics of clean code? (Select all that apply)",
-      options: [
-        "Self-documenting",
-        "Complex nested structures",
-        "Meaningful variable names",
-        "Single responsibility functions",
-        "Long parameter lists",
-      ],
-      correctAnswers: [0, 2, 3],
-      userAnswers: [0, 2, 3],
-      points: 2,
-    },
-    {
-      id: 4,
-      question:
-        "Which are common security vulnerabilities? (Select all that apply)",
-      options: [
-        "SQL Injection",
-        "Cross-Site Scripting (XSS)",
-        "Proper authentication",
-        "Buffer overflow",
-        "Strong encryption",
-      ],
-      correctAnswers: [0, 1, 3],
-      userAnswers: [0, 1],
-      points: 2,
-    },
-    {
-      id: 5,
-      question: "What are benefits of version control? (Select all that apply)",
-      options: [
-        "Track changes",
-        "Collaboration",
-        "Backup and recovery",
-        "Slower development",
-        "Branch management",
-      ],
-      correctAnswers: [0, 1, 2, 4],
-      userAnswers: [0, 1, 2, 4],
-      points: 2,
-    },
-  ];
+interface CandidateAssessmentRecord {
+  id: number;
+  candidate_name?: string | null;
+  job_title?: string | null;
+  pipeline_step_title?: string | null;
+  pipeline_process_type?: string | null;
+  assessment?: AssessmentItem | null;
+  assessment_download_url?: string | null;
+  submission_file_url?: string | null;
+  status?: "assigned" | "submitted" | "graded" | string;
+  score?: number | null;
+  score_inputted_by_name?: string | null;
+  notes?: string | null;
+  is_submitted?: boolean;
+  is_graded?: boolean;
+}
 
-  const mcqScore = mcqQuestions.reduce(
-    (total, q) => total + (q.correctAnswer === q.userAnswer ? q.points : 0),
-    0
-  );
-  const codingScore = 18; // Mock coding score
-  const checkboxScore = checkboxQuestions.reduce((total, q) => {
-    const correctCount = q.correctAnswers.filter((ans) =>
-      q.userAnswers.includes(ans)
-    ).length;
-    const incorrectCount = q.userAnswers.filter(
-      (ans) => !q.correctAnswers.includes(ans)
-    ).length;
+interface PerAssessmentState {
+  answerFile: File | null;
+  score: string;
+  notes: string;
+  savingAnswer: boolean;
+  savingGrade: boolean;
+}
 
-    if (correctCount === q.correctAnswers.length && incorrectCount === 0) {
-      return total + q.points;
+const resolveFileUrl = (rawUrl?: string | null) => {
+  if (!rawUrl) return "";
+  if (/^(?:https?:\/\/|data:|blob:)/i.test(rawUrl)) return rawUrl;
+  const backendBaseUrl = import.meta.env.VITE_BACKEND_URL as string | undefined;
+  if (!backendBaseUrl) return rawUrl;
+  const trimmedBaseUrl = backendBaseUrl.replace(/\/$/, "");
+  const normalizedPath = rawUrl.startsWith("/") ? rawUrl : `/${rawUrl}`;
+  return `${trimmedBaseUrl}${normalizedPath}`;
+};
+
+const isImageExtension = (ext?: string | null) => {
+  if (!ext) return false;
+  const normalized = ext.toLowerCase().replace(".", "");
+  return ["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(normalized);
+};
+
+const isPdfExtension = (ext?: string | null) => {
+  if (!ext) return false;
+  return ext.toLowerCase().replace(".", "") === "pdf";
+};
+
+export default function ExamForm() {
+  const navigate = useNavigate();
+  const { jobId, applicantId } = useParams<{ jobId: string; applicantId: string }>();
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+  const axiosPrivate = useAxiosPrivate();
+  const axiosMultipart = useAxiosMultipart();
+
+  const [records, setRecords] = useState<CandidateAssessmentRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [perAssessmentState, setPerAssessmentState] = useState<Map<number, PerAssessmentState>>(new Map());
+  const assessmentSectionRef = useRef<HTMLDivElement | null>(null);
+
+  const processType = searchParams.get("type") ?? undefined;
+  const isStaff = Boolean(user?.is_staff || user?.role === "admin" || user?.role === "superadmin");
+
+  const loadAssessment = async () => {
+    if (!applicantId) {
+      setRecords([]);
+      setLoading(false);
+      return;
     }
-    return total;
-  }, 0);
 
-  const totalScore = mcqScore + codingScore + checkboxScore;
-  const percentage = Math.round((totalScore / 50) * 100);
+    setLoading(true);
+
+    try {
+      const response = await axiosPrivate.get<CandidateAssessmentRecord[]>(
+        "/api/candidate/assessments/",
+        {
+          params: {
+            candidate_application_id: applicantId,
+            type: processType,
+          },
+        },
+      );
+
+      const items = Array.isArray(response.data) ? response.data : [];
+      setRecords(items);
+
+      const stateMap = new Map<number, PerAssessmentState>();
+      for (const item of items) {
+        stateMap.set(item.id, {
+          answerFile: null,
+          score: item.score !== null && item.score !== undefined ? String(item.score) : "",
+          notes: item.notes ?? "",
+          savingAnswer: false,
+          savingGrade: false,
+        });
+      }
+      setPerAssessmentState(stateMap);
+    } catch (error) {
+      console.error("Unable to load assessment.", error);
+      toast.error("Unable to load assessment.");
+      setRecords([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadAssessment();
+  }, [applicantId, processType]);
+
+  const firstRecord = records[0];
+  const statusLabel = firstRecord?.is_graded
+    ? "Graded"
+    : firstRecord?.is_submitted
+      ? "Submitted"
+      : records.length > 0
+        ? "Assigned"
+        : "Waiting";
+
+  const handleOpenAssessment = () => {
+    assessmentSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const updatePerAssessment = (id: number, update: Partial<PerAssessmentState>) => {
+    setPerAssessmentState((prev) => {
+      const next = new Map(prev);
+      const current = next.get(id);
+      if (current) {
+        next.set(id, { ...current, ...update });
+      }
+      return next;
+    });
+  };
+
+  const handleSubmitAnswer = async (recordId: number) => {
+    const state = perAssessmentState.get(recordId);
+    if (!state?.answerFile) {
+      toast.error("Please choose a file to submit.");
+      return;
+    }
+
+    updatePerAssessment(recordId, { savingAnswer: true });
+
+    try {
+      const formData = new FormData();
+      formData.append("answer_file", state.answerFile);
+
+      await axiosMultipart.patch(`/api/candidate/assessments/${recordId}/`, formData);
+
+      toast.success("Assessment answer uploaded.");
+      updatePerAssessment(recordId, { answerFile: null, savingAnswer: false });
+      await loadAssessment();
+    } catch (error) {
+      console.error("Unable to submit assessment answer.", error);
+      toast.error("Unable to submit assessment answer.");
+      updatePerAssessment(recordId, { savingAnswer: false });
+    }
+  };
+
+  const handleSaveGrade = async (recordId: number) => {
+    const state = perAssessmentState.get(recordId);
+    if (!state?.score) {
+      toast.error("Please enter a score.");
+      return;
+    }
+
+    updatePerAssessment(recordId, { savingGrade: true });
+
+    try {
+      const formData = new FormData();
+      formData.append("score", state.score);
+      formData.append("notes", state.notes || "");
+
+      await axiosMultipart.patch(`/api/candidate/assessments/${recordId}/`, formData);
+
+      toast.success("Assessment grade saved.");
+      updatePerAssessment(recordId, { savingGrade: false });
+      await loadAssessment();
+    } catch (error) {
+      console.error("Unable to save grade.", error);
+      toast.error("Unable to save grade.");
+      updatePerAssessment(recordId, { savingGrade: false });
+    }
+  };
+
+  const renderFilePreview = (downloadUrl: string, fileExtension?: string | null, label: string) => {
+    if (!downloadUrl) return null;
+
+    if (isPdfExtension(fileExtension)) {
+      return (
+        <div className="mt-3 rounded-lg border border-gray-200 overflow-hidden">
+          <iframe
+            src={downloadUrl}
+            className="w-full h-96"
+            title={label}
+          />
+        </div>
+      );
+    }
+
+    if (isImageExtension(fileExtension)) {
+      return (
+        <div className="mt-3 rounded-lg border border-gray-200 overflow-hidden bg-gray-100">
+          <img
+            src={downloadUrl}
+            alt={label}
+            className="max-w-full max-h-96 object-contain mx-auto"
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div className="mt-3">
+        <Button asChild variant="outline" className="gap-2">
+          <a href={downloadUrl} target="_blank" rel="noreferrer">
+            <FileDown className="h-4 w-4" />
+            Download {label}
+          </a>
+        </Button>
+      </div>
+    );
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
-      {/* Logo */}
-      <div className="text-center mb-8">
-        <img src="/OODC logo2.png" alt="OODC Logo" className="h-32 mx-auto" />
-        <div className="hidden text-2xl font-bold text-gray-800">OODC</div>
-      </div>
-
-      {/* Paper Container */}
-      <div className="max-w-6xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
-        {/* Back Button */}
-        <div className="p-6 pb-0">
+    <div className="min-h-screen bg-slate-50 py-8">
+      <div className="mx-auto max-w-5xl px-4">
+        <div className="mb-6 flex items-center justify-between gap-3">
           <Button
             variant="outline"
             size="sm"
             className="flex items-center gap-2"
-            onClick={onBack}
+            onClick={() => navigate(`/job/${jobId}/assessments`)}
           >
             <ArrowLeft className="h-4 w-4" />
             Back
           </Button>
+
+          <Badge variant="outline" className="rounded-full px-3 py-1 text-xs uppercase tracking-[0.2em]">
+            {statusLabel}
+          </Badge>
         </div>
 
-        {/* Grading Scale */}
-        {/* Right Column - Grading Scale */}
-        <div className="flex justify-end">
-          <div className="bg-gray-50 p-4 rounded-lg space-y-2 w-full max-w-md">
-            <h3 className="font-semibold">Grading Scale:</h3>
-            <p className="text-sm">
-              <span className="font-medium">45-50:</span> Exceptional (Ready for
-              leadership; minimal guidance needed)
-            </p>
-            <p className="text-sm">
-              <span className="font-medium">40-44:</span> Strong (Hire with
-              slight upskilling in 1–2 areas)
-            </p>
-            <p className="text-sm">
-              <span className="font-medium">35-39:</span> Moderate (Needs
-              coaching; may lack lead experience)
-            </p>
-            <p className="text-sm">
-              <span className="font-medium">&lt;35:</span> Not Ready (Requires
-              significant upskilling)
-            </p>
-          </div>
-        </div>
-
-        {/* Two Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6">
-          {/* Left Column - MCQ Section */}
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-lg font-bold mb-4">
-                Section 1: Multiple Choice (MCQ) - 20 points
-              </h2>
-
-              <div className="space-y-4">
-                {mcqQuestions.map((question) => (
-                  <div key={question.id} className="border-b pb-4">
-                    <p className="font-medium mb-2">
-                      Q{question.id}. {question.question}
-                    </p>
-                    <div className="space-y-1">
-                      {question.options.map((option, optionIndex) => (
-                        <div
-                          key={optionIndex}
-                          className="flex items-center gap-2"
-                        >
-                          <span className="w-6">
-                            {String.fromCharCode(65 + optionIndex)}.
-                          </span>
-                          <span>{option}</span>
-                          {optionIndex === question.correctAnswer &&
-                            question.userAnswer === question.correctAnswer && (
-                              <div className="flex items-center gap-1 text-green-600 ml-auto">
-                                <Check className="h-4 w-4" />
-                                <span className="text-sm">(Correct)</span>
-                              </div>
-                            )}
-                          {optionIndex === question.userAnswer &&
-                            question.userAnswer !== question.correctAnswer && (
-                              <div className="flex items-center gap-1 text-red-600 ml-auto">
-                                <X className="h-4 w-4" />
-                                <span className="text-sm">(Incorrect)</span>
-                              </div>
-                            )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 p-4 bg-gray-50 rounded">
-                <p className="font-semibold">
-                  Candidate Score in MCQ: {mcqScore}/20
+        <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 bg-linear-to-r from-slate-900 to-slate-700 px-6 py-5 text-white">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.28em] text-slate-300">Assigned Assessments</p>
+                <h1 className="mt-2 text-2xl font-semibold">
+                  {firstRecord?.job_title || `Job ${jobId}`}
+                </h1>
+                <p className="mt-1 text-sm text-slate-300">
+                  {firstRecord?.candidate_name || `Applicant ${applicantId}`}
                 </p>
-                <p className="text-sm text-gray-600 mt-1">Missed Q2 & Q9</p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="gap-2"
+                  onClick={handleOpenAssessment}
+                  disabled={records.length === 0}
+                >
+                  <Eye className="h-4 w-4" />
+                  See Assessments
+                </Button>
               </div>
             </div>
           </div>
 
-          {/* Right Column - Coding and Checkbox Sections */}
-          <div className="space-y-8">
-            {/* Coding Section */}
-            <div>
-              <h2 className="text-lg font-bold mb-4">
-                Section 2: Coding - 20 points
-              </h2>
-
-              <div className="space-y-4">
-                <div>
-                  <p className="font-medium">Task:</p>
-                  <p className="text-sm text-gray-700 mb-4">
-                    Implement a function to find the longest palindromic
-                    substring in a given string. Also design a simple REST API
-                    architecture for a user management system.
-                  </p>
-                </div>
-
-                <div>
-                  <p className="font-medium mb-2">Evaluation Criteria:</p>
-                  <ul className="text-sm text-gray-700 space-y-1">
-                    <li>• Algorithm correctness (8 points)</li>
-                    <li>• Code quality and readability (4 points)</li>
-                    <li>• API design principles (4 points)</li>
-                    <li>• Error handling (2 points)</li>
-                    <li>• Time/space complexity consideration (2 points)</li>
-                  </ul>
-                </div>
-
-                <div>
-                  <p className="font-medium mb-2">Solution:</p>
-                  <div className="bg-gray-100 p-3 rounded text-sm font-mono">
-                    <pre>{`function longestPalindrome(s) {
-  let longest = "";
-  for (let i = 0; i < s.length; i++) {
-    // Check odd length palindromes
-    let odd = expandAroundCenter(s, i, i);
-    // Check even length palindromes  
-    let even = expandAroundCenter(s, i, i + 1);
-    let current = odd.length > even.length ? odd : even;
-    if (current.length > longest.length) {
-      longest = current;
-    }
-  }
-  return longest;
-}`}</pre>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-gray-50 rounded">
-                  <p className="font-semibold">Candidate Score: 18/20</p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Excellent implementation with clean code. Minor deduction
-                    (-2) for not handling edge case of empty string input.
-                  </p>
-                </div>
+          <div ref={assessmentSectionRef} className="px-6 py-6 space-y-6">
+            {loading ? (
+              <div className="flex items-center gap-3 text-sm text-slate-500 py-8">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading assigned assessments...
               </div>
-            </div>
+            ) : records.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500 text-center">
+                No assessments have been assigned yet. The assessment will appear once the interviewer sends it.
+              </div>
+            ) : (
+              records.map((record) => {
+                const downloadUrl = resolveFileUrl(
+                  record.assessment_download_url ?? record.assessment?.file?.file ?? undefined
+                );
+                const submissionUrl = resolveFileUrl(record.submission_file_url);
+                const state = perAssessmentState.get(record.id);
+                const fileExt = record.assessment?.file?.file_extension ?? null;
 
-            {/* Checkbox Section */}
-            <div>
-              <h2 className="text-lg font-bold mb-4">
-                Section 3: Checkbox - 10 points
-              </h2>
-              <p className="text-sm text-gray-600 mb-4">
-                Select All Correct Answers | 2 points each
-              </p>
+                const itemStatusLabel = record.is_graded
+                  ? "Graded"
+                  : record.is_submitted
+                    ? "Submitted"
+                    : "Assigned";
 
-              <div className="space-y-4">
-                {checkboxQuestions.map((question) => (
-                  <div key={question.id} className="border-b pb-4">
-                    <p className="font-medium mb-2">
-                      Q{question.id}. {question.question}
-                    </p>
-                    <div className="space-y-1">
-                      {question.options.map((option, optionIndex) => (
-                        <div
-                          key={optionIndex}
-                          className="flex items-center gap-2"
+                return (
+                  <section
+                    key={record.id}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                          Assessment
+                        </p>
+                        <h2 className="mt-1 text-lg font-semibold text-slate-900">
+                          {formatAssessmentType(record.assessment?.type)}
+                        </h2>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {record.assessment?.file?.filename && (
+                          <Badge variant="secondary" className="rounded-full">
+                            {record.assessment.file.filename}
+                          </Badge>
+                        )}
+                        {fileExt && (
+                          <Badge variant="outline" className="rounded-full capitalize">
+                            {fileExt}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-3 mb-4">
+                      <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+                        <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Status</p>
+                        <Badge
+                          variant="outline"
+                          className={
+                            record.is_graded
+                              ? "mt-2 border-green-500 text-green-600"
+                              : record.is_submitted
+                                ? "mt-2 border-blue-400 text-blue-700"
+                                : "mt-2 border-yellow-400 text-yellow-700"
+                          }
                         >
-                          <div className="w-4 h-4 border border-gray-300 rounded flex items-center justify-center">
-                            {question.userAnswers.includes(optionIndex) && (
-                              <Check className="h-3 w-3 text-blue-600" />
-                            )}
+                          {itemStatusLabel}
+                        </Badge>
+                      </div>
+                      <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+                        <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Score</p>
+                        <p className="mt-2 text-sm font-semibold text-slate-900">
+                          {record.score !== null && record.score !== undefined ? `${record.score}/100` : "Pending"}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+                        <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Submission</p>
+                        <p className="mt-2 text-sm font-semibold text-slate-900">
+                          {record.is_submitted ? "Uploaded" : "Not yet submitted"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-4">
+                        <p className="text-sm font-medium text-slate-700">Assessment File</p>
+                        {downloadUrl ? (
+                          <>
+                            <div className="mt-2 flex flex-wrap gap-3">
+                              <Button asChild className="gap-2">
+                                <a href={downloadUrl} target="_blank" rel="noreferrer">
+                                  <FileDown className="h-4 w-4" />
+                                  Open Assessment File
+                                </a>
+                              </Button>
+                            </div>
+                            {renderFilePreview(downloadUrl, fileExt, formatAssessmentType(record.assessment?.type))}
+                          </>
+                        ) : (
+                          <p className="mt-4 text-sm text-amber-700">
+                            The assigned assessment file has not been uploaded yet.
+                          </p>
+                        )}
+                      </div>
+
+                      {submissionUrl && (
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                          <p className="text-sm font-medium text-slate-700">Submitted Answer</p>
+                          <div className="mt-2 flex flex-wrap gap-3">
+                            <Button asChild variant="outline" className="gap-2">
+                              <a href={submissionUrl} target="_blank" rel="noreferrer">
+                                <FileUp className="h-4 w-4" />
+                                View submitted answer
+                              </a>
+                            </Button>
                           </div>
-                          <span className="text-sm">{option}</span>
-                          {question.correctAnswers.includes(optionIndex) &&
-                            question.userAnswers.includes(optionIndex) && (
-                              <Check className="h-4 w-4 text-green-600 ml-auto" />
-                            )}
-                          {question.correctAnswers.includes(optionIndex) &&
-                            !question.userAnswers.includes(optionIndex) && (
-                              <div className="flex items-center gap-1 text-red-600 ml-auto">
-                                <X className="h-4 w-4" />
-                                <span className="text-xs">
-                                  (Missed by candidate)
-                                </span>
-                              </div>
-                            )}
-                          {!question.correctAnswers.includes(optionIndex) &&
-                            question.userAnswers.includes(optionIndex) && (
-                              <div className="flex items-center gap-1 text-red-600 ml-auto">
-                                <X className="h-4 w-4" />
-                                <span className="text-xs">(Incorrect)</span>
-                              </div>
-                            )}
+                          {renderFilePreview(submissionUrl, null, "Submitted Answer")}
                         </div>
-                      ))}
+                      )}
+
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                        <label
+                          className="block text-sm font-medium text-slate-700"
+                          htmlFor={`answer-file-${record.id}`}
+                        >
+                          Upload your completed answer
+                        </label>
+                        <Input
+                          id={`answer-file-${record.id}`}
+                          type="file"
+                          className="mt-2"
+                          onChange={(event) => {
+                            const file = event.target.files?.[0] ?? null;
+                            updatePerAssessment(record.id, { answerFile: file });
+                          }}
+                        />
+
+                        <div className="mt-4 flex flex-wrap items-center gap-3">
+                          <Button
+                            type="button"
+                            className="gap-2"
+                            onClick={() => handleSubmitAnswer(record.id)}
+                            disabled={state?.savingAnswer || !state?.answerFile}
+                          >
+                            {state?.savingAnswer ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <FileUp className="h-4 w-4" />
+                            )}
+                            Submit Answer
+                          </Button>
+                          {state?.answerFile ? (
+                            <p className="text-sm text-slate-500">Selected: {state.answerFile.name}</p>
+                          ) : (
+                            <p className="text-sm text-slate-500">Choose the completed assessment file to submit.</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {isStaff && (
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500 mb-3">
+                            Interviewer Grading
+                          </p>
+                          <div className="grid gap-4 sm:grid-cols-[1fr_2fr]">
+                            <div>
+                              <label
+                                className="block text-sm font-medium text-slate-700"
+                                htmlFor={`score-input-${record.id}`}
+                              >
+                                Grade (0-100)
+                              </label>
+                              <Input
+                                id={`score-input-${record.id}`}
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="1"
+                                value={state?.score ?? ""}
+                                onChange={(event) =>
+                                  updatePerAssessment(record.id, { score: event.target.value })
+                                }
+                                className="mt-2"
+                                placeholder="Enter score"
+                              />
+                            </div>
+                            <div>
+                              <label
+                                className="block text-sm font-medium text-slate-700"
+                                htmlFor={`notes-input-${record.id}`}
+                              >
+                                Private Notes
+                              </label>
+                              <Textarea
+                                id={`notes-input-${record.id}`}
+                                value={state?.notes ?? ""}
+                                onChange={(event) =>
+                                  updatePerAssessment(record.id, { notes: event.target.value })
+                                }
+                                className="mt-2 min-h-[80px]"
+                                placeholder="Notes visible only to the interviewer"
+                              />
+                            </div>
+                          </div>
+                          <div className="mt-4">
+                            <Button
+                              type="button"
+                              className="gap-2"
+                              onClick={() => handleSaveGrade(record.id)}
+                              disabled={state?.savingGrade}
+                            >
+                              {state?.savingGrade ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Save className="h-4 w-4" />
+                              )}
+                              Save Grade
+                            </Button>
+                          </div>
+                          {record.score_inputted_by_name && (
+                            <p className="mt-2 text-xs text-slate-400">
+                              Graded by: {record.score_inputted_by_name}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {!isStaff && record.is_graded && (
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500 mb-3">
+                            Result
+                          </p>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-sm text-slate-500">Score</p>
+                              <p className="mt-1 text-2xl font-semibold text-slate-900">
+                                {record.score !== null && record.score !== undefined ? `${record.score}/100` : "Pending"}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-slate-500">Notes</p>
+                              <p className="mt-1 text-sm text-slate-700">
+                                {record.notes || "No feedback provided."}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 p-4 bg-gray-50 rounded">
-                <p className="font-semibold">
-                  Candidate Score: {checkboxScore}/10
-                </p>
-                <p className="text-sm text-gray-600 mt-1">
-                  Missed some debugging techniques in Q2 and security
-                  vulnerabilities in Q4
-                </p>
-              </div>
-            </div>
-
-            {/* Final Score & Evaluation */}
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-bold mb-4">
-                Final Score & Evaluation
-              </h3>
-
-              <div className="space-y-2 mb-4">
-                <p>MCQ: {mcqScore}/20</p>
-                <p>Coding: {codingScore}/20</p>
-                <p>Checkbox: {checkboxScore}/10</p>
-              </div>
-
-              <div className="text-center p-4 bg-red-50 rounded mb-4">
-                <p className="text-2xl font-bold text-red-600">
-                  {totalScore}/50
-                </p>
-                <p className="text-lg font-semibold text-red-600">
-                  {percentage}%
-                </p>
-              </div>
-
-              <div className="p-4 bg-gray-50 rounded">
-                <p className="font-semibold text-green-600 mb-2">
-                  Verdict: Strong Hire
-                </p>
-                <p className="text-sm text-gray-700">
-                  The candidate demonstrates excellent technical skills with
-                  strong coding abilities and good understanding of fundamental
-                  concepts. Performance indicates readiness for the role with
-                  minimal additional training required.
-                </p>
-              </div>
-            </div>
+                  </section>
+                );
+              })
+            )}
           </div>
         </div>
       </div>

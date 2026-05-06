@@ -531,8 +531,8 @@ export default function JobManagement() {
       : "Unknown Job";
   };
 
-  const { jobtitle } = useParams<{ jobtitle: string }>();
-  const resolvedJobTitle = formatJobTitle(jobtitle);
+  const { jobId } = useParams<{ jobId: string }>();
+  const resolvedJobTitle = formatJobTitle(jobId);
 
   const navigate = useNavigate();
 
@@ -557,9 +557,9 @@ export default function JobManagement() {
                     className="flex items-center gap-2"
                     onClick={() => {
                       if (previousPath?.includes("/weekly")) {
-                        navigate(`/job/${jobtitle}/weekly`);
+                        navigate(`/job/${jobId}/weekly`);
                       } else {
-                        navigate(`/job/${jobtitle}`);
+                        navigate(`/job/${jobId}`);
                       }
                     }}
                   >
@@ -611,8 +611,8 @@ export default function JobManagement() {
                     value={selectedFilter || "finalinterview"}
                     onValueChange={(value) => {
                       setSelectedFilter(value);
-                      if (jobtitle) {
-                        navigate(`/job/${jobtitle}/${value}`);
+                      if (jobId) {
+                        navigate(`/job/${jobId}/${value}`);
                       }
                     }}
                   >

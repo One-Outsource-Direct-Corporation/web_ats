@@ -342,7 +342,7 @@ function DroppableColumn({
       "For Job Offer": "forjoboffer",
       "Job Offer & Finalization": "OfferAndFinalization", // Capitalized to match custom route
       Onboarding: "Onboarding",
-      Warm: "Warm",
+      "Pre-Onboarding": "PreOnboarding",
       Failed: "Failed",
     };
 
@@ -351,8 +351,8 @@ function DroppableColumn({
       // Final stages without job title
       const isCustomFinalStage = [
         "OfferAndFinalization",
+        "PreOnboarding",
         "Onboarding",
-        "Warm",
         "Failed",
       ].includes(routeSegment);
 
@@ -814,7 +814,7 @@ function StageSection({
     // Special layout for Stage 3 with 5 columns
     const firstRow = columns.slice(0, 3); // First 3 columns
     const secondRow = [
-      { title: "Warm", id: "warm" },
+      { title: "Pre-Onboarding", id: "pre-onboarding" },
       { title: "Failed", id: "failed" },
     ]; // Last 2 columns
 
@@ -996,7 +996,7 @@ export default function LeadDeveloperWeekly() {
       { id: "s3-11", name: "Sarah Johnson", time: "Nov 30", rating: 0 },
       { id: "s3-12", name: "Sarah Davis", time: "Nov 28", rating: 0 },
     ],
-    warm: [
+    preOnboarding: [
       { id: "s3-13", name: "Christian Edwards", time: "1h ago", rating: 0 },
       { id: "s3-14", name: "Clara Lopez", time: "1h ago", rating: 0 },
       { id: "s3-15", name: "John Clark", time: "4h ago", rating: 0 },
@@ -1188,7 +1188,7 @@ export default function LeadDeveloperWeekly() {
         { title: "For Job Offer", id: "job-offer" },
         { title: "Job Offer & Finalization", id: "job-offer-finalization" },
         { title: "Onboarding", id: "onboarding" },
-        { title: "Warm", id: "warm" },
+        { title: "Pre-Onboarding", id: "pre-onboarding" },
         { title: "Failed", id: "failed" },
       ],
       isMultiRow: true,

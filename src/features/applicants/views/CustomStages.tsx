@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import OfferAndFinalization from "../views/OfferAndFinalization";
+import PreOnboarding from "../views/PreOnboarding";
 import Onboarding from "../views/Onboarding";
-import Warm from "../views/Warm";
 import Failed from "../views/Failed";
 
 export default function TemplatePage() {
@@ -11,10 +11,10 @@ export default function TemplatePage() {
     switch (customStage) {
       case "OfferAndFinalization":
         return <OfferAndFinalization />;
+      case "PreOnboarding":
+        return <PreOnboarding />;
       case "Onboarding":
         return <Onboarding />;
-      case "Warm":
-        return <Warm />;
       case "Failed":
         return <Failed />;
       default:

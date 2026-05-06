@@ -32,7 +32,7 @@ import type { Applicant, StageConfig } from "../types/kanban.types";
 
 export default function JobWeeklyView() {
   const navigate = useNavigate();
-  const { jobtitle } = useParams<{ jobtitle: string }>();
+  const { jobId } = useParams<{ jobId: string }>();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [viewMode] = useState<"grid" | "list">("grid");
   const [selectedApplicants, setSelectedApplicants] = useState<Set<string>>(
@@ -108,7 +108,7 @@ export default function JobWeeklyView() {
       { id: "s3-11", name: "Sarah Johnson", time: "Nov 30", rating: 0 },
       { id: "s3-12", name: "Sarah Davis", time: "Nov 28", rating: 0 },
     ],
-    warm: [
+    preOnboarding: [
       { id: "s3-13", name: "Christian Edwards", time: "1h ago", rating: 0 },
       { id: "s3-14", name: "Clara Lopez", time: "1h ago", rating: 0 },
       { id: "s3-15", name: "John Clark", time: "4h ago", rating: 0 },
@@ -145,7 +145,7 @@ export default function JobWeeklyView() {
         { title: "For Job Offer", id: "job-offer" },
         { title: "Job Offer & Finalization", id: "job-offer-finalization" },
         { title: "Onboarding", id: "onboarding" },
-        { title: "Warm", id: "warm" },
+        { title: "Pre-Onboarding", id: "pre-onboarding" },
         { title: "Failed", id: "failed" },
       ],
       isMultiRow: true,
@@ -179,7 +179,7 @@ export default function JobWeeklyView() {
     return titleMap[normalizedSlug] || toTitleCase(slug);
   };
 
-  const resolvedJobTitle = formatJobTitle(jobtitle);
+  const resolvedJobTitle = formatJobTitle(jobId);
 
   useEffect(() => {
     document.title = `${resolvedJobTitle} - Applicants`;
@@ -363,7 +363,7 @@ export default function JobWeeklyView() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => navigate(`/job/${jobtitle}`)}
+                  onClick={() => navigate(`/job/${jobId}`)}
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
@@ -385,7 +385,7 @@ export default function JobWeeklyView() {
                   variant="ghost"
                   size="icon"
                   onClick={() => {
-                    navigate(`/job/${jobtitle}`);
+                    navigate(`/job/${jobId}`);
                   }}
                   className={
                     viewMode === "list" ? "text-black" : "text-gray-600"
@@ -467,7 +467,7 @@ export default function JobWeeklyView() {
                           onToggleSelect={handleToggleSelect}
                           onColumnClick={handleColumnClick}
                           navigate={navigate}
-                          jobtitle={jobtitle}
+                          jobId={jobId}
                         />
                       ))}
                     </div>
