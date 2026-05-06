@@ -120,13 +120,13 @@ function StatusBadge({ status }: { status: string }) {
 export default function CandidateDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [searchCode, setSearchCode] = useState("");
   const [activeTab, setActiveTab] = useState<"progress" | "documents">("progress");
+  const [taskFilter, setTaskFilter] = useState<"pending" | "submitted" | "graded">("pending");
 
   const axiosPrivate = useAxiosPrivate();
 
-  const { isLoading, isError } = useQuery({
+  const { isLoading, isError, data: dashboard } = useQuery({
     queryKey: queryKeys.candidates.applications(),
     queryFn: async () => {
       const res = await axiosPrivate.get("/api/candidate/me/");
@@ -168,7 +168,6 @@ export default function CandidateDashboard() {
         events: mappedEvents,
         tasks: mappedTasks,
       };
-      setDashboard(dashboardData);
       return dashboardData;
     },
   });
@@ -192,6 +191,8 @@ export default function CandidateDashboard() {
       : true
   );
 
+  const filteredTasks = tasks.filter((t) => t.task_status === taskFilter);
+
   const prevMonth = () => {
     if (calMonth === 0) {
       setCalMonth(11);
@@ -210,49 +211,8 @@ export default function CandidateDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img
-              src="/OODC%20logo3.png"
-              alt="One Outsource"
-              className="h-10 cursor-pointer"
-              onClick={() => navigate("/")}
-            />
-          </div>
-          <div className="flex items-center gap-4">
-            <Link
-              to="/"
-              className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-            >
-              Job Openings
-            </Link>
-            <Link
-              to="/candidate/profile"
-              className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-            >
-              My Profile
-            </Link>
-            {profilePhotoUrl ? (
-              <img
-                src={profilePhotoUrl}
-                alt="Profile"
-                className="w-8 h-8 rounded-full object-cover border border-gray-200"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold">
-                {user?.first_name?.[0]}
-                {user?.last_name?.[0]}
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto w-full px-6 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column */}
         <div className="lg:col-span-2 space-y-6">
           {/* Search + Actions */}
@@ -376,6 +336,7 @@ export default function CandidateDashboard() {
                         <th className="px-4 py-3 text-left font-semibold">Job Title</th>
                         <th className="px-4 py-3 text-left font-semibold">Application Status</th>
                         <th className="px-4 py-3 text-left font-semibold">Date</th>
+                        <th className="px-4 py-3 text-left font-semibold">Action</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -401,6 +362,16 @@ export default function CandidateDashboard() {
                                   })
                                 : "—"}
                             </td>
+                            <td className="px-4 py-3">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-xs h-7 px-2"
+                                onClick={() => navigate(`/candidate/applications/${app.id}`)}
+                              >
+                                View
+                              </Button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -415,6 +386,21 @@ export default function CandidateDashboard() {
                   <h2 className="text-lg font-bold text-[#0056d2]">My Tasks</h2>
                   <div className="flex-1 h-px bg-gray-300" />
                 </div>
+                <div className="flex gap-2 mb-3">
+                  {(["pending", "submitted", "graded"] as const).map((filter) => (
+                    <button
+                      key={filter}
+                      onClick={() => setTaskFilter(filter)}
+                      className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                        taskFilter === filter
+                          ? "bg-[#0056d2] text-white"
+                          : "bg-white text-gray-600 border hover:bg-gray-100"
+                      }`}
+                    >
+                      {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                    </button>
+                  ))}
+                </div>
                 <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
                   <table className="w-full text-sm">
                     <thead>
@@ -426,14 +412,14 @@ export default function CandidateDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {tasks.length === 0 ? (
+                      {filteredTasks.length === 0 ? (
                         <tr>
                           <td colSpan={4} className="px-4 py-6 text-center text-gray-500">
-                            No tasks yet.
+                            No {taskFilter} tasks.
                           </td>
                         </tr>
                       ) : (
-                        tasks.map((task) => (
+                        filteredTasks.map((task) => (
                           <tr key={task.id} className="border-t hover:bg-gray-50">
                             <td className="px-4 py-3">
                               <div className="font-medium text-gray-900">{task.job_title}</div>
@@ -676,7 +662,7 @@ export default function CandidateDashboard() {
             </div>
           </div>
         </div>
-      </main>
+      </div>
 
       {/* Footer */}
       <footer className="bg-[#0056d2] text-white py-6 mt-auto">

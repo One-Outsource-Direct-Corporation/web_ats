@@ -5,7 +5,7 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { ArrowLeft, BarChart3, FileText, Loader2, Search } from "lucide-react";
+import { ArrowLeft, BarChart3, Download, FileText, Loader2, Search } from "lucide-react";
 import { toast } from "react-toastify";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -91,7 +91,7 @@ interface CandidateAssessmentData {
   id: number;
   assessmentId: number;
   assessmentName?: string | null;
-  status: "assigned" | "submitted" | "graded" | "not_assigned";
+  status: "assigned" | "submitted" | "graded" | "sent" | "not_assigned";
   score?: number | null;
   notes?: string | null;
   is_sent?: boolean;
@@ -359,7 +359,6 @@ export default function PipelineApplicants() {
 
   const [assessmentGradeForm, setAssessmentGradeForm] = useState({ score: "", notes: "" });
   const [candidateAssessments, setCandidateAssessments] = useState<Map<number, CandidateAssessmentData[]>>(new Map());
-  const [stepAssessments, setStepAssessments] = useState<PipelineAssessment[]>([]);
   const [sendAssessmentModalState, setSendAssessmentModalState] = useState<SendAssessmentModalState>({
     open: false,
     candidateApplicationId: 0,
@@ -393,6 +392,12 @@ export default function PipelineApplicants() {
   const [isLoadingEmailPreview, setIsLoadingEmailPreview] = useState(false);
   const [emailPreview, setEmailPreview] = useState<InterviewEmailPreviewResponse | null>(null);
   const subjectEditedRef = useRef(false);
+
+  const [resumePreviewCandidate, setResumePreviewCandidate] = useState<{
+    id: number;
+    name: string;
+    resumeUrl?: string;
+  } | null>(null);
 
   const { data: jobDetail, isLoading, isError, refetch } = useJobDetailQuery(jobId);
 
@@ -456,12 +461,27 @@ export default function PipelineApplicants() {
     selectedType === "phone_call_interview" ||
     selectedType === "initial_interview" ||
     selectedType === "final_interview";
-  const isPassFailStage =
+  const selectedSteps = useMemo(
+    () => pipelineSteps.filter((step) => step.process_type === selectedType),
+    [pipelineSteps, selectedType],
+  );
+
+  const stepAssessments = useMemo<PipelineAssessment[]>(
+    () => (selectedSteps[0]?.assessments as PipelineAssessment[]) ?? [],
+    [selectedSteps],
+  );
+
+  const isResumeWithAssessments =
+    selectedType === "resume_screening" && stepAssessments.length > 0;
+  const isPassFailStage = !isResumeWithAssessments && (
     selectedType === "resume_screening" ||
     selectedType === "phone_call_interview" ||
-    selectedType === "initial_interview";
+    selectedType === "initial_interview"
+  );
   const isAssessmentStage = selectedType === "assessments";
   const showResumeColumn = selectedType === "resume_screening";
+
+  const isInterviewWithAssessments = isInterviewScheduleStage && stepAssessments.length > 0;
 
   const resolvePhotoUrl = (rawUrl?: string) => {
     if (!rawUrl) {
@@ -772,8 +792,64 @@ export default function PipelineApplicants() {
     );
   };
 
-  const handleOpenResumePreview = () => {
-    // Not used: preview handled by ResumeScreeningTable component
+  const getResumePreviewUrl = (candidate: { resumeUrl?: string }): string | undefined => {
+    const rawUrl = candidate.resumeUrl;
+    if (!rawUrl) return undefined;
+    if (/^(?:https?:\/\/|data:|blob:)/i.test(rawUrl)) return rawUrl;
+    const backendBaseUrl = import.meta.env.VITE_BACKEND_URL as string | undefined;
+    if (!backendBaseUrl) return rawUrl;
+    const trimmedBaseUrl = backendBaseUrl.replace(/\/$/, "");
+    const normalizedPath = rawUrl.startsWith("/") ? rawUrl : `/${rawUrl}`;
+    return `${trimmedBaseUrl}${normalizedPath}`;
+  };
+
+  const getResumeFileExt = (candidate: { resumeUrl?: string }): string | null => {
+    const url = candidate.resumeUrl;
+    if (!url) return null;
+    const filename = url.split("/").pop()?.split("?")[0] || "";
+    const ext = filename.split(".").pop() || "";
+    return ext.toLowerCase() || null;
+  };
+
+  const handleOpenResumePreview = (candidate: { id: number; name: string; resumeUrl?: string }) => {
+    setResumePreviewCandidate(candidate);
+  };
+
+  const handleDownloadResume = (candidate: { resumeUrl?: string; id: number }) => {
+    const rawUrl = candidate.resumeUrl;
+    if (!rawUrl) return;
+    let resumeUrl: string;
+    if (/^(?:https?:\/\/|data:|blob:)/i.test(rawUrl)) {
+      resumeUrl = rawUrl;
+    } else {
+      const backendBaseUrl = import.meta.env.VITE_BACKEND_URL as string | undefined;
+      const trimmedBaseUrl = (backendBaseUrl || "").replace(/\/$/, "");
+      const normalizedPath = rawUrl.startsWith("/") ? rawUrl : `/${rawUrl}`;
+      resumeUrl = `${trimmedBaseUrl}${normalizedPath}`;
+    }
+
+    (async () => {
+      try {
+        const resp = await fetch(resumeUrl, { mode: "cors" });
+        if (!resp.ok) throw new Error("Fetch failed");
+        const blob = await resp.blob();
+        const filename = (resumeUrl.split("/").pop() || `resume-${candidate.id}`).split("?")[0];
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename || "resume";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } catch {
+        const a = document.createElement("a");
+        a.href = resumeUrl;
+        a.target = "_blank";
+        a.rel = "noreferrer";
+        a.click();
+      }
+    })();
   };
 
   // Load candidate assessments via useQuery when assessment stage is active
@@ -789,24 +865,12 @@ export default function PipelineApplicants() {
       candidateIdsKey,
     ] as const,
     queryFn: async () => {
-      if (!isAssessmentStage || selectedStepCandidates.length === 0) {
+      if (!isAssessmentStage && !isInterviewWithAssessments && !isResumeWithAssessments) {
         return;
       }
 
-      const selectedSteps = pipelineSteps.filter(
-        (step) => step.process_type === selectedType,
-      );
-
-      if (selectedSteps.length > 0) {
-        const step = selectedSteps[0];
-        const assessmentsData = (step as any).assessments || [];
-        setStepAssessments(
-          assessmentsData.map((a: any) => ({
-            id: a.id,
-            name: a.name,
-            file: a.file,
-          }))
-        );
+      if (selectedStepCandidates.length === 0) {
+        return;
       }
 
       const assessmentMap = new Map<number, CandidateAssessmentData[]>();
@@ -836,7 +900,7 @@ export default function PipelineApplicants() {
 
       setCandidateAssessments(assessmentMap);
     },
-    enabled: isAssessmentStage && selectedStepCandidates.length > 0,
+    enabled: (isAssessmentStage || isInterviewWithAssessments || isResumeWithAssessments) && selectedStepCandidates.length > 0,
   });
 
   const handleOpenAssessmentModal = (
@@ -1372,7 +1436,7 @@ export default function PipelineApplicants() {
     return map;
   }, [pipelineSteps, jobNonNegotiables]);
 
-  const interviewTableColumnCount = (isInterviewScheduleStage ? 6 : isPassFailStage ? 5 : isAssessmentStage ? 5 : 5) + (showNonNegotiableColumn ? 1 : 0) + (showResumeColumn ? 1 : 0);
+  const interviewTableColumnCount = (isInterviewScheduleStage ? 6 + (isInterviewWithAssessments ? 1 : 0) : isPassFailStage ? 5 : isAssessmentStage || isResumeWithAssessments ? 5 : 5) + (showNonNegotiableColumn ? 1 : 0) + (showResumeColumn ? 1 : 0);
 
   return (
     <>
@@ -1458,7 +1522,7 @@ export default function PipelineApplicants() {
             )}
 
             {!isLoading && !isError && processTypes.length > 0 && (
-              selectedType === "resume_screening" ? (
+              selectedType === "resume_screening" && !isResumeWithAssessments ? (
                 <ResumeScreeningTable
                   candidates={selectedStepCandidates}
                   isPassFailDisabled={isCandidateProgressActionDisabled}
@@ -1514,6 +1578,11 @@ export default function PipelineApplicants() {
                           <TableHead className="border border-gray-200 py-2 px-3 w-24 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
                             Interview Evaluation Form
                           </TableHead>
+                          {isInterviewWithAssessments ? (
+                            <TableHead className="border border-gray-200 py-2 px-3 w-36 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
+                              Actions
+                            </TableHead>
+                          ) : null}
                         </>
                       ) : isPassFailStage ? (
                         <>
@@ -1524,7 +1593,7 @@ export default function PipelineApplicants() {
                             Fail
                           </TableHead>
                         </>
-                      ) : isAssessmentStage ? (
+                      ) : isAssessmentStage || isResumeWithAssessments ? (
                         <>
                           <TableHead className="border border-gray-200 py-2 px-3 text-center text-xs lg:text-sm lg:py-3 lg:px-4 w-56">
                             Assessments
@@ -1556,13 +1625,6 @@ export default function PipelineApplicants() {
                         </TableHead>
                       ) : null}
 
-                      {isInterviewScheduleStage ? (
-                        <TableHead className="border border-gray-200 py-2 px-3 w-24 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
-                          Interview Evaluation
-                          <br />
-                          Form
-                        </TableHead>
-                      ) : null}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1619,7 +1681,7 @@ export default function PipelineApplicants() {
                                 variant="outline"
                                 size="sm"
                                 className="w-full px-2 text-xs lg:text-sm text-slate-700 border-slate-300 bg-white hover:bg-slate-900 hover:text-white"
-                                onClick={() => handleOpenResumePreview()}
+                                onClick={() => handleOpenResumePreview(candidate)}
                               >
                                 View Resume
                               </Button>
@@ -1672,6 +1734,102 @@ export default function PipelineApplicants() {
                                   View
                                 </Button>
                               </TableCell>
+                              {isInterviewWithAssessments ? (
+                                <TableCell className="border border-gray-200 py-3 px-2 text-center align-top">
+                                  <div className="flex flex-col gap-1 overflow-x-auto min-w-32">
+                                    {stepAssessments.map((sa) => {
+                                      const candidateAssessment = (candidateAssessments.get(candidate.id) || []).find(
+                                        (ca) => ca.assessmentId === sa.id
+                                      );
+                                      const status = candidateAssessment?.status || "not_assigned";
+                                      const displayName = formatAssessmentType(sa.type);
+                                      return (
+                                        <div key={sa.id} className="flex items-center gap-1 rounded border border-gray-200 bg-gray-50 px-1.5 py-1 text-left shrink-0 min-w-0">
+                                          <span className="text-xs font-medium text-gray-700 whitespace-nowrap shrink-0">{displayName}</span>
+                                          <span className="text-[10px] text-gray-400 truncate shrink" title={sa.file?.filename || undefined}>
+                                            {sa.file?.filename || ""}
+                                          </span>
+                                          <div className="flex-1" />
+                                          {candidateAssessment ? (
+                                            <Badge variant="outline" className="text-[10px] whitespace-nowrap px-1 py-0 h-5">
+                                              {status === "graded" ? "Graded" : status === "submitted" ? "Submitted" : status === "sent" ? "Sent" : "Assigned"}
+                                            </Badge>
+                                          ) : (
+                                            <Badge variant="outline" className="text-[10px] whitespace-nowrap px-1 py-0 h-5 border-gray-300 text-gray-500">Not Sent</Badge>
+                                          )}
+                                          <span className="text-[10px] text-gray-500 whitespace-nowrap">
+                                            {candidateAssessment?.score !== undefined && candidateAssessment?.score !== null
+                                              ? `${candidateAssessment.score}/100`
+                                              : ""}
+                                          </span>
+                                          <Button variant="outline" size="sm" className="h-6 text-[10px] px-2 shrink-0"
+                                            onClick={() => handleOpenAssessmentModal(candidate, "preview", sa.id)}>
+                                            <FileText className="h-3 w-3 mr-1" />Preview
+                                          </Button>
+                                          {candidateAssessment && (
+                                            <Button variant="outline" size="sm" className="h-6 text-[10px] px-2 shrink-0"
+                                              onClick={() => handleViewAssessment(candidate)}>View</Button>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                    <div className="flex flex-col items-center gap-1.5 mt-1">
+                                      <Button variant="outline" size="sm"
+                                        className="w-full text-xs px-2 text-green-600 border-green-500 bg-white hover:bg-green-500 hover:text-white"
+                                        onClick={() => handleOpenSendAssessmentModal(candidate)}
+                                        disabled={candidate.pipelineStatus === "assessment_sent" || candidate.pipelineStatus === "assessment_partially_graded" || candidate.pipelineStatus === "assessment_graded" || !candidate.stepInterviewerId || user?.id !== candidate.stepInterviewerId}
+                                      >
+                                        Send
+                                      </Button>
+                                      <div className="flex gap-1">
+                                        <Button variant="outline" size="sm"
+                                          className="px-2 text-[10px] text-green-600 border-green-600 bg-white hover:bg-green-600 hover:text-white"
+                                          disabled={candidate.pipelineStatus !== "assessment_graded" || isCandidateProgressActionDisabled(candidate)}
+                                          onClick={() => handleCandidateProgress(candidate.id, candidate.name, candidate.pipelineStepId, "pass")}>
+                                          Pass
+                                        </Button>
+                                        <Button variant="outline" size="sm"
+                                          className="px-2 text-[10px] text-blue-600 border-blue-600 bg-white hover:bg-blue-600 hover:text-white"
+                                          disabled={candidate.pipelineStatus !== "assessment_graded" || isCandidateProgressActionDisabled(candidate)}
+                                          onClick={() => void handleCandidateShortlist(candidate.id, candidate.name, candidate.pipelineStepId)}>
+                                          Shortlist
+                                        </Button>
+                                        <Button variant="outline" size="sm"
+                                          className="px-2 text-[10px] text-red-600 border-red-600 bg-white hover:bg-red-600 hover:text-white"
+                                          disabled={candidate.pipelineStatus !== "assessment_graded" || isCandidateProgressActionDisabled(candidate)}
+                                          onClick={() => handleCandidateProgress(candidate.id, candidate.name, candidate.pipelineStepId, "fail")}>
+                                          Fail
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </TableCell>
+                              ) : (
+                                <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
+                                  <div className="flex flex-col items-center gap-1.5">
+                                    <div className="flex gap-1">
+                                      <Button variant="outline" size="sm"
+                                        className="px-2 text-[10px] text-green-600 border-green-600 bg-white hover:bg-green-600 hover:text-white"
+                                        disabled={isCandidateProgressActionDisabled(candidate)}
+                                        onClick={() => handleCandidateProgress(candidate.id, candidate.name, candidate.pipelineStepId, "pass")}>
+                                        Pass
+                                      </Button>
+                                      <Button variant="outline" size="sm"
+                                        className="px-2 text-[10px] text-blue-600 border-blue-600 bg-white hover:bg-blue-600 hover:text-white"
+                                        disabled={isCandidateProgressActionDisabled(candidate)}
+                                        onClick={() => void handleCandidateShortlist(candidate.id, candidate.name, candidate.pipelineStepId)}>
+                                        Shortlist
+                                      </Button>
+                                      <Button variant="outline" size="sm"
+                                        className="px-2 text-[10px] text-red-600 border-red-600 bg-white hover:bg-red-600 hover:text-white"
+                                        disabled={isCandidateProgressActionDisabled(candidate)}
+                                        onClick={() => handleCandidateProgress(candidate.id, candidate.name, candidate.pipelineStepId, "fail")}>
+                                        Fail
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </TableCell>
+                              )}
                             </>
                           ) : isPassFailStage ? (
                             <>
@@ -1712,7 +1870,7 @@ export default function PipelineApplicants() {
                                 </Button>
                               </TableCell>
                             </>
-                          ) : isAssessmentStage ? (
+                          ) : isAssessmentStage || isResumeWithAssessments ? (
                             <>
                               <TableCell className="border border-gray-200 py-3 px-2 text-center align-top">
                                 <div className="flex flex-col gap-1 overflow-x-auto">
@@ -1919,20 +2077,6 @@ export default function PipelineApplicants() {
                             </TableCell>
                           ) : null}
 
-                          {isInterviewScheduleStage ? (
-                            <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full px-2 text-xs lg:text-sm"
-                                onClick={() =>
-                                  handleOpenInterviewEvaluationForm(candidate, resolvedJobTitle)
-                                }
-                              >
-                                View
-                              </Button>
-                            </TableCell>
-                          ) : null}
                         </TableRow>
 ))
                     )}
@@ -1964,7 +2108,14 @@ export default function PipelineApplicants() {
 </DialogHeader>
 
               <div className="rounded-md border border-gray-200 p-3 space-y-3">
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-[140px_140px_1fr]">
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-[140px_140px_140px_1fr]">
+                <Input
+                  id="interview-date"
+                  type="date"
+                  value={scheduleForm.scheduledDate}
+                  onChange={(event) => handleScheduleInputChange("scheduledDate", event.target.value)}
+                  placeholder="Date"
+                />
                 <Select
                   value={scheduleForm.scheduledTime}
                   onValueChange={(value) => handleScheduleInputChange("scheduledTime", value)}
@@ -2529,6 +2680,79 @@ export default function PipelineApplicants() {
               Close
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(resumePreviewCandidate)} onOpenChange={(open) => { if (!open) setResumePreviewCandidate(null); }}>
+        <DialogContent className="flex h-[90vh] max-h-[90vh] w-[min(96vw,80rem)] max-w-none flex-col overflow-hidden">
+          <DialogHeader className="flex flex-col gap-4 text-left sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-1">
+              <DialogTitle>{resumePreviewCandidate ? `${resumePreviewCandidate.name}'s Resume` : "Resume Preview"}</DialogTitle>
+              <DialogDescription>Preview the submitted resume and download a copy.</DialogDescription>
+            </div>
+
+            {resumePreviewCandidate ? (
+              <Button
+                className="w-full shrink-0 sm:w-auto"
+                variant="outline"
+                onClick={() => handleDownloadResume(resumePreviewCandidate)}
+                disabled={!getResumePreviewUrl(resumePreviewCandidate)}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Open / Download Resume
+              </Button>
+            ) : null}
+          </DialogHeader>
+
+          {resumePreviewCandidate ? (() => {
+            const previewUrl = getResumePreviewUrl(resumePreviewCandidate);
+            const ext = getResumeFileExt(resumePreviewCandidate);
+            const isPdf = ext === "pdf";
+            const isImage = ["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(ext || "");
+
+            return (
+              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+                <div className="overflow-hidden rounded-lg border bg-white">
+                  {isImage && previewUrl ? (
+                    <img
+                      alt={`${resumePreviewCandidate.name} resume preview`}
+                      className="h-[72vh] w-full object-contain bg-white"
+                      src={previewUrl}
+                    />
+                  ) : isPdf && previewUrl ? (
+                    <iframe
+                      title={`${resumePreviewCandidate.name} resume preview`}
+                      className="h-[72vh] w-full bg-white"
+                      src={previewUrl}
+                    />
+                  ) : previewUrl ? (
+                    <div className="flex h-[72vh] w-full items-center justify-center p-6 text-sm text-gray-500">
+                      <iframe
+                        title={`${resumePreviewCandidate.name} resume preview`}
+                        className="h-[72vh] w-full bg-white"
+                        src={previewUrl}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex h-[72vh] w-full items-center justify-center p-6 text-sm text-gray-500">
+                      Resume preview is unavailable.
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-lg border bg-gray-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Resume Link</p>
+                  <p className="mt-1 wrap-break-word text-sm text-gray-900">
+                    {previewUrl || "No resume link available."}
+                  </p>
+                </div>
+              </div>
+            );
+          })() : (
+            <div className="flex items-center justify-center rounded-lg border border-dashed p-10 text-sm text-gray-500">
+              Resume preview is unavailable.
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </>
