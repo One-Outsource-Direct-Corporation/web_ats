@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   PositionBase,
   PositionFormData,
@@ -63,18 +63,32 @@ export const useExternalPostingFormData = (initialData?: PositionFormData) => {
       return normalizeExternalPostingFormData(initialData);
     }
 
-    if (shouldUseDraft) {
-      const savedDraft = positionDraftLocalStore.getDraft();
-      if (savedDraft?.data) {
-        return normalizeExternalPostingFormData(savedDraft.data);
-      }
-    }
-
-    // return import.meta.env.VITE_REACT_ENV === "development"
-    //   ? getDefaultFormData()
-    //   : getDefaultFormData();
     return getDefaultFormData();
   });
+
+  const [hasDraft, setHasDraft] = useState(() => {
+    if (!shouldUseDraft || initialData) return false;
+    return positionDraftLocalStore.getDraft() !== null;
+  });
+
+  const draftResolvedRef = useRef(
+    !shouldUseDraft || !!initialData || !positionDraftLocalStore.getDraft(),
+  );
+
+  const loadDraftFromStorage = useCallback(() => {
+    const saved = positionDraftLocalStore.getDraft();
+    if (saved?.data) {
+      setFormData(normalizeExternalPostingFormData(saved.data));
+    }
+    draftResolvedRef.current = true;
+    setHasDraft(false);
+  }, []);
+
+  const discardDraft = useCallback(() => {
+    positionDraftLocalStore.clearDraft();
+    draftResolvedRef.current = true;
+    setHasDraft(false);
+  }, []);
 
   function handlePositionBaseChange(
     field: keyof PositionBase,
@@ -103,6 +117,7 @@ export const useExternalPostingFormData = (initialData?: PositionFormData) => {
 
   function resetFormData() {
     setFormData(getDefaultFormData());
+    draftResolvedRef.current = true;
     if (shouldUseDraft) {
       positionDraftLocalStore.clearDraft();
     }
@@ -159,12 +174,16 @@ export const useExternalPostingFormData = (initialData?: PositionFormData) => {
 
   useEffect(() => {
     if (!shouldUseDraft || initialData) return;
+    if (!draftResolvedRef.current) return;
     positionDraftLocalStore.saveDraft(formData);
   }, [formData, shouldUseDraft, initialData]);
 
   return {
     formData,
     setFormData,
+    hasDraft,
+    loadDraftFromStorage,
+    discardDraft,
     handlePositionBaseChange,
     handleJobPostingChange,
     resetFormData,

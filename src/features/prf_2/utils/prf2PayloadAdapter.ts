@@ -265,6 +265,23 @@ export function adaptLegacyPrfToPrf2FormData(
       const mandatoryTypes = ["for_job_offer", "pre_onboarding", "onboarding"];
       const existingTypes = new Set(steps.filter((s) => s.stage === 4).map((s) => s.process_type));
       const missing = mandatoryTypes.filter((t) => !existingTypes.has(t));
+      const PASSED_BODY =
+        "Dear {{ candidate_name }},\n\n" +
+        "We are pleased to inform you that you have successfully completed the {{ pipeline_step_process_type_label }} for the position of {{ job_title }}. " +
+        "We will be in touch with further details regarding the next steps.\n\n" +
+        "Best regards,\n" +
+        "{{ interviewer_name }}\n" +
+        "{{ interviewer_role }}\n" +
+        "{{ company_name }}";
+      const FAILED_BODY =
+        "Dear {{ candidate_name }},\n\n" +
+        "Thank you for your participation in the {{ pipeline_step_process_type_label }} for the position of {{ job_title }}. " +
+        "After careful consideration, we regret to inform you that you have not been successful on this occasion.\n\n" +
+        "We appreciate your interest and wish you all the best in your future endeavors.\n\n" +
+        "Best regards,\n" +
+        "{{ interviewer_name }}\n" +
+        "{{ interviewer_role }}\n" +
+        "{{ company_name }}";
       missing.forEach((process_type, index) => {
         const order = steps.filter((s) => s.stage === 4).length + index + 1;
         steps.push({
@@ -278,8 +295,8 @@ export function adaptLegacyPrfToPrf2FormData(
           passedEmailTemplateId: null,
           failedEmailTemplateId: null,
           notification_templates: [
-            { action_type: "send_email", trigger_outcome: "passed", subject: "", body: "" },
-            { action_type: "send_email", trigger_outcome: "failed", subject: "", body: "" },
+            { action_type: "send_email", trigger_outcome: "passed", subject: "{{ pipeline_step_process_type_label }} - {{ job_title }}", body: PASSED_BODY },
+            { action_type: "send_email", trigger_outcome: "failed", subject: "{{ pipeline_step_process_type_label }} - {{ job_title }}", body: FAILED_BODY },
           ],
           assessments: [],
         } as any);

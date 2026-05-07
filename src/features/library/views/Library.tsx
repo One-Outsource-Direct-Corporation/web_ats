@@ -64,6 +64,7 @@ import type {
 } from "@/features/external_posting/types/questionnaire.types";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import { SectionList } from "@/features/external_posting/components/questionnaires/SectionList";
+import { AvailablePlaceholders } from "@/shared/components/reusables/pipeline/AvailablePlaceholders";
 
 export default function Library() {
   const navigate = useNavigate();
@@ -1239,6 +1240,8 @@ export default function Library() {
                   className="min-h-40 resize-y"
                 />
               </div>
+
+              <AvailablePlaceholders context="all" />
 
               {emailTemplateSaveError && (
                 <p className="text-xs text-red-600">{emailTemplateSaveError}</p>

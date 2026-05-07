@@ -7,6 +7,25 @@ import type { ValidationError } from "@/features/prf_2/utils/validateSteps";
 import { FieldError } from "@/shared/components/ui/field";
 import { useMemo } from "react";
 
+const PASSED_BODY =
+  "Dear {{ candidate_name }},\n\n" +
+  "We are pleased to inform you that you have successfully completed the {{ pipeline_step_process_type_label }} for the position of {{ job_title }}. " +
+  "We will be in touch with further details regarding the next steps.\n\n" +
+  "Best regards,\n" +
+  "{{ interviewer_name }}\n" +
+  "{{ interviewer_role }}\n" +
+  "{{ company_name }}";
+
+const FAILED_BODY =
+  "Dear {{ candidate_name }},\n\n" +
+  "Thank you for your participation in the {{ pipeline_step_process_type_label }} for the position of {{ job_title }}. " +
+  "After careful consideration, we regret to inform you that you have not been successful on this occasion.\n\n" +
+  "We appreciate your interest and wish you all the best in your future endeavors.\n\n" +
+  "Best regards,\n" +
+  "{{ interviewer_name }}\n" +
+  "{{ interviewer_role }}\n" +
+  "{{ company_name }}";
+
 const MANDATORY_STAGE_04_CONFIGS: Omit<PipelineStepLocal, "tempId">[] = [
   {
     process_type: "for_job_offer",
@@ -18,8 +37,8 @@ const MANDATORY_STAGE_04_CONFIGS: Omit<PipelineStepLocal, "tempId">[] = [
     passedEmailTemplateId: null,
     failedEmailTemplateId: null,
     notification_templates: [
-      { action_type: "send_email", trigger_outcome: "passed", subject: "", body: "" },
-      { action_type: "send_email", trigger_outcome: "failed", subject: "", body: "" },
+      { action_type: "send_email", trigger_outcome: "passed", subject: "{{ pipeline_step_process_type_label }} - {{ job_title }}", body: PASSED_BODY },
+      { action_type: "send_email", trigger_outcome: "failed", subject: "{{ pipeline_step_process_type_label }} - {{ job_title }}", body: FAILED_BODY },
     ],
     assessments: [],
   },
@@ -33,8 +52,8 @@ const MANDATORY_STAGE_04_CONFIGS: Omit<PipelineStepLocal, "tempId">[] = [
     passedEmailTemplateId: null,
     failedEmailTemplateId: null,
     notification_templates: [
-      { action_type: "send_email", trigger_outcome: "passed", subject: "", body: "" },
-      { action_type: "send_email", trigger_outcome: "failed", subject: "", body: "" },
+      { action_type: "send_email", trigger_outcome: "passed", subject: "{{ pipeline_step_process_type_label }} - {{ job_title }}", body: PASSED_BODY },
+      { action_type: "send_email", trigger_outcome: "failed", subject: "{{ pipeline_step_process_type_label }} - {{ job_title }}", body: FAILED_BODY },
     ],
     assessments: [],
   },
@@ -48,8 +67,8 @@ const MANDATORY_STAGE_04_CONFIGS: Omit<PipelineStepLocal, "tempId">[] = [
     passedEmailTemplateId: null,
     failedEmailTemplateId: null,
     notification_templates: [
-      { action_type: "send_email", trigger_outcome: "passed", subject: "", body: "" },
-      { action_type: "send_email", trigger_outcome: "failed", subject: "", body: "" },
+      { action_type: "send_email", trigger_outcome: "passed", subject: "{{ pipeline_step_process_type_label }} - {{ job_title }}", body: PASSED_BODY },
+      { action_type: "send_email", trigger_outcome: "failed", subject: "{{ pipeline_step_process_type_label }} - {{ job_title }}", body: FAILED_BODY },
     ],
     assessments: [],
   },
@@ -134,6 +153,7 @@ export default function PRFStep05({
         updatePipelineStep={updatePipelineStep}
         deletePipelineStep={deletePipelineStep}
         errors={normalizedPipelineErrors}
+        jobTitle={formData.job_posting.job_title ?? ""}
       />
     </div>
   );

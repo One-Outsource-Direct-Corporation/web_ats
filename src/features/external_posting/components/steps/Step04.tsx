@@ -7,12 +7,14 @@ interface Step04Props {
   pipelineSteps: PipelineStep[];
   pipelineHandler: (updatedPipelines: PipelineStep[]) => void;
   errors?: ValidationError | null;
+  jobTitle?: string;
 }
 
 export default function Step04({
   pipelineSteps,
   pipelineHandler,
   errors,
+  jobTitle,
 }: Step04Props) {
   const { pipelines, addPipelineStep, updatePipelineStep, deletePipelineStep } =
     usePipeline(pipelineSteps, pipelineHandler);
@@ -32,6 +34,7 @@ export default function Step04({
         updatePipelineStep={updatePipelineStep}
         deletePipelineStep={deletePipelineStep}
         errors={errors}
+        jobTitle={jobTitle}
       />
     </div>
   );

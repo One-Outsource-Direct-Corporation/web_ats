@@ -56,6 +56,8 @@ import {
 } from "@/features/jobs/utils/jobFormatters";
 
 import ResumeScreeningTable from "@/features/applicants/components/ResumeScreeningTable";
+import JobOfferPipelineTable from "@/features/applicants/components/JobOfferPipelineTable";
+import { useJobOffersQuery } from "@/features/applicants/hooks/useJobOffers";
 
 import { useDeferredAction } from "@/features/applicants/hooks/useDeferredAction";
 
@@ -400,6 +402,8 @@ export default function PipelineApplicants() {
   } | null>(null);
 
   const { data: jobDetail, isLoading, isError, refetch } = useJobDetailQuery(jobId);
+  const { data: offersData } = useJobOffersQuery();
+  const jobOffers = Array.isArray(offersData) ? offersData : [];
 
   // Track navigation to/from IEF pages and trigger a refetch when returning
   const prevPathRef = useRef<string>(location.pathname);
@@ -996,9 +1000,9 @@ export default function PipelineApplicants() {
     }
   };
 
-  const handleViewAssessment = (candidate: { id: number }) => {
+  const handleViewAssessment = (candidate: { id: number; pipelineStepId?: number }) => {
     if (!jobId) return;
-    navigate(`/job/${jobId}/exam-form/${candidate.id}`);
+    navigate(`/job/${jobId}/exam-form/${candidate.id}?pipelineStepId=${candidate.pipelineStepId ?? ''}`);
   };
 
   const handleOpenSendAssessmentModal = (
@@ -1550,6 +1554,14 @@ export default function PipelineApplicants() {
                     )
                   }
                 />
+              ) : selectedType === "for_job_offer" ? (
+                <JobOfferPipelineTable
+                  pipelineSteps={pipelineSteps.filter((s) => s.process_type === "for_job_offer")}
+                  jobOffers={jobOffers}
+                  jobTitle={resolvedJobTitle}
+                  onRefetch={refetch}
+                  jobDetail={jobDetail}
+                />
               ) : (
               <div className="mt-4 rounded-md border bg-white overflow-x-auto w-full">
                 <Table className="w-full table-fixed text-xs">
@@ -1769,6 +1781,24 @@ export default function PipelineApplicants() {
                                           {candidateAssessment && (
                                             <Button variant="outline" size="sm" className="h-6 text-[10px] px-2 shrink-0"
                                               onClick={() => handleViewAssessment(candidate)}>View</Button>
+                                          )}
+                                          {status === "submitted" && (
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              className="h-6 text-[10px] px-2 text-blue-600 border-blue-500 bg-white hover:bg-blue-500 hover:text-white shrink-0"
+                                              onClick={() =>
+                                                handleOpenAssessmentModal(candidate, "grade", sa.id, candidateAssessment?.id)
+                                              }
+                                              disabled={!candidate.stepInterviewerId || user?.id !== candidate.stepInterviewerId}
+                                              title={
+                                                !candidate.stepInterviewerId || user?.id !== candidate.stepInterviewerId
+                                                  ? 'Only the assigned interviewer can grade.'
+                                                  : undefined
+                                              }
+                                            >
+                                              Grade
+                                            </Button>
                                           )}
                                         </div>
                                       );

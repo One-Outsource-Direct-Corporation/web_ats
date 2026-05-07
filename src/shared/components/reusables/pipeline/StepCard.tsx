@@ -50,8 +50,13 @@ export function StepCard({
                 errorMessage = "Process type is required";
               } else if (field === "process_title") {
                 errorMessage = "Process title is required";
+              } else if (field === "interviewer_id") {
+                errorMessage = "Interviewer is required";
+              } else if (field === "notification_templates") {
+                errorMessage = "Passed and Failed email templates are required";
               } else if (Array.isArray(fieldErrors) && fieldErrors.length > 0) {
-                errorMessage = fieldErrors[0];
+                const first = fieldErrors[0];
+                errorMessage = typeof first === "string" ? first : "This field is invalid";
               }
               return errorMessage ? (
                 <p key={field + index} className="mb-1">

@@ -5,7 +5,6 @@ import Shortlisted from "../views/Shortlisted";
 import InitialInterview from "../views/InitialInterview";
 import Assessment from "../views/Assessment";
 import FinalInterview from "../views/FinalInterview";
-import ForJobOffer from "../views/ForJobOffer";
 import WeeklyMonthly from "../views/lead-developer-weekly-monthly";
 const STAGE_COMPONENTS: Record<
   string,
@@ -17,7 +16,6 @@ const STAGE_COMPONENTS: Record<
   shortlisted: Shortlisted,
   assessments: Assessment,
   finalinterview: FinalInterview,
-  forjoboffer: ForJobOffer,
   weekly: WeeklyMonthly,
   // add others
 };

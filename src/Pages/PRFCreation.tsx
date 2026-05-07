@@ -1,6 +1,6 @@
 import CancelRequestModal from "@/features/prf_2/components/CancelRequestModal";
 import PRFStepsNavigation from "@/features/prf_2/components/PRFStepsNavigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PRFStepComponent from "@/features/prf_2/components/PRFStepComponent.tsx";
 import PRFNavigationButton from "@/features/prf_2/components/PRFNavigationButton.tsx";
 import { usePRF2Form } from "@/features/prf_2/hooks/usePRF2Form";
@@ -12,6 +12,7 @@ import { isAxiosError } from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import PRFSidebarPreview from "@/features/prf_2/components/PRFSidebarPreview.tsx";
+import ResumeDraftModal from "@/features/prf_2/components/ResumeDraftModal";
 import type { PRFFormData as LegacyPRFFormData } from "@/features/prf_2/types/LegacyPRFCompat";
 import { adaptLegacyPrfToPrf2FormData } from "@/features/prf_2/utils/prf2PayloadAdapter";
 import {
@@ -24,6 +25,11 @@ import {
   validateStep,
   validateSteps,
 } from "@/features/prf_2/utils/validateSteps";
+import {
+  extractDraftSummary,
+  prfDraftLocalStore,
+  type PrfDraftLocalRecord,
+} from "@/features/prf_2/services/prfDraft.local-store";
 
 interface PRFCreationProps {
   initialData?: LegacyPRFFormData;
@@ -40,6 +46,9 @@ export default function PRFCreation({
   const [stepErrors, setStepErrors] = useState<StepErrors>(
     createEmptyStepErrors(),
   );
+  const [showResumeModal, setShowResumeModal] = useState(false);
+  const [draftRecord, setDraftRecord] = useState<PrfDraftLocalRecord | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const adaptedInitialData = useMemo(
     () => (initialData ? adaptLegacyPrfToPrf2FormData(initialData) : undefined),
     [initialData],
@@ -54,6 +63,35 @@ export default function PRFCreation({
     }
 
     setStepErrors(validateSteps(formData));
+  }, [formData, updateMode]);
+
+  useEffect(() => {
+    if (updateMode) return;
+
+    const saved = prfDraftLocalStore.getDraft();
+    if (saved) {
+      setDraftRecord(saved);
+      setShowResumeModal(true);
+    }
+  }, [updateMode]);
+
+  useEffect(() => {
+    if (updateMode) return;
+
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+    }
+
+    saveTimerRef.current = setTimeout(() => {
+      const summary = extractDraftSummary(formData);
+      prfDraftLocalStore.saveDraft(formData, summary);
+    }, 1500);
+
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+      }
+    };
   }, [formData, updateMode]);
 
   function handleStepClick(targetStep: number) {
@@ -104,6 +142,7 @@ export default function PRFCreation({
         : "Failed to submit PRF. Please try again.";
 
       if (response.status === 200 || response.status === 201) {
+        prfDraftLocalStore.clearDraft();
         setStepErrors(createEmptyStepErrors());
         toast.success(successMessage);
         navigate("/requests");
@@ -178,6 +217,18 @@ export default function PRFCreation({
     setStep((prev) => prev - 1);
   }
 
+  const handleResumeDraft = useCallback(() => {
+    if (!draftRecord) return;
+    setFormData(draftRecord.data);
+    setMaxStepVisited(6);
+    setShowResumeModal(false);
+  }, [draftRecord, setFormData]);
+
+  const handleStartNew = useCallback(() => {
+    prfDraftLocalStore.clearDraft();
+    setShowResumeModal(false);
+  }, []);
+
   return (
     <section className="min-h-screen p-6">
       <div className="mx-auto max-w-7xl space-y-4">
@@ -187,7 +238,11 @@ export default function PRFCreation({
           </h1>
         )}
 
-        {!updateMode && <CancelRequestModal />}
+        {!updateMode && (
+          <CancelRequestModal
+            onCancel={() => prfDraftLocalStore.clearDraft()}
+          />
+        )}
 
         <PRFStepsNavigation
           step={step}
@@ -215,6 +270,15 @@ export default function PRFCreation({
           submitting={isSubmitting}
           updateMode={updateMode}
         />
+        {draftRecord && (
+          <ResumeDraftModal
+            open={showResumeModal}
+            savedAt={draftRecord.savedAt}
+            summary={draftRecord.summary}
+            onResume={handleResumeDraft}
+            onStartNew={handleStartNew}
+          />
+        )}
       </div>
     </section>
   );

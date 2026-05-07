@@ -111,6 +111,8 @@ export interface JobDetailPipelineOwnerDto {
 export interface JobDetailResponseDto {
   id: number;
   job_title?: string;
+  work_schedule_from?: string;
+  work_schedule_to?: string;
   prf?: JobDetailPipelineOwnerDto | null;
   prf_nested?: JobDetailPipelineOwnerDto | null;
   external_posting?: JobDetailPipelineOwnerDto | null;

@@ -118,28 +118,20 @@ export default function CandidateAssessmentPage() {
 
   const assessments = app.assessments || [];
   const stepTypeFromState = (location.state as { stepType?: string } | null)?.stepType;
+  const pipelineStepId = (location.state as { pipelineStepId?: number } | null)?.pipelineStepId;
 
   const stepMap = new Map<number, PipelineStep>();
   (app.pipeline_steps || []).forEach(s => { if (s.id != null) stepMap.set(s.id, s); });
 
-  const stepTypes = new Set<string>();
-  assessments.forEach(a => {
-    if (a.candidate_pipeline_step != null) {
-      const step = stepMap.get(a.candidate_pipeline_step);
-      if (step?.process_type_label) stepTypes.add(step.process_type_label);
-    }
-  });
+  const filteredAssessments = pipelineStepId
+    ? assessments.filter(a => a.candidate_pipeline_step === pipelineStepId)
+    : assessments;
 
-  const subtitle = stepTypeFromState
-    ? `${stepTypeFromState}`
-    : stepTypes.size === 1
-      ? [...stepTypes][0]
-      : stepTypes.size > 1
-        ? `Assessment Tasks`
-        : 'Assessment Tasks';
+  const selectedStep = pipelineStepId ? stepMap.get(pipelineStepId) : null;
+  const subtitle = selectedStep?.process_type_label || stepTypeFromState || 'Assessment Tasks';
 
   const assessmentsByStep = new Map<string, AssessmentRecord[]>();
-  assessments.forEach(a => {
+  filteredAssessments.forEach(a => {
     let key = stepTypeFromState || 'Assessment Tasks';
     if (!stepTypeFromState && a.candidate_pipeline_step != null) {
       const step = stepMap.get(a.candidate_pipeline_step);
@@ -175,7 +167,7 @@ export default function CandidateAssessmentPage() {
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8">
-        {assessments.length === 0 && assessmentSteps.length === 0 ? (
+        {filteredAssessments.length === 0 && assessmentSteps.length === 0 ? (
           <div className="bg-white rounded-lg border p-12 text-center">
             <FileDown className="h-12 w-12 mx-auto mb-4 text-gray-300" />
             <h2 className="text-lg font-semibold text-gray-700 mb-2">No Assessments Found</h2>
@@ -184,7 +176,7 @@ export default function CandidateAssessmentPage() {
               You will be notified when assessments are available.
             </p>
           </div>
-        ) : assessments.length > 0 && !assessments.some((a) => a.is_sent) ? (
+        ) : filteredAssessments.length > 0 && !filteredAssessments.some((a) => a.is_sent) ? (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-12 text-center">
             <FileDown className="h-12 w-12 mx-auto mb-4 text-yellow-300" />
             <h2 className="text-lg font-semibold text-gray-700 mb-2">Assessments Not Yet Sent</h2>
@@ -334,7 +326,7 @@ export default function CandidateAssessmentPage() {
               </div>
             ))}
 
-            {assessmentSteps.length > 0 && assessments.length === 0 && (
+            {assessmentSteps.length > 0 && filteredAssessments.length === 0 && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
                 <p className="text-sm text-yellow-700">
                   You have an assessment stage in your application pipeline, but no assessments have been assigned yet.

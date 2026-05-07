@@ -91,4 +91,9 @@ export const queryKeys = {
     listing: (params?: { page?: number; search?: string; business_unit?: string; nested?: boolean }) =>
       [...queryKeys.departments.all, "listing", params?.page ?? 1, params?.search ?? "", params?.business_unit ?? "", params?.nested ?? false] as const,
   },
+  jobOffers: {
+    all: ["jobOffers"] as const,
+    list: (candidateId?: number) =>
+      [...queryKeys.jobOffers.all, "list", candidateId ?? "all"] as const,
+  },
 } as const;

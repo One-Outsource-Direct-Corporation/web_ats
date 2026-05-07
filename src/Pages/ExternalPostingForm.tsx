@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye } from "lucide-react";
 import {
@@ -13,6 +13,8 @@ import {
   useExternalPostingStepNavigation,
   useExternalPostingSubmissionFlow,
 } from "@/features/external_posting";
+import ResumeDraftModal from "@/features/external_posting/components/ResumeDraftModal";
+import { positionDraftLocalStore } from "@/features/external_posting/services/positionDraft.local-store";
 import { Button } from "@/shared/components/ui/button";
 
 interface ExternalPostingFormProps {
@@ -40,6 +42,9 @@ export default function ExternalPostingForm(props: ExternalPostingFormProps) {
   const {
     formData,
     setFormData,
+    hasDraft,
+    loadDraftFromStorage,
+    discardDraft,
     handlePositionBaseChange,
     handleJobPostingChange,
     resetFormData,
@@ -50,6 +55,18 @@ export default function ExternalPostingForm(props: ExternalPostingFormProps) {
   } = useExternalPostingFormData(initialData);
 
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [showResumeModal, setShowResumeModal] = useState(false);
+
+  const draftRecord = useMemo(() => {
+    if (!hasDraft) return null;
+    return positionDraftLocalStore.getDraft();
+  }, [hasDraft]);
+
+  useEffect(() => {
+    if (hasDraft) {
+      setShowResumeModal(true);
+    }
+  }, [hasDraft]);
 
   const { submitCurrentStep } = useExternalPostingSubmissionFlow({
     updateMode,
@@ -62,6 +79,16 @@ export default function ExternalPostingForm(props: ExternalPostingFormProps) {
       resetSteps();
     },
   });
+
+  const handleResumeDraft = () => {
+    loadDraftFromStorage();
+    setShowResumeModal(false);
+  };
+
+  const handleStartNewDraft = () => {
+    discardDraft();
+    setShowResumeModal(false);
+  };
 
   const handleNext = async () => {
     const { didSubmit } = await submitCurrentStep(formData);
@@ -107,6 +134,7 @@ export default function ExternalPostingForm(props: ExternalPostingFormProps) {
             pipelineSteps={formData.pipeline}
             pipelineHandler={pipelineHandler}
             errors={stepErrors[4]}
+            jobTitle={formData.job_posting.job_title ?? undefined}
           />
         );
       default:
@@ -176,6 +204,19 @@ export default function ExternalPostingForm(props: ExternalPostingFormProps) {
         formData={formData}
         currentStep={currentStep}
       />
+
+      {draftRecord && (
+        <ResumeDraftModal
+          open={showResumeModal}
+          savedAt={draftRecord.savedAt}
+          summary={{
+            jobTitle: draftRecord.data.job_posting?.job_title ?? null,
+            client: draftRecord.data.client,
+          }}
+          onResume={handleResumeDraft}
+          onStartNew={handleStartNewDraft}
+        />
+      )}
     </>
   );
 }

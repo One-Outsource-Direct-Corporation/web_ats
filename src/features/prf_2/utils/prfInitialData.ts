@@ -70,85 +70,48 @@ export function createInitialPRF2Data(user?: User | null): PRFFormData {
         sections: [],
       },
     },
-    pipeline_input: [
-      {
-        tempId: "default-for_job_offer",
-        process_type: "for_job_offer",
-        process_title: "For Job Offer",
+    pipeline_input: (() => {
+      const PASSED_BODY =
+        "Dear {{ candidate_name }},\n\n" +
+        "We are pleased to inform you that you have successfully completed the {{ pipeline_step_process_type_label }} for the position of {{ job_title }}. " +
+        "We will be in touch with further details regarding the next steps.\n\n" +
+        "Best regards,\n" +
+        "{{ interviewer_name }}\n" +
+        "{{ interviewer_role }}\n" +
+        "{{ company_name }}";
+
+      const FAILED_BODY =
+        "Dear {{ candidate_name }},\n\n" +
+        "Thank you for your participation in the {{ pipeline_step_process_type_label }} for the position of {{ job_title }}. " +
+        "After careful consideration, we regret to inform you that you have not been successful on this occasion.\n\n" +
+        "We appreciate your interest and wish you all the best in your future endeavors.\n\n" +
+        "Best regards,\n" +
+        "{{ interviewer_name }}\n" +
+        "{{ interviewer_role }}\n" +
+        "{{ company_name }}";
+
+      const defaultTemplate = (process_type: string, process_title: string, order: number) => ({
+        tempId: `default-${process_type}`,
+        process_type,
+        process_title,
         description: "",
-        order: 1,
+        order,
         stage: 4,
         interviewer: null,
         passedEmailTemplateId: null,
         failedEmailTemplateId: null,
         notification_templates: [
-          {
-            action_type: "send_email",
-            trigger_outcome: "passed",
-            subject: "",
-            body: "",
-          },
-          {
-            action_type: "send_email",
-            trigger_outcome: "failed",
-            subject: "",
-            body: "",
-          },
+          { action_type: "send_email", trigger_outcome: "passed", subject: "{{ pipeline_step_process_type_label }} - {{ job_title }}", body: PASSED_BODY },
+          { action_type: "send_email", trigger_outcome: "failed", subject: "{{ pipeline_step_process_type_label }} - {{ job_title }}", body: FAILED_BODY },
         ],
         assessments: [],
-      },
-      {
-        tempId: "default-pre_onboarding",
-        process_type: "pre_onboarding",
-        process_title: "Pre-Onboarding",
-        description: "",
-        order: 2,
-        stage: 4,
-        interviewer: null,
-        passedEmailTemplateId: null,
-        failedEmailTemplateId: null,
-        notification_templates: [
-          {
-            action_type: "send_email",
-            trigger_outcome: "passed",
-            subject: "",
-            body: "",
-          },
-          {
-            action_type: "send_email",
-            trigger_outcome: "failed",
-            subject: "",
-            body: "",
-          },
-        ],
-        assessments: [],
-      },
-      {
-        tempId: "default-onboarding",
-        process_type: "onboarding",
-        process_title: "Onboarding",
-        description: "",
-        order: 3,
-        stage: 4,
-        interviewer: null,
-        passedEmailTemplateId: null,
-        failedEmailTemplateId: null,
-        notification_templates: [
-          {
-            action_type: "send_email",
-            trigger_outcome: "passed",
-            subject: "",
-            body: "",
-          },
-          {
-            action_type: "send_email",
-            trigger_outcome: "failed",
-            subject: "",
-            body: "",
-          },
-        ],
-        assessments: [],
-      },
-    ],
+      });
+
+      return [
+        defaultTemplate("for_job_offer", "For Job Offer", 1),
+        defaultTemplate("pre_onboarding", "Pre-Onboarding", 2),
+        defaultTemplate("onboarding", "Onboarding", 3),
+      ];
+    })(),
   };
 }

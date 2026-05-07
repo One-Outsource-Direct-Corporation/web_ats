@@ -63,6 +63,7 @@ interface AddStepFormDialogProps {
   addPipelineStep: (newStep: PipelineStepLocal) => void;
   editingStep?: PipelineStep | null;
   updatePipelineStep?: (id: string | number, data: PipelineStep) => void;
+  jobTitle?: string;
 }
 
 export function AddStepFormDialog({
@@ -77,6 +78,7 @@ export function AddStepFormDialog({
   addPipelineStep,
   editingStep,
   updatePipelineStep,
+  jobTitle,
 }: AddStepFormDialogProps) {
   const isEditing = !!editingStep;
 
@@ -181,6 +183,20 @@ export function AddStepFormDialog({
             }
             onFailedEmailTemplateChange={(id) =>
               onStepDataChange("failedEmailTemplateId", id)
+            }
+            jobTitle={jobTitle}
+            processType={stepData.process_type}
+            interviewerName={
+              stepData.interviewer
+                ? [stepData.interviewer.first_name, stepData.interviewer.last_name]
+                    .filter(Boolean)
+                    .join(" ") || stepData.interviewer.email
+                : undefined
+            }
+            interviewerRole={
+              stepData.interviewer?.role
+                ? stepData.interviewer.role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+                : undefined
             }
           />
         </FieldGroup>

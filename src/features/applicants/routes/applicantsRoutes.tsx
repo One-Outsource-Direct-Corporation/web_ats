@@ -3,7 +3,7 @@ import PoolApplicants from "../views/PoolApplicants";
 import PipelineApplicants from "../views/PipelineApplicants";
 import PipelineApplicantStatusPage from "../views/PipelineApplicantStatusPage";
 import ExamForm from "../views/Exam-Form.tsx";
-import ForJobOffer from "../views/ForJobOffer";
+
 import OfferAndFinalization from "../views/OfferAndFinalization";
 import PreOnboarding from "../views/PreOnboarding";
 import Onboarding from "../views/Onboarding";
@@ -63,7 +63,7 @@ export const applicantsRoutes = [
   },
   {
     path: ":jobId/forjoboffer",
-    element: <ForJobOffer />,
+    element: <PipelineApplicants />,
   },
   // Custom final stages (without jobId)
   {

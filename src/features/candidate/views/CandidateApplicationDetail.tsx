@@ -103,7 +103,13 @@ export default function CandidateApplicationDetail() {
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs capitalize px-2 py-1 bg-blue-100 text-blue-800 rounded">
+                    <span className={`text-xs capitalize px-2 py-1 rounded ${
+                      step.status === "offer_sent" || step.status === "offer_signed"
+                        ? "bg-green-100 text-green-800"
+                        : step.status === "failed" || step.status === "cancelled"
+                        ? "bg-red-100 text-red-800"
+                        : "bg-blue-100 text-blue-800"
+                    }`}>
                       {step.status_label || step.status.replace(/_/g, " ")}
                     </span>
                     {hasSentStepAssessment && (
@@ -111,7 +117,7 @@ export default function CandidateApplicationDetail() {
                         size="sm"
                         variant="outline"
                         className="gap-1 text-xs h-7 px-2"
-                        onClick={() => navigate(`/candidate/applications/${id}/assessments`, { state: { stepType: step.process_type_label } })}
+                        onClick={() => navigate(`/candidate/applications/${id}/assessments`, { state: { stepType: step.process_type_label, pipelineStepId: step.id } })}
                       >
                         <FileText className="h-3 w-3" />
                         View Assessment

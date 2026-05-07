@@ -14,6 +14,7 @@ interface PipelineConfigurationProps {
   deletePipelineStep: (id: string | number) => void;
   errors?: unknown;
   title?: string;
+  jobTitle?: string;
 }
 
 export default function PipelineConfiguration({
@@ -23,6 +24,7 @@ export default function PipelineConfiguration({
   deletePipelineStep,
   errors,
   title = "Pipeline Configuration",
+  jobTitle,
 }: PipelineConfigurationProps) {
   const pipelineStages: PipelineStage[] = [
     { id: 1, name: "STAGE 01" },
@@ -73,6 +75,7 @@ export default function PipelineConfiguration({
               addPipelineStep={addPipelineStep}
               updatePipelineStep={updatePipelineStep}
               deletePipelineStep={deletePipelineStep}
+              jobTitle={jobTitle}
             />
           );
         })}

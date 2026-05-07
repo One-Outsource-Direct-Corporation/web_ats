@@ -39,8 +39,9 @@ interface Task {
 interface JobOffer {
   id: number;
   job_title: string;
-  job_req: string;
-  date: string;
+  reference_id: string;
+  date_sent: string;
+  status: string;
   documents_count: number;
 }
 
@@ -68,6 +69,7 @@ interface DashboardData {
   applications: Application[];
   events: CalendarEvent[];
   tasks: Task[];
+  offers: JobOffer[];
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -90,12 +92,6 @@ const DOCUMENTS: DocumentItem[] = [
   { id: "birth", name: "Photocopy of Birth Certificate", required: true, status: "pending" },
   { id: "dependent", name: "Photocopy of Dependents Birth Certificate (if applicable)", required: false, status: "pending" },
   { id: "marriage", name: "Photocopy of Marriage Contract (if applicable)", required: false, status: "pending" },
-];
-
-const MOCK_OFFERS: JobOffer[] = [
-  { id: 1, job_title: "Lead Developer", job_req: "R-80808", date: "2025-02-16", documents_count: 0 },
-  { id: 2, job_title: "Quality Assurance", job_req: "R-10101", date: "2025-02-16", documents_count: 0 },
-  { id: 3, job_title: "Business Analyst", job_req: "R-20202", date: "2025-02-16", documents_count: 0 },
 ];
 
 function getDaysInMonth(year: number, month: number) {
@@ -159,6 +155,18 @@ export default function CandidateDashboard() {
         candidate_application_id: task.candidate_application_id as number,
       }));
 
+      // Map backend offers
+      const mappedOffers: JobOffer[] = (
+        (data.offers as Array<Record<string, unknown>>) || []
+      ).map((offer) => ({
+        id: offer.id as number,
+        job_title: offer.job_title as string || '',
+        reference_id: offer.reference_id as string || '',
+        date_sent: offer.date_sent as string || '',
+        status: offer.status as string || '',
+        documents_count: (offer.documents_count as number) || 0,
+      }));
+
       const dashboardData: DashboardData = {
         first_name: data.first_name as string || '',
         last_name: data.last_name as string || '',
@@ -167,6 +175,7 @@ export default function CandidateDashboard() {
         applications: (data.applications as Application[]) || [],
         events: mappedEvents,
         tasks: mappedTasks,
+        offers: mappedOffers,
       };
       return dashboardData;
     },
@@ -176,6 +185,7 @@ export default function CandidateDashboard() {
   const applications = dashboard?.applications ?? [];
   const events = dashboard?.events ?? [];
   const tasks = dashboard?.tasks ?? [];
+  const offers = dashboard?.offers ?? [];
 
   // Calendar state
   const today = new Date();
@@ -462,11 +472,18 @@ export default function CandidateDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {MOCK_OFFERS.map((offer) => (
+                      {offers.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                            No job offers yet.
+                          </td>
+                        </tr>
+                      ) : (
+                        offers.map((offer) => (
                         <tr key={offer.id} className="border-t hover:bg-gray-50">
                           <td className="px-4 py-3">
                             <div className="font-medium text-gray-900">{offer.job_title}</div>
-                            <div className="text-xs text-gray-500">{offer.job_req}</div>
+                            <div className="text-xs text-gray-500">{offer.reference_id}</div>
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex gap-2">
@@ -479,20 +496,20 @@ export default function CandidateDashboard() {
                             </div>
                           </td>
                           <td className="px-4 py-3 text-gray-600">
-                            {new Date(offer.date).toLocaleDateString("en-US", {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                            })}
+                            {offer.date_sent
+                              ? new Date(offer.date_sent).toLocaleDateString("en-US", {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                })
+                              : "—"}
                           </td>
                           <td className="px-4 py-3">
-                            <Button size="sm" variant="outline" className="text-xs h-8">
-                              <Upload className="h-3 w-3 mr-1" />
-                              Add
-                            </Button>
+                            <span className="text-sm text-gray-600">{offer.documents_count}</span>
                           </td>
                         </tr>
-                      ))}
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
