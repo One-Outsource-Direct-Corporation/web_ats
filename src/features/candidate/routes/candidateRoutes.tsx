@@ -4,6 +4,8 @@ import CandidateApplicationDetail from "@/features/candidate/views/CandidateAppl
 import CandidateOfferPage from "@/features/candidate/views/CandidateOfferPage";
 import CandidateProfile from "@/features/candidate/views/CandidateProfile";
 import CandidateAssessmentPage from "@/features/candidate/views/CandidateAssessmentPage";
+import CandidateDocumentsPage from "@/features/candidate/views/CandidateDocumentsPage";
+import CandidatePreonboardingPage from "@/features/candidate/views/CandidatePreonboardingPage";
 import ProtectedRoutes from "@/features/auth/components/ProtectedRoutes";
 import CandidateLayout from "@/features/candidate/components/CandidateLayout";
 
@@ -38,6 +40,14 @@ export const candidateRoutes = [
       {
         path: "candidate/profile",
         element: <CandidateProfile />,
+      },
+      {
+        path: "candidate/documents",
+        element: <CandidateDocumentsPage />,
+      },
+      {
+        path: "candidate/preonboarding",
+        element: <CandidatePreonboardingPage />,
       },
     ],
   },

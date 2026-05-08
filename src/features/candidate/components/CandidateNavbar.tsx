@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Briefcase, LayoutDashboard, User, LogOut, ChevronsUpDown } from "lucide-react";
+import { Briefcase, LayoutDashboard, User, LogOut, ChevronsUpDown, FileText } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/lib/utils";
 import {

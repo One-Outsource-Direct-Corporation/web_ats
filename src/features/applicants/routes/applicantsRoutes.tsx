@@ -5,7 +5,6 @@ import PipelineApplicantStatusPage from "../views/PipelineApplicantStatusPage";
 import ExamForm from "../views/Exam-Form.tsx";
 
 import OfferAndFinalization from "../views/OfferAndFinalization";
-import PreOnboarding from "../views/PreOnboarding";
 import Onboarding from "../views/Onboarding";
 import Failed from "../views/Failed";
 
@@ -72,7 +71,7 @@ export const applicantsRoutes = [
   },
   {
     path: "stage/PreOnboarding",
-    element: <PreOnboarding />,
+    element: <PipelineApplicants />,
   },
   {
     path: "stage/Onboarding",

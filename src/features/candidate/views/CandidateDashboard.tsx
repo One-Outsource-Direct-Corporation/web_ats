@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { queryKeys } from "@/shared/query-keys";
@@ -16,6 +16,12 @@ import {
   ChevronLeft,
   ChevronRight,
   User,
+  ClipboardList,
+  X,
+  Download,
+  Trash2,
+  Loader2,
+  CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 
@@ -34,6 +40,24 @@ interface Task {
   scheduled_date: string;
   score?: number | null;
   candidate_application_id: number;
+  is_preonboarding?: boolean;
+}
+
+interface PreonboardingProgress {
+  total: number;
+  required_count: number;
+  required_submitted: number;
+  required_pending: number;
+  submitted: number;
+  verified: number;
+  pending: number;
+  stale: number;
+}
+
+interface PreonboardingDashboardData {
+  candidate_application_id: number | null;
+  requirements: { status: string; required: boolean }[];
+  progress: PreonboardingProgress;
 }
 
 interface JobOffer {
@@ -42,14 +66,8 @@ interface JobOffer {
   reference_id: string;
   date_sent: string;
   status: string;
-  documents_count: number;
-}
-
-interface DocumentItem {
-  id: string;
-  name: string;
-  required: boolean;
-  status: "pending" | "submitted" | "verified";
+  offer_document_url: string | null;
+  signed_document_url: string | null;
 }
 
 interface CalendarEvent {
@@ -59,6 +77,14 @@ interface CalendarEvent {
   title: string;
   location: string;
   type: "interview" | "exam" | "orientation";
+}
+
+interface CandidateDocument {
+  id: number;
+  original_filename: string;
+  filename: string;
+  file_url: string;
+  created_at: string;
 }
 
 interface DashboardData {
@@ -72,6 +98,22 @@ interface DashboardData {
   offers: JobOffer[];
 }
 
+interface RequiredDocument {
+  label: string;
+  keywords: string[];
+}
+
+const REQUIRED_DOCUMENTS: RequiredDocument[] = [
+  { label: "NBI Clearance", keywords: ["nbi", "clearance"] },
+  { label: "Police Clearance", keywords: ["police", "clearance"] },
+  { label: "Certificate of Employment (COE)", keywords: ["coe", "certificate of employment", "employment certificate"] },
+  { label: "Income Tax Return (ITR 2316)", keywords: ["itr", "tax return", "2316", "bir"] },
+  { label: "Barangay Clearance", keywords: ["barangay", "clearance"] },
+  { label: "Photocopy of Dependents Birth Certificate", keywords: ["dependent", "birth certificate", "birth cert"] },
+  { label: "Photocopy of Marriage Contract", keywords: ["marriage", "contract", "marriage contract"] },
+  { label: "Photocopy of Birth Certificate", keywords: ["birth certificate", "birth cert", "psa"] },
+];
+
 const STATUS_COLORS: Record<string, string> = {
   received: "bg-emerald-50 text-emerald-700 border-emerald-200",
   "on_hold": "bg-amber-50 text-amber-700 border-amber-200",
@@ -82,17 +124,6 @@ const STATUS_COLORS: Record<string, string> = {
   done: "bg-emerald-50 text-emerald-700 border-emerald-200",
   in_progress: "bg-sky-50 text-sky-700 border-sky-200",
 };
-
-const DOCUMENTS: DocumentItem[] = [
-  { id: "nbi", name: "Valid NBI Clearance or Police Clearance", required: true, status: "pending" },
-  { id: "medical", name: "Medical Certificate", required: true, status: "pending" },
-  { id: "coe", name: "Certificate of Employment (COE) and Income", required: true, status: "pending" },
-  { id: "itr", name: "Tax Return (ITR 2316)", required: true, status: "pending" },
-  { id: "brgy", name: "Barangay Clearance", required: true, status: "pending" },
-  { id: "birth", name: "Photocopy of Birth Certificate", required: true, status: "pending" },
-  { id: "dependent", name: "Photocopy of Dependents Birth Certificate (if applicable)", required: false, status: "pending" },
-  { id: "marriage", name: "Photocopy of Marriage Contract (if applicable)", required: false, status: "pending" },
-];
 
 function getDaysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
@@ -153,6 +184,7 @@ export default function CandidateDashboard() {
         scheduled_date: task.scheduled_date as string || '',
         score: task.score as number | null | undefined,
         candidate_application_id: task.candidate_application_id as number,
+        is_preonboarding: false,
       }));
 
       // Map backend offers
@@ -164,7 +196,8 @@ export default function CandidateDashboard() {
         reference_id: offer.reference_id as string || '',
         date_sent: offer.date_sent as string || '',
         status: offer.status as string || '',
-        documents_count: (offer.documents_count as number) || 0,
+        offer_document_url: offer.offer_document_url as string | null || null,
+        signed_document_url: offer.signed_document_url as string | null || null,
       }));
 
       const dashboardData: DashboardData = {
@@ -181,11 +214,85 @@ export default function CandidateDashboard() {
     },
   });
 
+  const { data: preonboardingDashboardData } = useQuery({
+    queryKey: queryKeys.preonboarding.data(),
+    queryFn: async () => {
+      const res = await axiosPrivate.get("/api/candidate/me/preonboarding/");
+      return res.data as PreonboardingDashboardData;
+    },
+  });
+
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<CandidateDocument | null>(null);
+  const [pendingUploadDoc, setPendingUploadDoc] = useState<string | null>(null);
+  const [selectedDocReq, setSelectedDocReq] = useState<RequiredDocument | null>(null);
+
+  const { data: documents = [], isLoading: docsLoading } = useQuery({
+    queryKey: queryKeys.documents.list(),
+    queryFn: async () => {
+      const res = await axiosPrivate.get("/api/candidate/me/documents/");
+      return res.data as CandidateDocument[];
+    },
+  });
+
+  const deleteDocMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await axiosPrivate.delete(`/api/candidate/me/documents/${id}/`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.documents.all });
+    },
+  });
+
+  const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      await axiosPrivate.post("/api/candidate/me/documents/", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.documents.all });
+    } catch {
+      // handled by interceptor
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const profilePhotoUrl = dashboard?.photo_url;
   const applications = dashboard?.applications ?? [];
   const events = dashboard?.events ?? [];
   const tasks = dashboard?.tasks ?? [];
   const offers = dashboard?.offers ?? [];
+
+  // Job offer action state
+  const [uploadingId, setUploadingId] = useState<number | null>(null);
+  const [uploadedFileIds, setUploadedFileIds] = useState<Record<number, number>>({});
+  const [acceptingId, setAcceptingId] = useState<number | null>(null);
+  const [showDeclineModal, setShowDeclineModal] = useState(false);
+  const [declineOfferId, setDeclineOfferId] = useState<number | null>(null);
+  const [declineReason, setDeclineReason] = useState("");
+
+  function handleDownload(url: string, filename: string) {
+    fetch(url)
+      .then((res) => res.blob())
+      .then((blob) => {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+      })
+      .catch(() => {});
+  }
 
   // Calendar state
   const today = new Date();
@@ -201,7 +308,34 @@ export default function CandidateDashboard() {
       : true
   );
 
-  const filteredTasks = tasks.filter((t) => t.task_status === taskFilter);
+  const preonboardingTask = useMemo(() => {
+    if (!preonboardingDashboardData?.candidate_application_id) return null;
+    const progress = preonboardingDashboardData.progress;
+    const allSubmitted = progress.required_count > 0 && progress.required_submitted === progress.required_count;
+    const allVerified = preonboardingDashboardData.requirements.every(
+      (r) => !r.required || r.status === "verified" || r.status === "carried_over",
+    );
+    let taskStatus: "pending" | "submitted" | "graded";
+    if (allVerified) taskStatus = "graded";
+    else if (allSubmitted) taskStatus = "submitted";
+    else taskStatus = "pending";
+
+    const app = applications.find((a) => a.id === preonboardingDashboardData.candidate_application_id);
+    return {
+      id: preonboardingDashboardData.candidate_application_id,
+      job_title: app?.job_title || "",
+      assessment_type_label: "Preonboarding Requirements",
+      task_status: taskStatus,
+      scheduled_date: "",
+      candidate_application_id: preonboardingDashboardData.candidate_application_id,
+      is_preonboarding: true,
+    } as Task;
+  }, [preonboardingDashboardData, applications]);
+
+  const filteredTasks = useMemo(() => {
+    const allTasks = preonboardingTask ? [preonboardingTask, ...tasks] : tasks;
+    return allTasks.filter((t) => t.task_status === taskFilter);
+  }, [tasks, preonboardingTask, taskFilter]);
 
   const prevMonth = () => {
     if (calMonth === 0) {
@@ -219,6 +353,70 @@ export default function CandidateDashboard() {
       setCalMonth((m) => m + 1);
     }
   };
+
+  async function handleUploadSigned(offerId: number) {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".pdf";
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      setUploadingId(offerId);
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await axiosPrivate.post("/api/candidate/job-offers/upload-signed/", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        setUploadedFileIds((prev) => ({ ...prev, [offerId]: res.data.id }));
+      } catch {
+        // handled by interceptor
+      } finally {
+        setUploadingId(null);
+      }
+    };
+    input.click();
+  }
+
+  async function handleAccept(offerId: number) {
+    const fileId = uploadedFileIds[offerId];
+    if (!fileId) return;
+    setAcceptingId(offerId);
+    try {
+      await axiosPrivate.patch("/api/candidate/job-offers/sign/", {
+        job_offer_id: offerId,
+        signed_document_id: fileId,
+      });
+      // Refetch to update status
+      window.location.reload();
+    } catch {
+      // handled by interceptor
+    } finally {
+      setAcceptingId(null);
+    }
+  }
+
+  function handleDeclineClick(offerId: number) {
+    setDeclineOfferId(offerId);
+    setDeclineReason("");
+    setShowDeclineModal(true);
+  }
+
+  async function handleDeclineConfirm() {
+    if (declineOfferId == null) return;
+    try {
+      await axiosPrivate.patch("/api/candidate/job-offers/decline/", {
+        job_offer_id: declineOfferId,
+        reason: declineReason,
+      });
+      setShowDeclineModal(false);
+      setDeclineOfferId(null);
+      setDeclineReason("");
+      window.location.reload();
+    } catch {
+      // handled by interceptor
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -412,46 +610,60 @@ export default function CandidateDashboard() {
                   ))}
                 </div>
                 <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-[#0056d2] text-white">
-                        <th className="px-4 py-3 text-left font-semibold">Job Title</th>
-                        <th className="px-4 py-3 text-left font-semibold">Task Title</th>
-                        <th className="px-4 py-3 text-left font-semibold">Task Status</th>
-                        <th className="px-4 py-3 text-left font-semibold">Scheduled Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredTasks.length === 0 ? (
-                        <tr>
-                          <td colSpan={4} className="px-4 py-6 text-center text-gray-500">
-                            No {taskFilter} tasks.
-                          </td>
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-[#0056d2] text-white">
+                          <th className="px-4 py-3 text-left font-semibold">Job Title</th>
+                          <th className="px-4 py-3 text-left font-semibold">Task Title</th>
+                          <th className="px-4 py-3 text-left font-semibold">Task Status</th>
+                          <th className="px-4 py-3 text-left font-semibold">Scheduled Date</th>
+                          <th className="px-4 py-3 text-center font-semibold">Action</th>
                         </tr>
-                      ) : (
-                        filteredTasks.map((task) => (
-                          <tr key={task.id} className="border-t hover:bg-gray-50">
-                            <td className="px-4 py-3">
-                              <div className="font-medium text-gray-900">{task.job_title}</div>
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">{task.assessment_type_label}</td>
-                            <td className="px-4 py-3">
-                              <StatusBadge status={task.task_status} />
-                            </td>
-                            <td className="px-4 py-3 text-gray-600">
-                              {task.scheduled_date
-                                ? new Date(task.scheduled_date).toLocaleDateString("en-US", {
-                                    year: "numeric",
-                                    month: "long",
-                                    day: "numeric",
-                                  })
-                                : "—"}
+                      </thead>
+                      <tbody>
+                        {filteredTasks.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="px-4 py-6 text-center text-gray-500">
+                              No {taskFilter} tasks.
                             </td>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                        ) : (
+                          filteredTasks.map((task) => (
+                            <tr key={`${task.is_preonboarding ? "pre" : "task"}-${task.id}`} className="border-t hover:bg-gray-50">
+                              <td className="px-4 py-3">
+                                <div className="font-medium text-gray-900">{task.job_title}</div>
+                              </td>
+                              <td className="px-4 py-3 text-gray-700">{task.assessment_type_label}</td>
+                              <td className="px-4 py-3">
+                                <StatusBadge status={task.task_status} />
+                              </td>
+                              <td className="px-4 py-3 text-gray-600">
+                                {task.scheduled_date
+                                  ? new Date(task.scheduled_date).toLocaleDateString("en-US", {
+                                      year: "numeric",
+                                      month: "long",
+                                      day: "numeric",
+                                    })
+                                  : "—"}
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                {task.is_preonboarding ? (
+                                  <Button
+                                    size="sm"
+                                    className="bg-[#0056d2] hover:bg-blue-700 text-white text-xs"
+                                    onClick={() => navigate("/candidate/preonboarding")}
+                                  >
+                                    View
+                                  </Button>
+                                ) : (
+                                  <span className="text-gray-300">—</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
                 </div>
               </section>
 
@@ -466,9 +678,9 @@ export default function CandidateDashboard() {
                     <thead>
                       <tr className="bg-[#0056d2] text-white">
                         <th className="px-4 py-3 text-left font-semibold">Job Title</th>
-                        <th className="px-4 py-3 text-left font-semibold">Task Action</th>
-                        <th className="px-4 py-3 text-left font-semibold">Date</th>
-                        <th className="px-4 py-3 text-left font-semibold">Documents</th>
+                        <th className="px-4 py-3 text-left font-semibold">Offer</th>
+                        <th className="px-4 py-3 text-left font-semibold">Action</th>
+                        <th className="px-4 py-3 text-left font-semibold">Status</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -486,26 +698,55 @@ export default function CandidateDashboard() {
                             <div className="text-xs text-gray-500">{offer.reference_id}</div>
                           </td>
                           <td className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <button className="px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors">
-                                Accept
+                            {offer.offer_document_url ? (
+                              <button onClick={() => handleDownload(offer.offer_document_url!, `Offer_${offer.reference_id || offer.id}.pdf`)}
+                                className="text-blue-600 underline text-xs hover:text-blue-800 bg-transparent border-none p-0 cursor-pointer">
+                                Download Offer
                               </button>
-                              <button className="px-3 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors">
-                                Reject
-                              </button>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-gray-600">
-                            {offer.date_sent
-                              ? new Date(offer.date_sent).toLocaleDateString("en-US", {
-                                  year: "numeric",
-                                  month: "long",
-                                  day: "numeric",
-                                })
-                              : "—"}
+                            ) : (
+                              <span className="text-xs text-gray-400">—</span>
+                            )}
+                            {offer.signed_document_url && (
+                              <a href={offer.signed_document_url} target="_blank" rel="noopener noreferrer"
+                                className="block text-blue-600 underline text-xs hover:text-blue-800 mt-1">
+                                View Signed
+                              </a>
+                            )}
                           </td>
                           <td className="px-4 py-3">
-                            <span className="text-sm text-gray-600">{offer.documents_count}</span>
+                            {offer.status === "sent" && (
+                              <div className="flex flex-col gap-2">
+                                {uploadedFileIds[offer.id] ? (
+                                  <span className="text-xs text-green-700 font-medium">✅ Signed file uploaded</span>
+                                ) : (
+                                  <button onClick={() => handleUploadSigned(offer.id)} disabled={uploadingId === offer.id}
+                                    className="px-3 py-1 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 disabled:opacity-50">
+                                    {uploadingId === offer.id ? "Uploading..." : "Upload Signed"}
+                                  </button>
+                                )}
+                                <div className="flex gap-2">
+                                  <button onClick={() => handleAccept(offer.id)}
+                                    disabled={!uploadedFileIds[offer.id] || acceptingId === offer.id}
+                                    className="px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    {acceptingId === offer.id ? "Accepting..." : "Accept"}
+                                  </button>
+                                  <button onClick={() => handleDeclineClick(offer.id)}
+                                    className="px-3 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100">
+                                    Reject
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                            {offer.status === "signed" && (
+                              <span className="text-xs text-green-700 font-medium">Accepted</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                              offer.status === "signed" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"
+                            }`}>
+                              {offer.status === "signed" ? "Signed" : "Sent"}
+                            </span>
                           </td>
                         </tr>
                         ))
@@ -514,6 +755,33 @@ export default function CandidateDashboard() {
                   </table>
                 </div>
               </section>
+
+              {/* Decline Modal */}
+              {showDeclineModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/50" onClick={() => setShowDeclineModal(false)} />
+                  <div className="relative z-10 w-full max-w-md mx-4">
+                    <div className="bg-white rounded-lg shadow-xl p-6">
+                      <h2 className="text-lg font-semibold text-blue-600 mb-4">Decline Job Offer</h2>
+                      <p className="text-gray-700 mb-4">Are you sure you want to decline this job offer?</p>
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Reason <span className="text-red-500">*</span></label>
+                        <textarea value={declineReason} onChange={(e) => setDeclineReason(e.target.value)}
+                          className="w-full min-h-[80px] px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Please provide a reason for declining..." required />
+                      </div>
+                      <div className="flex justify-end gap-3">
+                        <Button variant="outline" onClick={() => setShowDeclineModal(false)}
+                          className="bg-white text-blue-600 border-blue-600 hover:bg-blue-50">Cancel</Button>
+                        <Button onClick={handleDeclineConfirm} disabled={!declineReason.trim()}
+                          className="bg-red-600 text-white hover:bg-red-700">
+                          Confirm Decline
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           ) : (
             /* Documents Section */
@@ -522,56 +790,158 @@ export default function CandidateDashboard() {
                 <h2 className="text-lg font-bold text-[#0056d2]">Documents</h2>
                 <div className="flex-1 h-px bg-gray-300" />
               </div>
-              <div className="bg-white rounded-lg shadow-sm border p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex gap-3">
-                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      Submitted
-                    </span>
-                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                      Pending
-                    </span>
-                  </div>
-                  <Button className="bg-[#0056d2] hover:bg-blue-700 text-white">
-                    Submit
-                  </Button>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Document List */}
-                  <div className="space-y-2">
-                    {DOCUMENTS.map((doc) => (
-                      <div
-                        key={doc.id}
-                        className="flex items-start gap-3 p-3 rounded-lg border hover:bg-gray-50 transition-colors"
-                      >
-                        <FileText className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-gray-700 leading-snug">{doc.name}</p>
-                        </div>
-                        {doc.required && (
-                          <span className="text-red-500 text-xs">*</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                className="hidden"
+                onChange={handleDocUpload}
+              />
 
-                  {/* Upload Area */}
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 flex flex-col items-center justify-center text-center hover:bg-gray-50 transition-colors">
-                    <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                      <Upload className="h-8 w-8 text-gray-400" />
+              {docsLoading ? (
+                <div className="text-center py-12 text-gray-500">Loading documents...</div>
+              ) : (
+                <div className="flex gap-4 h-[600px]">
+                  {/* Left Panel - Document List */}
+                  <div className="w-80 flex-shrink-0 bg-white rounded-lg border overflow-hidden flex flex-col">
+                    <div className="p-3 border-b bg-gray-50">
+                      <p className="text-sm font-medium text-gray-700">Required Documents</p>
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">It&apos;s empty here</h3>
-                    <p className="text-sm text-gray-500 mb-4 max-w-xs">
-                      Upload your documents to complete your application requirements
-                    </p>
-                    <Button variant="outline" className="text-blue-600 border-blue-600 hover:bg-blue-50">
-                      <Upload className="h-4 w-4 mr-2" />
-                      Add File
-                    </Button>
+                    <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                      {REQUIRED_DOCUMENTS.map((docReq) => {
+                        const uploadedDoc = documents.find((d) =>
+                          docReq.keywords.some((kw) =>
+                            (d.original_filename || d.filename).toLowerCase().includes(kw),
+                          ),
+                        );
+                        const isSelected = selectedDocReq?.label === docReq.label;
+                        return (
+                          <button
+                            key={docReq.label}
+                            onClick={() => setSelectedDocReq(docReq)}
+                            className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${
+                              isSelected
+                                ? "bg-orange-50 border border-orange-200"
+                                : "hover:bg-gray-50 border border-transparent"
+                            }`}
+                          >
+                            <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+                              <FileText className="h-5 w-5 text-white" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-sm font-medium truncate ${
+                                uploadedDoc ? "text-emerald-700" : "text-orange-600"
+                              }`}>
+                                {docReq.label}
+                              </p>
+                              {uploadedDoc && (
+                                <p className="text-xs text-emerald-600 truncate">
+                                  {uploadedDoc.original_filename || uploadedDoc.filename}
+                                </p>
+                              )}
+                            </div>
+                            <span className="text-red-500 text-sm flex-shrink-0">*</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Right Panel - Preview/Upload */}
+                  <div className="flex-1 bg-white rounded-lg border overflow-hidden flex flex-col">
+                    {selectedDocReq ? (() => {
+                      const uploadedDoc = documents.find((d) =>
+                        selectedDocReq.keywords.some((kw) =>
+                          (d.original_filename || d.filename).toLowerCase().includes(kw),
+                        ),
+                      );
+                      return (
+                        <>
+                          <div className="p-4 border-b bg-gray-50 flex items-center justify-between">
+                            <div>
+                              <h3 className="font-semibold text-gray-900">{selectedDocReq.label}</h3>
+                              {uploadedDoc && (
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                  Uploaded: {uploadedDoc.original_filename || uploadedDoc.filename}
+                                </p>
+                              )}
+                            </div>
+                            {uploadedDoc && (
+                              <div className="flex gap-2">
+                                <a href={uploadedDoc.file_url} target="_blank" rel="noopener noreferrer">
+                                  <Button size="sm" variant="outline" className="text-xs">
+                                    <Download className="h-3 w-3 mr-1" />
+                                    Download
+                                  </Button>
+                                </a>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-red-500 hover:text-red-700 hover:bg-red-50 text-xs"
+                                  onClick={() => {
+                                    deleteDocMutation.mutate(uploadedDoc.id, {
+                                      onSuccess: () => {
+                                        setTimeout(() => fileInputRef.current?.click(), 300);
+                                      },
+                                    });
+                                  }}
+                                >
+                                  <Trash2 className="h-3 w-3 mr-1" />
+                                  Delete
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs"
+                                  onClick={() => fileInputRef.current?.click()}
+                                >
+                                  <Upload className="h-3 w-3 mr-1" />
+                                  Replace
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 overflow-auto p-4">
+                            {uploadedDoc ? (
+                              uploadedDoc.file_url.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/) ? (
+                                <img
+                                  src={uploadedDoc.file_url}
+                                  alt={uploadedDoc.original_filename}
+                                  className="w-full h-auto rounded border"
+                                />
+                              ) : (
+                                <iframe
+                                  src={uploadedDoc.file_url}
+                                  className="w-full h-full min-h-[500px] rounded border"
+                                  title={uploadedDoc.original_filename}
+                                />
+                              )
+                            ) : (
+                              <div className="flex flex-col items-center justify-center h-full border-2 border-dashed border-gray-300 rounded-lg">
+                                <FileText className="h-12 w-12 text-gray-300 mb-3" />
+                                <p className="text-gray-500 mb-4">No document uploaded yet</p>
+                                <Button
+                                  onClick={() => fileInputRef.current?.click()}
+                                  className="bg-[#0056d2] hover:bg-blue-700 text-white"
+                                >
+                                  <Upload className="h-4 w-4 mr-2" />
+                                  Upload Document
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      );
+                    })() : (
+                      <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                        <FileText className="h-16 w-16 mb-3" />
+                        <p className="text-lg">Select a document to preview</p>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
+              )}
             </section>
           )}
         </div>

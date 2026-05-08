@@ -5,9 +5,11 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { ArrowLeft, BarChart3, Download, FileText, Loader2, Search } from "lucide-react";
+import {
+  ArrowLeft, BarChart3, CheckCircle, Download, FileText, Loader2, Plus, Search, Settings, Trash2, X, XCircle,
+} from "lucide-react";
 import { toast } from "react-toastify";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   Avatar,
@@ -128,8 +130,60 @@ interface SendAssessmentPreview {
   recipient_name: string;
 }
 
+interface PreonboardingCandidate {
+  id: number;
+  candidate_name: string;
+  job_title: string;
+  photo_url?: string | null;
+  signed_offer_uploaded: boolean;
+  requirements_submitted: number;
+  requirements_required: number;
+  requirements_required_submitted: number;
+  requirements_total: number;
+}
 
+interface TemplateItem {
+  key: string;
+  label: string;
+  required: boolean;
+  order: number;
+  file_url?: string | null;
+  filename?: string | null;
+  status?: string;
+}
 
+interface RequirementItem {
+  requirement_key: string;
+  requirement_label: string;
+  required: boolean;
+  status: string;
+  version: number;
+  original_filename: string;
+  file_id: number | null;
+  file_url?: string | null;
+  filename?: string | null;
+  carry_over_to_onboarding: boolean;
+  submitted_at: string | null;
+}
+
+const STANDARD_PREONBOARDING_REQUIREMENTS: { label: string; required: boolean }[] = [
+  { label: "Valid NBI Clearance or Police Clearance", required: true },
+  { label: "Medical Certificate", required: true },
+  { label: "Certificate of Employment (COE)", required: true },
+  { label: "Income Tax Return (ITR 2316)", required: true },
+  { label: "Barangay Clearance", required: true },
+  { label: "Photocopy of Dependents Birth Certificate (if applicable)", required: true },
+  { label: "Photocopy of Marriage Contract (if applicable)", required: true },
+  { label: "Photocopy of Birth Certificate", required: true },
+  { label: "Photocopy of BIR ID / TIN Card", required: true },
+  { label: "Photocopy of SSS ID / E1 Form", required: false },
+  { label: "Photocopy of Philhealth Card", required: false },
+  { label: "Photocopy of Pag-ibig ID / Certificate / Record of Contribution", required: false },
+  { label: "2 pieces of 2×2 size photo", required: false },
+  { label: "2 pieces of 1×1 size photo", required: false },
+  { label: "Photocopy of SSS and Pag-ibig loan voucher (if with current loan)", required: false },
+  { label: "Photocopy of other Government-Issued IDs", required: false },
+];
 
 interface InterviewScheduleFormState {
   scheduledDate: string;
@@ -401,6 +455,18 @@ export default function PipelineApplicants() {
     resumeUrl?: string;
   } | null>(null);
 
+  // Preonboarding state
+  const [showPreOnboardingTemplateModal, setShowPreOnboardingTemplateModal] = useState(false);
+  const [preOnboardingTemplateItems, setPreOnboardingTemplateItems] = useState<TemplateItem[]>([]);
+  const [newPreOnboardingTemplateItem, setNewPreOnboardingTemplateItem] = useState("");
+
+  const [showPreOnboardingCandidateModal, setShowPreOnboardingCandidateModal] = useState(false);
+  const [selectedPreOnboardingCandidateId, setSelectedPreOnboardingCandidateId] = useState<number | null>(null);
+  const [preOnboardingCandidateItems, setPreOnboardingCandidateItems] = useState<TemplateItem[]>([]);
+  const [newPreOnboardingCandidateItem, setNewPreOnboardingCandidateItem] = useState("");
+  const [submissionDate, setSubmissionDate] = useState("");
+  const [reportDate, setReportDate] = useState("");
+
   const { data: jobDetail, isLoading, isError, refetch } = useJobDetailQuery(jobId);
   const { data: offersData } = useJobOffersQuery();
   const jobOffers = Array.isArray(offersData) ? offersData : [];
@@ -486,6 +552,79 @@ export default function PipelineApplicants() {
   const showResumeColumn = selectedType === "resume_screening";
 
   const isInterviewWithAssessments = isInterviewScheduleStage && stepAssessments.length > 0;
+
+  // Preonboarding step detection
+  const preonboardingPipelineStep = useMemo(
+    () => pipelineSteps.find((s) => s.process_type === "pre_onboarding"),
+    [pipelineSteps],
+  );
+
+  const isPreonboardingInterviewer = useMemo(() => {
+    if (!preonboardingPipelineStep) return false;
+    return preonboardingPipelineStep.interviewerId === user?.id;
+  }, [preonboardingPipelineStep, user?.id]);
+
+  // Fetch global template for preonboarding
+  const { data: preonboardingTemplateData } = useQuery({
+    queryKey: ["preonboarding-template", preonboardingPipelineStep?.id],
+    queryFn: async () => {
+      if (!preonboardingPipelineStep?.id) return { requirements: [] };
+      const res = await axiosPrivate.get(`/api/candidate/preonboarding/pipeline-steps/${preonboardingPipelineStep.id}/template/`);
+      return res.data as { requirements: TemplateItem[] };
+    },
+    enabled: !!preonboardingPipelineStep?.id,
+  });
+
+  // Fetch candidates at preonboarding
+  const { data: preonboardingCandidates = [], isLoading: preonboardingCandidatesLoading } = useQuery({
+    queryKey: ["preonboarding-candidates", jobId],
+    queryFn: async () => {
+      if (!jobId) return [];
+      const res = await axiosPrivate.get(`/api/candidate/preonboarding/candidates/?job_posting_id=${jobId}`);
+      return res.data as PreonboardingCandidate[];
+    },
+    enabled: selectedType === "pre_onboarding" && !!jobId,
+  });
+
+  // Save global template
+  const savePreonboardingTemplateMutation = useMutation({
+    mutationFn: async (items: TemplateItem[]) => {
+      await axiosPrivate.put(`/api/candidate/preonboarding/pipeline-steps/${preonboardingPipelineStep.id}/template/`, {
+        requirements: items,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["preonboarding-template", preonboardingPipelineStep?.id] });
+      setShowPreOnboardingTemplateModal(false);
+    },
+  });
+
+  // Save candidate requirements
+  const savePreonboardingCandidateReqsMutation = useMutation({
+    mutationFn: async ({ appId, items }: { appId: number; items: TemplateItem[] }) => {
+      await axiosPrivate.put(`/api/candidate/preonboarding/candidates/${appId}/requirements/`, {
+        requirements: items,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["preonboarding-candidates", jobId] });
+      setShowPreOnboardingCandidateModal(false);
+    },
+  });
+
+  // Pass/Fail for preonboarding
+  const preonboardingPassFailMutation = useMutation({
+    mutationFn: async ({ candidateAppId, stepId, outcome }: { candidateAppId: number; stepId: number; outcome: string }) => {
+      await axiosPrivate.post("/api/candidate/pipeline/progress/", {
+        candidate_application_id: candidateAppId,
+        pipeline_step_id: stepId,
+        outcome,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["preonboarding-candidates", jobId] });
+    },
+  });
 
   const resolvePhotoUrl = (rawUrl?: string) => {
     if (!rawUrl) {
@@ -617,6 +756,102 @@ export default function PipelineApplicants() {
 
   const handleTypeChange = (nextType: string) => {
     setSearchParams({ type: nextType });
+  };
+
+  // Preonboarding helper functions
+  const openPreOnboardingTemplateModal = () => {
+    if (preonboardingTemplateData?.requirements?.length) {
+      setPreOnboardingTemplateItems(
+        preonboardingTemplateData.requirements.map((r, i) => ({ ...r, order: r.order ?? i })),
+      );
+    } else {
+      setPreOnboardingTemplateItems(
+        STANDARD_PREONBOARDING_REQUIREMENTS.map((r, i) => ({
+          key: `req-${i}`,
+          label: r.label,
+          required: r.required,
+          order: i,
+        })),
+      );
+    }
+    setShowPreOnboardingTemplateModal(true);
+  };
+
+  const addPreOnboardingTemplateItem = () => {
+    if (!newPreOnboardingTemplateItem.trim()) return;
+    const key = `req-${Date.now()}`;
+    setPreOnboardingTemplateItems([
+      ...preOnboardingTemplateItems,
+      { key, label: newPreOnboardingTemplateItem.trim(), required: true, order: preOnboardingTemplateItems.length },
+    ]);
+    setNewPreOnboardingTemplateItem("");
+  };
+
+  const removePreOnboardingTemplateItem = (key: string) => {
+    setPreOnboardingTemplateItems(preOnboardingTemplateItems.filter((t) => t.key !== key));
+  };
+
+  const togglePreOnboardingTemplateRequired = (key: string) => {
+    setPreOnboardingTemplateItems(
+      preOnboardingTemplateItems.map((t) => (t.key === key ? { ...t, required: !t.required } : t)),
+    );
+  };
+
+  const openPreOnboardingCandidateModal = async (candidate: PreonboardingCandidate) => {
+    setSelectedPreOnboardingCandidateId(candidate.id);
+    try {
+      const res = await axiosPrivate.get(`/api/candidate/preonboarding/candidates/${candidate.id}/requirements/`);
+      const data = res.data;
+      const items: TemplateItem[] = (data.requirements || []).map((r: RequirementItem, i: number) => ({
+        key: r.requirement_key,
+        label: r.requirement_label,
+        required: r.required,
+        order: i,
+        file_url: r.file_url,
+        filename: r.filename,
+        status: r.status,
+      }));
+      setPreOnboardingCandidateItems(
+        items.length
+          ? items
+          : STANDARD_PREONBOARDING_REQUIREMENTS.map((r, i) => ({
+              key: `req-${i}`,
+              label: r.label,
+              required: r.required,
+              order: i,
+            })),
+      );
+    } catch {
+      setPreOnboardingCandidateItems(
+        STANDARD_PREONBOARDING_REQUIREMENTS.map((r, i) => ({
+          key: `req-${i}`,
+          label: r.label,
+          required: r.required,
+          order: i,
+        })),
+      );
+    }
+    setShowPreOnboardingCandidateModal(true);
+  };
+
+  const addPreOnboardingCandidateItem = () => {
+    if (!newPreOnboardingCandidateItem.trim()) return;
+    const key = `req-${Date.now()}`;
+    setPreOnboardingCandidateItems([
+      ...preOnboardingCandidateItems,
+      { key, label: newPreOnboardingCandidateItem.trim(), required: true, order: preOnboardingCandidateItems.length },
+    ]);
+    setNewPreOnboardingCandidateItem("");
+  };
+
+  const removePreOnboardingCandidateItem = (key: string) => {
+    setPreOnboardingCandidateItems(preOnboardingCandidateItems.filter((t) => t.key !== key));
+  };
+
+  const togglePreOnboardingCandidateRequired = (key: string) => {
+    setPreOnboardingCandidateItems(
+      preOnboardingCandidateItems.map((t) => (t.key === key ? { ...t, required: !t.required } : t)),
+    );
   };
 
   const handleOpenStatusPage = () => {
@@ -1554,6 +1789,155 @@ export default function PipelineApplicants() {
                     )
                   }
                 />
+              ) : selectedType === "pre_onboarding" ? (
+                <div className="mt-4 rounded-md border bg-white overflow-x-auto w-full">
+                  <div className="p-4 border-b flex items-center justify-end gap-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2"
+                      onClick={openPreOnboardingTemplateModal}
+                      disabled={!preonboardingPipelineStep || !isPreonboardingInterviewer}
+                      title={!isPreonboardingInterviewer ? "Only the assigned interviewer can configure the template." : undefined}
+                    >
+                      <Settings className="h-4 w-4" />
+                      Configure Global Template
+                    </Button>
+                  </div>
+
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-20 text-center">ID</TableHead>
+                        <TableHead className="w-48">Full Name</TableHead>
+                        <TableHead className="w-48">Position</TableHead>
+                        <TableHead className="w-40 text-center">Signed Offer</TableHead>
+                        <TableHead className="w-40 text-center">Documents</TableHead>
+                        <TableHead className="w-56 text-center">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {preonboardingCandidatesLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                            <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                          </TableCell>
+                        </TableRow>
+                      ) : preonboardingCandidates.filter((a) =>
+                        a.candidate_name?.toLowerCase().includes(searchTerm.toLowerCase())
+                      ).length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                            No applicants found.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        preonboardingCandidates
+                          .filter((a) =>
+                            a.candidate_name?.toLowerCase().includes(searchTerm.toLowerCase())
+                          )
+                          .map((applicant) => {
+                            const canPass =
+                              applicant.signed_offer_uploaded &&
+                              applicant.requirements_required_submitted === applicant.requirements_required;
+                            const isDisabled = !isPreonboardingInterviewer;
+                            return (
+                              <TableRow key={applicant.id}>
+                                <TableCell className="text-center">{applicant.id}</TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <Avatar className="h-8 w-8">
+                                      <AvatarImage src={resolvePhotoUrl(applicant.photo_url) || undefined} />
+                                      <AvatarFallback>
+                                        {applicant.candidate_name?.split(" ").map((n) => n[0]).join("") || "?"}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <span className="font-medium text-sm">{applicant.candidate_name}</span>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-sm">{applicant.job_title}</TableCell>
+                                <TableCell className="text-center">
+                                  {applicant.signed_offer_uploaded ? (
+                                    <div className="flex items-center justify-center gap-2">
+                                      <CheckCircle className="h-4 w-4 text-green-600" />
+                                      <span className="text-xs text-green-700">Uploaded</span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs text-gray-400">Not uploaded</span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <span className="text-sm">
+                                    {applicant.requirements_required_submitted}/{applicant.requirements_required}
+                                  </span>
+                                  <div className="w-full bg-gray-200 rounded-full h-2 mt-1 max-w-[80px] mx-auto">
+                                    <div
+                                      className="bg-blue-600 h-2 rounded-full"
+                                      style={{
+                                        width: `${applicant.requirements_required > 0 ? (applicant.requirements_required_submitted / applicant.requirements_required) * 100 : 0}%`,
+                                      }}
+                                    />
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <div className="flex gap-2 justify-center">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="text-xs"
+                                      onClick={() => openPreOnboardingCandidateModal(applicant)}
+                                      disabled={isDisabled}
+                                      title={isDisabled ? "Only the assigned interviewer can configure." : undefined}
+                                    >
+                                      <Settings className="h-3 w-3 mr-1" />
+                                      Config
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      className="bg-green-600 hover:bg-green-700 text-white"
+                                      disabled={!canPass || isDisabled}
+                                      title={isDisabled ? "Only the assigned interviewer can pass." : undefined}
+                                      onClick={() => {
+                                        if (preonboardingPipelineStep?.id) {
+                                          preonboardingPassFailMutation.mutate({
+                                            candidateAppId: applicant.id,
+                                            stepId: preonboardingPipelineStep.id,
+                                            outcome: "pass",
+                                          });
+                                        }
+                                      }}
+                                    >
+                                      <CheckCircle className="h-4 w-4 mr-1" />
+                                      Pass
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="text-red-600 border-red-300 hover:bg-red-50"
+                                      disabled={isDisabled}
+                                      title={isDisabled ? "Only the assigned interviewer can fail." : undefined}
+                                      onClick={() => {
+                                        if (preonboardingPipelineStep?.id) {
+                                          preonboardingPassFailMutation.mutate({
+                                            candidateAppId: applicant.id,
+                                            stepId: preonboardingPipelineStep.id,
+                                            outcome: "fail",
+                                          });
+                                        }
+                                      }}
+                                    >
+                                      <XCircle className="h-4 w-4 mr-1" />
+                                      Fail
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
               ) : selectedType === "for_job_offer" ? (
                 <JobOfferPipelineTable
                   pipelineSteps={pipelineSteps.filter((s) => s.process_type === "for_job_offer")}
@@ -2785,6 +3169,270 @@ export default function PipelineApplicants() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Global Preonboarding Template Modal */}
+      {showPreOnboardingTemplateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowPreOnboardingTemplateModal(false)} />
+          <div className="relative z-10 w-full max-w-lg mx-4">
+            <div className="bg-white rounded-lg shadow-xl">
+              {/* Header */}
+              <div className="relative px-6 pt-6 pb-4 border-b border-blue-500">
+                <button
+                  onClick={() => setShowPreOnboardingTemplateModal(false)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+                <h2 className="text-xl font-bold text-[#0056d2] text-center">
+                  Send Requirements
+                </h2>
+              </div>
+
+              {/* Body */}
+              <div className="px-6 py-5 max-h-[70vh] overflow-y-auto">
+                <p className="text-sm font-semibold text-gray-900 mb-3">Requirement list:</p>
+                <div className="space-y-2 mb-4 max-h-64 overflow-y-auto">
+                  {preOnboardingTemplateItems.map((item) => (
+                    <div key={item.key} className="flex items-center justify-between p-1">
+                      <label className="flex items-center gap-3 cursor-pointer flex-1">
+                        <input
+                          type="checkbox"
+                          checked={item.required}
+                          onChange={() => togglePreOnboardingTemplateRequired(item.key)}
+                          className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                          disabled={!isPreonboardingInterviewer}
+                        />
+                        <span className="text-sm text-gray-700">{item.label}</span>
+                      </label>
+                      <button
+                        onClick={() => removePreOnboardingTemplateItem(item.key)}
+                        className="text-gray-400 hover:text-red-500 ml-2"
+                        disabled={!isPreonboardingInterviewer}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add Row */}
+                <div className="flex gap-2 mb-2">
+                  <Input
+                    placeholder="Add requirement"
+                    value={newPreOnboardingTemplateItem}
+                    onChange={(e) => setNewPreOnboardingTemplateItem(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addPreOnboardingTemplateItem()}
+                    disabled={!isPreonboardingInterviewer}
+                    className="text-sm"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={addPreOnboardingTemplateItem}
+                    disabled={!isPreonboardingInterviewer}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add
+                  </Button>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowPreOnboardingTemplateModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-[#0056d2] hover:bg-blue-700 text-white"
+                  onClick={() => savePreonboardingTemplateMutation.mutate(preOnboardingTemplateItems)}
+                  disabled={!isPreonboardingInterviewer}
+                >
+                  Confirm
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Per-Candidate Preonboarding Config Modal */}
+      {showPreOnboardingCandidateModal && selectedPreOnboardingCandidateId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowPreOnboardingCandidateModal(false)} />
+          <div className="relative z-10 w-full max-w-lg mx-4">
+            <div className="bg-white rounded-lg shadow-xl">
+              {/* Header */}
+              <div className="relative px-6 pt-6 pb-4 border-b border-blue-500">
+                <button
+                  onClick={() => setShowPreOnboardingCandidateModal(false)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+                <h2 className="text-xl font-bold text-[#0056d2] text-center">
+                  Send Requirements
+                </h2>
+                <div className="absolute top-4 left-4">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      setPreOnboardingCandidateItems(
+                        STANDARD_PREONBOARDING_REQUIREMENTS.map((r, i) => ({
+                          key: `req-${i}`,
+                          label: r.label,
+                          required: r.required,
+                          order: i,
+                        })),
+                      )
+                    }
+                    className="text-xs"
+                    disabled={!isPreonboardingInterviewer}
+                  >
+                    Load Standard
+                  </Button>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="px-6 py-5 max-h-[70vh] overflow-y-auto">
+                {/* Date Fields */}
+                <div className="space-y-4 mb-6">
+                  <div className="flex items-center gap-4">
+                    <label className="text-sm font-semibold text-gray-900 w-36 shrink-0">
+                      Submission Date <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative flex-1">
+                      <input
+                        type="date"
+                        value={submissionDate}
+                        onChange={(e) => setSubmissionDate(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        disabled={!isPreonboardingInterviewer}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <label className="text-sm font-semibold text-gray-900 w-36 shrink-0">
+                      Report Date <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative flex-1">
+                      <input
+                        type="datetime-local"
+                        value={reportDate}
+                        onChange={(e) => setReportDate(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        disabled={!isPreonboardingInterviewer}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Requirement List */}
+                <p className="text-sm font-semibold text-gray-900 mb-3">Requirement list:</p>
+                <div className="space-y-2 mb-4 max-h-64 overflow-y-auto">
+                  {preOnboardingCandidateItems.map((item) => (
+                    <div key={item.key} className="flex items-center justify-between p-1">
+                      <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                        <input
+                          type="checkbox"
+                          checked={item.required}
+                          onChange={() => togglePreOnboardingCandidateRequired(item.key)}
+                          className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 shrink-0"
+                          disabled={!isPreonboardingInterviewer}
+                        />
+                        <span className="text-sm text-gray-700 truncate">{item.label}</span>
+                      </label>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {item.file_url && (
+                          <a
+                            href={item.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800"
+                            title={item.filename || "View file"}
+                          >
+                            <FileText className="h-4 w-4" />
+                          </a>
+                        )}
+                        <span className={`text-xs px-1.5 py-0.5 rounded ${
+                          item.status === "submitted" || item.status === "verified"
+                            ? "bg-green-100 text-green-700"
+                            : item.status === "stale"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-gray-100 text-gray-500"
+                        }`}>
+                          {item.status === "submitted" ? "Submitted" :
+                           item.status === "verified" ? "Verified" :
+                           item.status === "stale" ? "Stale" :
+                           item.status === "carried_over" ? "Carried Over" :
+                           "Pending"}
+                        </span>
+                        <button
+                          onClick={() => removePreOnboardingCandidateItem(item.key)}
+                          className="text-gray-400 hover:text-red-500"
+                          disabled={!isPreonboardingInterviewer}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add Row */}
+                <div className="flex gap-2 mb-2">
+                  <Input
+                    placeholder="Add requirement"
+                    value={newPreOnboardingCandidateItem}
+                    onChange={(e) => setNewPreOnboardingCandidateItem(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addPreOnboardingCandidateItem()}
+                    disabled={!isPreonboardingInterviewer}
+                    className="text-sm"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={addPreOnboardingCandidateItem}
+                    disabled={!isPreonboardingInterviewer}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add
+                  </Button>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowPreOnboardingCandidateModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-[#0056d2] hover:bg-blue-700 text-white"
+                  onClick={() => {
+                    if (selectedPreOnboardingCandidateId) {
+                      savePreonboardingCandidateReqsMutation.mutate({
+                        appId: selectedPreOnboardingCandidateId,
+                        items: preOnboardingCandidateItems,
+                      });
+                    }
+                  }}
+                  disabled={!isPreonboardingInterviewer}
+                >
+                  Confirm
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -96,4 +96,12 @@ export const queryKeys = {
     list: (candidateId?: number) =>
       [...queryKeys.jobOffers.all, "list", candidateId ?? "all"] as const,
   },
+  documents: {
+    all: ["documents"] as const,
+    list: () => [...queryKeys.documents.all, "list"] as const,
+  },
+  preonboarding: {
+    all: ["preonboarding"] as const,
+    data: () => [...queryKeys.preonboarding.all, "data"] as const,
+  },
 } as const;

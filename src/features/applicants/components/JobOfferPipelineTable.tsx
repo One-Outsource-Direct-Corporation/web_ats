@@ -27,7 +27,9 @@ import { Label } from "@/shared/components/ui/label.tsx";
 import { X, Eye, Loader2, Search } from "lucide-react";
 import { toast } from "react-toastify";
 import { useConfigureJobOffer, useSendJobOffer, useRescindJobOffer } from "@/features/applicants/hooks/useJobOffers";
+import { useDeferredAction } from "@/features/applicants/hooks/useDeferredAction";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import { getProcessTypeLabel } from "@/features/jobs/utils/jobFormatters";
 import type { JobOffer } from "@/features/applicants/types/jobOffer.types";
 import type { JobPipelineStep, JobPipelineCandidate } from "@/features/jobs/types/job.types";
@@ -519,9 +521,9 @@ function RejectOfferModal({ isOpen, onClose, applicantName, onReject, loading }:
   );
 }
 
-function RescindOfferModal({ isOpen, onClose, applicantName, onRescind, loading }: {
+function RescindOfferModal({ isOpen, onClose, applicantName, onRescind, loading, isSigned }: {
   isOpen: boolean; onClose: () => void; applicantName: string;
-  onRescind: (reason: string, remarks: string) => void; loading?: boolean;
+  onRescind: (reason: string, remarks: string) => void; loading?: boolean; isSigned?: boolean;
 }) {
   const [reason, setReason] = useState("");
   const [remarks, setRemarks] = useState("");
@@ -534,6 +536,11 @@ function RescindOfferModal({ isOpen, onClose, applicantName, onRescind, loading 
         <div className="bg-white rounded-lg shadow-xl p-6">
           <div className="mb-6 text-center">
             <h2 className="text-2xl font-semibold text-blue-600 mb-2">Rescind Job Offer</h2>
+            {isSigned && (
+              <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded p-3 mb-4">
+                ⚠️ This candidate has already signed the job offer. Rescinding will cancel the current offer. You can create and send a new offer afterwards.
+              </div>
+            )}
             <p className="text-gray-700 mb-4">Are you sure you want to rescind the offer made to {applicantName}?</p>
           </div>
           <hr className="border-blue-600 border-t-2 mb-6" />
@@ -614,6 +621,8 @@ export default function JobOfferPipelineTable({
   jobDetail,
 }: JobOfferPipelineTableProps) {
   const { user } = useAuth();
+  const axiosPrivate = useAxiosPrivate();
+  const { queueAction, processingId } = useDeferredAction();
   const [searchTerm, setSearchTerm] = useState("");
   const configureMutation = useConfigureJobOffer();
   const sendMutation = useSendJobOffer();
@@ -763,6 +772,25 @@ ${companyName}`;
     await handleRescind(reason, remarks);
   }
 
+  function handlePass(candidate: typeof selectedCandidate) {
+    if (!candidate || !candidate.pipelineStepId) return;
+    queueAction({
+      candidateName: candidate.name,
+      label: "Pass",
+      dedupKey: `progress-${candidate.candidateApplicationId}-${candidate.pipelineStepId}`,
+      candidateId: candidate.candidateApplicationId,
+      onCommit: async () => {
+        await axiosPrivate.post("/api/candidate/pipeline/progress/", {
+          candidate_application_id: candidate.candidateApplicationId,
+          pipeline_step_id: candidate.pipelineStepId,
+          outcome: "pass",
+        });
+        toast.success(`${candidate.name} passed to next stage.`);
+        onRefetch?.();
+      },
+    });
+  }
+
   async function handleSendJobOffer() {
     if (!selectedCandidate?.offer) return;
     setActionLoading(true);
@@ -838,6 +866,21 @@ ${companyName}`;
                         onClick={() => handleOpenPreview(candidate)}>
                         <Eye className="h-3 w-3 mr-1" />View Doc
                       </Button>
+                      {candidate.offer?.status === "signed" && candidate.offer.signed_document_url && (
+                        <Button variant="outline" size="sm"
+                          className="h-10 bg-white text-blue-700 border border-blue-400 hover:bg-blue-400 hover:text-white rounded-lg px-3 py-1 text-xs"
+                          onClick={() => window.open(candidate.offer!.signed_document_url, "_blank")}>
+                          View Signed
+                        </Button>
+                      )}
+                      {candidate.offer?.status === "signed" && (
+                        <Button size="sm"
+                          className="h-10 bg-green-600 text-white hover:bg-green-700 rounded-lg px-3 py-1 text-xs"
+                          disabled={!!processingId}
+                          onClick={() => handlePass(candidate)}>
+                          Pass
+                        </Button>
+                      )}
                       {candidate.offer && candidate.offer.status !== "rescinded" && (
                         <Button variant="outline" size="sm"
                           onClick={() => { setSelectedCandidate(candidate); setIsRescindOfferOpen(true); }}
@@ -845,12 +888,15 @@ ${companyName}`;
                           Rescind Offer
                         </Button>
                       )}
-                      {candidate.offer && (candidate.offer.status === "sent" || candidate.offer.status === "signed") && (
+                      {candidate.offer?.status === "signed" && (
                         <Button variant="outline" size="sm"
                           onClick={() => { setSelectedCandidate(candidate); setIsRejectOfferOpen(true); }}
                           className="h-10 bg-white text-red-700 border border-red-400 hover:bg-red-400 hover:text-white rounded-lg px-3 py-1 text-xs">
                           Reject
                         </Button>
+                      )}
+                      {candidate.offer?.status === "sent" && (
+                        <span className="text-xs text-gray-400 italic">Awaiting signature</span>
                       )}
                     </div>
                   </TableCell>
@@ -900,7 +946,8 @@ ${companyName}`;
 
       <RescindOfferModal isOpen={isRescindOfferOpen}
         onClose={() => setIsRescindOfferOpen(false)}
-        applicantName={selectedCandidate?.name ?? ""} onRescind={handleRescind} loading={actionLoading} />
+        applicantName={selectedCandidate?.name ?? ""} onRescind={handleRescind} loading={actionLoading}
+        isSigned={selectedCandidate?.offer?.status === "signed"} />
 
       <SendConfirmModal isOpen={isSendConfirmOpen}
         onClose={() => setIsSendConfirmOpen(false)}
