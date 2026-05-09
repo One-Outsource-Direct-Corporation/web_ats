@@ -7,4 +7,5 @@ export interface Applicant {
   department?: string;
   type?: string; // employment type
   avatar?: string;
+  photo_url?: string;
 }

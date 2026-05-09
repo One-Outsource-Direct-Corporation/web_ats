@@ -20,16 +20,20 @@ import {
 import { Badge } from "@/shared/components/ui/badge";
 import { Separator } from "@/shared/components/ui/separator";
 import { FolderSearch, FolderSearch2 } from "lucide-react";
-import { jobData } from "../data/jobData";
-import { ongoingProcesses } from "../data/ongoingProcesses";
 import type { StatusType } from "../types/upcoming_events.types";
+import type { JobData } from "../types/upcoming_events.types";
+import type { OngoingProcess } from "../types/upcoming_events.types";
 
 interface RecruitmentSectionProps {
   getStatusColor: (status: StatusType) => string;
+  jobData: JobData[];
+  ongoingProcesses: OngoingProcess[];
 }
 
 export function RecruitmentSection({
   getStatusColor,
+  jobData,
+  ongoingProcesses,
 }: RecruitmentSectionProps) {
   return (
     <Card className="h-fit relative">

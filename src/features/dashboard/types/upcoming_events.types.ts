@@ -32,6 +32,15 @@ export interface WeekDay {
   day: string;
   date: string;
   events: Event[];
+  isCurrentDay?: boolean;
+  isCurrentMonth?: boolean;
+  fullDate?: string;
+}
+
+export interface CalendarMonth {
+  month: string;
+  year: number;
+  days: WeekDay[];
 }
 
 export interface Metric {

@@ -14,7 +14,7 @@ const PROCESS_TYPE_LABELS: Record<string, string> = {
   assessments: "Assessments",
   final_interview: "Final Interview",
   for_job_offer: "For Job Offer",
-  pre_onboarding: "Requirements Sent",
+  pre_onboarding: "Pre-Onboarding",
   onboarding: "Onboarding",
   failed: "Failed",
 };
@@ -37,7 +37,7 @@ const PROCESS_TYPE_ROUTE_SEGMENTS: Record<
     segment: "preonboarding",
     customFinalStage: false,
   },
-  onboarding: { segment: "Onboarding", customFinalStage: true },
+  onboarding: { segment: "onboarding", customFinalStage: false },
   failed: { segment: "Failed", customFinalStage: true },
 };
 

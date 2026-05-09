@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { queryKeys } from "@/shared/query-keys";
+import { REQUIRED_DOCUMENTS, DOCUMENT_TYPE_LABELS, type CandidateDocument, type RequiredDocument } from "@/features/candidate/constants/requiredDocuments";
 import {
   Search,
   Briefcase,
@@ -79,14 +80,6 @@ interface CalendarEvent {
   type: "interview" | "exam" | "orientation";
 }
 
-interface CandidateDocument {
-  id: number;
-  original_filename: string;
-  filename: string;
-  file_url: string;
-  created_at: string;
-}
-
 interface DashboardData {
   first_name: string;
   last_name: string;
@@ -97,22 +90,6 @@ interface DashboardData {
   tasks: Task[];
   offers: JobOffer[];
 }
-
-interface RequiredDocument {
-  label: string;
-  keywords: string[];
-}
-
-const REQUIRED_DOCUMENTS: RequiredDocument[] = [
-  { label: "NBI Clearance", keywords: ["nbi", "clearance"] },
-  { label: "Police Clearance", keywords: ["police", "clearance"] },
-  { label: "Certificate of Employment (COE)", keywords: ["coe", "certificate of employment", "employment certificate"] },
-  { label: "Income Tax Return (ITR 2316)", keywords: ["itr", "tax return", "2316", "bir"] },
-  { label: "Barangay Clearance", keywords: ["barangay", "clearance"] },
-  { label: "Photocopy of Dependents Birth Certificate", keywords: ["dependent", "birth certificate", "birth cert"] },
-  { label: "Photocopy of Marriage Contract", keywords: ["marriage", "contract", "marriage contract"] },
-  { label: "Photocopy of Birth Certificate", keywords: ["birth certificate", "birth cert", "psa"] },
-];
 
 const STATUS_COLORS: Record<string, string> = {
   received: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -253,6 +230,7 @@ export default function CandidateDashboard() {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("document_type", selectedDocReq?.docType || "");
       await axiosPrivate.post("/api/candidate/me/documents/", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -324,7 +302,7 @@ export default function CandidateDashboard() {
     return {
       id: preonboardingDashboardData.candidate_application_id,
       job_title: app?.job_title || "",
-      assessment_type_label: "Preonboarding Requirements",
+      assessment_type_label: "Requirements Sent",
       task_status: taskStatus,
       scheduled_date: "",
       candidate_application_id: preonboardingDashboardData.candidate_application_id,
@@ -810,11 +788,7 @@ export default function CandidateDashboard() {
                     </div>
                     <div className="flex-1 overflow-y-auto p-2 space-y-1">
                       {REQUIRED_DOCUMENTS.map((docReq) => {
-                        const uploadedDoc = documents.find((d) =>
-                          docReq.keywords.some((kw) =>
-                            (d.original_filename || d.filename).toLowerCase().includes(kw),
-                          ),
-                        );
+                        const uploadedDoc = documents.find((d) => d.document_type === docReq.docType);
                         const isSelected = selectedDocReq?.label === docReq.label;
                         return (
                           <button
@@ -851,11 +825,7 @@ export default function CandidateDashboard() {
                   {/* Right Panel - Preview/Upload */}
                   <div className="flex-1 bg-white rounded-lg border overflow-hidden flex flex-col">
                     {selectedDocReq ? (() => {
-                      const uploadedDoc = documents.find((d) =>
-                        selectedDocReq.keywords.some((kw) =>
-                          (d.original_filename || d.filename).toLowerCase().includes(kw),
-                        ),
-                      );
+                      const uploadedDoc = documents.find((d) => d.document_type === selectedDocReq.docType);
                       return (
                         <>
                           <div className="p-4 border-b bg-gray-50 flex items-center justify-between">

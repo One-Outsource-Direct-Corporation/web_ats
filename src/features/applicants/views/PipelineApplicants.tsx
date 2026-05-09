@@ -142,6 +142,15 @@ interface PreonboardingCandidate {
   requirements_total: number;
 }
 
+interface OnboardingCandidate {
+  id: number;
+  candidate_name: string;
+  job_title: string;
+  photo_url?: string | null;
+  onboarding_date: string | null;
+  onboarding_email_sent_at: string | null;
+}
+
 interface TemplateItem {
   key: string;
   label: string;
@@ -467,6 +476,20 @@ export default function PipelineApplicants() {
   const [submissionDate, setSubmissionDate] = useState("");
   const [reportDate, setReportDate] = useState("");
 
+  // Onboarding state
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+  const [selectedOnboardingCandidate, setSelectedOnboardingCandidate] = useState<{
+    id: number;
+    candidate_name: string;
+    job_title: string;
+  } | null>(null);
+  const [onboardingDate, setOnboardingDate] = useState("");
+  const [onboardingEmailSubject, setOnboardingEmailSubject] = useState("");
+  const [onboardingEmailBody, setOnboardingEmailBody] = useState("");
+  const [onboardingPreviewOpen, setOnboardingPreviewOpen] = useState(false);
+  const [onboardingPreviewSubject, setOnboardingPreviewSubject] = useState("");
+  const [onboardingPreviewBody, setOnboardingPreviewBody] = useState("");
+
   const { data: jobDetail, isLoading, isError, refetch } = useJobDetailQuery(jobId);
   const { data: offersData } = useJobOffersQuery();
   const jobOffers = Array.isArray(offersData) ? offersData : [];
@@ -612,19 +635,202 @@ export default function PipelineApplicants() {
     },
   });
 
-  // Pass/Fail for preonboarding
-  const preonboardingPassFailMutation = useMutation({
-    mutationFn: async ({ candidateAppId, stepId, outcome }: { candidateAppId: number; stepId: number; outcome: string }) => {
-      await axiosPrivate.post("/api/candidate/pipeline/progress/", {
-        candidate_application_id: candidateAppId,
-        pipeline_step_id: stepId,
-        outcome,
-      });
+  const handlePreonboardingPassFail = (
+    candidateAppId: number,
+    candidateName: string,
+    pipelineStepId: number | undefined,
+    outcome: "pass" | "fail",
+  ) => {
+    if (!pipelineStepId || Number.isNaN(pipelineStepId)) return;
+
+    queueAction({
+      candidateName,
+      label: outcome === "pass" ? "Pass" : "Fail",
+      dedupKey: `preonboarding-progress-${candidateAppId}-${pipelineStepId}`,
+      candidateId: candidateAppId,
+      onCommit: async () => {
+        try {
+          await axiosPrivate.post("/api/candidate/pipeline/progress/", {
+            candidate_application_id: candidateAppId,
+            pipeline_step_id: pipelineStepId,
+            outcome,
+          });
+          toast.success(`${candidateName} marked as ${outcome === "pass" ? "Pass" : "Fail"}.`);
+          queryClient.setQueryData<PreonboardingCandidate[]>(["preonboarding-candidates", jobId], (old) =>
+            old?.filter((c) => c.id !== candidateAppId) ?? []
+          );
+        } catch (error) {
+          console.error("Unable to update preonboarding progress.", error);
+          toast.error("Unable to submit preonboarding progress update.");
+          queryClient.invalidateQueries({ queryKey: ["preonboarding-candidates", jobId] });
+        }
+      },
+    });
+  };
+
+  const isPreonboardingProgressActionDisabled = useCallback(
+    () => {
+      if (processingId !== null) return true;
+      if (!isPreonboardingInterviewer) return true;
+      return false;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["preonboarding-candidates", jobId] });
+    [processingId, isPreonboardingInterviewer],
+  );
+
+  // Onboarding step detection
+  const onboardingPipelineStep = useMemo(
+    () => pipelineSteps.find((s) => s.process_type === "onboarding"),
+    [pipelineSteps],
+  );
+
+  const isOnboardingInterviewer = useMemo(() => {
+    if (!onboardingPipelineStep) return false;
+    return onboardingPipelineStep.interviewerId === user?.id;
+  }, [onboardingPipelineStep, user?.id]);
+
+  // Fetch candidates at onboarding
+  const { data: onboardingCandidates = [], isLoading: onboardingCandidatesLoading } = useQuery({
+    queryKey: ["onboarding-candidates", jobId],
+    queryFn: async () => {
+      if (!jobId) return [];
+      const res = await axiosPrivate.get(`/api/candidate/onboarding/candidates/?job_posting_id=${jobId}`);
+      return res.data as OnboardingCandidate[];
+    },
+    enabled: selectedType === "onboarding" && !!jobId,
+  });
+
+  // Immediate supervisor from job PRF (prf_nested returns full object)
+  const immediateSupervisor = useMemo(() => {
+    return (jobDetail as any)?.prf_nested?.immediate_supervisor ?? null;
+  }, [jobDetail]);
+
+  // Send onboarding mutation with optimistic update
+  const sendOnboardingMutation = useMutation({
+    mutationFn: async (payload: {
+      candidate_application_id: number;
+      onboarding_date: string;
+      email_subject: string;
+      email_body: string;
+    }) => {
+      await axiosPrivate.post("/api/candidate/onboarding/send/", payload);
+    },
+    onMutate: async (payload) => {
+      await queryClient.cancelQueries({ queryKey: ["onboarding-candidates", jobId] });
+      const previous = queryClient.getQueryData<OnboardingCandidate[]>(["onboarding-candidates", jobId]);
+      queryClient.setQueryData<OnboardingCandidate[]>(["onboarding-candidates", jobId], (old) =>
+        old?.filter((c) => c.id !== payload.candidate_application_id) ?? []
+      );
+      return { previous };
+    },
+    onError: (err, payload, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["onboarding-candidates", jobId], context.previous);
+      }
+      toast.error("Unable to send onboarding.");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["onboarding-candidates", jobId] });
     },
   });
+
+  const handleSendOnboarding = (
+    candidateAppId: number,
+    candidateName: string,
+  ) => {
+    setShowOnboardingModal(false);
+    setSelectedOnboardingCandidate(null);
+
+    queueAction({
+      candidateName,
+      label: "Onboarding",
+      dedupKey: `onboarding-${candidateAppId}`,
+      candidateId: candidateAppId,
+      onCommit: async () => {
+        await sendOnboardingMutation.mutateAsync({
+          candidate_application_id: candidateAppId,
+          onboarding_date: onboardingDate,
+          email_subject: onboardingEmailSubject,
+          email_body: onboardingEmailBody,
+        });
+        toast.success(`Onboarding sent to ${candidateName}.`);
+      },
+    });
+  };
+
+  const interviewerName = useMemo(
+    () => onboardingPipelineStep?.interviewerName || user ? `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'ATS Recruitment Team' : 'ATS Recruitment Team',
+    [onboardingPipelineStep, user],
+  );
+
+  const interviewerRole = useMemo(
+    () => user?.role ? user.role.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : '',
+    [user],
+  );
+
+  const handleOnboardingPreview = () => {
+    if (!selectedOnboardingCandidate) return;
+    const companyName = (jobDetail as any)?.company?.name || (jobDetail as any)?.job_posting?.company?.name || "ATS Recruitment Team";
+    const supervisorName = immediateSupervisor
+      ? `${immediateSupervisor.first_name || ''} ${immediateSupervisor.last_name || ''}`.trim() || immediateSupervisor.email
+      : 'Not assigned';
+
+    const formattedDate = onboardingDate
+      ? new Date(onboardingDate + 'T12:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      : '[date not set]';
+
+    const placeholders: Record<string, string> = {
+      candidate_name: selectedOnboardingCandidate.candidate_name,
+      onboarding_date: formattedDate,
+      immediate_supervisor: supervisorName,
+      job_title: selectedOnboardingCandidate.job_title,
+      company_name: companyName,
+      interviewer_name: interviewerName,
+      interviewer_role: interviewerRole,
+    };
+
+    let previewSubject = onboardingEmailSubject;
+    let previewBody = onboardingEmailBody;
+    for (const [key, value] of Object.entries(placeholders)) {
+      const tag = `{{${key}}}`;
+      previewSubject = previewSubject.replaceAll(tag, value);
+      previewBody = previewBody.replaceAll(tag, value);
+    }
+
+    setOnboardingPreviewSubject(previewSubject);
+    setOnboardingPreviewBody(previewBody);
+    setOnboardingPreviewOpen(true);
+  };
+
+  const openOnboardingModal = (candidate: OnboardingCandidate) => {
+    setSelectedOnboardingCandidate({
+      id: candidate.id,
+      candidate_name: candidate.candidate_name,
+      job_title: candidate.job_title,
+    });
+    setOnboardingDate(new Date().toISOString().split("T")[0]);
+    setOnboardingEmailSubject("Onboarding Details - {{job_title}}");
+    setOnboardingEmailBody(
+      `Dear {{candidate_name}},\n\n` +
+      `We are pleased to inform you that you have been onboarded for the position of {{job_title}}.\n\n` +
+      `Your onboarding date is: {{onboarding_date}}\n\n` +
+      `Your immediate supervisor is: {{immediate_supervisor}}\n\n` +
+      `Please contact your supervisor for further details.\n\n` +
+      `Best regards,\n` +
+      `{{interviewer_name}}\n` +
+      `{{interviewer_role}}\n` +
+      `{{company_name}}`
+    );
+    setShowOnboardingModal(true);
+  };
+
+  const isOnboardingActionDisabled = useCallback(
+    () => {
+      if (processingId !== null) return true;
+      if (!isOnboardingInterviewer) return true;
+      return false;
+    },
+    [processingId, isOnboardingInterviewer],
+  );
 
   const resolvePhotoUrl = (rawUrl?: string) => {
     if (!rawUrl) {
@@ -1840,7 +2046,6 @@ export default function PipelineApplicants() {
                             const canPass =
                               applicant.signed_offer_uploaded &&
                               applicant.requirements_required_submitted === applicant.requirements_required;
-                            const isDisabled = !isPreonboardingInterviewer;
                             return (
                               <TableRow key={applicant.id}>
                                 <TableCell className="text-center">{applicant.id}</TableCell>
@@ -1886,8 +2091,8 @@ export default function PipelineApplicants() {
                                       variant="outline"
                                       className="text-xs"
                                       onClick={() => openPreOnboardingCandidateModal(applicant)}
-                                      disabled={isDisabled}
-                                      title={isDisabled ? "Only the assigned interviewer can configure." : undefined}
+                                      disabled={!isPreonboardingInterviewer}
+                                      title={!isPreonboardingInterviewer ? "Only the assigned interviewer can configure." : undefined}
                                     >
                                       <Settings className="h-3 w-3 mr-1" />
                                       Config
@@ -1895,16 +2100,16 @@ export default function PipelineApplicants() {
                                     <Button
                                       size="sm"
                                       className="bg-green-600 hover:bg-green-700 text-white"
-                                      disabled={!canPass || isDisabled}
-                                      title={isDisabled ? "Only the assigned interviewer can pass." : undefined}
+                                      disabled={!canPass || isPreonboardingProgressActionDisabled()}
+                                      title={
+                                        processingId !== null
+                                          ? "Please wait for current action to complete."
+                                          : !isPreonboardingInterviewer
+                                          ? "Only the assigned interviewer can pass."
+                                          : undefined
+                                      }
                                       onClick={() => {
-                                        if (preonboardingPipelineStep?.id) {
-                                          preonboardingPassFailMutation.mutate({
-                                            candidateAppId: applicant.id,
-                                            stepId: preonboardingPipelineStep.id,
-                                            outcome: "pass",
-                                          });
-                                        }
+                                        handlePreonboardingPassFail(applicant.id, applicant.candidate_name, preonboardingPipelineStep?.id, "pass");
                                       }}
                                     >
                                       <CheckCircle className="h-4 w-4 mr-1" />
@@ -1914,16 +2119,16 @@ export default function PipelineApplicants() {
                                       size="sm"
                                       variant="outline"
                                       className="text-red-600 border-red-300 hover:bg-red-50"
-                                      disabled={isDisabled}
-                                      title={isDisabled ? "Only the assigned interviewer can fail." : undefined}
+                                      disabled={isPreonboardingProgressActionDisabled()}
+                                      title={
+                                        processingId !== null
+                                          ? "Please wait for current action to complete."
+                                          : !isPreonboardingInterviewer
+                                          ? "Only the assigned interviewer can fail."
+                                          : undefined
+                                      }
                                       onClick={() => {
-                                        if (preonboardingPipelineStep?.id) {
-                                          preonboardingPassFailMutation.mutate({
-                                            candidateAppId: applicant.id,
-                                            stepId: preonboardingPipelineStep.id,
-                                            outcome: "fail",
-                                          });
-                                        }
+                                        handlePreonboardingPassFail(applicant.id, applicant.candidate_name, preonboardingPipelineStep?.id, "fail");
                                       }}
                                     >
                                       <XCircle className="h-4 w-4 mr-1" />
@@ -1934,6 +2139,75 @@ export default function PipelineApplicants() {
                               </TableRow>
                             );
                           })
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : selectedType === "onboarding" ? (
+                <div className="mt-4 rounded-md border bg-white overflow-x-auto w-full">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-20 text-center">ID</TableHead>
+                        <TableHead className="w-48">Full Name</TableHead>
+                        <TableHead className="w-48">Position</TableHead>
+                        <TableHead className="w-56 text-center">Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {onboardingCandidatesLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                            <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                          </TableCell>
+                        </TableRow>
+                      ) : onboardingCandidates.filter((a) =>
+                        a.candidate_name?.toLowerCase().includes(searchTerm.toLowerCase())
+                      ).length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                            No applicants found.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        onboardingCandidates
+                          .filter((a) =>
+                            a.candidate_name?.toLowerCase().includes(searchTerm.toLowerCase())
+                          )
+                          .map((applicant) => (
+                            <TableRow key={applicant.id}>
+                              <TableCell className="text-center">{applicant.id}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Avatar className="h-8 w-8">
+                                    <AvatarImage src={resolvePhotoUrl(applicant.photo_url) || undefined} />
+                                    <AvatarFallback>
+                                      {applicant.candidate_name?.split(" ").map((n) => n[0]).join("") || "?"}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span className="font-medium text-sm">{applicant.candidate_name}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-sm">{applicant.job_title}</TableCell>
+                              <TableCell className="text-center">
+                                <Button
+                                  size="sm"
+                                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                                  disabled={isOnboardingActionDisabled()}
+                                  title={
+                                    processingId !== null
+                                      ? "Please wait for current action to complete."
+                                      : !isOnboardingInterviewer
+                                      ? "Only the assigned interviewer can send onboarding."
+                                      : undefined
+                                  }
+                                  onClick={() => openOnboardingModal(applicant)}
+                                >
+                                  Send Onboarding
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))
                       )}
                     </TableBody>
                   </Table>
@@ -3427,6 +3701,160 @@ export default function PipelineApplicants() {
                   disabled={!isPreonboardingInterviewer}
                 >
                   Confirm
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Onboarding Email Preview Dialog */}
+      <Dialog open={onboardingPreviewOpen} onOpenChange={setOnboardingPreviewOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle>Email Preview</DialogTitle>
+            <DialogDescription>
+              This is what will be sent to the candidate.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-gray-600 uppercase">Subject</div>
+              <div className="text-sm bg-white p-3 rounded border border-gray-200 wrap-break-word">
+                {onboardingPreviewSubject}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-gray-600 uppercase">Plain Text Body</div>
+              <div className="text-sm bg-white p-4 rounded border border-gray-200 whitespace-pre-wrap wrap-break-word max-h-80 overflow-y-auto">
+                {onboardingPreviewBody || "No preview available."}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOnboardingPreviewOpen(false)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Onboarding Send Modal */}
+      {showOnboardingModal && selectedOnboardingCandidate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowOnboardingModal(false)} />
+          <div className="relative z-10 w-full max-w-lg mx-4">
+            <div className="bg-white rounded-lg shadow-xl">
+              <div className="relative px-6 pt-6 pb-4 border-b border-blue-500">
+                <button
+                  onClick={() => setShowOnboardingModal(false)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+                <h2 className="text-xl font-bold text-[#0056d2] text-center">
+                  Send Onboarding
+                </h2>
+              </div>
+
+              <div className="px-6 py-5 max-h-[70vh] overflow-y-auto space-y-4">
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Candidate</p>
+                  <p className="text-sm text-gray-600">{selectedOnboardingCandidate.candidate_name}</p>
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Position</p>
+                  <p className="text-sm text-gray-600">{selectedOnboardingCandidate.job_title}</p>
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Immediate Supervisor</p>
+                  <p className="text-sm text-gray-600">
+                    {immediateSupervisor
+                      ? `${immediateSupervisor.first_name || ''} ${immediateSupervisor.last_name || ''}`.trim() || immediateSupervisor.email
+                      : 'Not assigned'}
+                  </p>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-semibold text-gray-900">Onboarding Date</Label>
+                  <Input
+                    type="date"
+                    value={onboardingDate}
+                    onChange={(e) => setOnboardingDate(e.target.value)}
+                    className="mt-1"
+                  />
+                  {!onboardingDate && (
+                    <p className="text-xs text-amber-600 mt-1">Select a date to enable the Send button.</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-sm font-semibold text-gray-900">Email Subject</Label>
+                  <Input
+                    value={onboardingEmailSubject}
+                    onChange={(e) => setOnboardingEmailSubject(e.target.value)}
+                    className="mt-1"
+                    placeholder="Email subject"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm font-semibold text-gray-900">Email Body</Label>
+                  <p className="text-xs text-gray-400 mb-1">
+                    Available placeholders: {'{{candidate_name}}'}, {'{{onboarding_date}}'}, {'{{immediate_supervisor}}'}, {'{{job_title}}'}, {'{{company_name}}'}, {'{{interviewer_name}}'}, {'{{interviewer_role}}'}
+                  </p>
+                  <textarea
+                    value={onboardingEmailBody}
+                    onChange={(e) => setOnboardingEmailBody(e.target.value)}
+                    className="mt-1 w-full min-h-[200px] rounded-md border border-gray-300 p-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                    placeholder="Email body"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 px-6 py-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowOnboardingModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleOnboardingPreview}
+                >
+                  Preview Email
+                </Button>
+                <Button
+                  className="bg-[#0056d2] hover:bg-blue-700 text-white"
+                  disabled={!onboardingDate || !isOnboardingInterviewer}
+                  title={
+                    !onboardingDate
+                      ? "Select an onboarding date first."
+                      : !isOnboardingInterviewer
+                      ? "Only the assigned interviewer can send onboarding."
+                      : undefined
+                  }
+                  onClick={() => {
+                    if (selectedOnboardingCandidate) {
+                      handleSendOnboarding(
+                        selectedOnboardingCandidate.id,
+                        selectedOnboardingCandidate.candidate_name,
+                      );
+                    }
+                  }}
+                >
+                  Send Onboarding
                 </Button>
               </div>
             </div>

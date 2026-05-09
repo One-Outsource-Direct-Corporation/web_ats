@@ -25,7 +25,7 @@ export default function ProtectedRoutes({
       return <>{children}</>;
     }
 
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/" replace />;
   }
 
   // Role-based access control

@@ -1,6 +1,34 @@
 import type { Applicant } from "../types/applicant.types";
 import { Badge } from "@/shared/components/ui/badge.tsx";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/shared/components/ui/avatar.tsx";
 import { Link } from "react-router-dom";
+
+function resolvePhotoUrl(rawUrl?: string): string | undefined {
+  if (!rawUrl) return undefined;
+  if (/^(?:https?:\/\/|data:|blob:)/i.test(rawUrl)) return rawUrl;
+  const backendBaseUrl = import.meta.env.VITE_BACKEND_URL as string | undefined;
+  if (!backendBaseUrl) return rawUrl;
+  const base = backendBaseUrl.replace(/\/$/, "");
+  const path = rawUrl.startsWith("/") ? rawUrl : `/${rawUrl}`;
+  return `${base}${path}`;
+}
+
+function getPhotoSrc(a: Applicant): string | undefined {
+  return resolvePhotoUrl(a.photo_url ?? a.avatar);
+}
+
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
 
 interface Props {
   applicants: Applicant[];
@@ -30,16 +58,13 @@ export const ApplicantList = ({ applicants }: Props) => {
             <tr key={a.id} className="border-t text-sm text-gray-800">
               <td className="px-4 py-3">
                 <Link
-                  to={`/job/list/applicants/${encodeURIComponent(
-                    a.name.replace(/\s+/g, "-").toLowerCase()
-                  )}`}
+                  to={`/job/list/applicants/${a.id}`}
                   className="flex items-center gap-3 hover:underline hover:text-blue-600 transition-colors cursor-pointer"
                 >
-                  <img
-                    src={a.avatar || "/placeholder.svg"}
-                    alt={a.name}
-                    className="w-8 h-8 rounded-full"
-                  />
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={getPhotoSrc(a)} />
+                    <AvatarFallback>{getInitials(a.name)}</AvatarFallback>
+                  </Avatar>
                   <span>{a.name}</span>
                 </Link>
               </td>

@@ -1,3 +1,5 @@
+import { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useApplicants } from "../hooks/useApplicants";
 import { ApplicantList } from "../components/ApplicantList";
 import { Input } from "@/shared/components/ui/input.tsx";
@@ -9,16 +11,71 @@ import {
   SelectContent,
   SelectItem,
 } from "@/shared/components/ui/select.tsx";
+import { Loader2 } from "lucide-react";
 import { ChevronRightCircle } from "lucide-react";
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 
 export default function Applicants() {
   useEffect(() => {
     document.title = "Applicants";
   }, []);
+
   const navigate = useNavigate();
-  const applicants = useApplicants();
+  const { data: applicants = [], isLoading, error } = useApplicants();
+
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [positionFilter, setPositionFilter] = useState("all");
+  const [departmentFilter, setDepartmentFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
+
+  const filtered = useMemo(() => {
+    return applicants.filter((a) => {
+      if (search) {
+        const q = search.toLowerCase();
+        if (
+          !a.name?.toLowerCase().includes(q) &&
+          !a.email?.toLowerCase().includes(q)
+        )
+          return false;
+      }
+      if (statusFilter !== "all" && a.status !== statusFilter) return false;
+      if (positionFilter !== "all" && a.position !== positionFilter)
+        return false;
+      if (departmentFilter !== "all" && a.department !== departmentFilter)
+        return false;
+      if (typeFilter !== "all" && a.type !== typeFilter) return false;
+      return true;
+    });
+  }, [applicants, search, statusFilter, positionFilter, departmentFilter, typeFilter]);
+
+  const clearFilters = () => {
+    setSearch("");
+    setStatusFilter("all");
+    setPositionFilter("all");
+    setDepartmentFilter("all");
+    setTypeFilter("all");
+  };
+
+  const hasFilters =
+    search || statusFilter !== "all" || positionFilter !== "all" ||
+    departmentFilter !== "all" || typeFilter !== "all";
+
+  const statusOptions = useMemo(
+    () => [...new Set(applicants.map((a) => a.status).filter(Boolean))],
+    [applicants]
+  );
+  const positionOptions = useMemo(
+    () => [...new Set(applicants.map((a) => a.position).filter(Boolean))],
+    [applicants]
+  );
+  const departmentOptions = useMemo(
+    () => [...new Set(applicants.map((a) => a.department).filter(Boolean))],
+    [applicants]
+  );
+  const typeOptions = useMemo(
+    () => [...new Set(applicants.map((a) => a.type).filter(Boolean))],
+    [applicants]
+  );
 
   return (
     <div>
@@ -28,30 +85,68 @@ export default function Applicants() {
           <p className="text-lg text-gray-700 mt-5">
             Stores candidate details and tracks their application progress.
           </p>
-          <div className="flex justify-end">
-            <button className="text-sm text-blue-500 hover:underline cursor-pointer pb-2">
-              Clear filters
-            </button>
-          </div>
+          {hasFilters && (
+            <div className="flex justify-end">
+              <button
+                onClick={clearFilters}
+                className="text-sm text-blue-500 hover:underline cursor-pointer pb-2"
+              >
+                Clear filters
+              </button>
+            </div>
+          )}
           <div className="flex flex-wrap justify-between items-center gap-4">
-            <Input placeholder="Search applicants..." className="w-64" />
+            <Input
+              placeholder="Search applicants..."
+              className="w-64"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
             <div className="flex flex-wrap gap-2 ml-auto">
-              {[
-                "All Internal",
-                "All Status",
-                "All Job Position",
-                "All Departments",
-                "Employment Type",
-              ].map((label) => (
-                <Select key={label}>
-                  <SelectTrigger className="min-w-[160px] bg-gray-100">
-                    <SelectValue placeholder={label} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{label}</SelectItem>
-                  </SelectContent>
-                </Select>
-              ))}
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="min-w-[160px] bg-gray-100">
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  {statusOptions.map((s) => (
+                    <SelectItem key={s} value={s!}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={positionFilter} onValueChange={setPositionFilter}>
+                <SelectTrigger className="min-w-[160px] bg-gray-100">
+                  <SelectValue placeholder="All Job Position" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Job Position</SelectItem>
+                  {positionOptions.map((p) => (
+                    <SelectItem key={p} value={p!}>{p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+                <SelectTrigger className="min-w-[160px] bg-gray-100">
+                  <SelectValue placeholder="All Departments" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Departments</SelectItem>
+                  {departmentOptions.map((d) => (
+                    <SelectItem key={d} value={d!}>{d}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="min-w-[160px] bg-gray-100">
+                  <SelectValue placeholder="Employment Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Employment Type</SelectItem>
+                  {typeOptions.map((t) => (
+                    <SelectItem key={t} value={t!}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
@@ -59,7 +154,17 @@ export default function Applicants() {
       <div className="min-h-screen bg-gray-50 px-6 pt-[270px] pb-[80px]">
         <div className="mx-auto max-w-7xl w-full">
           <div className="overflow-x-auto rounded-lg border bg-white">
-            <ApplicantList applicants={applicants} />
+            {isLoading ? (
+              <div className="flex justify-center items-center py-16">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              </div>
+            ) : error ? (
+              <div className="text-center py-16 text-red-500">
+                Failed to load applicants. Please try again.
+              </div>
+            ) : (
+              <ApplicantList applicants={filtered} />
+            )}
           </div>
         </div>
       </div>

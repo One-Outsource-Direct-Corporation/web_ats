@@ -11,4 +11,5 @@ export interface PublicJobDetailResponse {
   description: string | null;
   responsibilities: string | null;
   qualifications: string | null;
+  has_applied?: boolean;
 }

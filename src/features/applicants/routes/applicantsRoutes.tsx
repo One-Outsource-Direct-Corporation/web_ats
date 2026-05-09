@@ -1,11 +1,11 @@
 import Applicants from "../views/Applicants";
+import ApplicantsInformationTab from "../views/ApplicantsInformationTab";
 import PoolApplicants from "../views/PoolApplicants";
 import PipelineApplicants from "../views/PipelineApplicants";
 import PipelineApplicantStatusPage from "../views/PipelineApplicantStatusPage";
 import ExamForm from "../views/Exam-Form.tsx";
 
 import OfferAndFinalization from "../views/OfferAndFinalization";
-import Onboarding from "../views/Onboarding";
 import Failed from "../views/Failed";
 
 export const applicantsRoutes = [
@@ -19,6 +19,10 @@ export const applicantsRoutes = [
       {
         path: "pool",
         element: <PoolApplicants />,
+      },
+      {
+        path: ":applicantId",
+        element: <ApplicantsInformationTab />,
       },
     ],
   },
@@ -64,6 +68,10 @@ export const applicantsRoutes = [
     path: ":jobId/forjoboffer",
     element: <PipelineApplicants />,
   },
+  {
+    path: ":jobId/onboarding",
+    element: <PipelineApplicants />,
+  },
   // Custom final stages (without jobId)
   {
     path: "stage/OfferAndFinalization",
@@ -75,7 +83,7 @@ export const applicantsRoutes = [
   },
   {
     path: "stage/Onboarding",
-    element: <Onboarding />,
+    element: <PipelineApplicants />,
   },
   {
     path: "stage/Failed",

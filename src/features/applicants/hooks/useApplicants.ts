@@ -1,11 +1,10 @@
-import { useState, useEffect } from "react";
-import type { Applicant } from "../types/applicant.types";
+import { useQuery } from "@tanstack/react-query";
 import { getApplicants } from "../services/applicantService";
+import { queryKeys } from "@/shared/query-keys";
 
 export function useApplicants() {
-  const [applicants, setApplicants] = useState<Applicant[]>([]);
-  useEffect(() => {
-    getApplicants().then(setApplicants);
-  }, []);
-  return applicants;
+  return useQuery({
+    queryKey: [...queryKeys.candidates.all, "all-applicants"],
+    queryFn: getApplicants,
+  });
 }

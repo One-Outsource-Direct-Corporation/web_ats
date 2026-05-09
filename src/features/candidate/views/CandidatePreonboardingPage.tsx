@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import { queryKeys } from "@/shared/query-keys";
 import { Button } from "@/shared/components/ui/button";
+import { findMatchingDocumentByTypeOrName, type CandidateDocument } from "@/features/candidate/constants/requiredDocuments";
 import {
   Upload,
   FileText,
@@ -41,14 +42,6 @@ interface PreonboardingData {
     pending: number;
     stale: number;
   };
-}
-
-interface CandidateDocument {
-  id: number;
-  original_filename: string;
-  filename: string;
-  file_url: string;
-  created_at: string;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -165,18 +158,10 @@ export default function CandidatePreonboardingPage() {
   const requirements = data?.requirements ?? [];
   const hasStaleItems = requirements.some((r) => r.status === "stale");
 
-  const findMatchingDocument = useCallback((requirementLabel: string) => {
-    const stopWords = ["valid", "or", "of", "if", "applicable", "photocopy", "the", "a", "an", "certificate", "copy", "for", "and", "with", "other", "size", "pieces", "card", "id", "form", "number"];
-    const keywords = requirementLabel
-      .toLowerCase()
-      .replace(/[()]/g, "")
-      .split(/\s+/)
-      .filter((w) => !stopWords.includes(w) && w.length > 2);
-    return documents.find((doc) => {
-      const name = (doc.original_filename || doc.filename).toLowerCase();
-      return keywords.some((kw) => name.includes(kw));
-    });
-  }, [documents]);
+  const findMatchingDocument = useCallback(
+    (requirementLabel: string) => findMatchingDocumentByTypeOrName(requirementLabel, documents),
+    [documents],
+  );
 
   const matchedDocs = useMemo(() => {
     const map = new Map<string, CandidateDocument | undefined>();

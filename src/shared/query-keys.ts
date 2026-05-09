@@ -104,4 +104,8 @@ export const queryKeys = {
     all: ["preonboarding"] as const,
     data: () => [...queryKeys.preonboarding.all, "data"] as const,
   },
+  dashboard: {
+    all: ["dashboard"] as const,
+    me: () => [...queryKeys.dashboard.all, "me"] as const,
+  },
 } as const;
