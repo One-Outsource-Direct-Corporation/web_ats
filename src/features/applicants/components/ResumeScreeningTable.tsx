@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Avatar,
   AvatarFallback,
@@ -140,7 +141,10 @@ export default function ResumeScreeningTable({
                   <TableCell className="text-center border border-gray-200 py-3 px-3 font-medium text-xs lg:text-sm align-middle">{String(candidate.id)}</TableCell>
 
                   <TableCell className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 w-36 align-middle" style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}>
-                    <div className="flex min-w-0 flex-col items-center justify-center gap-1 text-center lg:flex-row lg:gap-3">
+                    <Link
+                      to={`/job/list/applicants/${candidate.id}`}
+                      className="flex min-w-0 flex-col items-center justify-center gap-1 text-center lg:flex-row lg:gap-3 hover:opacity-80"
+                    >
                       <Avatar className="h-6 w-6 lg:h-8 lg:w-8 shrink-0">
                         <AvatarImage
                           src={getCandidatePhotoUrl(candidate) || "/placeholder.svg"}
@@ -158,7 +162,7 @@ export default function ResumeScreeningTable({
                       <span className="block min-w-0 max-w-full font-medium text-xs leading-tight whitespace-normal lg:text-sm" style={{ overflowWrap: "anywhere" }} title={candidate.name}>
                         {candidate.name}
                       </span>
-                    </div>
+                    </Link>
                   </TableCell>
 
                   <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">

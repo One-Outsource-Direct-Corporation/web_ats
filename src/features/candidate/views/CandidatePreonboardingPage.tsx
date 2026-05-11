@@ -15,6 +15,7 @@ import {
   Clock,
   X,
   FileUp,
+  Lock,
 } from "lucide-react";
 
 interface RequirementItem {
@@ -42,6 +43,7 @@ interface PreonboardingData {
     pending: number;
     stale: number;
   };
+  preonboarding_passed?: boolean;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -157,6 +159,7 @@ export default function CandidatePreonboardingPage() {
   const progress = data?.progress;
   const requirements = data?.requirements ?? [];
   const hasStaleItems = requirements.some((r) => r.status === "stale");
+  const preonboardingPassed = data?.preonboarding_passed ?? false;
 
   const findMatchingDocument = useCallback(
     (requirementLabel: string) => findMatchingDocumentByTypeOrName(requirementLabel, documents),
@@ -199,6 +202,18 @@ export default function CandidatePreonboardingPage() {
       <p className="text-gray-500 mb-6">
         Submit the required documents to complete your preonboarding.
       </p>
+
+      {preonboardingPassed && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
+          <Lock className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-green-800">Preonboarding Completed</p>
+            <p className="text-sm text-green-600">
+              You have passed the preonboarding stage. Documents are now locked and cannot be modified.
+            </p>
+          </div>
+        </div>
+      )}
 
       {hasStaleItems && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
@@ -274,7 +289,7 @@ export default function CandidatePreonboardingPage() {
                 </div>
 
                 <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
-                  {(req.status === "pending" || req.status === "stale") && (() => {
+                  {!preonboardingPassed && (req.status === "pending" || req.status === "stale") && (() => {
                     const matchedDoc = matchedDocs.get(req.requirement_key);
                     return (
                       <>
@@ -333,7 +348,7 @@ export default function CandidatePreonboardingPage() {
                       </>
                     );
                   })()}
-                  {(req.status === "submitted" || req.status === "verified") && (
+                  {!preonboardingPassed && (req.status === "submitted" || req.status === "verified") && (
                     <>
                       <Button
                         size="sm"

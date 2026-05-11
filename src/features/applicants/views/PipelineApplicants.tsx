@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Link,
   useLocation,
   useNavigate,
   useParams,
@@ -136,6 +137,12 @@ interface PreonboardingCandidate {
   job_title: string;
   photo_url?: string | null;
   signed_offer_uploaded: boolean;
+  resume_url?: string | null;
+  resume_filename?: string | null;
+  cover_letter_url?: string | null;
+  cover_letter_filename?: string | null;
+  med_cert_url?: string | null;
+  med_cert_filename?: string | null;
   requirements_submitted: number;
   requirements_required: number;
   requirements_required_submitted: number;
@@ -2071,17 +2078,41 @@ export default function PipelineApplicants() {
                                     <span className="text-xs text-gray-400">Not uploaded</span>
                                   )}
                                 </TableCell>
-                                <TableCell className="text-center">
-                                  <span className="text-sm">
-                                    {applicant.requirements_required_submitted}/{applicant.requirements_required}
-                                  </span>
-                                  <div className="w-full bg-gray-200 rounded-full h-2 mt-1 max-w-[80px] mx-auto">
-                                    <div
-                                      className="bg-blue-600 h-2 rounded-full"
-                                      style={{
-                                        width: `${applicant.requirements_required > 0 ? (applicant.requirements_required_submitted / applicant.requirements_required) * 100 : 0}%`,
-                                      }}
-                                    />
+                                <TableCell className="text-center align-top">
+                                  <div className="space-y-2">
+                                    <div>
+                                      <span className="text-sm">
+                                        {applicant.requirements_required_submitted}/{applicant.requirements_required}
+                                      </span>
+                                      <div className="w-full bg-gray-200 rounded-full h-2 mt-1 max-w-[80px] mx-auto">
+                                        <div
+                                          className="bg-blue-600 h-2 rounded-full"
+                                          style={{
+                                            width: `${applicant.requirements_required > 0 ? (applicant.requirements_required_submitted / applicant.requirements_required) * 100 : 0}%`,
+                                          }}
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="border-t pt-1.5 space-y-1">
+                                      {[
+                                        { url: applicant.resume_url, filename: applicant.resume_filename, label: "Resume" },
+                                        { url: applicant.cover_letter_url, filename: applicant.cover_letter_filename, label: "Cover Letter" },
+                                        { url: applicant.med_cert_url, filename: applicant.med_cert_filename, label: "Medical Cert" },
+                                      ].map((doc) =>
+                                        doc.url ? (
+                                          <a
+                                            key={doc.label}
+                                            href={resolveFileUrl(doc.url ?? undefined)}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="flex items-center gap-1 text-[10px] text-blue-600 hover:text-blue-800 hover:underline justify-center"
+                                          >
+                                            <FileText className="h-3 w-3 shrink-0" />
+                                            <span className="truncate max-w-[100px]">{doc.label}</span>
+                                          </a>
+                                        ) : null
+                                      )}
+                                    </div>
                                   </div>
                                 </TableCell>
                                 <TableCell className="text-center">
@@ -2320,7 +2351,10 @@ export default function PipelineApplicants() {
                             className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 w-36 align-middle"
                             style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}
                           >
-                            <div className="flex min-w-0 flex-col items-center justify-center gap-1 text-center lg:flex-row lg:gap-2">
+                            <Link
+                              to={`/job/list/applicants/${candidate.id}`}
+                              className="flex min-w-0 flex-col items-center justify-center gap-1 text-center lg:flex-row lg:gap-2 hover:opacity-80"
+                            >
                               <Avatar className="h-10 w-10 shrink-0 rounded-sm">
                                 <AvatarImage
                                   src={candidate.photoUrl || "/placeholder.svg"}
@@ -2342,7 +2376,7 @@ export default function PipelineApplicants() {
                               >
                                 {candidate.name}
                               </span>
-                            </div>
+                            </Link>
                           </TableCell>
 
                           {showResumeColumn ? (

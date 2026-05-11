@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
-
-import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 import {
   Avatar,
   AvatarFallback,
@@ -29,7 +29,6 @@ import {
   CheckSquare,
   Download,
   Send,
-  Smile,
   ChevronRight,
   MapPin,
   Phone,
@@ -38,161 +37,105 @@ import {
   Upload,
   Scaling,
 } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { Navbar } from "@/shared/components/reusables/Navbar.tsx";
 import AnsweredForm from "@/shared/components/forms/AnsweredForm.tsx";
-import { getApplicantById } from "../services/applicantService";
-import type { Applicant } from "../types/applicant.types";
+import { getApplicantById, getComments, createComment, deleteComment } from "../services/applicantService";
+import type { Applicant, Comment, PreonboardingDocument } from "../types/applicant.types";
+import { useQuery } from "@tanstack/react-query";
+import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
+import { useJobDetailQuery } from "@/features/jobs/hooks/useJobs";
+import { extractPipelineStepsFromJobDetail } from "@/features/jobs/services/jobService";
 
-const progressStages = [
-  { name: "Initial Interview", completed: true },
-  { name: "Panel Interview", completed: true },
-  { name: "HM Interview", completed: false, current: true },
-  { name: "Final Interview", completed: false },
-];
-
-const workExperience = [
-  {
-    title: "Senior Software Engineer",
-    employmentType: "Full-time",
-    company: "TechCorp Inc",
-    location: "Remote",
-    startDate: "Jan 2022",
-    endDate: "Present",
-  },
-  {
-    title: "Software Engineer",
-    employmentType: "Full-time",
-    company: "StartupXYZ",
-    location: "Onsite",
-    startDate: "Jun 2020",
-    endDate: "Dec 2021",
-  },
-  {
-    title: "Junior Developer",
-    employmentType: "Part-time",
-    company: "WebSolutions",
-    location: "Remote",
-    startDate: "Jan 2019",
-    endDate: "May 2020",
-  },
-];
-
-const comments = [
-  {
-    id: 1,
-    author: "Sarah Johnson",
-    avatar: "https://i.pravatar.cc/32?img=12",
-    content: "Great technical skills demonstrated during the coding challenge.",
-    timestamp: "2 hours ago",
-  },
-  {
-    id: 2,
-    author: "Mike Chen",
-    avatar: "https://i.pravatar.cc/32?img=5",
-    content: "Strong communication skills and cultural fit.",
-    timestamp: "1 day ago",
-  },
-];
-
-const assessments = [
-  {
-    name: "Soft Skill Assessment",
-    score: 73,
-    description: "Evaluates communication, teamwork, and interpersonal skills.",
-  },
-  {
-    name: "Technical Skill Assessment",
-    score: 75,
-    description:
-      "Tests programming knowledge, problem-solving, and technical expertise.",
-  },
-  {
-    name: "Core Values Assessment",
-    score: 90,
-    description: "Measures alignment with company culture and values.",
-  },
-];
-
-function RadialChart({ score }: { score: number }) {
-  const data = [
-    { name: "Score", value: score },
-    { name: "Remaining", value: 100 - score },
-  ];
-
-  const getColors = (score: number) => {
-    if (score < 75) return { main: "#ef4444", light: "#fecaca" }; // red and light red
-    if (score === 75) return { main: "#eab308", light: "#fef3c7" }; // yellow and light yellow
-    return { main: "#22c55e", light: "#bbf7d0" }; // green and light green
-  };
-
-  const colors = getColors(score);
-
-  return (
-    <div className="pr-2">
-      <ResponsiveContainer width={80} height={70}>
-        <PieChart>
-          <Pie
-            data={data}
-            cx={35}
-            cy={35}
-            innerRadius={20}
-            outerRadius={30}
-            startAngle={90}
-            endAngle={-270}
-            dataKey="value"
-          >
-            <Cell fill={colors.main} />
-            <Cell fill={colors.light} />
-          </Pie>
-        </PieChart>
-      </ResponsiveContainer>
-    </div>
-  );
+function resolveMediaUrl(rawUrl?: string | null): string | undefined {
+  if (!rawUrl) return undefined;
+  if (/^(?:https?:\/\/|data:|blob:)/i.test(rawUrl)) return rawUrl;
+  const backendBaseUrl = import.meta.env.VITE_BACKEND_URL as string | undefined;
+  if (!backendBaseUrl) return rawUrl;
+  const trimmedBaseUrl = backendBaseUrl.replace(/\/$/, "");
+  const normalizedPath = rawUrl.startsWith("/") ? rawUrl : `/${rawUrl}`;
+  return `${trimmedBaseUrl}${normalizedPath}`;
 }
 
-function HalfCircleChart({ score }: { score: number }) {
-  const data = [
-    { name: "Score", value: score },
-    { name: "Remaining", value: 100 - score },
-  ];
+function downloadFile(url: string, filename?: string | null) {
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename || "download";
+  a.target = "_blank";
+  a.rel = "noreferrer";
+  a.click();
+}
 
-  return (
-    <div className="relative">
-      <ResponsiveContainer width={200} height={100}>
-        <PieChart>
-          <Pie
-            data={data}
-            cx={100}
-            cy={100}
-            innerRadius={60}
-            outerRadius={80}
-            startAngle={180}
-            endAngle={0}
-            dataKey="value"
-          >
-            <Cell fill="#1e40af" />
-            <Cell fill="#93c5fd" />
-          </Pie>
-        </PieChart>
-      </ResponsiveContainer>
-      <div className="absolute inset-0 flex items-end justify-center pb-4">
-        <span className="text-2xl font-bold text-blue-900">{score}%</span>
-      </div>
-    </div>
-  );
+function formatRelativeTime(dateString: string): string {
+  const now = Date.now();
+  const date = new Date(dateString).getTime();
+  const diffMs = now - date;
+  const diffSec = Math.floor(diffMs / 1000);
+  if (diffSec < 60) return 'just now';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour}h ago`;
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay < 30) return `${diffDay}d ago`;
+  const diffMonth = Math.floor(diffDay / 30);
+  if (diffMonth < 12) return `${diffMonth}mo ago`;
+  const diffYear = Math.floor(diffMonth / 12);
+  return `${diffYear}y ago`;
 }
 
 export default function ApplicantTracker() {
   const [newComment, setNewComment] = useState("");
-  const overallScore = Math.round(
-    assessments.reduce((acc, curr) => acc + curr.score, 0) / assessments.length
-  );
   const navigate = useNavigate();
   const { applicantId } = useParams();
 
   const [currentApplicant, setCurrentApplicant] = useState<Applicant | null>(null);
   const [loading, setLoading] = useState(true);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
+  const axiosPrivate = useAxiosPrivate();
+  const { data: jobDetail } = useJobDetailQuery(currentApplicant?.job_id);
+  const { data: applyDetail } = useQuery({
+    queryKey: ["job-apply-form", currentApplicant?.job_id],
+    queryFn: async () => {
+      if (!currentApplicant?.job_id) return null
+      const resp = await axiosPrivate.get(`/api/job/${currentApplicant.job_id}/apply/`)
+      return resp.data as Record<string, unknown>
+    },
+    enabled: !!currentApplicant?.job_id,
+  })
+  const interviewSteps = useMemo(
+    () =>
+      extractPipelineStepsFromJobDetail(jobDetail).filter((step) =>
+        ["phone_call_interview", "initial_interview", "final_interview"].includes(step.process_type),
+      ),
+    [jobDetail],
+  )
+  const questionnaireSections = useMemo(
+    () => {
+      const fromAppForm = (
+        (jobDetail as Record<string, unknown>)?.application_form as Record<string, unknown> | undefined
+      )?.questionnaire as Record<string, unknown> | undefined
+      if (fromAppForm?.sections && Array.isArray(fromAppForm.sections) && fromAppForm.sections.length > 0) {
+        return fromAppForm.sections as Array<{
+          id?: number; name: string
+          questionnaires: Array<{ id: number; question: string; question_type: string; options?: unknown[] }>
+        }>
+      }
+      const fromApply = (
+        applyDetail?.application_form as Record<string, unknown> | undefined
+      )?.questionnaire as Record<string, unknown> | undefined
+      if (fromApply?.sections && Array.isArray(fromApply.sections)) {
+        return fromApply.sections as Array<{
+          id?: number; name: string
+          questionnaires: Array<{ id: number; question: string; question_type: string; options?: unknown[] }>
+        }>
+      }
+      return []
+    },
+    [jobDetail, applyDetail],
+  )
 
   useEffect(() => {
     if (!applicantId) {
@@ -205,6 +148,63 @@ export default function ApplicantTracker() {
       .catch(() => setCurrentApplicant(null))
       .finally(() => setLoading(false));
   }, [applicantId]);
+
+  useEffect(() => {
+    if (!currentApplicant?.id) return;
+    const appId = Number(currentApplicant.id);
+    if (!appId) return;
+    setCommentsLoading(true);
+    getComments(appId)
+      .then((data) => setComments(Array.isArray(data) ? data : []))
+      .catch(() => setComments([]))
+      .finally(() => setCommentsLoading(false));
+  }, [currentApplicant?.id]);
+
+  const handleSendComment = useCallback(async () => {
+    const trimmed = newComment.trim();
+    if (!trimmed || !currentApplicant?.id) return;
+    const appId = Number(currentApplicant.id);
+    if (!appId) return;
+    setIsSubmittingComment(true);
+    try {
+      await createComment(appId, trimmed);
+      setNewComment("");
+      const updated = await getComments(appId);
+      setComments(Array.isArray(updated) ? updated : []);
+    } catch {
+      toast.error("Failed to send comment.");
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  }, [newComment, currentApplicant?.id]);
+
+  const handleDeleteComment = useCallback(async (commentId: number) => {
+    try {
+      await deleteComment(commentId);
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+    } catch {
+      toast.error("Failed to delete comment.");
+    }
+  }, []);
+
+  const documents = useMemo(() => {
+    const items: Array<{ label: string; url?: string | null; filename?: string | null; group?: string }> = [
+      { label: "Resume", url: currentApplicant?.resume_url, filename: currentApplicant?.resume_filename, group: "Application" },
+      { label: "Cover Letter", url: currentApplicant?.cover_letter_url, filename: currentApplicant?.cover_letter_filename, group: "Application" },
+      { label: "Photo", url: currentApplicant?.photo_url, filename: currentApplicant?.resume_filename, group: "Application" },
+      { label: "Medical Certificate", url: currentApplicant?.med_cert_url, filename: currentApplicant?.med_cert_filename, group: "Application" },
+      { label: "Signed Job Offer", url: currentApplicant?.signed_offer_url, filename: currentApplicant?.signed_offer_filename, group: "Application" },
+    ]
+    const preonboarding = (currentApplicant?.preonboarding_documents ?? []).map(
+      (doc: PreonboardingDocument) => ({
+        label: doc.requirement_label || doc.requirement_key,
+        url: doc.file_url,
+        filename: doc.filename,
+        group: "Pre-onboarding",
+      }),
+    )
+    return [...items.filter((doc) => !!doc.url), ...preonboarding.filter((doc) => !!doc.url)]
+  }, [currentApplicant])
 
   return (
     <>
@@ -226,40 +226,66 @@ export default function ApplicantTracker() {
           </div>
           <div className="mx-auto max-w-7xl space-y-6">
             {/* Progress Bar Panel */}
-            <Card>
-              <CardContent className="p-6">
-                {/* Heading */}
-                <h3 className="mb-4 text-lg font-bold text-gray-800 text-center">
-                  Application Status
-                </h3>
+                <Card>
+                  <CardContent className="p-6">
+                    {/* Heading */}
+                    <h3 className="mb-4 text-lg font-bold text-gray-800 text-center">
+                      Application Status
+                    </h3>
 
-                {/* Responsive Progress Bar */}
-                <div className="flex flex-col items-center justify-center space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 sm:space-x-4">
-                  {progressStages.map((stage, index) => (
-                    <div key={stage.name} className="flex items-center">
-                      <div className="flex flex-col items-center">
-                        <div
-                          className={`rounded-lg px-4 py-2 text-sm font-medium text-center ${
-                            stage.current
-                              ? "bg-blue-500 text-white"
-                              : stage.completed
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-600"
-                          }`}
-                        >
-                          {stage.name}
-                        </div>
+                    {/* Responsive Progress Bar */}
+                    {currentApplicant?.pipeline_progress &&
+                    currentApplicant.pipeline_progress.length > 0 ? (
+                      <div className="flex flex-col items-center justify-center space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 sm:space-x-4">
+                        {currentApplicant.pipeline_progress.map((step, index) => {
+                          const isCompleted =
+                            step.status === "passed" ||
+                            step.status === "shortlisted" ||
+                            step.status === "approved_from_shortlist" ||
+                            step.status === "assessment_graded" ||
+                            step.status === "scheduled" ||
+                            step.status === "in_progress" ||
+                            step.status === "offer_sent" ||
+                            step.status === "offer_signed" ||
+                            step.status === "onboarding_sent";
+                          const isCurrent =
+                            step.status === "pending" ||
+                            step.status === "assessment_sent" ||
+                            step.status === "assessment_partially_graded";
+                          const isFailed = step.status === "failed" || step.status === "rejected_from_shortlist";
+
+                          return (
+                            <div key={step.pipeline_step_id} className="flex items-center">
+                              <div className="flex flex-col items-center">
+                                <div
+                                  className={`rounded-lg px-4 py-2 text-sm font-medium text-center ${
+                                    isFailed
+                                      ? "bg-red-100 text-red-800"
+                                      : isCurrent
+                                      ? "bg-blue-500 text-white"
+                                      : isCompleted
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-gray-100 text-gray-600"
+                                  }`}
+                                >
+                                  {step.process_title}
+                                </div>
+                              </div>
+
+                              {index < currentApplicant.pipeline_progress.length - 1 && (
+                                <ChevronRight className="mx-2 hidden sm:block h-5 w-5 text-gray-400" />
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
-
-                      {/* Chevron only visible on wider screens */}
-                      {index < progressStages.length - 1 && (
-                        <ChevronRight className="mx-2 hidden sm:block h-5 w-5 text-gray-400" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    ) : (
+                      <div className="text-sm text-gray-500 text-center">
+                        No pipeline steps configured.
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
 
             {/* Applicant Profile */}
             {loading ? (
@@ -280,7 +306,7 @@ export default function ApplicantTracker() {
                 <div className="flex items-start space-x-4">
                   <Avatar className="h-16 w-16">
                     <AvatarImage
-                      src={"/placeholder.svg"}
+                      src={resolveMediaUrl(currentApplicant.photo_url) || "/placeholder.svg"}
                     />
                     <AvatarFallback>
                       {currentApplicant.name
@@ -343,38 +369,50 @@ export default function ApplicantTracker() {
                                 Working Experience
                               </h3>
                             </div>
-                            <Badge variant="secondary">4 Years, 2 Months</Badge>
+                            {(() => {
+                              const totalYears = (currentApplicant?.work_experience ?? []).reduce(
+                                (acc, exp) => acc + (exp.years ?? 0),
+                                0,
+                              );
+                              return totalYears > 0 ? (
+                                <Badge variant="secondary">{totalYears} Year{totalYears > 1 ? 's' : ''}</Badge>
+                              ) : null;
+                            })()}
                           </div>
 
                           <div className="space-y-4">
-                            {workExperience.map((exp, index) => (
-                              <div key={index} className="relative">
-                                <div className="flex">
-                                  <div className="mr-4 flex flex-col items-center">
-                                    <div className="h-3 w-3 rounded-full bg-blue-500"></div>
-                                    {index < workExperience.length - 1 && (
-                                      <div className="mt-2 h-16 w-px bg-gray-300"></div>
-                                    )}
-                                  </div>
-                                  <div className="flex-1 pb-4">
-                                    <h4 className="font-bold text-gray-900">
-                                      {exp.title}
-                                    </h4>
-                                    <div className="mt-1 flex flex-wrap gap-2 text-sm text-gray-600">
-                                      <span>{exp.employmentType}</span>
-                                      <span className="text-gray-400">|</span>
-                                      <span>
-                                        {exp.company} - {exp.location}
-                                      </span>
-                                      <span className="text-gray-400">|</span>
-                                      <span>
-                                        {exp.startDate} - {exp.endDate}
-                                      </span>
+                            {currentApplicant?.work_experience && currentApplicant.work_experience.length > 0 ? (
+                              currentApplicant.work_experience.map((exp, index) => (
+                                <div key={index} className="relative">
+                                  <div className="flex">
+                                    <div className="mr-4 flex flex-col items-center">
+                                      <div className="h-3 w-3 rounded-full bg-blue-500"></div>
+                                      {index < (currentApplicant.work_experience?.length ?? 0) - 1 && (
+                                        <div className="mt-2 h-16 w-px bg-gray-300"></div>
+                                      )}
+                                    </div>
+                                    <div className="flex-1 pb-4">
+                                      <h4 className="font-bold text-gray-900">
+                                        {exp.jobTitle || "N/A"}
+                                      </h4>
+                                      <div className="mt-1 flex flex-wrap gap-2 text-sm text-gray-600">
+                                        <span>{exp.company || "N/A"}</span>
+                                        {exp.years != null && (
+                                          <>
+                                            <span className="text-gray-400">|</span>
+                                            <span>{exp.years} Year{exp.years > 1 ? 's' : ''}</span>
+                                          </>
+                                        )}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
+                              ))
+                            ) : (
+                              <div className="text-sm text-gray-500 text-center py-4">
+                                No work experience provided.
                               </div>
-                            ))}
+                            )}
                           </div>
                         </div>
 
@@ -386,18 +424,50 @@ export default function ApplicantTracker() {
                             </div>
                             <h3 className="font-semibold">Cover Letter</h3>
                           </div>
-                          <div className="rounded-lg bg-gray-50 p-4">
-                            <p className="text-sm text-gray-700">
-                              Dear Hiring Manager, I am writing to express my
-                              strong interest in the Software Engineer position
-                              at your company. With over 4 years of experience
-                              in full-stack development and a passion for
-                              creating innovative solutions...
-                            </p>
-                            <button className="mt-2 text-sm text-blue-600 hover:underline">
-                              Read more
-                            </button>
-                          </div>
+                          {currentApplicant?.cover_letter_url ? (
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-lg border p-4">
+                              <div className="flex items-center gap-3">
+                                <div className="relative flex items-center justify-center rounded bg-blue-100 p-2">
+                                  <FileText className="h-5 w-5 text-blue-600" />
+                                  <span className="absolute bottom-0 right-0 translate-x-1/2 translate-y-1/2 rounded bg-white px-1 text-[10px] font-bold text-blue-600 shadow-sm">
+                                    {currentApplicant.cover_letter_filename?.split('.').pop()?.toUpperCase() || "DOC"}
+                                  </span>
+                                </div>
+                                <span className="text-sm font-medium">
+                                  {currentApplicant.cover_letter_filename || "Cover Letter"}
+                                </span>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="w-full sm:w-auto"
+                                  onClick={() => window.open(currentApplicant.cover_letter_url!, "_blank")}
+                                >
+                                  <FileText className="mr-2 h-4 w-4" />
+                                  Preview
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="w-full sm:w-auto"
+                                  onClick={() => {
+                                    const a = document.createElement("a");
+                                    a.href = currentApplicant.cover_letter_url!;
+                                    a.download = currentApplicant.cover_letter_filename || "cover_letter";
+                                    a.click();
+                                  }}
+                                >
+                                  <Download className="mr-2 h-4 w-4" />
+                                  Download
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-sm text-gray-500 text-center py-4 rounded-lg bg-gray-50">
+                              No cover letter provided.
+                            </div>
+                          )}
                         </div>
 
                         {/* Resume */}
@@ -408,29 +478,50 @@ export default function ApplicantTracker() {
                             </div>
                             <h3 className="font-semibold">Resume</h3>
                           </div>
-                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-lg border p-4">
-                            <div className="flex items-center gap-3">
-                              {/* File icon with PDF label */}
-                              <div className="relative flex items-center justify-center rounded bg-blue-100 p-2">
-                                <FileText className="h-5 w-5 text-blue-600" />
-                                <span className="absolute bottom-0 right-0 translate-x-1/2 translate-y-1/2 rounded bg-white px-1 text-[10px] font-bold text-blue-600 shadow-sm">
-                                  PDF
+                          {currentApplicant?.resume_url ? (
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-lg border p-4">
+                              <div className="flex items-center gap-3">
+                                <div className="relative flex items-center justify-center rounded bg-blue-100 p-2">
+                                  <FileText className="h-5 w-5 text-blue-600" />
+                                  <span className="absolute bottom-0 right-0 translate-x-1/2 translate-y-1/2 rounded bg-white px-1 text-[10px] font-bold text-blue-600 shadow-sm">
+                                    {currentApplicant.resume_filename?.split('.').pop()?.toUpperCase() || "PDF"}
+                                  </span>
+                                </div>
+                                <span className="text-sm font-medium">
+                                  {currentApplicant.resume_filename || "Resume"}
                                 </span>
                               </div>
-                              <span className="text-sm font-medium">
-                                {currentApplicant.name.replace(/\s+/g, "_")}
-                                _Resume.pdf
-                              </span>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="w-full sm:w-auto"
+                                  onClick={() => window.open(currentApplicant.resume_url!, "_blank")}
+                                >
+                                  <FileText className="mr-2 h-4 w-4" />
+                                  Preview
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="w-full sm:w-auto"
+                                  onClick={() => {
+                                    const a = document.createElement("a");
+                                    a.href = currentApplicant.resume_url!;
+                                    a.download = currentApplicant.resume_filename || "resume";
+                                    a.click();
+                                  }}
+                                >
+                                  <Download className="mr-2 h-4 w-4" />
+                                  Download
+                                </Button>
+                              </div>
                             </div>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="w-full sm:w-auto"
-                            >
-                              <Download className="mr-2 h-4 w-4" />
-                              Download
-                            </Button>
-                          </div>
+                          ) : (
+                            <div className="text-sm text-gray-500 text-center py-4 rounded-lg bg-gray-50">
+                              No resume provided.
+                            </div>
+                          )}
                         </div>
 
                         {/* Comments */}
@@ -443,31 +534,50 @@ export default function ApplicantTracker() {
                           </div>
 
                           <div className="space-y-4">
-                            {comments.map((comment) => (
-                              <div key={comment.id} className="flex gap-3">
-                                <Avatar className="h-8 w-8">
-                                  <AvatarImage
-                                    src={comment.avatar || "/placeholder.svg"}
-                                  />
-                                  <AvatarFallback>
-                                    {comment.author[0]}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-medium">
-                                      {comment.author}
-                                    </span>
-                                    <span className="text-xs text-gray-500">
-                                      {comment.timestamp}
-                                    </span>
-                                  </div>
-                                  <p className="mt-1 text-sm text-gray-700">
-                                    {comment.content}
-                                  </p>
-                                </div>
+                            {commentsLoading ? (
+                              <div className="flex justify-center py-4">
+                                <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
                               </div>
-                            ))}
+                            ) : comments.length === 0 ? (
+                              <div className="text-sm text-gray-500 text-center py-4">
+                                No comments yet.
+                              </div>
+                            ) : (
+                              comments.map((comment) => (
+                                <div key={comment.id} className="flex gap-3 group">
+                                  <Avatar className="h-8 w-8">
+                                    <AvatarImage
+                                      src={resolveMediaUrl(comment.author_avatar) || "/placeholder.svg"}
+                                    />
+                                    <AvatarFallback className="text-xs">
+                                      {comment.author_name?.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase() || "?"}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm font-medium">
+                                        {comment.author_name}
+                                      </span>
+                                      <span className="text-xs text-gray-500">
+                                        {formatRelativeTime(comment.created_at)}
+                                      </span>
+                                    </div>
+                                    <p className="mt-1 text-sm text-gray-700 whitespace-pre-wrap break-words">
+                                      {comment.content}
+                                    </p>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600"
+                                    onClick={() => handleDeleteComment(comment.id)}
+                                    title="Delete comment"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              ))
+                            )}
                           </div>
 
                           <div className="mt-4 flex gap-2">
@@ -475,16 +585,20 @@ export default function ApplicantTracker() {
                               placeholder="Write a comment..."
                               value={newComment}
                               onChange={(e) => setNewComment(e.target.value)}
-                              className="flex-1"
+                              className="flex-1 min-h-[60px]"
                             />
-                            <div className="flex flex-col gap-2">
-                              <Button size="icon" variant="outline">
-                                <Smile className="h-4 w-4" />
-                              </Button>
-                              <Button size="icon" className="bg-[#0056d2]">
+                            <Button
+                              size="icon"
+                              className="bg-[#0056d2] shrink-0 self-end"
+                              onClick={handleSendComment}
+                              disabled={isSubmittingComment || !newComment.trim()}
+                            >
+                              {isSubmittingComment ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
                                 <Send className="h-4 w-4" />
-                              </Button>
-                            </div>
+                              )}
+                            </Button>
                           </div>
                         </div>
                       </TabsContent>
@@ -493,172 +607,85 @@ export default function ApplicantTracker() {
                         value="answered-form"
                         className="mt-6 space-y-8"
                       >
-                        <AnsweredForm applicant={currentApplicant} />
+                        <AnsweredForm
+                          snapshot={currentApplicant.application_form_snapshot ?? {}}
+                          questionnaireSnapshot={currentApplicant.application_form_questionnaire_snapshot ?? {}}
+                          questionnaireSections={questionnaireSections}
+                        />
                       </TabsContent>
 
                       <TabsContent value="document" className="mt-6 space-y-4">
-                        <div className="space-y-4">
-                          {/* Document 1 */}
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                            <div className="flex items-center gap-3">
-                              <div className="rounded bg-red-100 p-2">
-                                <span className="text-xs font-bold text-red-600">
-                                  PDF
-                                </span>
-                              </div>
-                              <div>
-                                <h4 className="font-medium text-gray-900">
-                                  {currentApplicant.name.replace(/\s+/g, "_")}
-                                  _Resume.pdf
-                                </h4>
-                                <p className="text-sm text-gray-500">
-                                  Uploaded on Dec 15, 2023 at 2:30 PM
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Button size="sm" variant="outline">
-                                <Download className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
+                        {documents.length > 0 ? (
+                          <div className="space-y-6">
+                            {["Application", "Pre-onboarding"].map((group) => {
+                              const groupDocs = documents.filter((d) => (d.group ?? "Application") === group)
+                              if (groupDocs.length === 0) return null
+                              return (
+                                <div key={group} className="space-y-3">
+                                  <h4 className="text-sm font-semibold text-gray-800">{group} Documents</h4>
+                                  <div className="space-y-3">
+                                    {groupDocs.map((doc, i) => {
+                                      const ext = doc.filename?.split(".").pop()?.toUpperCase() || "FILE"
+                                      const colorMap: Record<string, string> = {
+                                        PDF: "bg-red-100 text-red-600",
+                                        DOC: "bg-blue-100 text-blue-600",
+                                        DOCX: "bg-blue-100 text-blue-600",
+                                        JPG: "bg-green-100 text-green-600",
+                                        JPEG: "bg-green-100 text-green-600",
+                                        PNG: "bg-green-100 text-green-600",
+                                      }
+                                      const badgeClass = colorMap[ext] || "bg-gray-100 text-gray-600"
+                                      const resolvedUrl = resolveMediaUrl(doc.url)
+                                      return (
+                                        <div key={`${group}-${i}`} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                                            <div className={`rounded p-2 shrink-0 ${badgeClass.split(" ")[0]}`}>
+                                              <span className={`text-xs font-bold ${badgeClass.split(" ")[1]}`}>
+                                                {ext}
+                                              </span>
+                                            </div>
+                                            <div className="min-w-0">
+                                              <h4 className="font-medium text-gray-900 break-words whitespace-normal">
+                                                {doc.filename || doc.label}
+                                              </h4>
+                                              <p className="text-sm text-gray-500 capitalize truncate">{doc.label}</p>
+                                            </div>
+                                          </div>
+                                          <div className="flex items-center gap-2 shrink-0">
+                                            <Button
+                                              size="sm"
+                                              variant="outline"
+                                              className="px-2 text-xs"
+                                              onClick={() => resolvedUrl && window.open(resolvedUrl, "_blank")}
+                                              disabled={!resolvedUrl}
+                                            >
+                                              <FileText className="h-3.5 w-3.5 mr-1" />
+                                              Preview
+                                            </Button>
+                                            <Button
+                                              size="sm"
+                                              variant="outline"
+                                              className="px-2 text-xs"
+                                              onClick={() => resolvedUrl && downloadFile(resolvedUrl, doc.filename || undefined)}
+                                              disabled={!resolvedUrl}
+                                            >
+                                              <Download className="h-3.5 w-3.5 mr-1" />
+                                              Download
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+                              )
+                            })}
                           </div>
-
-                          {/* Document 2 */}
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                            <div className="flex items-center gap-3">
-                              <div className="rounded bg-blue-100 p-2">
-                                <span className="text-xs font-bold text-blue-600">
-                                  DOC
-                                </span>
-                              </div>
-                              <div>
-                                <h4 className="font-medium text-gray-900">
-                                  Cover_Letter_
-                                  {currentApplicant.name.replace(/\s+/g, "_")}
-                                  .docx
-                                </h4>
-                                <p className="text-sm text-gray-500">
-                                  Uploaded on Dec 14, 2023 at 4:15 PM
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Button size="sm" variant="outline">
-                                <Download className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
+                        ) : (
+                          <div className="text-sm text-gray-500 text-center py-8">
+                            No documents uploaded.
                           </div>
-
-                          {/* Document 3 */}
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                            <div className="flex items-center gap-3">
-                              <div className="rounded bg-green-100 p-2">
-                                <span className="text-xs font-bold text-green-600">
-                                  IMG
-                                </span>
-                              </div>
-                              <div>
-                                <h4 className="font-medium text-gray-900">
-                                  Profile_Photo_
-                                  {currentApplicant.name.replace(/\s+/g, "_")}
-                                  _2x2.jpg
-                                </h4>
-                                <p className="text-sm text-gray-500">
-                                  Uploaded on Dec 13, 2023 at 10:45 AM
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Button size="sm" variant="outline">
-                                <Download className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-
-                          {/* Document 4 */}
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                            <div className="flex items-center gap-3">
-                              <div className="rounded bg-purple-100 p-2">
-                                <span className="text-xs font-bold text-purple-600">
-                                  PDF
-                                </span>
-                              </div>
-                              <div>
-                                <h4 className="font-medium text-gray-900">
-                                  Medical_Certificate_
-                                  {currentApplicant.name.replace(/\s+/g, "_")}
-                                  _2023.pdf
-                                </h4>
-                                <p className="text-sm text-gray-500">
-                                  Uploaded on Dec 12, 2023 at 9:20 AM
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Button size="sm" variant="outline">
-                                <Download className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Upload New Document */}
-                        <div className="mt-6 p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
-                          <input
-                            type="file"
-                            multiple
-                            className="hidden"
-                            id="document-upload"
-                          />
-                          <div className="space-y-2">
-                            <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                              <Upload className="h-6 w-6 text-gray-400" />
-                            </div>
-                            <div>
-                              <label
-                                htmlFor="document-upload"
-                                className="text-sm font-medium text-blue-600 hover:text-blue-500 cursor-pointer"
-                              >
-                                Click to upload
-                              </label>
-                              <span className="text-sm text-gray-500">
-                                {" "}
-                                or drag and drop
-                              </span>
-                            </div>
-                            <p className="text-xs text-gray-500">
-                              PDF, DOC, DOCX, JPG, PNG up to 10MB
-                            </p>
-                          </div>
-                        </div>
+                        )}
                       </TabsContent>
                     </Tabs>
                   </CardContent>
@@ -669,88 +696,52 @@ export default function ApplicantTracker() {
               <div className="md:col-span-2">
                 <Card className="h-full">
                   <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle>Interview Evaluation Form</CardTitle>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          navigate(
-                            `/job/list/applicants/${name || "john-doe"}/IEForm`
-                          )
-                        }
-                        className="flex items-center gap-2 text-blue-600 hover:bg-blue-50"
-                      >
-                        <Scaling className="h-4 w-4" />
-                        Preview
-                      </Button>
-                    </div>
+                    <CardTitle>Interview Evaluation Forms</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-8">
-                    {/* Assessments */}
-                    {assessments.map((assessment, index) => (
-                      <div
-                        key={index}
-                        className="space-y-3 rounded-lg bg-white p-4 shadow"
-                      >
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-semibold">{assessment.type_label || assessment.type}</h4>
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`text-lg font-bold ${
-                                assessment.score < 75
-                                  ? "text-red-500"
-                                  : assessment.score === 75
-                                  ? "text-yellow-500"
-                                  : "text-green-500"
-                              }`}
+                    {interviewSteps.length === 0 ? (
+                      <div className="text-sm text-gray-500 text-center py-8">
+                        No interview steps configured for this job.
+                      </div>
+                    ) : (
+                      interviewSteps.map((step) => (
+                        <div
+                          key={step.id}
+                          className="space-y-3 rounded-lg bg-white p-4 shadow"
+                        >
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold">{step.process_title}</h4>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                navigate(
+                                  `/job/${currentApplicant?.job_id}/applicants/${applicantId}/interviews/${step.id}/ief`
+                                )
+                              }
+                              className="flex items-center gap-2 text-blue-600 hover:bg-blue-50"
                             >
-                              {assessment.score}%
-                            </span>
-                            <RadialChart score={assessment.score} />
+                              <Scaling className="h-4 w-4" />
+                              View IEF
+                            </Button>
                           </div>
                         </div>
-                        <p className="text-xs text-gray-600">
-                          {assessment.description}
-                        </p>
-                      </div>
-                    ))}
+                      ))
+                    )}
 
-                    {/* AI Evaluation Summary */}
-                    <div className="space-y-2">
-                      <h4 className="font-semibold">AI Evaluation Summary</h4>
+                    {/* AI Evaluation Summary - Disabled */}
+                    <div className="space-y-2 opacity-50 pointer-events-none">
+                      <h4 className="font-semibold flex items-center gap-2">
+                        AI Evaluation Summary
+                        <Badge variant="outline" className="text-xs">Coming Soon</Badge>
+                      </h4>
                       <Textarea
                         readOnly
-                        value="The candidate demonstrates strong technical capabilities with excellent problem-solving skills. Communication skills are above average, and there's good alignment with company values. Recommended for next round."
+                        disabled
+                        value=""
+                        placeholder="AI Evaluation will be available soon."
                         className="h-20 text-sm"
                       />
-                    </div>
-
-                    {/* Overall Rating */}
-                    <div className="space-y-4">
-                      <h4 className="font-semibold">Overall Rating</h4>
-                      <div className="flex justify-center">
-                        <HalfCircleChart score={overallScore} />
-                      </div>
-
-                      <Button className="w-full bg-[#0056d2]">
-                        Set Interview
-                      </Button>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button
-                          variant="outline"
-                          className="border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
-                        >
-                          Pass
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
-                        >
-                          Fail
-                        </Button>
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
