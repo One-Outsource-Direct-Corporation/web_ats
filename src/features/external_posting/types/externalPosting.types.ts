@@ -32,6 +32,7 @@ export interface JobPosting {
   description: string | null;
   responsibilities: string | null;
   qualifications: string | null;
+  required_skills: string[];
   working_site: string | null;
   work_schedule_from: string | null;
   work_schedule_to: string | null;

@@ -30,6 +30,8 @@ import {
   prfDraftLocalStore,
   type PrfDraftLocalRecord,
 } from "@/features/prf_2/services/prfDraft.local-store";
+import ApplicantPoolingModal, {type PoolingOption } from "@/shared/components/ApplicantPoolingModal";
+import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 
 interface PRFCreationProps {
   initialData?: LegacyPRFFormData;
@@ -41,12 +43,15 @@ export default function PRFCreation({
   updateMode = false,
 }: PRFCreationProps) {
   const navigate = useNavigate();
+  const axiosPrivate = useAxiosPrivate();
   const [step, setStep] = useState(1);
   const [maxStepVisited, setMaxStepVisited] = useState(updateMode ? 6 : 1);
   const [stepErrors, setStepErrors] = useState<StepErrors>(
     createEmptyStepErrors(),
   );
   const [showResumeModal, setShowResumeModal] = useState(false);
+  const [showPoolingModal, setShowPoolingModal] = useState(false);
+  const [createdJobPostingId, setCreatedJobPostingId] = useState<number | null>(null);
   const [draftRecord, setDraftRecord] = useState<PrfDraftLocalRecord | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const adaptedInitialData = useMemo(
@@ -144,8 +149,19 @@ export default function PRFCreation({
       if (response.status === 200 || response.status === 201) {
         prfDraftLocalStore.clearDraft();
         setStepErrors(createEmptyStepErrors());
-        toast.success(successMessage);
-        navigate("/requests");
+        
+        if (updateMode) {
+          toast.success(successMessage);
+          navigate("/requests");
+          return;
+        }
+        
+        // Store the created job posting ID and show pooling modal
+        const jobPostingId = response.data?.job_posting?.id ?? response.data?.id;
+        if (jobPostingId) {
+          setCreatedJobPostingId(jobPostingId);
+        }
+        setShowPoolingModal(true);
         return;
       }
 
@@ -229,6 +245,35 @@ export default function PRFCreation({
     setShowResumeModal(false);
   }, []);
 
+  const handlePoolingConfirm = async (option: PoolingOption) => {
+    try {
+      if (createdJobPostingId) {
+        await axiosPrivate.patch(`/api/job_posting/${createdJobPostingId}/`, {
+          applicant_pooling_option: option,
+        });
+      }
+      
+      if (option !== 'new_only' && createdJobPostingId) {
+        await axiosPrivate.post(`/api/job_posting/${createdJobPostingId}/pool_applicants/`, {
+          pooling_option: option,
+        });
+      }
+      
+      toast.success('PRF submitted successfully!');
+    } catch (error) {
+      console.error('Error updating pooling option:', error);
+      toast.success('PRF submitted successfully!');
+    } finally {
+      setShowPoolingModal(false);
+      navigate("/requests");
+    }
+  };
+
+  const handlePoolingSkip = () => {
+    setShowPoolingModal(false);
+    navigate("/requests");
+  };
+
   return (
     <section className="min-h-screen p-6">
       <div className="mx-auto max-w-7xl space-y-4">
@@ -279,6 +324,14 @@ export default function PRFCreation({
             onStartNew={handleStartNew}
           />
         )}
+
+        <ApplicantPoolingModal
+          open={showPoolingModal}
+          onOpenChange={setShowPoolingModal}
+          jobTitle={formData.job_posting?.job_title ?? 'this position'}
+          onConfirm={handlePoolingConfirm}
+          onSkip={handlePoolingSkip}
+        />
       </div>
     </section>
   );

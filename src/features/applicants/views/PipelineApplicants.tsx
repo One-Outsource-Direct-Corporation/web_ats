@@ -61,6 +61,7 @@ import {
 import ResumeScreeningTable from "@/features/applicants/components/ResumeScreeningTable";
 import JobOfferPipelineTable from "@/features/applicants/components/JobOfferPipelineTable";
 import { useJobOffersQuery } from "@/features/applicants/hooks/useJobOffers";
+import RejectCandidateModal from "@/features/applicants/components/RejectCandidateModal";
 
 import { useDeferredAction } from "@/features/applicants/hooks/useDeferredAction";
 
@@ -496,6 +497,15 @@ export default function PipelineApplicants() {
   const [onboardingPreviewOpen, setOnboardingPreviewOpen] = useState(false);
   const [onboardingPreviewSubject, setOnboardingPreviewSubject] = useState("");
   const [onboardingPreviewBody, setOnboardingPreviewBody] = useState("");
+
+  // Reject candidate modal state
+  const [rejectModalState, setRejectModalState] = useState<{
+    open: boolean;
+    candidate: { id: number; name: string; pipelineStepId?: number } | null;
+  }>({
+    open: false,
+    candidate: null,
+  });
 
   const { data: jobDetail, isLoading, isError, refetch } = useJobDetailQuery(jobId);
   const { data: offersData } = useJobOffersQuery();
@@ -1117,6 +1127,19 @@ export default function PipelineApplicants() {
       return;
     }
 
+    // Show reject modal for fail outcome
+    if (outcome === "fail") {
+      setRejectModalState({
+        open: true,
+        candidate: {
+          id: candidateApplicationId,
+          name: candidateName,
+          pipelineStepId,
+        },
+      });
+      return;
+    }
+
     queueAction({
       candidateName,
       label: outcome === "pass" ? "Pass" : "Fail",
@@ -1140,6 +1163,39 @@ export default function PipelineApplicants() {
         }
       },
     });
+  };
+
+  const handleRejectCandidate = async (
+    candidateId: number,
+    pipelineStepId: number | undefined,
+    addToPool: boolean,
+    rejectionReason: string,
+  ) => {
+    if (!pipelineStepId) return;
+
+    try {
+      // If adding to pool, do that first
+      if (addToPool) {
+        await axiosPrivate.post('/api/candidate/talent-pool/add_to_pool/', {
+          candidate_application_id: candidateId,
+          rejection_reason: rejectionReason,
+        });
+      }
+
+      // Then reject
+      await axiosPrivate.post("/api/candidate/pipeline/progress/", {
+        candidate_application_id: candidateId,
+        pipeline_step_id: pipelineStepId,
+        outcome: "fail",
+      });
+
+      const candidateName = rejectModalState.candidate?.name || "Candidate";
+      toast.success(`${candidateName} has been rejected.${addToPool ? ' Added to talent pool.' : ''}`);
+      await refetch();
+    } catch (error) {
+      toast.error("Failed to reject candidate");
+      console.error("Reject candidate error:", error);
+    }
   };
 
   const handleCandidateShortlist = (
@@ -3894,6 +3950,16 @@ export default function PipelineApplicants() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Reject Candidate Modal */}
+      {rejectModalState.candidate && (
+        <RejectCandidateModal
+          isOpen={rejectModalState.open}
+          onClose={() => setRejectModalState({ open: false, candidate: null })}
+          candidate={rejectModalState.candidate}
+          onReject={handleRejectCandidate}
+        />
       )}
     </>
   );

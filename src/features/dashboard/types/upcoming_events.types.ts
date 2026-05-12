@@ -1,5 +1,5 @@
 // Dashboard feature types
-export type EventType = "phone" | "phone-red" | "notebookpen" | "clipboard";
+export type EventType = "phone" | "phone-green" | "phone-red" | "notebookpen" | "clipboard";
 export type StatusType = "Interview" | "Assessment" | "Offer Sent" | string;
 
 export interface EventIconProps {

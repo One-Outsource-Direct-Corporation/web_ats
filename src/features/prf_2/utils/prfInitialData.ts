@@ -26,6 +26,7 @@ export function createInitialPRF2Data(user?: User | null): PRFFormData {
       description: "",
       responsibilities: "",
       qualifications: "",
+      required_skills: [],
       status: JobPostingStatus.PENDING,
       type: JobPostingType.PRF,
     },

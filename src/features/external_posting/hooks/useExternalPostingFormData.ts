@@ -104,6 +104,22 @@ export const useExternalPostingFormData = (initialData?: PositionFormData) => {
     fieldName: keyof PositionFormData["job_posting"],
     value: string | number | null,
   ) {
+    if (fieldName === "required_skills") {
+      try {
+        const parsed = typeof value === "string" ? JSON.parse(value) : value;
+        setFormData((prev: PositionFormData) => ({
+          ...prev,
+          job_posting: {
+            ...prev.job_posting,
+            [fieldName]: Array.isArray(parsed) ? parsed : [],
+          },
+        }));
+        return;
+      } catch {
+        return;
+      }
+    }
+
     const normalizedValue = normalizeJobPostingValue(fieldName, value);
 
     setFormData((prev: PositionFormData) => ({

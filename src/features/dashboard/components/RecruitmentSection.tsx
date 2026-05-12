@@ -36,7 +36,7 @@ export function RecruitmentSection({
   ongoingProcesses,
 }: RecruitmentSectionProps) {
   return (
-    <Card className="h-fit relative">
+    <Card className="h-full relative">
       <CardHeader>
         <CardTitle>
           <div className="flex items-center gap-2 -mb-5">

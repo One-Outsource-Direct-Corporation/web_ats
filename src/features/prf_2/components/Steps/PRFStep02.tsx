@@ -15,6 +15,10 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/shared/components/ui/field";
+import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
+import { X, Plus } from "lucide-react";
+import { useState } from "react";
 import {
   EmploymentType,
   ExperienceLevel,
@@ -51,8 +55,45 @@ export default function PRFStep02({
   const descriptionError = getJobPostingError(errors, "description");
   const responsibilitiesError = getJobPostingError(errors, "responsibilities");
   const qualificationsError = getJobPostingError(errors, "qualifications");
+  const requiredSkillsError = getJobPostingError(errors, "required_skills");
   const minSalaryError = getJobPostingError(errors, "min_salary");
   const maxSalaryError = getJobPostingError(errors, "max_salary");
+  const [newSkill, setNewSkill] = useState("");
+
+  const handleAddSkill = () => {
+    const trimmed = newSkill.trim();
+    if (!trimmed) return;
+    
+    const currentSkills = formData.job_posting.required_skills ?? [];
+    if (currentSkills.includes(trimmed)) return;
+    
+    updateFormData((prev) => ({
+      ...prev,
+      job_posting: {
+        ...prev.job_posting,
+        required_skills: [...currentSkills, trimmed],
+      },
+    }));
+    setNewSkill("");
+  };
+
+  const handleRemoveSkill = (skill: string) => {
+    const currentSkills = formData.job_posting.required_skills ?? [];
+    updateFormData((prev) => ({
+      ...prev,
+      job_posting: {
+        ...prev.job_posting,
+        required_skills: currentSkills.filter(s => s !== skill),
+      },
+    }));
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddSkill();
+    }
+  };
 
   return (
     <div className="lg:col-span-2 space-y-6">
@@ -298,6 +339,50 @@ export default function PRFStep02({
             {qualificationsError && (
               <FieldError>{qualificationsError}</FieldError>
             )}
+          </div>
+
+          <div>
+            <FieldLabel>Required Skills <span className="text-red-500">*</span></FieldLabel>
+            <div className="flex gap-2 mt-2">
+              <Input
+                value={newSkill}
+                onChange={(e) => setNewSkill(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Type a skill and press Enter or click Add"
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                onClick={handleAddSkill}
+                disabled={!newSkill.trim()}
+                variant="outline"
+                size="sm"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add
+              </Button>
+            </div>
+            {requiredSkillsError && (
+              <FieldError>{requiredSkillsError}</FieldError>
+            )}
+            <div className="flex flex-wrap gap-2 mt-3">
+              {(formData.job_posting.required_skills ?? []).map((skill) => (
+                <Badge
+                  key={skill}
+                  variant="secondary"
+                  className="flex items-center gap-1 pr-1"
+                >
+                  {skill}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveSkill(skill)}
+                    className="ml-1 hover:text-red-500"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
           </div>
         </div>
       </FieldGroup>

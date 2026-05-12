@@ -144,6 +144,7 @@ function getStep2Errors(formData: PRFFormData): ValidationError | null {
     "description",
     "responsibilities",
     "qualifications",
+    "required_skills",
     "min_salary",
     "max_salary",
   ];
@@ -154,6 +155,10 @@ function getStep2Errors(formData: PRFFormData): ValidationError | null {
     if (jobPostingErrors[field]) {
       step2JobPostingErrors[field] = jobPostingErrors[field];
     }
+  }
+
+  if (!formData.job_posting.required_skills || formData.job_posting.required_skills.length === 0) {
+    step2JobPostingErrors.required_skills = ["At least one required skill is needed."];
   }
 
   if (Object.keys(step2JobPostingErrors).length > 0) {
@@ -246,6 +251,7 @@ export function mapServerErrorsToSteps(
     "job_posting.description": 2,
     "job_posting.responsibilities": 2,
     "job_posting.qualifications": 2,
+    "job_posting.required_skills": 2,
 
     hardware_required: 3,
     software_required: 3,

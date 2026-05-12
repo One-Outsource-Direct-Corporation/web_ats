@@ -1,7 +1,9 @@
 import { useEffect } from "react";
 import { Clock, MessageSquare, UserCheck, Users } from "lucide-react";
-import { LeftColumn } from "../components/LeftColumn";
-import { RightColumn } from "../components/RightColumn";
+import { CalendarSection } from "../components/CalendarSection";
+import { MetricsSection } from "../components/MetricsSection";
+import { RecruitmentSection } from "../components/RecruitmentSection";
+import { InterviewsSection } from "../components/InterviewsSection";
 import { useDashboard } from "../api/useDashboard";
 import type { StatusType, Metric } from "../types/upcoming_events.types";
 
@@ -67,7 +69,7 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="relative bg-gray-50 p-6">
+      <div className="p-6">
         <div className="mx-auto max-w-7xl space-y-6">
           <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
           <div className="text-center text-gray-500 py-12">Loading dashboard...</div>
@@ -78,7 +80,7 @@ export default function Dashboard() {
 
   if (isError || !data) {
     return (
-      <div className="relative bg-gray-50 p-6">
+      <div className="p-6">
         <div className="mx-auto max-w-7xl space-y-6">
           <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
           <div className="text-center text-red-500 py-12">
@@ -90,26 +92,32 @@ export default function Dashboard() {
   }
 
   return (
-    <>
-      <div className="relative bg-gray-50 p-6">
-        <div className="mx-auto max-w-7xl space-y-6">
-          <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <LeftColumn
-              getStatusColor={getStatusColor}
-              jobData={data.job_data}
-              ongoingProcesses={data.ongoing_processes}
-              weekDays={data.upcoming_events.days}
-            />
-            <RightColumn
+    <div className="p-6">
+      <div className="mx-auto max-w-7xl">
+        <h1 className="text-3xl font-bold text-gray-800 mb-6">Dashboard</h1>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:grid-rows-2">
+          <div className="lg:col-span-2 lg:row-span-1">
+            <CalendarSection weekDays={data.upcoming_events.days} />
+          </div>
+          <div className="lg:col-span-1 lg:row-span-1">
+            <MetricsSection
               metrics={mapMetrics(data.metrics)}
-              interviews={data.interviews}
               getPastelColor={getPastelColor}
               getBorderColor={getBorderColor}
             />
           </div>
+          <div className="lg:col-span-2 lg:row-span-1">
+            <RecruitmentSection
+              getStatusColor={getStatusColor}
+              jobData={data.job_data}
+              ongoingProcesses={data.ongoing_processes}
+            />
+          </div>
+          <div className="lg:col-span-1 lg:row-span-1">
+            <InterviewsSection interviews={data.interviews} />
+          </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

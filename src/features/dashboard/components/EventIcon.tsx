@@ -5,6 +5,8 @@ export function getEventIcon(type: EventType) {
   switch (type) {
     case "phone":
       return <Phone className="w-4 h-4 text-blue-500" />;
+    case "phone-green":
+      return <Phone className="w-4 h-4 text-green-500" />;
     case "phone-red":
       return <Phone className="w-4 h-4 text-red-500" />;
     case "notebookpen":

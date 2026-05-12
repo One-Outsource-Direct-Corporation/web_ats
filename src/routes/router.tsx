@@ -16,6 +16,7 @@ import PersistLogin from "@/features/auth/components/PersistLogin";
 import { publicJobsRoutes } from "@/features/jobs/public/routes/careersRoute";
 import { requestRoutes } from "@/features/requests/routes/requestRoutes";
 import { candidateRoutes } from "@/features/candidate/routes/candidateRoutes";
+import TalentPool from "@/features/talent-pool/views/TalentPool";
 
 export const router = createBrowserRouter([
   {
@@ -44,6 +45,10 @@ export const router = createBrowserRouter([
         children: [
           ...dashboardRoutes,
           ...positionRoutes,
+          {
+            path: "pool",
+            element: <TalentPool />,
+          },
           {
             path: "library/ief-templates",
             element: <IEFTemplateLibrary />,

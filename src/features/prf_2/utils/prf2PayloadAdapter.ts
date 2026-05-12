@@ -31,6 +31,7 @@ interface PrfSubmitPayload {
     description: string | null;
     responsibilities: string | null;
     qualifications: string | null;
+    required_skills: string[];
     status: string | null;
     type: "prf";
   };
@@ -235,6 +236,9 @@ export function adaptLegacyPrfToPrf2FormData(
       description: toStringOrEmpty(sourceJobPosting.description),
       responsibilities: toStringOrEmpty(sourceJobPosting.responsibilities),
       qualifications: toStringOrEmpty(sourceJobPosting.qualifications),
+      required_skills: Array.isArray(sourceJobPosting.required_skills)
+        ? sourceJobPosting.required_skills
+        : base.job_posting.required_skills,
       status:
         (toNullableString(
           sourceJobPosting.status,
@@ -347,6 +351,7 @@ export function buildPrfSubmitPayload(formData: PRFFormData): PrfSubmitPayload {
       description: toNullableString(formData.job_posting.description),
       responsibilities: toNullableString(formData.job_posting.responsibilities),
       qualifications: toNullableString(formData.job_posting.qualifications),
+      required_skills: formData.job_posting.required_skills ?? [],
       status:
         toNullableString(formData.job_posting.status) ??
         JobPostingStatus.PENDING,

@@ -76,6 +76,7 @@ export interface JobPostingCreatePayload {
   description: string;
   responsibilities: string;
   qualifications: string;
+  required_skills: string[];
   status: JobPostingStatus;
   type: JobPostingType;
 }

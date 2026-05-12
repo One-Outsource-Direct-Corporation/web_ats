@@ -1,85 +1,69 @@
 import { useEffect, useState } from "react";
-import { Input } from "@/shared/components/ui/input.tsx";
+import { useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
+import { Input } from "@/shared/components/ui/input";
+import { Button } from "@/shared/components/ui/button";
 import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/shared/components/ui/select.tsx";
-import { Button } from "@/shared/components/ui/button.tsx";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/shared/components/ui/dialog";
+import { toast } from "react-toastify";
+import { Search, UserPlus } from "lucide-react";
+import AssignToJobModal from "@/features/talent-pool/components/AssignToJobModal";
 
-const applicants = [
-  {
-    name: "Michael Taylor",
-    email: "michael.taylor@email.com",
-    avatar: "https://i.pravatar.cc/80?u=1",
-    status: "Failed",
-    badge: "Shortlisted",
-    position: "Lead Developer",
-    evaluation: "Failed",
-    skills: ["Photoshop", "Illustrator", "Agile", "HTML", "CSS"],
-    match: "95%",
-  },
-  {
-    name: "Sarah White",
-    email: "sarah.white@email.com",
-    avatar: "https://i.pravatar.cc/80?u=2",
-    status: "Passed",
-    badge: "For Job Offer",
-    position: "Lead Developer",
-    evaluation: "Passed",
-    skills: ["Photoshop", "Illustrator", "Agile"],
-    match: "90%",
-  },
-  {
-    name: "Nathan Wood",
-    email: "nathan.wood@email.com",
-    avatar: "https://i.pravatar.cc/80?u=3",
-    status: "Passed",
-    badge: "Shortlisted",
-    position: "Software Developer",
-    evaluation: "Passed",
-    skills: ["HTML", "CSS", "Java", "Illustrator"],
-    match: "87%",
-  },
-  {
-    name: "Rachel Miller",
-    email: "rachel.miller@email.com",
-    avatar: "https://i.pravatar.cc/80?u=4",
-    status: "Passed",
-    badge: "For Job Offer",
-    position: "Lead Developer",
-    evaluation: "Passed",
-    skills: ["Photoshop", "Agile"],
-    match: "85%",
-  },
-  {
-    name: "Olivia Miller",
-    email: "olivia.miller@email.com",
-    avatar: "https://i.pravatar.cc/80?u=5",
-    status: "Failed (Final Interview)",
-    badge: "Failed",
-    position: "Lead Developer",
-    evaluation: "Failed (Final Interview)",
-    skills: ["Photoshop", "Illustrator"],
-    match: "84%",
-  },
-];
+interface PooledCandidate {
+  id: number;
+  candidate_name: string;
+  candidate_email: string;
+  candidate_photo_url: string | null;
+  candidate_skills: string[];
+  original_job_title: string;
+  rejection_reason: string;
+  pooled_by: string;
+  pooled_at: string;
+  notes: string;
+}
 
 export default function PoolApplicants() {
+  const navigate = useNavigate();
+  const axiosPrivate = useAxiosPrivate();
+  const queryClient = useQueryClient();
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [selectedCandidate, setSelectedCandidate] = useState<PooledCandidate | null>(null);
+  const pageSize = 20;
 
   useEffect(() => {
     document.title = "Pool Applicants";
   }, []);
 
-  const handleViewProfile = (applicantName: string) => {
-    // Convert name to URL-friendly format (lowercase, replace spaces with hyphens)
-    const urlFriendlyName = applicantName.toLowerCase().replace(/\s+/g, "-");
-    // Use window.location to navigate
-    window.location.href = `/job/list/applicants/${urlFriendlyName}`;
-  };
+  const { data: poolData, isLoading } = useQuery({
+    queryKey: ["talent-pool", currentPage],
+    queryFn: async () => {
+      const response = await axiosPrivate.get("/api/candidate/talent-pool/", {
+        params: { page: currentPage, page_size: pageSize },
+      });
+      return response.data;
+    },
+  });
+
+  const filteredCandidates =
+    poolData?.results?.filter(
+      (candidate: PooledCandidate) =>
+        candidate.candidate_name
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        candidate.candidate_email
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase()),
+    ) || [];
 
   const handleCancel = () => {
     setShowCancelModal(true);
@@ -87,13 +71,30 @@ export default function PoolApplicants() {
 
   const handleGoBack = () => {
     setShowCancelModal(false);
-    // Navigate to previous screen
     window.history.back();
   };
 
   const handleCloseModal = () => {
     setShowCancelModal(false);
   };
+
+  const handleAssignToJob = (candidate: PooledCandidate) => {
+    setSelectedCandidate(candidate);
+    setAssignModalOpen(true);
+  };
+
+  const handleAssignSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ["talent-pool"] });
+    toast.success("Candidate assigned to job posting");
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4 mt-20 flex items-center justify-center">
+        <div className="text-gray-500">Loading pooled applicants...</div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -113,152 +114,180 @@ export default function PoolApplicants() {
             </Button>
           </div>
 
-          {/* Filter Row - Dropdown and Search */}
+          {/* Search */}
           <div className="flex items-center justify-between gap-4">
-            <Select>
-              <SelectTrigger className="w-60 bg-white shadow-sm">
-                <SelectValue placeholder="UI Designer" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ui-designer">UI Designer</SelectItem>
-                <SelectItem value="lead-dev">Lead Developer</SelectItem>
-              </SelectContent>
-            </Select>
-
             <div className="relative w-64">
               <Input
                 placeholder="Search Applicant Name"
                 className="pl-10 bg-white shadow-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <svg
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             </div>
           </div>
 
-          {/* Subheader */}
-          <h2 className="text-lg font-semibold text-gray-700">
-            Top Applicants for{" "}
-            <span className="text-blue-600">UI Designer</span>
-          </h2>
-
           {/* Applicant Cards */}
           <div className="space-y-4 pb-20">
-            {applicants.map((applicant, index) => (
+            {filteredCandidates.map((candidate: PooledCandidate) => (
               <div
-                key={index}
+                key={candidate.id}
                 className="flex items-start justify-between bg-white p-4 rounded-lg shadow-sm border"
               >
                 {/* Left side */}
                 <div className="flex items-start gap-4">
                   <img
-                    src={applicant.avatar || "/placeholder.svg"}
-                    alt={applicant.name}
-                    className="w-12 h-12 rounded-full"
+                    src={candidate.candidate_photo_url || "/placeholder-avatar.png"}
+                    alt={candidate.candidate_name}
+                    className="w-12 h-12 rounded-full object-cover"
                   />
                   <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-md font-semibold">
-                        {applicant.name}
-                      </h3>
-                      {applicant.badge && (
-                        <span
-                          className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                            applicant.badge === "Shortlisted"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : applicant.badge === "For Job Offer"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {applicant.badge}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-500">{applicant.email}</p>
+                    <h3 className="text-md font-semibold">
+                      {candidate.candidate_name}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {candidate.candidate_email}
+                    </p>
                     <p className="text-sm text-gray-500">
                       Position Applied:{" "}
                       <span className="text-gray-700">
-                        {applicant.position}
+                        {candidate.original_job_title}
                       </span>
                     </p>
-                    <p className="text-sm text-gray-500">
-                      Interview Evaluation Status:{" "}
-                      <span className="text-gray-700">
-                        {applicant.evaluation}
-                      </span>
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Matched Skills:{" "}
-                      <span className="text-gray-700">
-                        {applicant.skills.join(", ")}
-                      </span>
-                    </p>
+                    {candidate.rejection_reason && (
+                      <p className="text-sm text-gray-500">
+                        Rejection Reason:{" "}
+                        <span className="text-gray-700">
+                          {candidate.rejection_reason}
+                        </span>
+                      </p>
+                    )}
+                    {candidate.candidate_skills &&
+                      candidate.candidate_skills.length > 0 && (
+                        <p className="text-sm text-gray-500">
+                          Matched Skills:{" "}
+                          <span className="text-gray-700">
+                            {candidate.candidate_skills.join(", ")}
+                          </span>
+                        </p>
+                      )}
+                    {candidate.pooled_by && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        Pooled by {candidate.pooled_by}
+                        {candidate.pooled_at
+                          ? ` on ${new Date(candidate.pooled_at).toLocaleDateString()}`
+                          : ""}
+                      </p>
+                    )}
                   </div>
                 </div>
                 {/* Right side */}
                 <div className="flex flex-col items-end gap-2">
-                  <p className="text-sm font-medium text-gray-700">
-                    {applicant.match} matched
-                  </p>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleViewProfile(applicant.name)}
+                      onClick={() =>
+                        navigate(
+                          `/job/list/applicants/${candidate.id}`,
+                        )
+                      }
                     >
                       View Profile
                     </Button>
-                    <Button className="bg-[#0056D2]" size="sm">
-                      Email applicant
+                    <Button
+                      className="bg-[#0056D2]"
+                      size="sm"
+                      onClick={() => handleAssignToJob(candidate)}
+                    >
+                      <UserPlus className="h-4 w-4 mr-1" />
+                      Assign to Job
                     </Button>
                   </div>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {poolData && poolData.count > pageSize && (
+            <div className="flex justify-center gap-2 mt-6">
+              <Button
+                variant="outline"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => p - 1)}
+              >
+                Previous
+              </Button>
+              <span className="px-4 py-2">
+                Page {currentPage} of{" "}
+                {Math.ceil(poolData.count / pageSize)}
+              </span>
+              <Button
+                variant="outline"
+                disabled={
+                  currentPage >= Math.ceil(poolData.count / pageSize)
+                }
+                onClick={() => setCurrentPage((p) => p + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+
+          {filteredCandidates.length === 0 && !isLoading && (
+            <div className="text-center py-12">
+              <p className="text-gray-500">
+                {searchTerm
+                  ? "No applicants match your search"
+                  : "No applicants in the talent pool"}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Cancel Modal */}
-      {showCancelModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl border">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Cancel pooling of applicants?
-            </h3>
-            <p className="text-sm text-gray-600 mb-6">
-              Clicking "Cancel" will return you to the previous screen. No
-              changes will be applied to the pooling.
-            </p>
-            <div className="flex justify-end gap-3">
-              <Button
-                variant="outline"
-                onClick={handleCloseModal}
-                className="text-gray-600 hover:text-gray-700 bg-transparent"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleGoBack}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                Go Back
-              </Button>
-            </div>
-          </div>
-        </div>
+      {/* Assign to Job Modal */}
+      {selectedCandidate && (
+        <AssignToJobModal
+          open={assignModalOpen}
+          onOpenChange={setAssignModalOpen}
+          candidate={{
+            id: selectedCandidate.id,
+            candidate_name: selectedCandidate.candidate_name,
+            candidate_email: selectedCandidate.candidate_email,
+          }}
+          onSuccess={handleAssignSuccess}
+        />
       )}
+
+      {/* Cancel Modal */}
+      <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cancel pooling of applicants?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-600">
+            Clicking "Cancel" will return you to the previous screen. No
+            changes will be applied to the pooling.
+          </p>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={handleCloseModal}
+              className="text-gray-600 hover:text-gray-700 bg-transparent"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleGoBack}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Go Back
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

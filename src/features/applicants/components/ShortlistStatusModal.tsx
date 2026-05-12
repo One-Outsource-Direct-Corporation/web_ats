@@ -18,6 +18,7 @@ import {
 import { Label } from "@/shared/components/ui/label.tsx";
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group.tsx";
 import { Textarea } from "@/shared/components/ui/textarea.tsx";
+import { Checkbox } from "@/shared/components/ui/checkbox";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import { useDeferredAction } from "@/features/applicants/hooks/useDeferredAction";
 
@@ -57,6 +58,7 @@ export default function ShortlistStatusModal({
 }: ShortlistStatusModalProps) {
   const [status, setStatus] = useState<"passed" | "failed">("passed");
   const [remarks, setRemarks] = useState("");
+  const [addToTalentPool, setAddToTalentPool] = useState(false);
   const axiosPrivate = useAxiosPrivate();
   const { queueAction } = useDeferredAction();
 
@@ -78,6 +80,7 @@ export default function ShortlistStatusModal({
       candidate_application_id: candidateApplicationId,
       pipeline_step_id: pipelineStepId,
       remarks: remarks.trim(),
+      add_to_talent_pool: status === "failed" ? addToTalentPool : false,
     };
 
     const candidateName = candidate.name;
@@ -85,6 +88,7 @@ export default function ShortlistStatusModal({
 
     setStatus("passed");
     setRemarks("");
+    setAddToTalentPool(false);
     onClose();
 
     queueAction({
@@ -119,6 +123,7 @@ export default function ShortlistStatusModal({
   const handleClose = () => {
     setStatus("passed");
     setRemarks("");
+    setAddToTalentPool(false);
     onClose();
   };
 
@@ -196,6 +201,25 @@ export default function ShortlistStatusModal({
                 className="min-h-24 resize-none"
               />
             </div>
+
+            {/* Add to Talent Pool - Only show when failing */}
+            {status === "failed" && (
+              <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-md border border-blue-200">
+                <Checkbox
+                  id="add-to-talent-pool"
+                  checked={addToTalentPool}
+                  onCheckedChange={(checked) => setAddToTalentPool(checked as boolean)}
+                />
+                <div className="space-y-1">
+                  <Label htmlFor="add-to-talent-pool" className="font-medium text-blue-900 cursor-pointer">
+                    Add to Talent Pool
+                  </Label>
+                  <p className="text-xs text-blue-700">
+                    This candidate will be added to the talent pool for future consideration.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Confirmation Message */}
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">

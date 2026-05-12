@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import { Button } from "@/shared/components/ui/button";
-import { Calendar, Phone, NotebookPen, ClipboardList } from "lucide-react";
+import { Calendar, Phone } from "lucide-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getEventIcon } from "./EventIcon.tsx";
 import { useDashboardCalendar } from "../api/useDashboardCalendar";
@@ -87,7 +87,7 @@ export function CalendarSection({ weekDays }: CalendarSectionProps) {
   }
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calendar className="h-5 w-5" />
@@ -196,16 +196,12 @@ export function CalendarSection({ weekDays }: CalendarSectionProps) {
                           <span>Phone Interview</span>
                         </div>
                         <div className="flex items-center gap-1">
+                          <Phone className="w-3.5 h-3.5 text-green-500" />
+                          <span>Initial Interview</span>
+                        </div>
+                        <div className="flex items-center gap-1">
                           <Phone className="w-3.5 h-3.5 text-red-500" />
                           <span>Final Interview</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <NotebookPen className="w-3.5 h-3.5 text-yellow-500" />
-                          <span>Assessment</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <ClipboardList className="w-3.5 h-3.5 text-purple-500" />
-                          <span>Task / Offer</span>
                         </div>
                       </div>
                     </div>
@@ -259,16 +255,12 @@ export function CalendarSection({ weekDays }: CalendarSectionProps) {
               <span>Phone Interview</span>
             </div>
             <div className="flex items-center space-x-1">
+              <Phone className="w-4 h-4 text-green-500" />
+              <span>Initial Interview</span>
+            </div>
+            <div className="flex items-center space-x-1">
               <Phone className="w-4 h-4 text-red-500" />
-              <span>Final Phone Interview</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <NotebookPen className="w-4 h-4 text-yellow-500" />
-              <span>Assessment</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <ClipboardList className="w-4 h-4 text-purple-500" />
-              <span>Task Test</span>
+              <span>Final Interview</span>
             </div>
           </div>
         </div>

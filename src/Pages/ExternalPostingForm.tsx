@@ -16,6 +16,9 @@ import {
 import ResumeDraftModal from "@/features/external_posting/components/ResumeDraftModal";
 import { positionDraftLocalStore } from "@/features/external_posting/services/positionDraft.local-store";
 import { Button } from "@/shared/components/ui/button";
+import ApplicantPoolingModal, { type PoolingOption } from "@/shared/components/ApplicantPoolingModal";
+import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
+import { toast } from "react-toastify";
 
 interface ExternalPostingFormProps {
   initialData?: PositionFormData;
@@ -25,6 +28,7 @@ interface ExternalPostingFormProps {
 export default function ExternalPostingForm(props: ExternalPostingFormProps) {
   const { initialData, updateMode } = props;
   const navigate = useNavigate();
+  const axiosPrivate = useAxiosPrivate();
 
   const {
     steps,
@@ -56,6 +60,8 @@ export default function ExternalPostingForm(props: ExternalPostingFormProps) {
 
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [showResumeModal, setShowResumeModal] = useState(false);
+  const [showPoolingModal, setShowPoolingModal] = useState(false);
+  const [createdJobPostingId, setCreatedJobPostingId] = useState<number | null>(null);
 
   const draftRecord = useMemo(() => {
     if (!hasDraft) return null;
@@ -74,9 +80,12 @@ export default function ExternalPostingForm(props: ExternalPostingFormProps) {
     onUpdateStepErrors: updateStepErrors,
     onNavigateToStep: handleStepClick,
     onUpdateSuccess: () => navigate("/requests"),
-    onCreateSuccess: () => {
-      resetFormData();
-      resetSteps();
+    onCreateSuccess: (response) => {
+      // Store the created job posting ID and show pooling modal
+      if (response?.data?.job_posting?.id) {
+        setCreatedJobPostingId(response.data.job_posting.id);
+      }
+      setShowPoolingModal(true);
     },
   });
 
@@ -88,6 +97,41 @@ export default function ExternalPostingForm(props: ExternalPostingFormProps) {
   const handleStartNewDraft = () => {
     discardDraft();
     setShowResumeModal(false);
+  };
+
+  const handlePoolingConfirm = async (option: PoolingOption) => {
+    try {
+      if (createdJobPostingId) {
+        // Update the job posting with the pooling option
+        await axiosPrivate.patch(`/api/job_posting/${createdJobPostingId}/`, {
+          applicant_pooling_option: option,
+        });
+      }
+      
+      // Trigger pooling if not "new_only"
+      if (option !== 'new_only' && createdJobPostingId) {
+        await axiosPrivate.post(`/api/job_posting/${createdJobPostingId}/pool_applicants/`, {
+          pooling_option: option,
+        });
+      }
+      
+      toast.success('Position created successfully!');
+    } catch (error) {
+      console.error('Error updating pooling option:', error);
+      toast.success('Position created successfully!');
+    } finally {
+      setShowPoolingModal(false);
+      resetFormData();
+      resetSteps();
+      navigate("/requests");
+    }
+  };
+
+  const handlePoolingSkip = () => {
+    setShowPoolingModal(false);
+    resetFormData();
+    resetSteps();
+    navigate("/requests");
   };
 
   const handleNext = async () => {
@@ -217,6 +261,14 @@ export default function ExternalPostingForm(props: ExternalPostingFormProps) {
           onStartNew={handleStartNewDraft}
         />
       )}
+
+      <ApplicantPoolingModal
+        open={showPoolingModal}
+        onOpenChange={setShowPoolingModal}
+        jobTitle={formData.job_posting.job_title ?? 'this position'}
+        onConfirm={handlePoolingConfirm}
+        onSkip={handlePoolingSkip}
+      />
     </>
   );
 }

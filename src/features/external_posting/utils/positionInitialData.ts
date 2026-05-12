@@ -18,6 +18,7 @@ export const getDefaultFormData = (): PositionFormData => ({
     description: null,
     responsibilities: null,
     qualifications: null,
+    required_skills: [],
     working_site: null,
     work_schedule_from: null,
     work_schedule_to: null,

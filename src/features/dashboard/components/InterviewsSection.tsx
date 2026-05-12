@@ -13,7 +13,7 @@ interface InterviewsSectionProps {
 
 export function InterviewsSection({ interviews }: InterviewsSectionProps) {
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <CardTitle>
           <div className="flex items-center gap-2">
