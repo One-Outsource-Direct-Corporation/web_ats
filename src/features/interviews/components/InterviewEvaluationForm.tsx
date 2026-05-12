@@ -976,21 +976,23 @@ export default function InterviewEvaluationForm() {
           </div>
 
           <div className="grid gap-5 lg:grid-cols-2">
-            <Card className="border-slate-200 shadow-sm">
+            <Card className="border-slate-200 shadow-sm opacity-60 pointer-events-none">
               <CardHeader>
-                <CardTitle className="text-lg text-slate-900">AI Summary</CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-lg text-slate-900">AI Summary</CardTitle>
+                  <Badge variant="outline" className="text-xs">Coming Soon</Badge>
+                </div>
                 <CardDescription className="text-slate-600">
-                  Leave this blank for now if you are completing the evaluation manually.
+                  AI-powered evaluation summary will be available in a future update.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Textarea
-                  value={aiSummary}
-                  onChange={(event) => setAiSummary(event.target.value)}
-                  placeholder="Optional AI-generated summary"
+                  value=""
+                  placeholder="AI Evaluation is not yet available."
                   className="min-h-40"
-                  readOnly={!isEditable}
-                  disabled={!isEditable}
+                  readOnly
+                  disabled
                 />
               </CardContent>
             </Card>

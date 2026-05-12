@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Link,
   useLocation,
   useNavigate,
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { ArrowLeft, BarChart3, FileText, Loader2, Search } from "lucide-react";
+import {
+  ArrowLeft, BarChart3, CheckCircle, Download, FileText, Loader2, Plus, Search, Settings, Trash2, X, XCircle,
+} from "lucide-react";
 import { toast } from "react-toastify";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   Avatar,
@@ -56,17 +59,11 @@ import {
 } from "@/features/jobs/utils/jobFormatters";
 
 import ResumeScreeningTable from "@/features/applicants/components/ResumeScreeningTable";
+import JobOfferPipelineTable from "@/features/applicants/components/JobOfferPipelineTable";
+import { useJobOffersQuery } from "@/features/applicants/hooks/useJobOffers";
+import RejectCandidateModal from "@/features/applicants/components/RejectCandidateModal";
 
-type PipelineProgressOutcome = "pass" | "fail";
-
-interface PendingProgressAction {
-  id: string;
-  candidateApplicationId: number;
-  candidateName: string;
-  pipelineStepId: number;
-  outcome: PipelineProgressOutcome;
-  toastId?: string | number;
-}
+import { useDeferredAction } from "@/features/applicants/hooks/useDeferredAction";
 
 interface InterviewScheduleModalState {
   open: boolean;
@@ -100,7 +97,7 @@ interface CandidateAssessmentData {
   id: number;
   assessmentId: number;
   assessmentName?: string | null;
-  status: "assigned" | "submitted" | "graded" | "not_assigned";
+  status: "assigned" | "submitted" | "graded" | "sent" | "not_assigned";
   score?: number | null;
   notes?: string | null;
   is_sent?: boolean;
@@ -135,8 +132,75 @@ interface SendAssessmentPreview {
   recipient_name: string;
 }
 
+interface PreonboardingCandidate {
+  id: number;
+  candidate_name: string;
+  job_title: string;
+  photo_url?: string | null;
+  signed_offer_uploaded: boolean;
+  resume_url?: string | null;
+  resume_filename?: string | null;
+  cover_letter_url?: string | null;
+  cover_letter_filename?: string | null;
+  med_cert_url?: string | null;
+  med_cert_filename?: string | null;
+  requirements_submitted: number;
+  requirements_required: number;
+  requirements_required_submitted: number;
+  requirements_total: number;
+}
 
+interface OnboardingCandidate {
+  id: number;
+  candidate_name: string;
+  job_title: string;
+  photo_url?: string | null;
+  onboarding_date: string | null;
+  onboarding_email_sent_at: string | null;
+}
 
+interface TemplateItem {
+  key: string;
+  label: string;
+  required: boolean;
+  order: number;
+  file_url?: string | null;
+  filename?: string | null;
+  status?: string;
+}
+
+interface RequirementItem {
+  requirement_key: string;
+  requirement_label: string;
+  required: boolean;
+  status: string;
+  version: number;
+  original_filename: string;
+  file_id: number | null;
+  file_url?: string | null;
+  filename?: string | null;
+  carry_over_to_onboarding: boolean;
+  submitted_at: string | null;
+}
+
+const STANDARD_PREONBOARDING_REQUIREMENTS: { label: string; required: boolean }[] = [
+  { label: "Valid NBI Clearance or Police Clearance", required: true },
+  { label: "Medical Certificate", required: true },
+  { label: "Certificate of Employment (COE)", required: true },
+  { label: "Income Tax Return (ITR 2316)", required: true },
+  { label: "Barangay Clearance", required: true },
+  { label: "Photocopy of Dependents Birth Certificate (if applicable)", required: true },
+  { label: "Photocopy of Marriage Contract (if applicable)", required: true },
+  { label: "Photocopy of Birth Certificate", required: true },
+  { label: "Photocopy of BIR ID / TIN Card", required: true },
+  { label: "Photocopy of SSS ID / E1 Form", required: false },
+  { label: "Photocopy of Philhealth Card", required: false },
+  { label: "Photocopy of Pag-ibig ID / Certificate / Record of Contribution", required: false },
+  { label: "2 pieces of 2×2 size photo", required: false },
+  { label: "2 pieces of 1×1 size photo", required: false },
+  { label: "Photocopy of SSS and Pag-ibig loan voucher (if with current loan)", required: false },
+  { label: "Photocopy of other Government-Issued IDs", required: false },
+];
 
 interface InterviewScheduleFormState {
   scheduledDate: string;
@@ -162,9 +226,6 @@ interface InterviewEmailPreviewResponse {
   html_body: string;
   scheduled_for: string;
 }
-
-const GRACE_PERIOD_MS = 5000;
-const DEFERRED_ACTION_TOAST_POSITION = "top-center" as const;
 
 const toDateInputValue = (isoDateTime?: string): string => {
   if (!isoDateTime) {
@@ -338,7 +399,7 @@ const normalizeStatusTag = (value?: string): string => {
     .replace(/[^a-z_]/g, "");
 };
 
-  const ACTIVE_PIPELINE_STATUSES = new Set(["pending", "scheduled", "in_progress"]);
+  const ACTIVE_PIPELINE_STATUSES = new Set(["pending", "scheduled", "in_progress", "assessment_sent", "assessment_partially_graded", "assessment_graded"]);
 
 export default function PipelineApplicants() {
   const navigate = useNavigate();
@@ -349,13 +410,7 @@ export default function PipelineApplicants() {
   const { user } = useAuth();
   const axiosPrivate = useAxiosPrivate();
   const queryClient = useQueryClient();
-
-  const [pendingActions, setPendingActions] = useState<PendingProgressAction[]>([]);
-  const pendingTimersRef = useRef<Record<string, ReturnType<typeof window.setTimeout>>>({});
-  const pendingCountdownIntervalsRef = useRef<Record<string, ReturnType<typeof window.setInterval>>>({});
-  const pendingActionsRef = useRef<PendingProgressAction[]>([]);
-
-  const [processingCandidateId, setProcessingCandidateId] = useState<number | null>(null);
+  const { queueAction, processingId, pendingCandidateIds } = useDeferredAction();
 
   const [scheduleModalState, setScheduleModalState] = useState<InterviewScheduleModalState>({
     open: false,
@@ -377,7 +432,6 @@ export default function PipelineApplicants() {
 
   const [assessmentGradeForm, setAssessmentGradeForm] = useState({ score: "", notes: "" });
   const [candidateAssessments, setCandidateAssessments] = useState<Map<number, CandidateAssessmentData[]>>(new Map());
-  const [stepAssessments, setStepAssessments] = useState<PipelineAssessment[]>([]);
   const [sendAssessmentModalState, setSendAssessmentModalState] = useState<SendAssessmentModalState>({
     open: false,
     candidateApplicationId: 0,
@@ -388,7 +442,6 @@ export default function PipelineApplicants() {
   });
   const [sendPreview, setSendPreview] = useState<SendAssessmentPreview | null>(null);
   const [isSendPreviewOpen, setIsSendPreviewOpen] = useState(false);
-  const [isSendingAssessment, setIsSendingAssessment] = useState(false);
   const [isLoadingSendPreview, setIsLoadingSendPreview] = useState(false);
   const [isSubmittingGrade, setIsSubmittingGrade] = useState(false);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
@@ -413,11 +466,50 @@ export default function PipelineApplicants() {
   const [emailPreview, setEmailPreview] = useState<InterviewEmailPreviewResponse | null>(null);
   const subjectEditedRef = useRef(false);
 
-  const { data: jobDetail, isLoading, isError, refetch } = useJobDetailQuery(jobId);
+  const [resumePreviewCandidate, setResumePreviewCandidate] = useState<{
+    id: number;
+    name: string;
+    resumeUrl?: string;
+  } | null>(null);
 
-  useEffect(() => {
-    pendingActionsRef.current = pendingActions;
-  }, [pendingActions]);
+  // Preonboarding state
+  const [showPreOnboardingTemplateModal, setShowPreOnboardingTemplateModal] = useState(false);
+  const [preOnboardingTemplateItems, setPreOnboardingTemplateItems] = useState<TemplateItem[]>([]);
+  const [newPreOnboardingTemplateItem, setNewPreOnboardingTemplateItem] = useState("");
+
+  const [showPreOnboardingCandidateModal, setShowPreOnboardingCandidateModal] = useState(false);
+  const [selectedPreOnboardingCandidateId, setSelectedPreOnboardingCandidateId] = useState<number | null>(null);
+  const [preOnboardingCandidateItems, setPreOnboardingCandidateItems] = useState<TemplateItem[]>([]);
+  const [newPreOnboardingCandidateItem, setNewPreOnboardingCandidateItem] = useState("");
+  const [submissionDate, setSubmissionDate] = useState("");
+  const [reportDate, setReportDate] = useState("");
+
+  // Onboarding state
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+  const [selectedOnboardingCandidate, setSelectedOnboardingCandidate] = useState<{
+    id: number;
+    candidate_name: string;
+    job_title: string;
+  } | null>(null);
+  const [onboardingDate, setOnboardingDate] = useState("");
+  const [onboardingEmailSubject, setOnboardingEmailSubject] = useState("");
+  const [onboardingEmailBody, setOnboardingEmailBody] = useState("");
+  const [onboardingPreviewOpen, setOnboardingPreviewOpen] = useState(false);
+  const [onboardingPreviewSubject, setOnboardingPreviewSubject] = useState("");
+  const [onboardingPreviewBody, setOnboardingPreviewBody] = useState("");
+
+  // Reject candidate modal state
+  const [rejectModalState, setRejectModalState] = useState<{
+    open: boolean;
+    candidate: { id: number; name: string; pipelineStepId?: number } | null;
+  }>({
+    open: false,
+    candidate: null,
+  });
+
+  const { data: jobDetail, isLoading, isError, refetch } = useJobDetailQuery(jobId);
+  const { data: offersData } = useJobOffersQuery();
+  const jobOffers = Array.isArray(offersData) ? offersData : [];
 
   // Track navigation to/from IEF pages and trigger a refetch when returning
   const prevPathRef = useRef<string>(location.pathname);
@@ -432,20 +524,6 @@ export default function PipelineApplicants() {
 
     prevPathRef.current = current;
   }, [location.pathname, refetch]);
-
-  useEffect(() => {
-    return () => {
-      for (const timerId of Object.values(pendingTimersRef.current)) {
-        window.clearTimeout(timerId);
-      }
-      pendingTimersRef.current = {};
-
-      for (const intervalId of Object.values(pendingCountdownIntervalsRef.current)) {
-        window.clearInterval(intervalId);
-      }
-      pendingCountdownIntervalsRef.current = {};
-    };
-  }, []);
 
   const pipelineSteps = useMemo(
     () => extractPipelineStepsFromJobDetail(jobDetail),
@@ -493,12 +571,283 @@ export default function PipelineApplicants() {
     selectedType === "phone_call_interview" ||
     selectedType === "initial_interview" ||
     selectedType === "final_interview";
-  const isPassFailStage =
+  const selectedSteps = useMemo(
+    () => pipelineSteps.filter((step) => step.process_type === selectedType),
+    [pipelineSteps, selectedType],
+  );
+
+  const stepAssessments = useMemo<PipelineAssessment[]>(
+    () => (selectedSteps[0]?.assessments as PipelineAssessment[]) ?? [],
+    [selectedSteps],
+  );
+
+  const isResumeWithAssessments =
+    selectedType === "resume_screening" && stepAssessments.length > 0;
+  const isPassFailStage = !isResumeWithAssessments && (
     selectedType === "resume_screening" ||
     selectedType === "phone_call_interview" ||
-    selectedType === "initial_interview";
+    selectedType === "initial_interview"
+  );
   const isAssessmentStage = selectedType === "assessments";
   const showResumeColumn = selectedType === "resume_screening";
+
+  const isInterviewWithAssessments = isInterviewScheduleStage && stepAssessments.length > 0;
+
+  // Preonboarding step detection
+  const preonboardingPipelineStep = useMemo(
+    () => pipelineSteps.find((s) => s.process_type === "pre_onboarding"),
+    [pipelineSteps],
+  );
+
+  const isPreonboardingInterviewer = useMemo(() => {
+    if (!preonboardingPipelineStep) return false;
+    return preonboardingPipelineStep.interviewerId === user?.id;
+  }, [preonboardingPipelineStep, user?.id]);
+
+  // Fetch global template for preonboarding
+  const { data: preonboardingTemplateData } = useQuery({
+    queryKey: ["preonboarding-template", preonboardingPipelineStep?.id],
+    queryFn: async () => {
+      if (!preonboardingPipelineStep?.id) return { requirements: [] };
+      const res = await axiosPrivate.get(`/api/candidate/preonboarding/pipeline-steps/${preonboardingPipelineStep.id}/template/`);
+      return res.data as { requirements: TemplateItem[] };
+    },
+    enabled: !!preonboardingPipelineStep?.id,
+  });
+
+  // Fetch candidates at preonboarding
+  const { data: preonboardingCandidates = [], isLoading: preonboardingCandidatesLoading } = useQuery({
+    queryKey: ["preonboarding-candidates", jobId],
+    queryFn: async () => {
+      if (!jobId) return [];
+      const res = await axiosPrivate.get(`/api/candidate/preonboarding/candidates/?job_posting_id=${jobId}`);
+      return res.data as PreonboardingCandidate[];
+    },
+    enabled: selectedType === "pre_onboarding" && !!jobId,
+  });
+
+  // Save global template
+  const savePreonboardingTemplateMutation = useMutation({
+    mutationFn: async (items: TemplateItem[]) => {
+      await axiosPrivate.put(`/api/candidate/preonboarding/pipeline-steps/${preonboardingPipelineStep.id}/template/`, {
+        requirements: items,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["preonboarding-template", preonboardingPipelineStep?.id] });
+      setShowPreOnboardingTemplateModal(false);
+    },
+  });
+
+  // Save candidate requirements
+  const savePreonboardingCandidateReqsMutation = useMutation({
+    mutationFn: async ({ appId, items }: { appId: number; items: TemplateItem[] }) => {
+      await axiosPrivate.put(`/api/candidate/preonboarding/candidates/${appId}/requirements/`, {
+        requirements: items,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["preonboarding-candidates", jobId] });
+      setShowPreOnboardingCandidateModal(false);
+    },
+  });
+
+  const handlePreonboardingPassFail = (
+    candidateAppId: number,
+    candidateName: string,
+    pipelineStepId: number | undefined,
+    outcome: "pass" | "fail",
+  ) => {
+    if (!pipelineStepId || Number.isNaN(pipelineStepId)) return;
+
+    queueAction({
+      candidateName,
+      label: outcome === "pass" ? "Pass" : "Fail",
+      dedupKey: `preonboarding-progress-${candidateAppId}-${pipelineStepId}`,
+      candidateId: candidateAppId,
+      onCommit: async () => {
+        try {
+          await axiosPrivate.post("/api/candidate/pipeline/progress/", {
+            candidate_application_id: candidateAppId,
+            pipeline_step_id: pipelineStepId,
+            outcome,
+          });
+          toast.success(`${candidateName} marked as ${outcome === "pass" ? "Pass" : "Fail"}.`);
+          queryClient.setQueryData<PreonboardingCandidate[]>(["preonboarding-candidates", jobId], (old) =>
+            old?.filter((c) => c.id !== candidateAppId) ?? []
+          );
+        } catch (error) {
+          console.error("Unable to update preonboarding progress.", error);
+          toast.error("Unable to submit preonboarding progress update.");
+          queryClient.invalidateQueries({ queryKey: ["preonboarding-candidates", jobId] });
+        }
+      },
+    });
+  };
+
+  const isPreonboardingProgressActionDisabled = useCallback(
+    () => {
+      if (processingId !== null) return true;
+      if (!isPreonboardingInterviewer) return true;
+      return false;
+    },
+    [processingId, isPreonboardingInterviewer],
+  );
+
+  // Onboarding step detection
+  const onboardingPipelineStep = useMemo(
+    () => pipelineSteps.find((s) => s.process_type === "onboarding"),
+    [pipelineSteps],
+  );
+
+  const isOnboardingInterviewer = useMemo(() => {
+    if (!onboardingPipelineStep) return false;
+    return onboardingPipelineStep.interviewerId === user?.id;
+  }, [onboardingPipelineStep, user?.id]);
+
+  // Fetch candidates at onboarding
+  const { data: onboardingCandidates = [], isLoading: onboardingCandidatesLoading } = useQuery({
+    queryKey: ["onboarding-candidates", jobId],
+    queryFn: async () => {
+      if (!jobId) return [];
+      const res = await axiosPrivate.get(`/api/candidate/onboarding/candidates/?job_posting_id=${jobId}`);
+      return res.data as OnboardingCandidate[];
+    },
+    enabled: selectedType === "onboarding" && !!jobId,
+  });
+
+  // Immediate supervisor from job PRF (prf_nested returns full object)
+  const immediateSupervisor = useMemo(() => {
+    return (jobDetail as any)?.prf_nested?.immediate_supervisor ?? null;
+  }, [jobDetail]);
+
+  // Send onboarding mutation with optimistic update
+  const sendOnboardingMutation = useMutation({
+    mutationFn: async (payload: {
+      candidate_application_id: number;
+      onboarding_date: string;
+      email_subject: string;
+      email_body: string;
+    }) => {
+      await axiosPrivate.post("/api/candidate/onboarding/send/", payload);
+    },
+    onMutate: async (payload) => {
+      await queryClient.cancelQueries({ queryKey: ["onboarding-candidates", jobId] });
+      const previous = queryClient.getQueryData<OnboardingCandidate[]>(["onboarding-candidates", jobId]);
+      queryClient.setQueryData<OnboardingCandidate[]>(["onboarding-candidates", jobId], (old) =>
+        old?.filter((c) => c.id !== payload.candidate_application_id) ?? []
+      );
+      return { previous };
+    },
+    onError: (err, payload, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["onboarding-candidates", jobId], context.previous);
+      }
+      toast.error("Unable to send onboarding.");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["onboarding-candidates", jobId] });
+    },
+  });
+
+  const handleSendOnboarding = (
+    candidateAppId: number,
+    candidateName: string,
+  ) => {
+    setShowOnboardingModal(false);
+    setSelectedOnboardingCandidate(null);
+
+    queueAction({
+      candidateName,
+      label: "Onboarding",
+      dedupKey: `onboarding-${candidateAppId}`,
+      candidateId: candidateAppId,
+      onCommit: async () => {
+        await sendOnboardingMutation.mutateAsync({
+          candidate_application_id: candidateAppId,
+          onboarding_date: onboardingDate,
+          email_subject: onboardingEmailSubject,
+          email_body: onboardingEmailBody,
+        });
+        toast.success(`Onboarding sent to ${candidateName}.`);
+      },
+    });
+  };
+
+  const interviewerName = useMemo(
+    () => onboardingPipelineStep?.interviewerName || user ? `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'ATS Recruitment Team' : 'ATS Recruitment Team',
+    [onboardingPipelineStep, user],
+  );
+
+  const interviewerRole = useMemo(
+    () => user?.role ? user.role.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : '',
+    [user],
+  );
+
+  const handleOnboardingPreview = () => {
+    if (!selectedOnboardingCandidate) return;
+    const companyName = (jobDetail as any)?.company?.name || (jobDetail as any)?.job_posting?.company?.name || "ATS Recruitment Team";
+    const supervisorName = immediateSupervisor
+      ? `${immediateSupervisor.first_name || ''} ${immediateSupervisor.last_name || ''}`.trim() || immediateSupervisor.email
+      : 'Not assigned';
+
+    const formattedDate = onboardingDate
+      ? new Date(onboardingDate + 'T12:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      : '[date not set]';
+
+    const placeholders: Record<string, string> = {
+      candidate_name: selectedOnboardingCandidate.candidate_name,
+      onboarding_date: formattedDate,
+      immediate_supervisor: supervisorName,
+      job_title: selectedOnboardingCandidate.job_title,
+      company_name: companyName,
+      interviewer_name: interviewerName,
+      interviewer_role: interviewerRole,
+    };
+
+    let previewSubject = onboardingEmailSubject;
+    let previewBody = onboardingEmailBody;
+    for (const [key, value] of Object.entries(placeholders)) {
+      const tag = `{{${key}}}`;
+      previewSubject = previewSubject.replaceAll(tag, value);
+      previewBody = previewBody.replaceAll(tag, value);
+    }
+
+    setOnboardingPreviewSubject(previewSubject);
+    setOnboardingPreviewBody(previewBody);
+    setOnboardingPreviewOpen(true);
+  };
+
+  const openOnboardingModal = (candidate: OnboardingCandidate) => {
+    setSelectedOnboardingCandidate({
+      id: candidate.id,
+      candidate_name: candidate.candidate_name,
+      job_title: candidate.job_title,
+    });
+    setOnboardingDate(new Date().toISOString().split("T")[0]);
+    setOnboardingEmailSubject("Onboarding Details - {{job_title}}");
+    setOnboardingEmailBody(
+      `Dear {{candidate_name}},\n\n` +
+      `We are pleased to inform you that you have been onboarded for the position of {{job_title}}.\n\n` +
+      `Your onboarding date is: {{onboarding_date}}\n\n` +
+      `Your immediate supervisor is: {{immediate_supervisor}}\n\n` +
+      `Please contact your supervisor for further details.\n\n` +
+      `Best regards,\n` +
+      `{{interviewer_name}}\n` +
+      `{{interviewer_role}}\n` +
+      `{{company_name}}`
+    );
+    setShowOnboardingModal(true);
+  };
+
+  const isOnboardingActionDisabled = useCallback(
+    () => {
+      if (processingId !== null) return true;
+      if (!isOnboardingInterviewer) return true;
+      return false;
+    },
+    [processingId, isOnboardingInterviewer],
+  );
 
   const resolvePhotoUrl = (rawUrl?: string) => {
     if (!rawUrl) {
@@ -616,11 +965,6 @@ export default function PipelineApplicants() {
       .sort((left, right) => left.id - right.id);
   }, [pipelineSteps, selectedType, searchTerm]);
 
-  const pendingCandidateIds = useMemo(
-    () => new Set(pendingActions.map((pendingAction) => pendingAction.candidateApplicationId)),
-    [pendingActions],
-  );
-
   const visibleStepCandidates = useMemo(
     () =>
       selectedStepCandidates.filter(
@@ -635,6 +979,102 @@ export default function PipelineApplicants() {
 
   const handleTypeChange = (nextType: string) => {
     setSearchParams({ type: nextType });
+  };
+
+  // Preonboarding helper functions
+  const openPreOnboardingTemplateModal = () => {
+    if (preonboardingTemplateData?.requirements?.length) {
+      setPreOnboardingTemplateItems(
+        preonboardingTemplateData.requirements.map((r, i) => ({ ...r, order: r.order ?? i })),
+      );
+    } else {
+      setPreOnboardingTemplateItems(
+        STANDARD_PREONBOARDING_REQUIREMENTS.map((r, i) => ({
+          key: `req-${i}`,
+          label: r.label,
+          required: r.required,
+          order: i,
+        })),
+      );
+    }
+    setShowPreOnboardingTemplateModal(true);
+  };
+
+  const addPreOnboardingTemplateItem = () => {
+    if (!newPreOnboardingTemplateItem.trim()) return;
+    const key = `req-${Date.now()}`;
+    setPreOnboardingTemplateItems([
+      ...preOnboardingTemplateItems,
+      { key, label: newPreOnboardingTemplateItem.trim(), required: true, order: preOnboardingTemplateItems.length },
+    ]);
+    setNewPreOnboardingTemplateItem("");
+  };
+
+  const removePreOnboardingTemplateItem = (key: string) => {
+    setPreOnboardingTemplateItems(preOnboardingTemplateItems.filter((t) => t.key !== key));
+  };
+
+  const togglePreOnboardingTemplateRequired = (key: string) => {
+    setPreOnboardingTemplateItems(
+      preOnboardingTemplateItems.map((t) => (t.key === key ? { ...t, required: !t.required } : t)),
+    );
+  };
+
+  const openPreOnboardingCandidateModal = async (candidate: PreonboardingCandidate) => {
+    setSelectedPreOnboardingCandidateId(candidate.id);
+    try {
+      const res = await axiosPrivate.get(`/api/candidate/preonboarding/candidates/${candidate.id}/requirements/`);
+      const data = res.data;
+      const items: TemplateItem[] = (data.requirements || []).map((r: RequirementItem, i: number) => ({
+        key: r.requirement_key,
+        label: r.requirement_label,
+        required: r.required,
+        order: i,
+        file_url: r.file_url,
+        filename: r.filename,
+        status: r.status,
+      }));
+      setPreOnboardingCandidateItems(
+        items.length
+          ? items
+          : STANDARD_PREONBOARDING_REQUIREMENTS.map((r, i) => ({
+              key: `req-${i}`,
+              label: r.label,
+              required: r.required,
+              order: i,
+            })),
+      );
+    } catch {
+      setPreOnboardingCandidateItems(
+        STANDARD_PREONBOARDING_REQUIREMENTS.map((r, i) => ({
+          key: `req-${i}`,
+          label: r.label,
+          required: r.required,
+          order: i,
+        })),
+      );
+    }
+    setShowPreOnboardingCandidateModal(true);
+  };
+
+  const addPreOnboardingCandidateItem = () => {
+    if (!newPreOnboardingCandidateItem.trim()) return;
+    const key = `req-${Date.now()}`;
+    setPreOnboardingCandidateItems([
+      ...preOnboardingCandidateItems,
+      { key, label: newPreOnboardingCandidateItem.trim(), required: true, order: preOnboardingCandidateItems.length },
+    ]);
+    setNewPreOnboardingCandidateItem("");
+  };
+
+  const removePreOnboardingCandidateItem = (key: string) => {
+    setPreOnboardingCandidateItems(preOnboardingCandidateItems.filter((t) => t.key !== key));
+  };
+
+  const togglePreOnboardingCandidateRequired = (key: string) => {
+    setPreOnboardingCandidateItems(
+      preOnboardingCandidateItems.map((t) => (t.key === key ? { ...t, required: !t.required } : t)),
+    );
   };
 
   const handleOpenStatusPage = () => {
@@ -652,154 +1092,6 @@ export default function PipelineApplicants() {
     navigate(`/job/${jobId}/applicants/status?${nextParams.toString()}`);
   };
 
-  const clearPendingActionCountdown = useCallback((actionId: string) => {
-    const intervalId = pendingCountdownIntervalsRef.current[actionId];
-    if (!intervalId) {
-      return;
-    }
-
-    window.clearInterval(intervalId);
-    delete pendingCountdownIntervalsRef.current[actionId];
-  }, []);
-
-  const removePendingAction = useCallback((actionId: string) => {
-    setPendingActions((previousValue) =>
-      previousValue.filter((action) => action.id !== actionId),
-    );
-  }, []);
-
-  const handleUndoPendingAction = useCallback((actionId: string) => {
-    const timerId = pendingTimersRef.current[actionId];
-    if (timerId) {
-      window.clearTimeout(timerId);
-      delete pendingTimersRef.current[actionId];
-    }
-
-    clearPendingActionCountdown(actionId);
-
-    const existingAction = pendingActionsRef.current.find(
-      (pendingAction) => pendingAction.id === actionId,
-    );
-    removePendingAction(actionId);
-
-    if (existingAction?.toastId !== undefined) {
-      toast.dismiss(existingAction.toastId);
-    }
-  }, [clearPendingActionCountdown, removePendingAction]);
-
-  const commitPendingAction = useCallback(
-    async (pendingAction: PendingProgressAction) => {
-      if (!pendingActionsRef.current.some((action) => action.id === pendingAction.id)) {
-        return;
-      }
-
-      const timerId = pendingTimersRef.current[pendingAction.id];
-      if (timerId) {
-        window.clearTimeout(timerId);
-        delete pendingTimersRef.current[pendingAction.id];
-      }
-
-      clearPendingActionCountdown(pendingAction.id);
-      // Dismiss the info toast for this pending action so it doesn't linger
-      if (pendingAction.toastId !== undefined) {
-        try {
-          toast.dismiss(pendingAction.toastId);
-        } catch (e) {
-          // ignore
-        }
-      }
-
-      try {
-        setProcessingCandidateId(pendingAction.candidateApplicationId);
-        await axiosPrivate.post("/api/candidate/pipeline/progress/", {
-          candidate_application_id: pendingAction.candidateApplicationId,
-          pipeline_step_id: pendingAction.pipelineStepId,
-          outcome: pendingAction.outcome,
-        });
-
-        toast.success(
-          `${pendingAction.candidateName} marked as ${pendingAction.outcome === "pass" ? "Pass" : "Fail"}.`,
-          {
-            position: DEFERRED_ACTION_TOAST_POSITION,
-          },
-        );
-      } catch (error) {
-        console.error("Unable to update candidate pipeline progress.", error);
-        toast.error("Unable to submit candidate progress update.", {
-          position: DEFERRED_ACTION_TOAST_POSITION,
-        });
-      } finally {
-        removePendingAction(pendingAction.id);
-        setProcessingCandidateId(null);
-        await refetch();
-      }
-    },
-    [clearPendingActionCountdown, refetch, removePendingAction],
-  );
-
-  const renderDeferredActionToast = useCallback(
-    (pendingAction: PendingProgressAction, secondsLeft: number) => {
-      const actionLabel = pendingAction.outcome === "pass" ? "Pass" : "Fail";
-
-      return (
-        <div className="space-y-2">
-          <p className="text-sm leading-5">
-            <span className="font-semibold">{pendingAction.candidateName}</span>{" "}
-            queued for {actionLabel}. Auto-submit in {secondsLeft} second{secondsLeft === 1 ? "" : "s"}.
-          </p>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-8"
-            onClick={() => handleUndoPendingAction(pendingAction.id)}
-          >
-            Undo
-          </Button>
-        </div>
-      );
-    },
-    [handleUndoPendingAction],
-  );
-
-  const showDeferredActionToast = useCallback(
-    (pendingAction: PendingProgressAction) => {
-      const startingSeconds = Math.ceil(GRACE_PERIOD_MS / 1000);
-      let secondsLeft = startingSeconds;
-
-      const toastId = toast.info(
-        renderDeferredActionToast(pendingAction, startingSeconds),
-        {
-          // Disable react-toastify autoClose to avoid internal timer resets
-          autoClose: false,
-          closeButton: false,
-          position: DEFERRED_ACTION_TOAST_POSITION,
-        },
-      );
-
-      pendingCountdownIntervalsRef.current[pendingAction.id] = window.setInterval(() => {
-        secondsLeft -= 1;
-
-        if (secondsLeft <= 0) {
-          // countdown finished: clear interval and remove the info toast
-          clearPendingActionCountdown(pendingAction.id);
-          try {
-            toast.dismiss(toastId);
-          } catch (e) {
-            // ignore
-          }
-          return;
-        }
-
-        toast.update(toastId, {
-          render: renderDeferredActionToast(pendingAction, secondsLeft),
-        });
-      }, 1000);
-
-      return toastId;
-    },
-    [clearPendingActionCountdown, renderDeferredActionToast],
-  );
 
   const isCandidateProgressActionDisabled = useCallback(
     (candidate: { id: number | string; stepInterviewerId?: number }) => {
@@ -812,7 +1104,7 @@ export default function PipelineApplicants() {
         return true;
       }
 
-      if (processingCandidateId === candidateId) {
+      if (processingId !== null) {
         return true;
       }
 
@@ -822,68 +1114,117 @@ export default function PipelineApplicants() {
 
       return user?.id !== candidate.stepInterviewerId;
     },
-    [processingCandidateId, user?.id],
+    [processingId, user?.id],
   );
 
   const handleCandidateProgress = (
     candidateApplicationId: number,
     candidateName: string,
     pipelineStepId: number | undefined,
-    outcome: PipelineProgressOutcome,
+    outcome: "pass" | "fail",
   ) => {
     if (!pipelineStepId || Number.isNaN(pipelineStepId)) {
       return;
     }
 
-    if (processingCandidateId === candidateApplicationId) {
+    // Show reject modal for fail outcome
+    if (outcome === "fail") {
+      setRejectModalState({
+        open: true,
+        candidate: {
+          id: candidateApplicationId,
+          name: candidateName,
+          pipelineStepId,
+        },
+      });
       return;
     }
 
-    const hasPendingAction = pendingActions.some(
-      (pendingAction) =>
-        pendingAction.candidateApplicationId === candidateApplicationId &&
-        pendingAction.pipelineStepId === pipelineStepId,
-    );
-    if (hasPendingAction) {
-      return;
-    }
-
-    const actionId = `${candidateApplicationId}-${pipelineStepId}-${Date.now()}-${outcome}`;
-
-    const pendingAction: PendingProgressAction = {
-      id: actionId,
-      candidateApplicationId,
+    queueAction({
       candidateName,
-      pipelineStepId,
-      outcome,
-    };
-
-    pendingAction.toastId = showDeferredActionToast(pendingAction);
-
-    setPendingActions((previousValue) => [...previousValue, pendingAction]);
-    pendingTimersRef.current[pendingAction.id] = window.setTimeout(() => {
-      void commitPendingAction(pendingAction);
-    }, GRACE_PERIOD_MS);
+      label: outcome === "pass" ? "Pass" : "Fail",
+      dedupKey: `progress-${candidateApplicationId}-${pipelineStepId}`,
+      candidateId: candidateApplicationId,
+      onCommit: async () => {
+        try {
+          await axiosPrivate.post("/api/candidate/pipeline/progress/", {
+            candidate_application_id: candidateApplicationId,
+            pipeline_step_id: pipelineStepId,
+            outcome,
+          });
+          toast.success(
+            `${candidateName} marked as ${outcome === "pass" ? "Pass" : "Fail"}.`,
+          );
+          await refetch();
+        } catch (error) {
+          console.error("Unable to update candidate pipeline progress.", error);
+          toast.error("Unable to submit candidate progress update.");
+          await refetch();
+        }
+      },
+    });
   };
 
-  const handleCandidateShortlist = async (
+  const handleRejectCandidate = async (
+    candidateId: number,
+    pipelineStepId: number | undefined,
+    addToPool: boolean,
+    rejectionReason: string,
+  ) => {
+    if (!pipelineStepId) return;
+
+    try {
+      // If adding to pool, do that first
+      if (addToPool) {
+        await axiosPrivate.post('/api/candidate/talent-pool/add_to_pool/', {
+          candidate_application_id: candidateId,
+          rejection_reason: rejectionReason,
+        });
+      }
+
+      // Then reject
+      await axiosPrivate.post("/api/candidate/pipeline/progress/", {
+        candidate_application_id: candidateId,
+        pipeline_step_id: pipelineStepId,
+        outcome: "fail",
+      });
+
+      const candidateName = rejectModalState.candidate?.name || "Candidate";
+      toast.success(`${candidateName} has been rejected.${addToPool ? ' Added to talent pool.' : ''}`);
+      await refetch();
+    } catch (error) {
+      toast.error("Failed to reject candidate");
+      console.error("Reject candidate error:", error);
+    }
+  };
+
+  const handleCandidateShortlist = (
     candidateApplicationId: number,
+    candidateName: string,
     pipelineStepId: number | undefined,
   ) => {
     if (!pipelineStepId || Number.isNaN(pipelineStepId)) {
       return;
     }
 
-    try {
-      await axiosPrivate.post("/api/candidate/pipeline/shortlist/", {
-        candidate_application_id: candidateApplicationId,
-        pipeline_step_id: pipelineStepId,
-      });
-      toast.success("Candidate shortlisted successfully.");
-      void refetch();
-    } catch {
-      toast.error("Failed to shortlist candidate.");
-    }
+    queueAction({
+      candidateName,
+      label: "Shortlist",
+      dedupKey: `shortlist-${candidateApplicationId}-${pipelineStepId}`,
+      candidateId: candidateApplicationId,
+      onCommit: async () => {
+        try {
+          await axiosPrivate.post("/api/candidate/pipeline/shortlist/", {
+            candidate_application_id: candidateApplicationId,
+            pipeline_step_id: pipelineStepId,
+          });
+          toast.success("Candidate shortlisted successfully.");
+          await refetch();
+        } catch {
+          toast.error("Failed to shortlist candidate.");
+        }
+      },
+    });
   };
 
   const handleOpenScheduleModal = (
@@ -959,8 +1300,64 @@ export default function PipelineApplicants() {
     );
   };
 
-  const handleOpenResumePreview = () => {
-    // Not used: preview handled by ResumeScreeningTable component
+  const getResumePreviewUrl = (candidate: { resumeUrl?: string }): string | undefined => {
+    const rawUrl = candidate.resumeUrl;
+    if (!rawUrl) return undefined;
+    if (/^(?:https?:\/\/|data:|blob:)/i.test(rawUrl)) return rawUrl;
+    const backendBaseUrl = import.meta.env.VITE_BACKEND_URL as string | undefined;
+    if (!backendBaseUrl) return rawUrl;
+    const trimmedBaseUrl = backendBaseUrl.replace(/\/$/, "");
+    const normalizedPath = rawUrl.startsWith("/") ? rawUrl : `/${rawUrl}`;
+    return `${trimmedBaseUrl}${normalizedPath}`;
+  };
+
+  const getResumeFileExt = (candidate: { resumeUrl?: string }): string | null => {
+    const url = candidate.resumeUrl;
+    if (!url) return null;
+    const filename = url.split("/").pop()?.split("?")[0] || "";
+    const ext = filename.split(".").pop() || "";
+    return ext.toLowerCase() || null;
+  };
+
+  const handleOpenResumePreview = (candidate: { id: number; name: string; resumeUrl?: string }) => {
+    setResumePreviewCandidate(candidate);
+  };
+
+  const handleDownloadResume = (candidate: { resumeUrl?: string; id: number }) => {
+    const rawUrl = candidate.resumeUrl;
+    if (!rawUrl) return;
+    let resumeUrl: string;
+    if (/^(?:https?:\/\/|data:|blob:)/i.test(rawUrl)) {
+      resumeUrl = rawUrl;
+    } else {
+      const backendBaseUrl = import.meta.env.VITE_BACKEND_URL as string | undefined;
+      const trimmedBaseUrl = (backendBaseUrl || "").replace(/\/$/, "");
+      const normalizedPath = rawUrl.startsWith("/") ? rawUrl : `/${rawUrl}`;
+      resumeUrl = `${trimmedBaseUrl}${normalizedPath}`;
+    }
+
+    (async () => {
+      try {
+        const resp = await fetch(resumeUrl, { mode: "cors" });
+        if (!resp.ok) throw new Error("Fetch failed");
+        const blob = await resp.blob();
+        const filename = (resumeUrl.split("/").pop() || `resume-${candidate.id}`).split("?")[0];
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename || "resume";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } catch {
+        const a = document.createElement("a");
+        a.href = resumeUrl;
+        a.target = "_blank";
+        a.rel = "noreferrer";
+        a.click();
+      }
+    })();
   };
 
   // Load candidate assessments via useQuery when assessment stage is active
@@ -976,24 +1373,12 @@ export default function PipelineApplicants() {
       candidateIdsKey,
     ] as const,
     queryFn: async () => {
-      if (!isAssessmentStage || selectedStepCandidates.length === 0) {
+      if (!isAssessmentStage && !isInterviewWithAssessments && !isResumeWithAssessments) {
         return;
       }
 
-      const selectedSteps = pipelineSteps.filter(
-        (step) => step.process_type === selectedType,
-      );
-
-      if (selectedSteps.length > 0) {
-        const step = selectedSteps[0];
-        const assessmentsData = (step as any).assessments || [];
-        setStepAssessments(
-          assessmentsData.map((a: any) => ({
-            id: a.id,
-            name: a.name,
-            file: a.file,
-          }))
-        );
+      if (selectedStepCandidates.length === 0) {
+        return;
       }
 
       const assessmentMap = new Map<number, CandidateAssessmentData[]>();
@@ -1023,7 +1408,7 @@ export default function PipelineApplicants() {
 
       setCandidateAssessments(assessmentMap);
     },
-    enabled: isAssessmentStage && selectedStepCandidates.length > 0,
+    enabled: (isAssessmentStage || isInterviewWithAssessments || isResumeWithAssessments) && selectedStepCandidates.length > 0,
   });
 
   const handleOpenAssessmentModal = (
@@ -1119,9 +1504,9 @@ export default function PipelineApplicants() {
     }
   };
 
-  const handleViewAssessment = (candidate: { id: number }) => {
+  const handleViewAssessment = (candidate: { id: number; pipelineStepId?: number }) => {
     if (!jobId) return;
-    navigate(`/job/${jobId}/exam-form/${candidate.id}`);
+    navigate(`/job/${jobId}/exam-form/${candidate.id}?pipelineStepId=${candidate.pipelineStepId ?? ''}`);
   };
 
   const handleOpenSendAssessmentModal = (
@@ -1192,31 +1577,41 @@ export default function PipelineApplicants() {
     }
   };
 
-  const handleSendAssessment = async () => {
+  const handleSendAssessment = () => {
     const assessmentIds = stepAssessments.map((a) => a.id).filter(Boolean);
     if (assessmentIds.length === 0) {
       toast.error("No assessments to send.");
       return;
     }
 
-    setIsSendingAssessment(true);
-    try {
-      await axiosPrivate.post("/api/candidate/assessments/send/", {
-        assessment_ids: assessmentIds,
-        candidate_application_id: sendAssessmentModalState.candidateApplicationId,
-        pipeline_step_id: sendAssessmentModalState.pipelineStepId,
-        subject: sendAssessmentModalState.subject,
-        body: sendAssessmentModalState.body,
-      });
-      toast.success(`Assessment email sent to ${sendAssessmentModalState.candidateName}.`);
-      handleCloseSendAssessmentModal();
-      await queryClient.invalidateQueries({ queryKey: ["candidate-assessments"] });
-    } catch (error) {
-      console.error("Failed to send assessment:", error);
-      toast.error("Unable to send assessment email.");
-    } finally {
-      setIsSendingAssessment(false);
-    }
+    const candidateAppId = sendAssessmentModalState.candidateApplicationId;
+    const stepId = sendAssessmentModalState.pipelineStepId;
+    const subject = sendAssessmentModalState.subject;
+    const body = sendAssessmentModalState.body;
+    const candidateName = sendAssessmentModalState.candidateName;
+
+    handleCloseSendAssessmentModal();
+
+    queueAction({
+      candidateName,
+      label: "Send Assessment",
+      onCommit: async () => {
+        try {
+          await axiosPrivate.post("/api/candidate/assessments/send/", {
+            assessment_ids: assessmentIds,
+            candidate_application_id: candidateAppId,
+            pipeline_step_id: stepId,
+            subject,
+            body,
+          });
+          toast.success(`Assessment email sent to ${candidateName}.`);
+          await queryClient.invalidateQueries({ queryKey: ["candidate-assessments"] });
+        } catch (error) {
+          console.error("Failed to send assessment:", error);
+          toast.error("Unable to send assessment email.");
+        }
+      },
+    });
   };
 
   const getAssessmentStatusBadge = (status: string) => {
@@ -1549,7 +1944,7 @@ export default function PipelineApplicants() {
     return map;
   }, [pipelineSteps, jobNonNegotiables]);
 
-  const interviewTableColumnCount = (isInterviewScheduleStage ? 6 : isPassFailStage ? 5 : isAssessmentStage ? 6 : 6) + (showNonNegotiableColumn ? 1 : 0) + (showResumeColumn ? 1 : 0);
+  const interviewTableColumnCount = (isInterviewScheduleStage ? 6 + (isInterviewWithAssessments ? 1 : 0) : isPassFailStage ? 5 : isAssessmentStage || isResumeWithAssessments ? 5 : 5) + (showNonNegotiableColumn ? 1 : 0) + (showResumeColumn ? 1 : 0);
 
   return (
     <>
@@ -1635,7 +2030,7 @@ export default function PipelineApplicants() {
             )}
 
             {!isLoading && !isError && processTypes.length > 0 && (
-              selectedType === "resume_screening" ? (
+              selectedType === "resume_screening" && !isResumeWithAssessments ? (
                 <ResumeScreeningTable
                   candidates={selectedStepCandidates}
                   isPassFailDisabled={isCandidateProgressActionDisabled}
@@ -1650,6 +2045,7 @@ export default function PipelineApplicants() {
                   onShortlist={(candidate) =>
                     void handleCandidateShortlist(
                       Number(candidate.id),
+                      candidate.name,
                       candidate.pipelineStepId,
                     )
                   }
@@ -1662,8 +2058,257 @@ export default function PipelineApplicants() {
                     )
                   }
                 />
+              ) : selectedType === "pre_onboarding" ? (
+                <div className="mt-4 rounded-md border bg-white overflow-x-auto w-full">
+                  <div className="p-4 border-b flex items-center justify-end gap-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2"
+                      onClick={openPreOnboardingTemplateModal}
+                      disabled={!preonboardingPipelineStep || !isPreonboardingInterviewer}
+                      title={!isPreonboardingInterviewer ? "Only the assigned interviewer can configure the template." : undefined}
+                    >
+                      <Settings className="h-4 w-4" />
+                      Configure Global Template
+                    </Button>
+                  </div>
+
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-20 text-center">ID</TableHead>
+                        <TableHead className="w-48">Full Name</TableHead>
+                        <TableHead className="w-48">Position</TableHead>
+                        <TableHead className="w-40 text-center">Signed Offer</TableHead>
+                        <TableHead className="w-40 text-center">Documents</TableHead>
+                        <TableHead className="w-56 text-center">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {preonboardingCandidatesLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                            <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                          </TableCell>
+                        </TableRow>
+                      ) : preonboardingCandidates.filter((a) =>
+                        a.candidate_name?.toLowerCase().includes(searchTerm.toLowerCase())
+                      ).length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                            No applicants found.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        preonboardingCandidates
+                          .filter((a) =>
+                            a.candidate_name?.toLowerCase().includes(searchTerm.toLowerCase())
+                          )
+                          .map((applicant) => {
+                            const canPass =
+                              applicant.signed_offer_uploaded &&
+                              applicant.requirements_required_submitted === applicant.requirements_required;
+                            return (
+                              <TableRow key={applicant.id}>
+                                <TableCell className="text-center">{applicant.id}</TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <Avatar className="h-8 w-8">
+                                      <AvatarImage src={resolvePhotoUrl(applicant.photo_url) || undefined} />
+                                      <AvatarFallback>
+                                        {applicant.candidate_name?.split(" ").map((n) => n[0]).join("") || "?"}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <span className="font-medium text-sm">{applicant.candidate_name}</span>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-sm">{applicant.job_title}</TableCell>
+                                <TableCell className="text-center">
+                                  {applicant.signed_offer_uploaded ? (
+                                    <div className="flex items-center justify-center gap-2">
+                                      <CheckCircle className="h-4 w-4 text-green-600" />
+                                      <span className="text-xs text-green-700">Uploaded</span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs text-gray-400">Not uploaded</span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-center align-top">
+                                  <div className="space-y-2">
+                                    <div>
+                                      <span className="text-sm">
+                                        {applicant.requirements_required_submitted}/{applicant.requirements_required}
+                                      </span>
+                                      <div className="w-full bg-gray-200 rounded-full h-2 mt-1 max-w-[80px] mx-auto">
+                                        <div
+                                          className="bg-blue-600 h-2 rounded-full"
+                                          style={{
+                                            width: `${applicant.requirements_required > 0 ? (applicant.requirements_required_submitted / applicant.requirements_required) * 100 : 0}%`,
+                                          }}
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="border-t pt-1.5 space-y-1">
+                                      {[
+                                        { url: applicant.resume_url, filename: applicant.resume_filename, label: "Resume" },
+                                        { url: applicant.cover_letter_url, filename: applicant.cover_letter_filename, label: "Cover Letter" },
+                                        { url: applicant.med_cert_url, filename: applicant.med_cert_filename, label: "Medical Cert" },
+                                      ].map((doc) =>
+                                        doc.url ? (
+                                          <a
+                                            key={doc.label}
+                                            href={resolveFileUrl(doc.url ?? undefined)}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="flex items-center gap-1 text-[10px] text-blue-600 hover:text-blue-800 hover:underline justify-center"
+                                          >
+                                            <FileText className="h-3 w-3 shrink-0" />
+                                            <span className="truncate max-w-[100px]">{doc.label}</span>
+                                          </a>
+                                        ) : null
+                                      )}
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <div className="flex gap-2 justify-center">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="text-xs"
+                                      onClick={() => openPreOnboardingCandidateModal(applicant)}
+                                      disabled={!isPreonboardingInterviewer}
+                                      title={!isPreonboardingInterviewer ? "Only the assigned interviewer can configure." : undefined}
+                                    >
+                                      <Settings className="h-3 w-3 mr-1" />
+                                      Config
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      className="bg-green-600 hover:bg-green-700 text-white"
+                                      disabled={!canPass || isPreonboardingProgressActionDisabled()}
+                                      title={
+                                        processingId !== null
+                                          ? "Please wait for current action to complete."
+                                          : !isPreonboardingInterviewer
+                                          ? "Only the assigned interviewer can pass."
+                                          : undefined
+                                      }
+                                      onClick={() => {
+                                        handlePreonboardingPassFail(applicant.id, applicant.candidate_name, preonboardingPipelineStep?.id, "pass");
+                                      }}
+                                    >
+                                      <CheckCircle className="h-4 w-4 mr-1" />
+                                      Pass
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="text-red-600 border-red-300 hover:bg-red-50"
+                                      disabled={isPreonboardingProgressActionDisabled()}
+                                      title={
+                                        processingId !== null
+                                          ? "Please wait for current action to complete."
+                                          : !isPreonboardingInterviewer
+                                          ? "Only the assigned interviewer can fail."
+                                          : undefined
+                                      }
+                                      onClick={() => {
+                                        handlePreonboardingPassFail(applicant.id, applicant.candidate_name, preonboardingPipelineStep?.id, "fail");
+                                      }}
+                                    >
+                                      <XCircle className="h-4 w-4 mr-1" />
+                                      Fail
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : selectedType === "onboarding" ? (
+                <div className="mt-4 rounded-md border bg-white overflow-x-auto w-full">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-20 text-center">ID</TableHead>
+                        <TableHead className="w-48">Full Name</TableHead>
+                        <TableHead className="w-48">Position</TableHead>
+                        <TableHead className="w-56 text-center">Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {onboardingCandidatesLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                            <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                          </TableCell>
+                        </TableRow>
+                      ) : onboardingCandidates.filter((a) =>
+                        a.candidate_name?.toLowerCase().includes(searchTerm.toLowerCase())
+                      ).length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                            No applicants found.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        onboardingCandidates
+                          .filter((a) =>
+                            a.candidate_name?.toLowerCase().includes(searchTerm.toLowerCase())
+                          )
+                          .map((applicant) => (
+                            <TableRow key={applicant.id}>
+                              <TableCell className="text-center">{applicant.id}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Avatar className="h-8 w-8">
+                                    <AvatarImage src={resolvePhotoUrl(applicant.photo_url) || undefined} />
+                                    <AvatarFallback>
+                                      {applicant.candidate_name?.split(" ").map((n) => n[0]).join("") || "?"}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span className="font-medium text-sm">{applicant.candidate_name}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-sm">{applicant.job_title}</TableCell>
+                              <TableCell className="text-center">
+                                <Button
+                                  size="sm"
+                                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                                  disabled={isOnboardingActionDisabled()}
+                                  title={
+                                    processingId !== null
+                                      ? "Please wait for current action to complete."
+                                      : !isOnboardingInterviewer
+                                      ? "Only the assigned interviewer can send onboarding."
+                                      : undefined
+                                  }
+                                  onClick={() => openOnboardingModal(applicant)}
+                                >
+                                  Send Onboarding
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : selectedType === "for_job_offer" ? (
+                <JobOfferPipelineTable
+                  pipelineSteps={pipelineSteps.filter((s) => s.process_type === "for_job_offer")}
+                  jobOffers={jobOffers}
+                  jobTitle={resolvedJobTitle}
+                  onRefetch={refetch}
+                  jobDetail={jobDetail}
+                />
               ) : (
-              <div className="mt-4 rounded-md border bg-white overflow-x-auto">
+              <div className="mt-4 rounded-md border bg-white overflow-x-auto w-full">
                 <Table className="w-full table-fixed text-xs">
                   <TableHeader>
                     <TableRow>
@@ -1690,6 +2335,11 @@ export default function PipelineApplicants() {
                           <TableHead className="border border-gray-200 py-2 px-3 w-24 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
                             Interview Evaluation Form
                           </TableHead>
+                          {isInterviewWithAssessments ? (
+                            <TableHead className="border border-gray-200 py-2 px-3 w-36 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
+                              Actions
+                            </TableHead>
+                          ) : null}
                         </>
                       ) : isPassFailStage ? (
                         <>
@@ -1700,13 +2350,13 @@ export default function PipelineApplicants() {
                             Fail
                           </TableHead>
                         </>
-                      ) : isAssessmentStage ? (
+                      ) : isAssessmentStage || isResumeWithAssessments ? (
                         <>
                           <TableHead className="border border-gray-200 py-2 px-3 text-center text-xs lg:text-sm lg:py-3 lg:px-4 w-56">
                             Assessments
                           </TableHead>
-                          <TableHead className="border border-gray-200 py-2 px-3 w-16 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
-                            Send
+                          <TableHead className="border border-gray-200 py-2 px-3 w-36 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
+                            Actions
                           </TableHead>
                         </>
                       ) : (
@@ -1732,13 +2382,6 @@ export default function PipelineApplicants() {
                         </TableHead>
                       ) : null}
 
-                      {isInterviewScheduleStage ? (
-                        <TableHead className="border border-gray-200 py-2 px-3 w-24 text-center text-xs lg:text-sm lg:py-3 lg:px-4">
-                          Interview Evaluation
-                          <br />
-                          Form
-                        </TableHead>
-                      ) : null}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1764,7 +2407,10 @@ export default function PipelineApplicants() {
                             className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 w-36 align-middle"
                             style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}
                           >
-                            <div className="flex min-w-0 flex-col items-center justify-center gap-1 text-center lg:flex-row lg:gap-2">
+                            <Link
+                              to={`/job/list/applicants/${candidate.id}`}
+                              className="flex min-w-0 flex-col items-center justify-center gap-1 text-center lg:flex-row lg:gap-2 hover:opacity-80"
+                            >
                               <Avatar className="h-10 w-10 shrink-0 rounded-sm">
                                 <AvatarImage
                                   src={candidate.photoUrl || "/placeholder.svg"}
@@ -1786,7 +2432,7 @@ export default function PipelineApplicants() {
                               >
                                 {candidate.name}
                               </span>
-                            </div>
+                            </Link>
                           </TableCell>
 
                           {showResumeColumn ? (
@@ -1795,7 +2441,7 @@ export default function PipelineApplicants() {
                                 variant="outline"
                                 size="sm"
                                 className="w-full px-2 text-xs lg:text-sm text-slate-700 border-slate-300 bg-white hover:bg-slate-900 hover:text-white"
-                                onClick={() => handleOpenResumePreview()}
+                                onClick={() => handleOpenResumePreview(candidate)}
                               >
                                 View Resume
                               </Button>
@@ -1848,6 +2494,120 @@ export default function PipelineApplicants() {
                                   View
                                 </Button>
                               </TableCell>
+                              {isInterviewWithAssessments ? (
+                                <TableCell className="border border-gray-200 py-3 px-2 text-center align-top">
+                                  <div className="flex flex-col gap-1 overflow-x-auto min-w-32">
+                                    {stepAssessments.map((sa) => {
+                                      const candidateAssessment = (candidateAssessments.get(candidate.id) || []).find(
+                                        (ca) => ca.assessmentId === sa.id
+                                      );
+                                      const status = candidateAssessment?.status || "not_assigned";
+                                      const displayName = formatAssessmentType(sa.type);
+                                      return (
+                                        <div key={sa.id} className="flex items-center gap-1 rounded border border-gray-200 bg-gray-50 px-1.5 py-1 text-left shrink-0 min-w-0">
+                                          <span className="text-xs font-medium text-gray-700 whitespace-nowrap shrink-0">{displayName}</span>
+                                          <span className="text-[10px] text-gray-400 truncate shrink" title={sa.file?.filename || undefined}>
+                                            {sa.file?.filename || ""}
+                                          </span>
+                                          <div className="flex-1" />
+                                          {candidateAssessment ? (
+                                            <Badge variant="outline" className="text-[10px] whitespace-nowrap px-1 py-0 h-5">
+                                              {status === "graded" ? "Graded" : status === "submitted" ? "Submitted" : status === "sent" ? "Sent" : "Assigned"}
+                                            </Badge>
+                                          ) : (
+                                            <Badge variant="outline" className="text-[10px] whitespace-nowrap px-1 py-0 h-5 border-gray-300 text-gray-500">Not Sent</Badge>
+                                          )}
+                                          <span className="text-[10px] text-gray-500 whitespace-nowrap">
+                                            {candidateAssessment?.score !== undefined && candidateAssessment?.score !== null
+                                              ? `${candidateAssessment.score}/100`
+                                              : ""}
+                                          </span>
+                                          <Button variant="outline" size="sm" className="h-6 text-[10px] px-2 shrink-0"
+                                            onClick={() => handleOpenAssessmentModal(candidate, "preview", sa.id)}>
+                                            <FileText className="h-3 w-3 mr-1" />Preview
+                                          </Button>
+                                          {candidateAssessment && (
+                                            <Button variant="outline" size="sm" className="h-6 text-[10px] px-2 shrink-0"
+                                              onClick={() => handleViewAssessment(candidate)}>View</Button>
+                                          )}
+                                          {status === "submitted" && (
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              className="h-6 text-[10px] px-2 text-blue-600 border-blue-500 bg-white hover:bg-blue-500 hover:text-white shrink-0"
+                                              onClick={() =>
+                                                handleOpenAssessmentModal(candidate, "grade", sa.id, candidateAssessment?.id)
+                                              }
+                                              disabled={!candidate.stepInterviewerId || user?.id !== candidate.stepInterviewerId}
+                                              title={
+                                                !candidate.stepInterviewerId || user?.id !== candidate.stepInterviewerId
+                                                  ? 'Only the assigned interviewer can grade.'
+                                                  : undefined
+                                              }
+                                            >
+                                              Grade
+                                            </Button>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                    <div className="flex flex-col items-center gap-1.5 mt-1">
+                                      <Button variant="outline" size="sm"
+                                        className="w-full text-xs px-2 text-green-600 border-green-500 bg-white hover:bg-green-500 hover:text-white"
+                                        onClick={() => handleOpenSendAssessmentModal(candidate)}
+                                        disabled={candidate.pipelineStatus === "assessment_sent" || candidate.pipelineStatus === "assessment_partially_graded" || candidate.pipelineStatus === "assessment_graded" || !candidate.stepInterviewerId || user?.id !== candidate.stepInterviewerId}
+                                      >
+                                        Send
+                                      </Button>
+                                      <div className="flex gap-1">
+                                        <Button variant="outline" size="sm"
+                                          className="px-2 text-[10px] text-green-600 border-green-600 bg-white hover:bg-green-600 hover:text-white"
+                                          disabled={candidate.pipelineStatus !== "assessment_graded" || isCandidateProgressActionDisabled(candidate)}
+                                          onClick={() => handleCandidateProgress(candidate.id, candidate.name, candidate.pipelineStepId, "pass")}>
+                                          Pass
+                                        </Button>
+                                        <Button variant="outline" size="sm"
+                                          className="px-2 text-[10px] text-blue-600 border-blue-600 bg-white hover:bg-blue-600 hover:text-white"
+                                          disabled={candidate.pipelineStatus !== "assessment_graded" || isCandidateProgressActionDisabled(candidate)}
+                                          onClick={() => void handleCandidateShortlist(candidate.id, candidate.name, candidate.pipelineStepId)}>
+                                          Shortlist
+                                        </Button>
+                                        <Button variant="outline" size="sm"
+                                          className="px-2 text-[10px] text-red-600 border-red-600 bg-white hover:bg-red-600 hover:text-white"
+                                          disabled={candidate.pipelineStatus !== "assessment_graded" || isCandidateProgressActionDisabled(candidate)}
+                                          onClick={() => handleCandidateProgress(candidate.id, candidate.name, candidate.pipelineStepId, "fail")}>
+                                          Fail
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </TableCell>
+                              ) : (
+                                <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
+                                  <div className="flex flex-col items-center gap-1.5">
+                                    <div className="flex gap-1">
+                                      <Button variant="outline" size="sm"
+                                        className="px-2 text-[10px] text-green-600 border-green-600 bg-white hover:bg-green-600 hover:text-white"
+                                        disabled={isCandidateProgressActionDisabled(candidate)}
+                                        onClick={() => handleCandidateProgress(candidate.id, candidate.name, candidate.pipelineStepId, "pass")}>
+                                        Pass
+                                      </Button>
+                                      <Button variant="outline" size="sm"
+                                        className="px-2 text-[10px] text-blue-600 border-blue-600 bg-white hover:bg-blue-600 hover:text-white"
+                                        disabled={isCandidateProgressActionDisabled(candidate)}
+                                        onClick={() => void handleCandidateShortlist(candidate.id, candidate.name, candidate.pipelineStepId)}>
+                                        Shortlist
+                                      </Button>
+                                      <Button variant="outline" size="sm"
+                                        className="px-2 text-[10px] text-red-600 border-red-600 bg-white hover:bg-red-600 hover:text-white"
+                                        disabled={isCandidateProgressActionDisabled(candidate)}
+                                        onClick={() => handleCandidateProgress(candidate.id, candidate.name, candidate.pipelineStepId, "fail")}>
+                                        Fail
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </TableCell>
+                              )}
                             </>
                           ) : isPassFailStage ? (
                             <>
@@ -1888,12 +2648,14 @@ export default function PipelineApplicants() {
                                 </Button>
                               </TableCell>
                             </>
-                          ) : isAssessmentStage ? (
+                          ) : isAssessmentStage || isResumeWithAssessments ? (
                             <>
                               <TableCell className="border border-gray-200 py-3 px-2 text-center align-top">
                                 <div className="flex flex-col gap-1 overflow-x-auto">
                                   {stepAssessments.length === 0 ? (
-                                    <span className="text-xs text-gray-400">No assessments configured</span>
+                                    <div className="flex items-center gap-1 rounded border border-gray-200 bg-gray-50 px-1.5 py-1 text-left">
+                                      <span className="text-xs text-gray-400">No assessments configured</span>
+                                    </div>
                                   ) : (
                                     stepAssessments.map((sa) => {
                                       const candidateAssessment = (candidateAssessments.get(candidate.id) || []).find(
@@ -1963,32 +2725,86 @@ export default function PipelineApplicants() {
                                    )}
                                  </div>
                                </TableCell>
-                              <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle w-16">
+                              <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle w-36">
                                 {stepAssessments.length > 0 ? (() => {
                                   const candidateAssessmentsList = candidateAssessments.get(candidate.id) || [];
                                   const alreadySent = candidateAssessmentsList.some((ca) => ca.is_sent);
                                   const isInterviewer = candidate.stepInterviewerId && user?.id === candidate.stepInterviewerId;
-                                  const disabled = alreadySent || !isInterviewer;
+                                  const isAllGraded = candidate.pipelineStatus === "assessment_graded";
+                                  const isAssessmentProgressed = alreadySent || candidate.pipelineStatus === "assessment_sent" || candidate.pipelineStatus === "assessment_partially_graded" || candidate.pipelineStatus === "assessment_graded";
                                   return (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="w-full text-xs lg:text-sm px-2 text-green-600 border-green-500 bg-white hover:bg-green-500 hover:text-white"
-                                      onClick={() => handleOpenSendAssessmentModal(candidate)}
-                                      disabled={disabled}
-                                      title={
-                                        alreadySent
-                                          ? 'Assessment already sent.'
-                                          : !isInterviewer
-                                            ? 'Only the assigned interviewer can send assessments.'
-                                            : undefined
-                                      }
-                                    >
-                                      Send
-                                    </Button>
+                                    <div className="flex flex-col items-center gap-1.5">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full text-xs px-2 text-green-600 border-green-500 bg-white hover:bg-green-500 hover:text-white"
+                                        onClick={() => handleOpenSendAssessmentModal(candidate)}
+                                        disabled={isAssessmentProgressed || !isInterviewer}
+                                        title={
+                                          isAssessmentProgressed
+                                            ? 'Assessment already sent or graded.'
+                                            : !isInterviewer
+                                              ? 'Only the assigned interviewer can send assessments.'
+                                              : undefined
+                                        }
+                                      >
+                                        Send
+                                      </Button>
+                                      <div className="flex gap-1">
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="px-2 text-[10px] text-green-600 border-green-600 bg-white hover:bg-green-600 hover:text-white"
+                                          disabled={!isAllGraded || isCandidateProgressActionDisabled(candidate)}
+                                          onClick={() =>
+                                            handleCandidateProgress(
+                                              candidate.id,
+                                              candidate.name,
+                                              candidate.pipelineStepId,
+                                              "pass",
+                                            )
+                                          }
+                                        >
+                                          Pass
+                                        </Button>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="px-2 text-[10px] text-blue-600 border-blue-600 bg-white hover:bg-blue-600 hover:text-white"
+                                          disabled={!isAllGraded || isCandidateProgressActionDisabled(candidate)}
+                                          onClick={() =>
+                                            void handleCandidateShortlist(
+                                              candidate.id,
+                                              candidate.name,
+                                              candidate.pipelineStepId,
+                                            )
+                                          }
+                                        >
+                                          Shortlist
+                                        </Button>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="px-2 text-[10px] text-red-600 border-red-600 bg-white hover:bg-red-600 hover:text-white"
+                                          disabled={!isAllGraded || isCandidateProgressActionDisabled(candidate)}
+                                          onClick={() =>
+                                            handleCandidateProgress(
+                                              candidate.id,
+                                              candidate.name,
+                                              candidate.pipelineStepId,
+                                              "fail",
+                                            )
+                                          }
+                                        >
+                                          Fail
+                                        </Button>
+                                      </div>
+                                    </div>
                                   );
                                 })() : (
-                                  <span className="text-xs text-gray-400">-</span>
+                                  <div className="flex items-center justify-center rounded border border-gray-200 bg-gray-50 px-1.5 py-1">
+                                    <span className="text-xs text-gray-400">-</span>
+                                  </div>
                                 )}
                               </TableCell>
                             </>
@@ -2039,20 +2855,6 @@ export default function PipelineApplicants() {
                             </TableCell>
                           ) : null}
 
-                          {isInterviewScheduleStage ? (
-                            <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full px-2 text-xs lg:text-sm"
-                                onClick={() =>
-                                  handleOpenInterviewEvaluationForm(candidate, resolvedJobTitle)
-                                }
-                              >
-                                View
-                              </Button>
-                            </TableCell>
-                          ) : null}
                         </TableRow>
 ))
                     )}
@@ -2084,7 +2886,14 @@ export default function PipelineApplicants() {
 </DialogHeader>
 
               <div className="rounded-md border border-gray-200 p-3 space-y-3">
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-[140px_140px_1fr]">
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-[140px_140px_140px_1fr]">
+                <Input
+                  id="interview-date"
+                  type="date"
+                  value={scheduleForm.scheduledDate}
+                  onChange={(event) => handleScheduleInputChange("scheduledDate", event.target.value)}
+                  placeholder="Date"
+                />
                 <Select
                   value={scheduleForm.scheduledTime}
                   onValueChange={(value) => handleScheduleInputChange("scheduledTime", value)}
@@ -2568,7 +3377,6 @@ export default function PipelineApplicants() {
               type="button"
               variant="outline"
               onClick={handleCloseSendAssessmentModal}
-              disabled={isSendingAssessment}
             >
               Cancel
             </Button>
@@ -2576,16 +3384,15 @@ export default function PipelineApplicants() {
               type="button"
               variant="outline"
               onClick={handleSendPreview}
-              disabled={isSendingAssessment || isLoadingSendPreview}
+              disabled={isLoadingSendPreview}
             >
               {isLoadingSendPreview ? "Loading..." : "Preview Email"}
             </Button>
             <Button
               type="button"
               onClick={handleSendAssessment}
-              disabled={isSendingAssessment}
             >
-              {isSendingAssessment ? "Sending..." : "Confirm & Send"}
+              Confirm & Send
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2653,6 +3460,507 @@ export default function PipelineApplicants() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={Boolean(resumePreviewCandidate)} onOpenChange={(open) => { if (!open) setResumePreviewCandidate(null); }}>
+        <DialogContent className="flex h-[90vh] max-h-[90vh] w-[min(96vw,80rem)] max-w-none flex-col overflow-hidden">
+          <DialogHeader className="flex flex-col gap-4 text-left sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-1">
+              <DialogTitle>{resumePreviewCandidate ? `${resumePreviewCandidate.name}'s Resume` : "Resume Preview"}</DialogTitle>
+              <DialogDescription>Preview the submitted resume and download a copy.</DialogDescription>
+            </div>
+
+            {resumePreviewCandidate ? (
+              <Button
+                className="w-full shrink-0 sm:w-auto"
+                variant="outline"
+                onClick={() => handleDownloadResume(resumePreviewCandidate)}
+                disabled={!getResumePreviewUrl(resumePreviewCandidate)}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Open / Download Resume
+              </Button>
+            ) : null}
+          </DialogHeader>
+
+          {resumePreviewCandidate ? (() => {
+            const previewUrl = getResumePreviewUrl(resumePreviewCandidate);
+            const ext = getResumeFileExt(resumePreviewCandidate);
+            const isPdf = ext === "pdf";
+            const isImage = ["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(ext || "");
+
+            return (
+              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+                <div className="overflow-hidden rounded-lg border bg-white">
+                  {isImage && previewUrl ? (
+                    <img
+                      alt={`${resumePreviewCandidate.name} resume preview`}
+                      className="h-[72vh] w-full object-contain bg-white"
+                      src={previewUrl}
+                    />
+                  ) : isPdf && previewUrl ? (
+                    <iframe
+                      title={`${resumePreviewCandidate.name} resume preview`}
+                      className="h-[72vh] w-full bg-white"
+                      src={previewUrl}
+                    />
+                  ) : previewUrl ? (
+                    <div className="flex h-[72vh] w-full items-center justify-center p-6 text-sm text-gray-500">
+                      <iframe
+                        title={`${resumePreviewCandidate.name} resume preview`}
+                        className="h-[72vh] w-full bg-white"
+                        src={previewUrl}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex h-[72vh] w-full items-center justify-center p-6 text-sm text-gray-500">
+                      Resume preview is unavailable.
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-lg border bg-gray-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Resume Link</p>
+                  <p className="mt-1 wrap-break-word text-sm text-gray-900">
+                    {previewUrl || "No resume link available."}
+                  </p>
+                </div>
+              </div>
+            );
+          })() : (
+            <div className="flex items-center justify-center rounded-lg border border-dashed p-10 text-sm text-gray-500">
+              Resume preview is unavailable.
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Global Preonboarding Template Modal */}
+      {showPreOnboardingTemplateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowPreOnboardingTemplateModal(false)} />
+          <div className="relative z-10 w-full max-w-lg mx-4">
+            <div className="bg-white rounded-lg shadow-xl">
+              {/* Header */}
+              <div className="relative px-6 pt-6 pb-4 border-b border-blue-500">
+                <button
+                  onClick={() => setShowPreOnboardingTemplateModal(false)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+                <h2 className="text-xl font-bold text-[#0056d2] text-center">
+                  Send Requirements
+                </h2>
+              </div>
+
+              {/* Body */}
+              <div className="px-6 py-5 max-h-[70vh] overflow-y-auto">
+                <p className="text-sm font-semibold text-gray-900 mb-3">Requirement list:</p>
+                <div className="space-y-2 mb-4 max-h-64 overflow-y-auto">
+                  {preOnboardingTemplateItems.map((item) => (
+                    <div key={item.key} className="flex items-center justify-between p-1">
+                      <label className="flex items-center gap-3 cursor-pointer flex-1">
+                        <input
+                          type="checkbox"
+                          checked={item.required}
+                          onChange={() => togglePreOnboardingTemplateRequired(item.key)}
+                          className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                          disabled={!isPreonboardingInterviewer}
+                        />
+                        <span className="text-sm text-gray-700">{item.label}</span>
+                      </label>
+                      <button
+                        onClick={() => removePreOnboardingTemplateItem(item.key)}
+                        className="text-gray-400 hover:text-red-500 ml-2"
+                        disabled={!isPreonboardingInterviewer}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add Row */}
+                <div className="flex gap-2 mb-2">
+                  <Input
+                    placeholder="Add requirement"
+                    value={newPreOnboardingTemplateItem}
+                    onChange={(e) => setNewPreOnboardingTemplateItem(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addPreOnboardingTemplateItem()}
+                    disabled={!isPreonboardingInterviewer}
+                    className="text-sm"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={addPreOnboardingTemplateItem}
+                    disabled={!isPreonboardingInterviewer}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add
+                  </Button>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowPreOnboardingTemplateModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-[#0056d2] hover:bg-blue-700 text-white"
+                  onClick={() => savePreonboardingTemplateMutation.mutate(preOnboardingTemplateItems)}
+                  disabled={!isPreonboardingInterviewer}
+                >
+                  Confirm
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Per-Candidate Preonboarding Config Modal */}
+      {showPreOnboardingCandidateModal && selectedPreOnboardingCandidateId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowPreOnboardingCandidateModal(false)} />
+          <div className="relative z-10 w-full max-w-lg mx-4">
+            <div className="bg-white rounded-lg shadow-xl">
+              {/* Header */}
+              <div className="relative px-6 pt-6 pb-4 border-b border-blue-500">
+                <button
+                  onClick={() => setShowPreOnboardingCandidateModal(false)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+                <h2 className="text-xl font-bold text-[#0056d2] text-center">
+                  Send Requirements
+                </h2>
+                <div className="absolute top-4 left-4">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      setPreOnboardingCandidateItems(
+                        STANDARD_PREONBOARDING_REQUIREMENTS.map((r, i) => ({
+                          key: `req-${i}`,
+                          label: r.label,
+                          required: r.required,
+                          order: i,
+                        })),
+                      )
+                    }
+                    className="text-xs"
+                    disabled={!isPreonboardingInterviewer}
+                  >
+                    Load Standard
+                  </Button>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="px-6 py-5 max-h-[70vh] overflow-y-auto">
+                {/* Date Fields */}
+                <div className="space-y-4 mb-6">
+                  <div className="flex items-center gap-4">
+                    <label className="text-sm font-semibold text-gray-900 w-36 shrink-0">
+                      Submission Date <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative flex-1">
+                      <input
+                        type="date"
+                        value={submissionDate}
+                        onChange={(e) => setSubmissionDate(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        disabled={!isPreonboardingInterviewer}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <label className="text-sm font-semibold text-gray-900 w-36 shrink-0">
+                      Report Date <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative flex-1">
+                      <input
+                        type="datetime-local"
+                        value={reportDate}
+                        onChange={(e) => setReportDate(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        disabled={!isPreonboardingInterviewer}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Requirement List */}
+                <p className="text-sm font-semibold text-gray-900 mb-3">Requirement list:</p>
+                <div className="space-y-2 mb-4 max-h-64 overflow-y-auto">
+                  {preOnboardingCandidateItems.map((item) => (
+                    <div key={item.key} className="flex items-center justify-between p-1">
+                      <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                        <input
+                          type="checkbox"
+                          checked={item.required}
+                          onChange={() => togglePreOnboardingCandidateRequired(item.key)}
+                          className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 shrink-0"
+                          disabled={!isPreonboardingInterviewer}
+                        />
+                        <span className="text-sm text-gray-700 truncate">{item.label}</span>
+                      </label>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {item.file_url && (
+                          <a
+                            href={item.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800"
+                            title={item.filename || "View file"}
+                          >
+                            <FileText className="h-4 w-4" />
+                          </a>
+                        )}
+                        <span className={`text-xs px-1.5 py-0.5 rounded ${
+                          item.status === "submitted" || item.status === "verified"
+                            ? "bg-green-100 text-green-700"
+                            : item.status === "stale"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-gray-100 text-gray-500"
+                        }`}>
+                          {item.status === "submitted" ? "Submitted" :
+                           item.status === "verified" ? "Verified" :
+                           item.status === "stale" ? "Stale" :
+                           item.status === "carried_over" ? "Carried Over" :
+                           "Pending"}
+                        </span>
+                        <button
+                          onClick={() => removePreOnboardingCandidateItem(item.key)}
+                          className="text-gray-400 hover:text-red-500"
+                          disabled={!isPreonboardingInterviewer}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add Row */}
+                <div className="flex gap-2 mb-2">
+                  <Input
+                    placeholder="Add requirement"
+                    value={newPreOnboardingCandidateItem}
+                    onChange={(e) => setNewPreOnboardingCandidateItem(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addPreOnboardingCandidateItem()}
+                    disabled={!isPreonboardingInterviewer}
+                    className="text-sm"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={addPreOnboardingCandidateItem}
+                    disabled={!isPreonboardingInterviewer}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add
+                  </Button>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowPreOnboardingCandidateModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-[#0056d2] hover:bg-blue-700 text-white"
+                  onClick={() => {
+                    if (selectedPreOnboardingCandidateId) {
+                      savePreonboardingCandidateReqsMutation.mutate({
+                        appId: selectedPreOnboardingCandidateId,
+                        items: preOnboardingCandidateItems,
+                      });
+                    }
+                  }}
+                  disabled={!isPreonboardingInterviewer}
+                >
+                  Confirm
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Onboarding Email Preview Dialog */}
+      <Dialog open={onboardingPreviewOpen} onOpenChange={setOnboardingPreviewOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle>Email Preview</DialogTitle>
+            <DialogDescription>
+              This is what will be sent to the candidate.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-gray-600 uppercase">Subject</div>
+              <div className="text-sm bg-white p-3 rounded border border-gray-200 wrap-break-word">
+                {onboardingPreviewSubject}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-gray-600 uppercase">Plain Text Body</div>
+              <div className="text-sm bg-white p-4 rounded border border-gray-200 whitespace-pre-wrap wrap-break-word max-h-80 overflow-y-auto">
+                {onboardingPreviewBody || "No preview available."}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOnboardingPreviewOpen(false)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Onboarding Send Modal */}
+      {showOnboardingModal && selectedOnboardingCandidate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowOnboardingModal(false)} />
+          <div className="relative z-10 w-full max-w-lg mx-4">
+            <div className="bg-white rounded-lg shadow-xl">
+              <div className="relative px-6 pt-6 pb-4 border-b border-blue-500">
+                <button
+                  onClick={() => setShowOnboardingModal(false)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+                <h2 className="text-xl font-bold text-[#0056d2] text-center">
+                  Send Onboarding
+                </h2>
+              </div>
+
+              <div className="px-6 py-5 max-h-[70vh] overflow-y-auto space-y-4">
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Candidate</p>
+                  <p className="text-sm text-gray-600">{selectedOnboardingCandidate.candidate_name}</p>
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Position</p>
+                  <p className="text-sm text-gray-600">{selectedOnboardingCandidate.job_title}</p>
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Immediate Supervisor</p>
+                  <p className="text-sm text-gray-600">
+                    {immediateSupervisor
+                      ? `${immediateSupervisor.first_name || ''} ${immediateSupervisor.last_name || ''}`.trim() || immediateSupervisor.email
+                      : 'Not assigned'}
+                  </p>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-semibold text-gray-900">Onboarding Date</Label>
+                  <Input
+                    type="date"
+                    value={onboardingDate}
+                    onChange={(e) => setOnboardingDate(e.target.value)}
+                    className="mt-1"
+                  />
+                  {!onboardingDate && (
+                    <p className="text-xs text-amber-600 mt-1">Select a date to enable the Send button.</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-sm font-semibold text-gray-900">Email Subject</Label>
+                  <Input
+                    value={onboardingEmailSubject}
+                    onChange={(e) => setOnboardingEmailSubject(e.target.value)}
+                    className="mt-1"
+                    placeholder="Email subject"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm font-semibold text-gray-900">Email Body</Label>
+                  <p className="text-xs text-gray-400 mb-1">
+                    Available placeholders: {'{{candidate_name}}'}, {'{{onboarding_date}}'}, {'{{immediate_supervisor}}'}, {'{{job_title}}'}, {'{{company_name}}'}, {'{{interviewer_name}}'}, {'{{interviewer_role}}'}
+                  </p>
+                  <textarea
+                    value={onboardingEmailBody}
+                    onChange={(e) => setOnboardingEmailBody(e.target.value)}
+                    className="mt-1 w-full min-h-[200px] rounded-md border border-gray-300 p-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                    placeholder="Email body"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 px-6 py-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowOnboardingModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleOnboardingPreview}
+                >
+                  Preview Email
+                </Button>
+                <Button
+                  className="bg-[#0056d2] hover:bg-blue-700 text-white"
+                  disabled={!onboardingDate || !isOnboardingInterviewer}
+                  title={
+                    !onboardingDate
+                      ? "Select an onboarding date first."
+                      : !isOnboardingInterviewer
+                      ? "Only the assigned interviewer can send onboarding."
+                      : undefined
+                  }
+                  onClick={() => {
+                    if (selectedOnboardingCandidate) {
+                      handleSendOnboarding(
+                        selectedOnboardingCandidate.id,
+                        selectedOnboardingCandidate.candidate_name,
+                      );
+                    }
+                  }}
+                >
+                  Send Onboarding
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Candidate Modal */}
+      {rejectModalState.candidate && (
+        <RejectCandidateModal
+          isOpen={rejectModalState.open}
+          onClose={() => setRejectModalState({ open: false, candidate: null })}
+          candidate={rejectModalState.candidate}
+          onReject={handleRejectCandidate}
+        />
+      )}
     </>
   );
 }

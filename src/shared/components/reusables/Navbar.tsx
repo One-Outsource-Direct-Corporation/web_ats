@@ -12,6 +12,7 @@ import {
   Settings,
   ChevronsUpDown,
   LogOut,
+  UserPlus,
 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -58,6 +59,11 @@ export function Navbar() {
       path: "/job",
       label: "Applicants",
       icon: Users,
+    },
+    {
+      path: "/pool",
+      label: "Talent Pool",
+      icon: UserPlus,
     },
     {
       path: "/positions",

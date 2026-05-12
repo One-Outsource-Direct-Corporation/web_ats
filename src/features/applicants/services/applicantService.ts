@@ -1,37 +1,37 @@
-import type { Applicant } from "../types/applicant.types";
+import { axiosPrivate } from "@/config/axios";
+import type { Applicant, Comment } from "../types/applicant.types";
 
 export async function getApplicants(): Promise<Applicant[]> {
-  // TODO: Replace with actual API call
-  return [
-    {
-      id: "1",
-      name: "Maria White",
-      email: "maria.white@email.com",
-      status: "Hired",
-      position: "Project Manager",
-      department: "CI",
-      type: "Full Time",
-      avatar: "https://i.pravatar.cc/40?u=1",
-    },
-    {
-      id: "2",
-      name: "Carmen Martinez",
-      email: "carmen.martinez@email.com",
-      status: "Failed",
-      position: "Social Media Manager",
-      department: "Marketing",
-      type: "Full Time",
-      avatar: "https://i.pravatar.cc/40?u=2",
-    },
-    {
-      id: "3",
-      name: "Olivia Miller",
-      email: "olivia.miller@email.com",
-      status: "Warm",
-      position: "Senior UI/UX Designer",
-      department: "CI",
-      type: "Full Time",
-      avatar: "https://i.pravatar.cc/40?u=3",
-    },
-  ];
+  const response = await axiosPrivate.get("/api/candidate/applications/");
+  return response.data;
+}
+
+export async function getApplicantById(id: string | number): Promise<Applicant> {
+  const response = await axiosPrivate.get("/api/candidate/applications/");
+  const applicants: Applicant[] = response.data;
+  const applicant = applicants.find((a) => String(a.id) === String(id));
+  if (!applicant) throw new Error(`Applicant with id ${id} not found`);
+  return applicant;
+}
+
+export async function getComments(applicationId: number): Promise<Comment[]> {
+  const response = await axiosPrivate.get("/api/candidate/comments/", {
+    params: { candidate_application_id: applicationId },
+  });
+  return response.data;
+}
+
+export async function createComment(
+  applicationId: number,
+  content: string,
+): Promise<Comment> {
+  const response = await axiosPrivate.post("/api/candidate/comments/", {
+    candidate_application: applicationId,
+    content,
+  });
+  return response.data;
+}
+
+export async function deleteComment(commentId: number): Promise<void> {
+  await axiosPrivate.delete(`/api/candidate/comments/${commentId}/`);
 }

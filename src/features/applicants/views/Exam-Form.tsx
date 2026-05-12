@@ -10,6 +10,7 @@ import { Textarea } from "@/shared/components/ui/textarea";
 import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 import useAxiosMultipart from "@/features/auth/hooks/useAxiosMultipart";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useDeferredAction } from "@/features/applicants/hooks/useDeferredAction";
 import { formatAssessmentType } from "@/shared/utils/assessmentUtils";
 
 interface AssessmentFile {
@@ -38,16 +39,15 @@ interface CandidateAssessmentRecord {
   status?: "assigned" | "submitted" | "graded" | string;
   score?: number | null;
   score_inputted_by_name?: string | null;
+  assigned_interviewer_id?: number | null;
   notes?: string | null;
   is_submitted?: boolean;
   is_graded?: boolean;
 }
 
 interface PerAssessmentState {
-  answerFile: File | null;
   score: string;
   notes: string;
-  savingAnswer: boolean;
   savingGrade: boolean;
 }
 
@@ -84,9 +84,10 @@ export default function ExamForm() {
   const [loading, setLoading] = useState(true);
   const [perAssessmentState, setPerAssessmentState] = useState<Map<number, PerAssessmentState>>(new Map());
   const assessmentSectionRef = useRef<HTMLDivElement | null>(null);
+  const { queueAction, processingId } = useDeferredAction();
 
   const processType = searchParams.get("type") ?? undefined;
-  const isStaff = Boolean(user?.is_staff || user?.role === "admin" || user?.role === "superadmin");
+  const pipelineStepId = searchParams.get("pipelineStepId") ?? undefined;
 
   const loadAssessment = async () => {
     if (!applicantId) {
@@ -104,6 +105,7 @@ export default function ExamForm() {
           params: {
             candidate_application_id: applicantId,
             type: processType,
+            pipeline_step_id: pipelineStepId,
           },
         },
       );
@@ -114,10 +116,8 @@ export default function ExamForm() {
       const stateMap = new Map<number, PerAssessmentState>();
       for (const item of items) {
         stateMap.set(item.id, {
-          answerFile: null,
           score: item.score !== null && item.score !== undefined ? String(item.score) : "",
           notes: item.notes ?? "",
-          savingAnswer: false,
           savingGrade: false,
         });
       }
@@ -159,55 +159,37 @@ export default function ExamForm() {
     });
   };
 
-  const handleSubmitAnswer = async (recordId: number) => {
-    const state = perAssessmentState.get(recordId);
-    if (!state?.answerFile) {
-      toast.error("Please choose a file to submit.");
-      return;
-    }
-
-    updatePerAssessment(recordId, { savingAnswer: true });
-
-    try {
-      const formData = new FormData();
-      formData.append("answer_file", state.answerFile);
-
-      await axiosMultipart.patch(`/api/candidate/assessments/${recordId}/`, formData);
-
-      toast.success("Assessment answer uploaded.");
-      updatePerAssessment(recordId, { answerFile: null, savingAnswer: false });
-      await loadAssessment();
-    } catch (error) {
-      console.error("Unable to submit assessment answer.", error);
-      toast.error("Unable to submit assessment answer.");
-      updatePerAssessment(recordId, { savingAnswer: false });
-    }
-  };
-
-  const handleSaveGrade = async (recordId: number) => {
+  const handleSaveGrade = (recordId: number, assessmentType: string) => {
     const state = perAssessmentState.get(recordId);
     if (!state?.score) {
       toast.error("Please enter a score.");
       return;
     }
 
-    updatePerAssessment(recordId, { savingGrade: true });
+    queueAction({
+      candidateName: assessmentType,
+      label: "Grade",
+      dedupKey: `grade-${recordId}`,
+      onCommit: async () => {
+        updatePerAssessment(recordId, { savingGrade: true });
 
-    try {
-      const formData = new FormData();
-      formData.append("score", state.score);
-      formData.append("notes", state.notes || "");
+        try {
+          const formData = new FormData();
+          formData.append("score", state.score);
+          formData.append("notes", state.notes || "");
 
-      await axiosMultipart.patch(`/api/candidate/assessments/${recordId}/`, formData);
+          await axiosMultipart.patch(`/api/candidate/assessments/${recordId}/`, formData);
 
-      toast.success("Assessment grade saved.");
-      updatePerAssessment(recordId, { savingGrade: false });
-      await loadAssessment();
-    } catch (error) {
-      console.error("Unable to save grade.", error);
-      toast.error("Unable to save grade.");
-      updatePerAssessment(recordId, { savingGrade: false });
-    }
+          toast.success("Assessment grade saved.");
+          updatePerAssessment(recordId, { savingGrade: false });
+          await loadAssessment();
+        } catch (error) {
+          console.error("Unable to save grade.", error);
+          toast.error("Unable to save grade.");
+          updatePerAssessment(recordId, { savingGrade: false });
+        }
+      },
+    });
   };
 
   const renderFilePreview = (downloadUrl: string, fileExtension?: string | null, label: string) => {
@@ -257,7 +239,7 @@ export default function ExamForm() {
             variant="outline"
             size="sm"
             className="flex items-center gap-2"
-            onClick={() => navigate(`/job/${jobId}/assessments`)}
+            onClick={() => navigate(-1)}
           >
             <ArrowLeft className="h-4 w-4" />
             Back
@@ -320,6 +302,8 @@ export default function ExamForm() {
                   : record.is_submitted
                     ? "Submitted"
                     : "Assigned";
+                const isInterviewer = record.assigned_interviewer_id != null && user?.id === record.assigned_interviewer_id;
+                const isGradingDisabled = !isInterviewer || record.is_graded;
 
                 return (
                   <section
@@ -417,46 +401,6 @@ export default function ExamForm() {
                       )}
 
                       <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                        <label
-                          className="block text-sm font-medium text-slate-700"
-                          htmlFor={`answer-file-${record.id}`}
-                        >
-                          Upload your completed answer
-                        </label>
-                        <Input
-                          id={`answer-file-${record.id}`}
-                          type="file"
-                          className="mt-2"
-                          onChange={(event) => {
-                            const file = event.target.files?.[0] ?? null;
-                            updatePerAssessment(record.id, { answerFile: file });
-                          }}
-                        />
-
-                        <div className="mt-4 flex flex-wrap items-center gap-3">
-                          <Button
-                            type="button"
-                            className="gap-2"
-                            onClick={() => handleSubmitAnswer(record.id)}
-                            disabled={state?.savingAnswer || !state?.answerFile}
-                          >
-                            {state?.savingAnswer ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <FileUp className="h-4 w-4" />
-                            )}
-                            Submit Answer
-                          </Button>
-                          {state?.answerFile ? (
-                            <p className="text-sm text-slate-500">Selected: {state.answerFile.name}</p>
-                          ) : (
-                            <p className="text-sm text-slate-500">Choose the completed assessment file to submit.</p>
-                          )}
-                        </div>
-                      </div>
-
-                      {isStaff && (
-                        <div className="rounded-2xl border border-slate-200 bg-white p-4">
                           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500 mb-3">
                             Interviewer Grading
                           </p>
@@ -480,6 +424,14 @@ export default function ExamForm() {
                                 }
                                 className="mt-2"
                                 placeholder="Enter score"
+                                disabled={isGradingDisabled}
+                                title={
+                                  record.is_graded
+                                    ? "Already graded"
+                                    : !isInterviewer
+                                      ? "Only the assigned interviewer can grade"
+                                      : undefined
+                                }
                               />
                             </div>
                             <div>
@@ -497,6 +449,14 @@ export default function ExamForm() {
                                 }
                                 className="mt-2 min-h-[80px]"
                                 placeholder="Notes visible only to the interviewer"
+                                disabled={isGradingDisabled}
+                                title={
+                                  record.is_graded
+                                    ? "Already graded"
+                                    : !isInterviewer
+                                      ? "Only the assigned interviewer can grade"
+                                      : undefined
+                                }
                               />
                             </div>
                           </div>
@@ -504,8 +464,15 @@ export default function ExamForm() {
                             <Button
                               type="button"
                               className="gap-2"
-                              onClick={() => handleSaveGrade(record.id)}
-                              disabled={state?.savingGrade}
+                              onClick={() => handleSaveGrade(record.id, formatAssessmentType(record.assessment?.type))}
+                              disabled={isGradingDisabled || state?.savingGrade || processingId !== null}
+                              title={
+                                record.is_graded
+                                  ? "Already graded"
+                                  : !isInterviewer
+                                    ? "Only the assigned interviewer can grade"
+                                    : undefined
+                              }
                             >
                               {state?.savingGrade ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -520,10 +487,9 @@ export default function ExamForm() {
                               Graded by: {record.score_inputted_by_name}
                             </p>
                           )}
-                        </div>
-                      )}
+                          </div>
 
-                      {!isStaff && record.is_graded && (
+                        {record.is_graded && (
                         <div className="rounded-2xl border border-slate-200 bg-white p-4">
                           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500 mb-3">
                             Result

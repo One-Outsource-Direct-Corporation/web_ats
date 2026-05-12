@@ -34,10 +34,10 @@ const PROCESS_TYPE_ROUTE_SEGMENTS: Record<
   final_interview: { segment: "finalinterview", customFinalStage: false },
   for_job_offer: { segment: "forjoboffer", customFinalStage: false },
   pre_onboarding: {
-    segment: "PreOnboarding",
-    customFinalStage: true,
+    segment: "preonboarding",
+    customFinalStage: false,
   },
-  onboarding: { segment: "Onboarding", customFinalStage: true },
+  onboarding: { segment: "onboarding", customFinalStage: false },
   failed: { segment: "Failed", customFinalStage: true },
 };
 

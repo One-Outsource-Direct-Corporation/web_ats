@@ -20,6 +20,7 @@ import {
 } from "@/shared/components/ui/select";
 import { formatDate, formatDateYYYYMMDD } from "@/shared/utils/formatDate";
 import { ArrowLeft, Plus, Trash2, Upload, FileText, X, Eye, ImageIcon, ChevronDown } from "lucide-react";
+import { Badge } from "@/shared/components/ui/badge";
 
 interface WorkExperienceEntry {
   jobTitle: string;
@@ -47,6 +48,7 @@ interface FormState {
   institution: string;
   program: string;
   work_experience: WorkExperienceEntry[];
+  skills: string[];
 }
 
 const initialForm: FormState = {
@@ -69,6 +71,7 @@ const initialForm: FormState = {
   institution: "",
   program: "",
   work_experience: [],
+  skills: [],
 };
 
 function FieldLabel({ label, required }: { label: string; required: boolean }) {
@@ -120,6 +123,7 @@ export default function CandidateProfile() {
               years: w.years || 0,
             }))
           : [],
+        skills: Array.isArray(details.skills) ? details.skills : [],
       });
     }
   }, [details]);
@@ -167,13 +171,40 @@ export default function CandidateProfile() {
     }));
   };
 
+  const [newSkill, setNewSkill] = useState("");
+
+  const handleAddSkill = () => {
+    const trimmed = newSkill.trim();
+    if (!trimmed) return;
+    
+    setForm((prev) => {
+      if (prev.skills.includes(trimmed)) return prev;
+      return { ...prev, skills: [...prev.skills, trimmed] };
+    });
+    setNewSkill("");
+  };
+
+  const handleRemoveSkill = (skill: string) => {
+    setForm((prev) => ({
+      ...prev,
+      skills: prev.skills.filter(s => s !== skill),
+    }));
+  };
+
+  const handleSkillKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddSkill();
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData();
 
     (Object.keys(form) as Array<keyof FormState>).forEach((key) => {
       if (key === "email") return; // Email is read-only — do not submit
-      if (key === "work_experience") {
+      if (key === "work_experience" || key === "skills") {
         formData.append(key, JSON.stringify(form[key]));
       } else {
         formData.append(key, form[key] as string);
@@ -481,6 +512,55 @@ export default function CandidateProfile() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </section>
+          )}
+
+          {/* Skills */}
+          {isVisible("skills") && (
+            <section className="bg-white rounded-lg shadow-sm border p-6">
+              <h2 className="text-lg font-bold text-[#0056d2] mb-4">Skills (Optional)</h2>
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Input
+                    value={newSkill}
+                    onChange={(e) => setNewSkill(e.target.value)}
+                    onKeyDown={handleSkillKeyDown}
+                    placeholder="Type a skill and press Enter or click Add"
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleAddSkill}
+                    disabled={!newSkill.trim()}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {form.skills.map((skill) => (
+                    <Badge
+                      key={skill}
+                      variant="secondary"
+                      className="flex items-center gap-1 pr-1"
+                    >
+                      {skill}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSkill(skill)}
+                        className="ml-1 hover:text-red-500"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                  {form.skills.length === 0 && (
+                    <p className="text-sm text-gray-400">No skills added yet.</p>
+                  )}
+                </div>
               </div>
             </section>
           )}

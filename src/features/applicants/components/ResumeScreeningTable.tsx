@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Avatar,
   AvatarFallback,
@@ -71,10 +72,6 @@ export default function ResumeScreeningTable({
   className,
 }: Props) {
   const [selectedApplicant, setSelectedApplicant] = useState<Candidate | null>(null);
-  const [resumePreviewUrl, setResumePreviewUrl] = useState<string | null>(null);
-  const [resumePreviewMimeType, setResumePreviewMimeType] = useState<string | null>(null);
-  const [isResumePreviewLoading, setIsResumePreviewLoading] = useState(false);
-  const [resumePreviewError, setResumePreviewError] = useState<string | null>(null);
 
   const selectedApplicantResumeUrl = resolveMediaUrl(selectedApplicant?.resumeUrl);
 
@@ -82,58 +79,13 @@ export default function ResumeScreeningTable({
     return resolveMediaUrl(candidate.photoUrl ?? candidate.avatar);
   };
 
-  useEffect(() => {
-    let isActive = true;
-    let objectUrl: string | null = null;
-
-    setResumePreviewUrl(null);
-    setResumePreviewMimeType(null);
-    setResumePreviewError(null);
-
-    if (!selectedApplicantResumeUrl) {
-      setIsResumePreviewLoading(false);
-      return () => undefined;
-    }
-
-    setIsResumePreviewLoading(true);
-
-    (async () => {
-      try {
-        const response = await fetch(selectedApplicantResumeUrl, { mode: "cors" });
-
-        if (!response.ok) {
-          throw new Error("Failed to load resume preview.");
-        }
-
-        const blob = await response.blob();
-        objectUrl = window.URL.createObjectURL(blob);
-
-        if (!isActive) {
-          window.URL.revokeObjectURL(objectUrl);
-          return;
-        }
-
-        setResumePreviewUrl(objectUrl);
-        setResumePreviewMimeType(blob.type || null);
-      } catch {
-        if (isActive) {
-          setResumePreviewError("Resume preview is unavailable for this file.");
-        }
-      } finally {
-        if (isActive) {
-          setIsResumePreviewLoading(false);
-        }
-      }
-    })();
-
-    return () => {
-      isActive = false;
-
-      if (objectUrl) {
-        window.URL.revokeObjectURL(objectUrl);
-      }
-    };
-  }, [selectedApplicantResumeUrl]);
+  const getResumeFileExt = (candidate: Candidate): string | null => {
+    const url = candidate.resumeUrl;
+    if (!url) return null;
+    const filename = url.split("/").pop()?.split("?")[0] || "";
+    const ext = filename.split(".").pop() || "";
+    return ext.toLowerCase() || null;
+  };
 
   const handleDownloadResume = (candidate: Candidate) => {
     const resumeUrl = resolveMediaUrl(candidate.resumeUrl);
@@ -189,7 +141,10 @@ export default function ResumeScreeningTable({
                   <TableCell className="text-center border border-gray-200 py-3 px-3 font-medium text-xs lg:text-sm align-middle">{String(candidate.id)}</TableCell>
 
                   <TableCell className="border border-gray-200 py-3 px-3 lg:py-4 lg:px-4 w-36 align-middle" style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}>
-                    <div className="flex min-w-0 flex-col items-center justify-center gap-1 text-center lg:flex-row lg:gap-3">
+                    <Link
+                      to={`/job/list/applicants/${candidate.id}`}
+                      className="flex min-w-0 flex-col items-center justify-center gap-1 text-center lg:flex-row lg:gap-3 hover:opacity-80"
+                    >
                       <Avatar className="h-6 w-6 lg:h-8 lg:w-8 shrink-0">
                         <AvatarImage
                           src={getCandidatePhotoUrl(candidate) || "/placeholder.svg"}
@@ -207,7 +162,7 @@ export default function ResumeScreeningTable({
                       <span className="block min-w-0 max-w-full font-medium text-xs leading-tight whitespace-normal lg:text-sm" style={{ overflowWrap: "anywhere" }} title={candidate.name}>
                         {candidate.name}
                       </span>
-                    </div>
+                    </Link>
                   </TableCell>
 
                   <TableCell className="border border-gray-200 py-3 px-3 text-center align-middle">
@@ -295,44 +250,51 @@ export default function ResumeScreeningTable({
             ) : null}
           </DialogHeader>
 
-          {selectedApplicant ? (
-            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
-              <div className="overflow-hidden rounded-lg border bg-white">
-                {isResumePreviewLoading ? (
-                  <div className="flex h-[72vh] w-full items-center justify-center p-6 text-sm text-gray-500">
-                    Loading resume preview...
-                  </div>
-                ) : resumePreviewError ? (
-                  <div className="flex h-[72vh] w-full items-center justify-center p-6 text-sm text-gray-500">
-                    {resumePreviewError}
-                  </div>
-                ) : resumePreviewUrl && resumePreviewMimeType?.startsWith("image/") ? (
-                  <img
-                    alt={`${selectedApplicant.name} resume preview`}
-                    className="h-[72vh] w-full object-contain bg-white"
-                    src={resumePreviewUrl}
-                  />
-                ) : resumePreviewUrl && resumePreviewMimeType === "application/pdf" ? (
-                  <iframe
-                    title={`${selectedApplicant.name} resume preview`}
-                    className="h-[72vh] w-full bg-white"
-                    src={resumePreviewUrl}
-                  />
-                ) : (
-                  <div className="flex h-[72vh] w-full items-center justify-center p-6 text-sm text-gray-500">
-                    Resume preview is unavailable.
-                  </div>
-                )}
-              </div>
+          {selectedApplicant ? (() => {
+            const previewUrl = selectedApplicantResumeUrl;
+            const ext = getResumeFileExt(selectedApplicant);
+            const isPdf = ext === "pdf";
+            const isImage = ["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(ext || "");
 
-              <div className="rounded-lg border bg-gray-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Resume Link</p>
-                <p className="mt-1 wrap-break-word text-sm text-gray-900">
-                  {selectedApplicantResumeUrl || "No resume link available."}
-                </p>
+            return (
+              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+                <div className="overflow-hidden rounded-lg border bg-white">
+                  {isImage && previewUrl ? (
+                    <img
+                      alt={`${selectedApplicant.name} resume preview`}
+                      className="h-[72vh] w-full object-contain bg-white"
+                      src={previewUrl}
+                    />
+                  ) : isPdf && previewUrl ? (
+                    <iframe
+                      title={`${selectedApplicant.name} resume preview`}
+                      className="h-[72vh] w-full bg-white"
+                      src={previewUrl}
+                    />
+                  ) : previewUrl ? (
+                    <div className="flex h-[72vh] w-full items-center justify-center p-6 text-sm text-gray-500">
+                      <iframe
+                        title={`${selectedApplicant.name} resume preview`}
+                        className="h-[72vh] w-full bg-white"
+                        src={previewUrl}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex h-[72vh] w-full items-center justify-center p-6 text-sm text-gray-500">
+                      Resume preview is unavailable.
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-lg border bg-gray-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Resume Link</p>
+                  <p className="mt-1 wrap-break-word text-sm text-gray-900">
+                    {previewUrl || "No resume link available."}
+                  </p>
+                </div>
               </div>
-            </div>
-          ) : (
+            );
+          })() : (
             <div className="flex items-center justify-center rounded-lg border border-dashed p-10 text-sm text-gray-500">
               Resume preview is unavailable.
             </div>

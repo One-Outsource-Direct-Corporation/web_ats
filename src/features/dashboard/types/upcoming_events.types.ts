@@ -1,5 +1,5 @@
 // Dashboard feature types
-export type EventType = "phone" | "phone-red" | "notebookpen" | "clipboard";
+export type EventType = "phone" | "phone-green" | "phone-red" | "notebookpen" | "clipboard";
 export type StatusType = "Interview" | "Assessment" | "Offer Sent" | string;
 
 export interface EventIconProps {
@@ -32,6 +32,15 @@ export interface WeekDay {
   day: string;
   date: string;
   events: Event[];
+  isCurrentDay?: boolean;
+  isCurrentMonth?: boolean;
+  fullDate?: string;
+}
+
+export interface CalendarMonth {
+  month: string;
+  year: number;
+  days: WeekDay[];
 }
 
 export interface Metric {

@@ -78,7 +78,15 @@ export default function CareerDescription() {
 
           {/* Action Buttons - Auth Aware */}
           <div className="flex gap-4 ml-9 flex-wrap items-center">
-            {isCandidate ? (
+            {isCandidate && jobPublicDetail?.has_applied ? (
+              <Button
+                disabled
+                className="bg-gray-400 cursor-not-allowed px-6 py-2 text-white"
+              >
+                <Briefcase className="h-4 w-4 mr-2" />
+                Already Applied
+              </Button>
+            ) : isCandidate ? (
               <Button
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
                 onClick={() => {

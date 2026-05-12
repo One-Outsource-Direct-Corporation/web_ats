@@ -6,12 +6,8 @@ import { toast } from "react-toastify";
 import { clearAllAuthStorage } from "../utils/authStorage";
 
 const useRefreshToken = () => {
-  const { setUser, setIsAuth, setPersist } = useAuth();
+  const { setUser, setIsAuth } = useAuth();
   const refresh = useCallback(async (): Promise<User | undefined> => {
-    // console.log(
-    //   "🔄 useRefreshToken.refresh() called from:",
-    //   new Error().stack?.split("\n")[2]?.trim()
-    // );
     try {
       const response = await defaultAxios.post("/api/auth/token/refresh/");
       setUser(response.data?.user ?? null);
@@ -29,7 +25,6 @@ const useRefreshToken = () => {
 
       setUser(null);
       setIsAuth(false);
-      setPersist(false);
       clearAllAuthStorage();
 
       if (
@@ -43,7 +38,7 @@ const useRefreshToken = () => {
       }
       return undefined;
     }
-  }, [setIsAuth, setPersist, setUser]);
+  }, [setIsAuth, setUser]);
 
   return refresh;
 };

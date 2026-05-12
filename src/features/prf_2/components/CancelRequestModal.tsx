@@ -12,7 +12,11 @@ import {
 import { MinusCircle } from "lucide-react";
 import { useNavigate } from "react-router";
 
-export default function CancelRequestModal() {
+interface CancelRequestModalProps {
+  onCancel?: () => void;
+}
+
+export default function CancelRequestModal({ onCancel }: CancelRequestModalProps) {
   const navigate = useNavigate();
   return (
     <Dialog>
@@ -37,7 +41,13 @@ export default function CancelRequestModal() {
           <DialogClose asChild>
             <Button variant="outline">No</Button>
           </DialogClose>
-          <Button variant="destructive" onClick={() => navigate("/requests")}>
+          <Button
+            variant="destructive"
+            onClick={() => {
+              onCancel?.();
+              navigate("/requests");
+            }}
+          >
             Yes
           </Button>
         </DialogFooter>

@@ -73,7 +73,7 @@ export const getDefaultLandingPage = (role: string | undefined): string => {
   }
 
   if (isRestrictedManager(role)) {
-    return "/positions";
+    return "/dashboard";
   }
 
   return "/dashboard";
@@ -111,10 +111,11 @@ export const canAccessRoute = (
     );
   }
 
-  // Restricted managers can only access base path, positions, and requests
+  // Restricted managers can only access base path, dashboard, positions, and requests
   if (isRestrictedManager(role)) {
     return (
       route === "/" ||
+      route.startsWith("/dashboard") ||
       route.startsWith("/positions") ||
       route.startsWith("/requests") ||
       route.startsWith("/job")
@@ -150,10 +151,11 @@ export const getAccessibleRoutes = (role: string | undefined) => {
     );
   }
 
-  // If restricted manager, only return positions and requests
+  // If restricted manager, return dashboard, positions, requests, and job
   if (isRestrictedManager(role)) {
     return allRoutes.filter(
       (route) =>
+        route.path === "/dashboard" ||
         route.path === "/positions" ||
         route.path === "/requests" ||
         route.path === "/job"

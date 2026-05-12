@@ -91,4 +91,21 @@ export const queryKeys = {
     listing: (params?: { page?: number; search?: string; business_unit?: string; nested?: boolean }) =>
       [...queryKeys.departments.all, "listing", params?.page ?? 1, params?.search ?? "", params?.business_unit ?? "", params?.nested ?? false] as const,
   },
+  jobOffers: {
+    all: ["jobOffers"] as const,
+    list: (candidateId?: number) =>
+      [...queryKeys.jobOffers.all, "list", candidateId ?? "all"] as const,
+  },
+  documents: {
+    all: ["documents"] as const,
+    list: () => [...queryKeys.documents.all, "list"] as const,
+  },
+  preonboarding: {
+    all: ["preonboarding"] as const,
+    data: () => [...queryKeys.preonboarding.all, "data"] as const,
+  },
+  dashboard: {
+    all: ["dashboard"] as const,
+    me: () => [...queryKeys.dashboard.all, "me"] as const,
+  },
 } as const;

@@ -78,6 +78,10 @@ export function validateSteps(formData: PositionFormData): StepErrors {
     }
   });
 
+  if (!formData.job_posting.required_skills || formData.job_posting.required_skills.length === 0) {
+    step2JobPosting.required_skills = ["At least one required skill is needed."];
+  }
+
   if (Object.keys(step2JobPosting).length > 0) {
     step2Errors.job_posting = step2JobPosting;
   }
@@ -146,6 +150,7 @@ export function mapServerErrorsToSteps(
     "job_posting.description": 2,
     "job_posting.responsibilities": 2,
     "job_posting.qualifications": 2,
+    "job_posting.required_skills": 2,
     non_negotiable: 3,
     questionnaire: 3,
     "application_form.non_negotiable": 3,

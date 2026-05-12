@@ -485,7 +485,7 @@ export default function JobManagement() {
                               className="text-blue-600 hover:text-blue-800 text-xs lg:text-sm underline"
                               onClick={() => {
                                 navigate(
-                                  `/job/${jobId}/exam-form/${applicant.id}?type=assessments`
+                                  `/job/${jobId}/exam-form/${applicant.id}?type=assessments&pipelineStepId=${applicant.pipelineStepId ?? ''}`
                                 );
                               }}
                             >

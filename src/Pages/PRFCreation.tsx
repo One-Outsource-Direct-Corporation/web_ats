@@ -1,6 +1,6 @@
 import CancelRequestModal from "@/features/prf_2/components/CancelRequestModal";
 import PRFStepsNavigation from "@/features/prf_2/components/PRFStepsNavigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PRFStepComponent from "@/features/prf_2/components/PRFStepComponent.tsx";
 import PRFNavigationButton from "@/features/prf_2/components/PRFNavigationButton.tsx";
 import { usePRF2Form } from "@/features/prf_2/hooks/usePRF2Form";
@@ -12,6 +12,7 @@ import { isAxiosError } from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import PRFSidebarPreview from "@/features/prf_2/components/PRFSidebarPreview.tsx";
+import ResumeDraftModal from "@/features/prf_2/components/ResumeDraftModal";
 import type { PRFFormData as LegacyPRFFormData } from "@/features/prf_2/types/LegacyPRFCompat";
 import { adaptLegacyPrfToPrf2FormData } from "@/features/prf_2/utils/prf2PayloadAdapter";
 import {
@@ -24,6 +25,13 @@ import {
   validateStep,
   validateSteps,
 } from "@/features/prf_2/utils/validateSteps";
+import {
+  extractDraftSummary,
+  prfDraftLocalStore,
+  type PrfDraftLocalRecord,
+} from "@/features/prf_2/services/prfDraft.local-store";
+import ApplicantPoolingModal, {type PoolingOption } from "@/shared/components/ApplicantPoolingModal";
+import useAxiosPrivate from "@/features/auth/hooks/useAxiosPrivate";
 
 interface PRFCreationProps {
   initialData?: LegacyPRFFormData;
@@ -35,11 +43,17 @@ export default function PRFCreation({
   updateMode = false,
 }: PRFCreationProps) {
   const navigate = useNavigate();
+  const axiosPrivate = useAxiosPrivate();
   const [step, setStep] = useState(1);
   const [maxStepVisited, setMaxStepVisited] = useState(updateMode ? 6 : 1);
   const [stepErrors, setStepErrors] = useState<StepErrors>(
     createEmptyStepErrors(),
   );
+  const [showResumeModal, setShowResumeModal] = useState(false);
+  const [showPoolingModal, setShowPoolingModal] = useState(false);
+  const [createdJobPostingId, setCreatedJobPostingId] = useState<number | null>(null);
+  const [draftRecord, setDraftRecord] = useState<PrfDraftLocalRecord | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const adaptedInitialData = useMemo(
     () => (initialData ? adaptLegacyPrfToPrf2FormData(initialData) : undefined),
     [initialData],
@@ -54,6 +68,35 @@ export default function PRFCreation({
     }
 
     setStepErrors(validateSteps(formData));
+  }, [formData, updateMode]);
+
+  useEffect(() => {
+    if (updateMode) return;
+
+    const saved = prfDraftLocalStore.getDraft();
+    if (saved) {
+      setDraftRecord(saved);
+      setShowResumeModal(true);
+    }
+  }, [updateMode]);
+
+  useEffect(() => {
+    if (updateMode) return;
+
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+    }
+
+    saveTimerRef.current = setTimeout(() => {
+      const summary = extractDraftSummary(formData);
+      prfDraftLocalStore.saveDraft(formData, summary);
+    }, 1500);
+
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+      }
+    };
   }, [formData, updateMode]);
 
   function handleStepClick(targetStep: number) {
@@ -104,9 +147,21 @@ export default function PRFCreation({
         : "Failed to submit PRF. Please try again.";
 
       if (response.status === 200 || response.status === 201) {
+        prfDraftLocalStore.clearDraft();
         setStepErrors(createEmptyStepErrors());
-        toast.success(successMessage);
-        navigate("/requests");
+        
+        if (updateMode) {
+          toast.success(successMessage);
+          navigate("/requests");
+          return;
+        }
+        
+        // Store the created job posting ID and show pooling modal
+        const jobPostingId = response.data?.job_posting?.id ?? response.data?.id;
+        if (jobPostingId) {
+          setCreatedJobPostingId(jobPostingId);
+        }
+        setShowPoolingModal(true);
         return;
       }
 
@@ -178,6 +233,47 @@ export default function PRFCreation({
     setStep((prev) => prev - 1);
   }
 
+  const handleResumeDraft = useCallback(() => {
+    if (!draftRecord) return;
+    setFormData(draftRecord.data);
+    setMaxStepVisited(6);
+    setShowResumeModal(false);
+  }, [draftRecord, setFormData]);
+
+  const handleStartNew = useCallback(() => {
+    prfDraftLocalStore.clearDraft();
+    setShowResumeModal(false);
+  }, []);
+
+  const handlePoolingConfirm = async (option: PoolingOption) => {
+    try {
+      if (createdJobPostingId) {
+        await axiosPrivate.patch(`/api/job_posting/${createdJobPostingId}/`, {
+          applicant_pooling_option: option,
+        });
+      }
+      
+      if (option !== 'new_only' && createdJobPostingId) {
+        await axiosPrivate.post(`/api/job_posting/${createdJobPostingId}/pool_applicants/`, {
+          pooling_option: option,
+        });
+      }
+      
+      toast.success('PRF submitted successfully!');
+    } catch (error) {
+      console.error('Error updating pooling option:', error);
+      toast.success('PRF submitted successfully!');
+    } finally {
+      setShowPoolingModal(false);
+      navigate("/requests");
+    }
+  };
+
+  const handlePoolingSkip = () => {
+    setShowPoolingModal(false);
+    navigate("/requests");
+  };
+
   return (
     <section className="min-h-screen p-6">
       <div className="mx-auto max-w-7xl space-y-4">
@@ -187,7 +283,11 @@ export default function PRFCreation({
           </h1>
         )}
 
-        {!updateMode && <CancelRequestModal />}
+        {!updateMode && (
+          <CancelRequestModal
+            onCancel={() => prfDraftLocalStore.clearDraft()}
+          />
+        )}
 
         <PRFStepsNavigation
           step={step}
@@ -214,6 +314,23 @@ export default function PRFCreation({
           handlePrevious={handleStepPrevChange}
           submitting={isSubmitting}
           updateMode={updateMode}
+        />
+        {draftRecord && (
+          <ResumeDraftModal
+            open={showResumeModal}
+            savedAt={draftRecord.savedAt}
+            summary={draftRecord.summary}
+            onResume={handleResumeDraft}
+            onStartNew={handleStartNew}
+          />
+        )}
+
+        <ApplicantPoolingModal
+          open={showPoolingModal}
+          onOpenChange={setShowPoolingModal}
+          jobTitle={formData.job_posting?.job_title ?? 'this position'}
+          onConfirm={handlePoolingConfirm}
+          onSkip={handlePoolingSkip}
         />
       </div>
     </section>

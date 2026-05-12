@@ -13,11 +13,11 @@ export function MetricsSection({
   getBorderColor,
 }: MetricsSectionProps) {
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-2 gap-4 h-full">
       {metrics.map((metric, index) => (
         <Card
           key={index}
-          className="p-4"
+          className="p-4 h-full"
           style={{
             backgroundColor: `${getPastelColor(metric.color)}`,
           }}

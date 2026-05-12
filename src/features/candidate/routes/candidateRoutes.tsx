@@ -4,7 +4,10 @@ import CandidateApplicationDetail from "@/features/candidate/views/CandidateAppl
 import CandidateOfferPage from "@/features/candidate/views/CandidateOfferPage";
 import CandidateProfile from "@/features/candidate/views/CandidateProfile";
 import CandidateAssessmentPage from "@/features/candidate/views/CandidateAssessmentPage";
+import CandidateDocumentsPage from "@/features/candidate/views/CandidateDocumentsPage";
+import CandidatePreonboardingPage from "@/features/candidate/views/CandidatePreonboardingPage";
 import ProtectedRoutes from "@/features/auth/components/ProtectedRoutes";
+import CandidateLayout from "@/features/candidate/components/CandidateLayout";
 
 export const candidateRoutes = [
   {
@@ -16,35 +19,36 @@ export const candidateRoutes = [
     element: <CandidateOfferPage />,
   },
   {
-    path: "candidate/dashboard",
     element: (
       <ProtectedRoutes allowedRoles={["candidate"]}>
-        <CandidateDashboard />
+        <CandidateLayout />
       </ProtectedRoutes>
     ),
-  },
-  {
-    path: "candidate/applications/:id",
-    element: (
-      <ProtectedRoutes allowedRoles={["candidate"]}>
-        <CandidateApplicationDetail />
-      </ProtectedRoutes>
-    ),
-  },
-  {
-    path: "candidate/applications/:id/assessments",
-    element: (
-      <ProtectedRoutes allowedRoles={["candidate"]}>
-        <CandidateAssessmentPage />
-      </ProtectedRoutes>
-    ),
-  },
-  {
-    path: "candidate/profile",
-    element: (
-      <ProtectedRoutes allowedRoles={["candidate"]}>
-        <CandidateProfile />
-      </ProtectedRoutes>
-    ),
+    children: [
+      {
+        path: "candidate/dashboard",
+        element: <CandidateDashboard />,
+      },
+      {
+        path: "candidate/applications/:id",
+        element: <CandidateApplicationDetail />,
+      },
+      {
+        path: "candidate/applications/:id/assessments",
+        element: <CandidateAssessmentPage />,
+      },
+      {
+        path: "candidate/profile",
+        element: <CandidateProfile />,
+      },
+      {
+        path: "candidate/documents",
+        element: <CandidateDocumentsPage />,
+      },
+      {
+        path: "candidate/preonboarding",
+        element: <CandidatePreonboardingPage />,
+      },
+    ],
   },
 ];

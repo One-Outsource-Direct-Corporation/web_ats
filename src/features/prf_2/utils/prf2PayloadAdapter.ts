@@ -31,6 +31,7 @@ interface PrfSubmitPayload {
     description: string | null;
     responsibilities: string | null;
     qualifications: string | null;
+    required_skills: string[];
     status: string | null;
     type: "prf";
   };
@@ -235,6 +236,9 @@ export function adaptLegacyPrfToPrf2FormData(
       description: toStringOrEmpty(sourceJobPosting.description),
       responsibilities: toStringOrEmpty(sourceJobPosting.responsibilities),
       qualifications: toStringOrEmpty(sourceJobPosting.qualifications),
+      required_skills: Array.isArray(sourceJobPosting.required_skills)
+        ? sourceJobPosting.required_skills
+        : base.job_posting.required_skills,
       status:
         (toNullableString(
           sourceJobPosting.status,
@@ -265,6 +269,23 @@ export function adaptLegacyPrfToPrf2FormData(
       const mandatoryTypes = ["for_job_offer", "pre_onboarding", "onboarding"];
       const existingTypes = new Set(steps.filter((s) => s.stage === 4).map((s) => s.process_type));
       const missing = mandatoryTypes.filter((t) => !existingTypes.has(t));
+      const PASSED_BODY =
+        "Dear {{ candidate_name }},\n\n" +
+        "We are pleased to inform you that you have successfully completed the {{ pipeline_step_process_type_label }} for the position of {{ job_title }}. " +
+        "We will be in touch with further details regarding the next steps.\n\n" +
+        "Best regards,\n" +
+        "{{ interviewer_name }}\n" +
+        "{{ interviewer_role }}\n" +
+        "{{ company_name }}";
+      const FAILED_BODY =
+        "Dear {{ candidate_name }},\n\n" +
+        "Thank you for your participation in the {{ pipeline_step_process_type_label }} for the position of {{ job_title }}. " +
+        "After careful consideration, we regret to inform you that you have not been successful on this occasion.\n\n" +
+        "We appreciate your interest and wish you all the best in your future endeavors.\n\n" +
+        "Best regards,\n" +
+        "{{ interviewer_name }}\n" +
+        "{{ interviewer_role }}\n" +
+        "{{ company_name }}";
       missing.forEach((process_type, index) => {
         const order = steps.filter((s) => s.stage === 4).length + index + 1;
         steps.push({
@@ -278,8 +299,8 @@ export function adaptLegacyPrfToPrf2FormData(
           passedEmailTemplateId: null,
           failedEmailTemplateId: null,
           notification_templates: [
-            { action_type: "send_email", trigger_outcome: "passed", subject: "", body: "" },
-            { action_type: "send_email", trigger_outcome: "failed", subject: "", body: "" },
+            { action_type: "send_email", trigger_outcome: "passed", subject: "{{ pipeline_step_process_type_label }} - {{ job_title }}", body: PASSED_BODY },
+            { action_type: "send_email", trigger_outcome: "failed", subject: "{{ pipeline_step_process_type_label }} - {{ job_title }}", body: FAILED_BODY },
           ],
           assessments: [],
         } as any);
@@ -330,6 +351,7 @@ export function buildPrfSubmitPayload(formData: PRFFormData): PrfSubmitPayload {
       description: toNullableString(formData.job_posting.description),
       responsibilities: toNullableString(formData.job_posting.responsibilities),
       qualifications: toNullableString(formData.job_posting.qualifications),
+      required_skills: formData.job_posting.required_skills ?? [],
       status:
         toNullableString(formData.job_posting.status) ??
         JobPostingStatus.PENDING,

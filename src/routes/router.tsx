@@ -1,5 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import RootLayout from "@/shared/pages/RootLayout";
+import ErrorPage from "@/shared/pages/ErrorPage";
+import NotFoundPage from "@/shared/pages/NotFoundPage";
 import { applicantsRoutes } from "@/features/applicants/routes/applicantsRoutes.tsx";
 import { jobsRoutes } from "@/features/jobs/routes/jobsRoutes.tsx";
 import { interviewsRoutes } from "@/features/interviews/routes/interviewsRoutes.tsx";
@@ -14,11 +16,13 @@ import PersistLogin from "@/features/auth/components/PersistLogin";
 import { publicJobsRoutes } from "@/features/jobs/public/routes/careersRoute";
 import { requestRoutes } from "@/features/requests/routes/requestRoutes";
 import { candidateRoutes } from "@/features/candidate/routes/candidateRoutes";
+import TalentPool from "@/features/talent-pool/views/TalentPool";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <PersistLogin />,
+    errorElement: <ErrorPage />,
     children: [
       ...publicJobsRoutes,
       ...candidateRoutes,
@@ -37,10 +41,14 @@ export const router = createBrowserRouter([
             <RootLayout />
           </ProtectedRoutes>
         ),
+        errorElement: <ErrorPage />,
         children: [
           ...dashboardRoutes,
           ...positionRoutes,
-          // Explicit route for IEF Template Library to avoid 404 on direct navigation
+          {
+            path: "pool",
+            element: <TalentPool />,
+          },
           {
             path: "library/ief-templates",
             element: <IEFTemplateLibrary />,
@@ -56,6 +64,10 @@ export const router = createBrowserRouter([
       {
         path: "prf_2",
         element: <Navigate to="/prf" replace />,
+      },
+      {
+        path: "*",
+        element: <NotFoundPage />,
       },
     ],
   },
