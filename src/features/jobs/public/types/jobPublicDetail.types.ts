@@ -12,4 +12,5 @@ export interface PublicJobDetailResponse {
   responsibilities: string | null;
   qualifications: string | null;
   has_applied?: boolean;
+  all_locations_full?: boolean | null;
 }

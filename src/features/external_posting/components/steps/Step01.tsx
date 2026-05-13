@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { Card } from "@/shared/components/ui/card";
 import { BasicDetailsForm } from "../BasicDetailsForm";
@@ -8,7 +8,12 @@ import {
   type LocationEntryDb,
   type LocationEntryLocal,
 } from "@/features/location";
-import { BatchManagement, useBatchEntries } from "@/features/batch";
+import {
+  BatchManagement,
+  useBatchEntries,
+  type BatchEntryDb,
+  type BatchEntryLocal,
+} from "@/features/batch";
 import type {
   PositionBase,
   PositionFormData,
@@ -58,9 +63,27 @@ export default function Step01({
     setSelectedLocationId(id);
   }
 
-  // const filteredBatches = selectedLocationId
-  //   ? batches.filter((batch) => batch.locationId === selectedLocationId)
-  //   : [];
+  const computedTotalHeadcount = useMemo(() => {
+    return locations.reduce((total, loc) => {
+      if ((loc as LocationEntryDb)._delete) return total;
+
+      const locId =
+        (loc as LocationEntryDb).id ?? (loc as LocationEntryLocal).tempId;
+
+      if (loc.with_batch) {
+        const batchSum = batches
+          .filter(
+            (b) =>
+              b.location === locId &&
+              !(b as BatchEntryDb)._delete,
+          )
+          .reduce((sum, b) => sum + (b.headcount || 0), 0);
+        return total + batchSum;
+      }
+
+      return total + (loc.headcount ?? 0);
+    }, 0);
+  }, [locations, batches]);
 
   return (
     <Card className="p-6">
@@ -69,6 +92,7 @@ export default function Step01({
         onInputChange={handleInputChange}
         handleJobPostingChange={handleJobPostingChange}
         errorFields={error ?? null}
+        computedHeadcount={computedTotalHeadcount || null}
       />
 
       <LocationManagement

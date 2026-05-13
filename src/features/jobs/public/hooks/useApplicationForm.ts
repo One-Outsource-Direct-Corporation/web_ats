@@ -8,6 +8,7 @@ import type {
   QuestionnaireAnswers,
   WorkExperienceEntry,
 } from "../types/application_form.types";
+import type { LocationPublicSummary } from "../types/jobApply.types";
 
 const initialPersonalData: PersonalFormData = {
   firstName: null,
@@ -67,10 +68,12 @@ const data = {
 export const useApplicationForm = (
   jobTitle?: string,
   prefillData?: Partial<ApplicationFormData>,
+  locations?: LocationPublicSummary[],
 ) => {
   const [formData, setFormData] = useState<ApplicationFormData>(data);
   const [currentStage, setCurrentStage] = useState(1);
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [selectedLocationId, setSelectedLocationId] = useState<number | null>(null);
 
   // Apply prefill data when it becomes available (e.g. after async load).
   // A ref guard ensures we only merge once so user edits are not overwritten
@@ -212,12 +215,20 @@ export const useApplicationForm = (
     }
   };
 
+  const handleLocationSelect = (locationId: number | null) => {
+    setSelectedLocationId(locationId);
+  };
+
   return {
     formData,
     currentStage,
     acceptTerms,
+    selectedLocationId,
+    locations,
 
     setAcceptTerms,
+    setSelectedLocationId,
+    handleLocationSelect,
 
     handleInputPersonalInfo,
     handleInputJobDetails,
