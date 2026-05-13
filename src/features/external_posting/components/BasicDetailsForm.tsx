@@ -63,6 +63,7 @@ interface BasicDetailsFormProps {
     value: string | number | null,
   ) => void;
   errorFields: ValidationError | null;
+  computedHeadcount?: number | null;
 }
 
 // To do: Optimize the function on onChange, it is laggy
@@ -73,6 +74,7 @@ export const BasicDetailsForm = ({
   onInputChange,
   handleJobPostingChange,
   errorFields,
+  computedHeadcount,
 }: BasicDetailsFormProps) => {
   const parseNullableNumber = (value: string): number | null => {
     const trimmedValue = value.trim();
@@ -491,15 +493,10 @@ export const BasicDetailsForm = ({
               <FieldLabel>Headcounts Needed *</FieldLabel>
               <Input
                 type="number"
-                value={formData.job_posting.number_of_vacancies ?? ""}
-                onChange={(e) =>
-                  handleJobPostingChange(
-                    "number_of_vacancies",
-                    parseNullableNumber(e.target.value),
-                  )
-                }
-                placeholder="Enter number of positions"
+                value={computedHeadcount ?? ""}
+                placeholder="Auto-computed from locations"
                 min={0}
+                disabled
               />
               {getJobError("number_of_vacancies") && (
                 <FieldError>{getJobError("number_of_vacancies")}</FieldError>

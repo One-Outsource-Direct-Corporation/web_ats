@@ -86,6 +86,12 @@ export default function CareerDescription() {
                 <Briefcase className="h-4 w-4 mr-2" />
                 Already Applied
               </Button>
+            ) : isCandidate && jobPublicDetail?.all_locations_full ? (
+              <div className="bg-gray-100 border border-gray-300 rounded-lg p-4 max-w-md">
+                <p className="text-gray-600 text-sm">
+                  This position is no longer accepting applications.
+                </p>
+              </div>
             ) : isCandidate ? (
               <Button
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"

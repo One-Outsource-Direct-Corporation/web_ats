@@ -25,6 +25,20 @@ export function useExternalPostingMutation() {
   const submitExternalPosting = useCallback(
     async (params: { formData: PositionFormData; updateMode?: boolean }) => {
       const { formData, updateMode } = params;
+
+      const totalHeadcount = (formData.locations ?? []).reduce((total, loc) => {
+        if ((loc as Record<string, unknown>)._delete) return total;
+        const locId = (loc as Record<string, unknown>).id ?? (loc as Record<string, unknown>).tempId;
+        if (loc.with_batch) {
+          const batchSum = (formData.batches ?? [])
+            .filter((b: Record<string, unknown>) => b.location === locId && !b._delete)
+            .reduce((sum: number, b: Record<string, unknown>) => sum + ((b.headcount as number) || 0), 0);
+          return total + batchSum;
+        }
+        return total + ((loc.headcount as number) ?? 0);
+      }, 0);
+      formData.job_posting.number_of_vacancies = totalHeadcount || null;
+
       const payload = stateToDataFormatClient(formData);
 
       if (updateMode) {

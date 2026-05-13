@@ -40,15 +40,27 @@ export interface PublicApplyApplicationForm {
   questionnaire: PublicApplyQuestionnaire;
 }
 
+export interface LocationPublicSummary {
+  id: number;
+  name: string;
+  headcount: number;
+  booked: number;
+  hired: number;
+  available: number;
+}
+
 export interface PublicApplyJobDetailResponse {
   job_posting: PublicApplyJobPosting;
   application_form: PublicApplyApplicationForm;
+  locations?: LocationPublicSummary[];
+  all_locations_full?: boolean;
 }
 
 export interface CandidateApplicationSubmissionPayload {
   job_posting: number;
   source?: string;
   referral_code?: string | null;
+  location_entry_id?: number | null;
   personal_info: Record<string, unknown>;
   job_details: Record<string, unknown>;
   education_work: Record<string, unknown>;

@@ -19,7 +19,9 @@ import Step01 from "../components/steps/Step01";
 import Step02 from "../components/steps/Step02";
 import Step03 from "../components/steps/Step03";
 import Step04 from "../components/steps/Step04";
+import StepLocation from "../components/steps/StepLocation";
 import type { WorkExperienceEntry, ApplicationFormData } from "../types/application_form.types";
+import type { LocationPublicSummary } from "../types/jobApply.types";
 import { useCandidateApplicationSubmission } from "../hooks/useCandidateApplicationSubmission";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 
@@ -51,11 +53,17 @@ export default function CareersApply() {
   const { submitCandidateApplication, isSubmitting } =
     useCandidateApplicationSubmission();
 
+  const hasLocations = !!(jobDetail?.locations && jobDetail.locations.length > 0);
+
   const {
     formData,
     currentStage,
     acceptTerms,
+    selectedLocationId,
+    locations,
     setAcceptTerms,
+    setSelectedLocationId,
+    handleLocationSelect,
     handleInputPersonalInfo,
     handleInputJobDetails,
     handleInputEducationWork,
@@ -65,7 +73,18 @@ export default function CareersApply() {
     handleQuestionnaireCheckboxInput,
     goToNextStage,
     goToPreviousStage,
-  } = useApplicationForm(jobDetail?.job_posting?.job_title ?? "", prefillFormData);
+  } = useApplicationForm(
+    jobDetail?.job_posting?.job_title ?? "",
+    prefillFormData,
+    hasLocations ? jobDetail.locations : undefined,
+  );
+
+  // Auto-select if only 1 location
+  useEffect(() => {
+    if (locations && locations.length === 1 && locations[0].available > 0) {
+      setSelectedLocationId(locations[0].id);
+    }
+  }, [locations, setSelectedLocationId]);
 
   // Wrapper functions to handle type compatibility
   const handleJobDetailsChange = (
@@ -147,9 +166,16 @@ export default function CareersApply() {
     }
 
     if (currentStage < 4) {
-      if (currentStage === 1 && !acceptTerms) {
-        toast.error("Please accept the data privacy terms to continue.");
-        return;
+      if (currentStage === 1) {
+        if (!acceptTerms) {
+          toast.error("Please accept the data privacy terms to continue.");
+          return;
+        }
+
+        if (hasLocations && !selectedLocationId) {
+          toast.error("Please select a preferred location to continue.");
+          return;
+        }
       }
 
       goToNextStage();
@@ -190,6 +216,7 @@ export default function CareersApply() {
         payload: {
           job_posting: jobDetail.job_posting.id,
           source: "careers_page",
+          location_entry_id: hasLocations ? selectedLocationId : null,
           personal_info: formData.personalInfo,
           job_details: {
             expectedSalary: formData.jobDetails.expectedSalary,
@@ -395,13 +422,24 @@ export default function CareersApply() {
         />
         <div className="flex-1 p-4 lg:p-8">
           {currentStage === 1 && (
-            <Step01
-              formData={formData.personalInfo}
-              applicationForm={jobDetail.application_form.application_form}
-              onInputChange={handleInputPersonalInfo}
-              acceptTerms={acceptTerms}
-              onAcceptTermsChange={setAcceptTerms}
-            />
+            <div className="space-y-8">
+              {hasLocations && locations && (
+                <StepLocation
+                  locations={locations}
+                  selectedLocationId={selectedLocationId}
+                  onLocationSelect={handleLocationSelect}
+                />
+              )}
+              <div className={hasLocations ? "border-t pt-8" : ""}>
+                <Step01
+                  formData={formData.personalInfo}
+                  applicationForm={jobDetail.application_form.application_form}
+                  onInputChange={handleInputPersonalInfo}
+                  acceptTerms={acceptTerms}
+                  onAcceptTermsChange={setAcceptTerms}
+                />
+              </div>
+            </div>
           )}
           {currentStage === 2 && (
             <Step02
